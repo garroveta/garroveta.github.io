@@ -1,0 +1,99 @@
+import { Check, RotateCcw } from 'lucide-react'
+
+import {
+  demoRoleOptions,
+  getDemoRoleOption,
+  type DemoRole,
+} from '../app/demoRoles'
+
+type ProfilePageProps = {
+  activeRole: DemoRole
+  onRoleChange: (role: DemoRole) => void
+  onReset: () => void
+}
+
+export function ProfilePage({
+  activeRole,
+  onRoleChange,
+  onReset,
+}: ProfilePageProps) {
+  const currentRole = getDemoRoleOption(activeRole)
+
+  return (
+    <div className="page">
+      <header className="page-heading">
+        <span className="page-eyebrow">Cuenta de demostración</span>
+        <h1>Perfil</h1>
+        <p>
+          Cambia de vista para explorar el prototipo con cada tipo de usuario.
+        </p>
+      </header>
+
+      <section className="profile-summary" aria-labelledby="profile-name">
+        <span className="profile-avatar" aria-hidden="true">
+          DM
+        </span>
+        <div className="profile-summary__identity">
+          <span>Perfil activo</span>
+          <h2 id="profile-name">Demo Member</h2>
+          <p>Miembro validado · Tienda piloto</p>
+        </div>
+        <span className="current-role">
+          <currentRole.icon aria-hidden="true" size={17} />
+          {currentRole.label}
+        </span>
+      </section>
+
+      <section className="role-section" aria-labelledby="role-title">
+        <div className="section-heading">
+          <div>
+            <span>Modo de prueba</span>
+            <h2 id="role-title">Cambiar de vista</h2>
+          </div>
+        </div>
+
+        <div className="role-options">
+          {demoRoleOptions.map(
+            ({ id, icon: Icon, label, description }, index) => {
+              const isSelected = activeRole === id
+
+              return (
+                <button
+                  className="role-option"
+                  type="button"
+                  key={id}
+                  aria-pressed={isSelected}
+                  onClick={() => onRoleChange(id)}
+                >
+                  <span
+                    className={`role-option__icon role-option__icon--${index + 1}`}
+                  >
+                    <Icon aria-hidden="true" size={21} />
+                  </span>
+                  <span className="role-option__content">
+                    <strong>{label}</strong>
+                    <small>{description}</small>
+                  </span>
+                  <span className="role-option__check" aria-hidden="true">
+                    {isSelected ? <Check size={17} strokeWidth={3} /> : null}
+                  </span>
+                </button>
+              )
+            },
+          )}
+        </div>
+      </section>
+
+      <section className="reset-panel">
+        <div>
+          <strong>Restaurar la demostración</strong>
+          <p>Vuelve a la vista de jugador utilizada al iniciar el prototipo.</p>
+        </div>
+        <button className="secondary-button" type="button" onClick={onReset}>
+          <RotateCcw aria-hidden="true" size={17} />
+          Restablecer
+        </button>
+      </section>
+    </div>
+  )
+}

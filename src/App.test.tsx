@@ -34,4 +34,25 @@ describe('App', () => {
       'page',
     )
   })
+
+  it('switches and resets the demonstration role', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
+
+    expect(screen.getByLabelText('Vista actual: Gerente')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Gerente/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Restablecer' }))
+
+    expect(screen.getByLabelText('Vista actual: Jugador')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Jugador/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+  })
 })
