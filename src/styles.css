@@ -1,0 +1,117 @@
+:root {
+  color: #f8fafc;
+  background: #111827;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at top right, rgb(124 58 237 / 28%), transparent 32rem),
+    linear-gradient(160deg, #111827 0%, #171427 55%, #0f172a 100%);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.app-shell {
+  width: min(100% - 2rem, 68rem);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 4rem 0;
+}
+
+.hero {
+  max-width: 44rem;
+}
+
+.eyebrow {
+  display: inline-flex;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid rgb(167 139 250 / 45%);
+  border-radius: 999px;
+  color: #ddd6fe;
+  background: rgb(76 29 149 / 28%);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 1rem 0 0;
+  font-size: clamp(2.5rem, 9vw, 5rem);
+  line-height: 0.95;
+  letter-spacing: -0.055em;
+}
+
+.hero__description {
+  max-width: 38rem;
+  margin: 1.4rem 0 0;
+  color: #cbd5e1;
+  font-size: clamp(1.05rem, 3vw, 1.35rem);
+  line-height: 1.6;
+}
+
+.prototype-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 3rem;
+}
+
+.prototype-card {
+  min-height: 11rem;
+  padding: 1.4rem;
+  border: 1px solid rgb(148 163 184 / 18%);
+  border-radius: 1.25rem;
+  background: rgb(15 23 42 / 62%);
+  box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 18%);
+  backdrop-filter: blur(12px);
+}
+
+.prototype-card h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.prototype-card p {
+  margin: 0.75rem 0 0;
+  color: #94a3b8;
+  line-height: 1.55;
+}
+
+.prototype-status {
+  margin: 2rem 0 0;
+  color: #a78bfa;
+  font-size: 0.92rem;
+}
+
+@media (max-width: 44rem) {
+  .app-shell {
+    padding: 2rem 0 3rem;
+  }
+
+  .prototype-grid {
+    grid-template-columns: 1fr;
+    margin-top: 2.25rem;
+  }
+
+  .prototype-card {
+    min-height: auto;
+  }
+}
