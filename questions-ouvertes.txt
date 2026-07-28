@@ -1,0 +1,138 @@
+QUESTIONS OUVERTES — APPLICATION COMMUNAUTAIRE MTG
+Mise à jour : 15 juillet 2026
+
+Ce document contient uniquement les questions qui restent à trancher.
+Les sujets économiques sont conservés à part, puisqu'ils seront étudiés dans un second temps.
+
+
+1. PÉRIMÈTRE DU PRODUIT PILOTE
+
+1. L'application doit-elle uniquement compléter WhatsApp, ou a-t-elle vocation à remplacer progressivement certains de ses usages ?
+
+2. Un joueur pourra-t-il, à terme, appartenir à plusieurs boutiques ou communautés avec le même compte ?
+
+3. Quels rôles faut-il prévoir exactement pour le pilote : joueur, gérant, employé et/ou modérateur ?
+
+4. Quelles actions chaque rôle pourra-t-il réaliser ? Par exemple : valider un membre, modérer une annonce, créer un événement, publier une actualité ou corriger un résultat.
+
+5. Quel résultat permettra de considérer le pilote comme réussi après trois mois : nombre de membres inscrits, utilisateurs actifs, annonces publiées, correspondances trouvées, échanges réalisés, inscriptions aux événements ou diminution des questions répétitives sur WhatsApp ?
+
+
+2. INSCRIPTION, PROFIL ET VIE PRIVÉE
+
+6. Comment un joueur demandera-t-il à rejoindre la communauté : lien public, QR code en boutique, code d'invitation ou ajout manuel ?
+
+7. Le joueur utilisera-t-il son véritable nom, un pseudonyme, ou les deux ?
+
+8. Quelles coordonnées pourra-t-il choisir de rendre visibles lorsqu'un autre membre consulte son profil après une correspondance : WhatsApp, téléphone, e-mail, Discord ou aucune coordonnée directe ?
+
+9. Les coordonnées seront-elles visibles par tous les membres validés, ou uniquement par les personnes ayant une correspondance de cartes ?
+
+10. Faut-il permettre de signaler et de bloquer un membre, une annonce ou un comportement ?
+
+
+3. CARTES, RECHERCHES ET ANNONCES
+
+11. Pour une carte à vendre ou échanger, quelles informations seront obligatoires : édition, langue, état, finition foil/non-foil, quantité, prix et type d'opération ?
+
+12. Une recherche portera-t-elle simplement sur le nom d'une carte, ou pourra-t-elle exiger une édition, une langue, un état ou une finition précise ?
+
+13. Quel volume faut-il prévoir par joueur : quelques dizaines, quelques centaines ou plusieurs milliers de cartes ?
+
+14. Quels formats d'import les membres utilisent-ils déjà : texte copié-collé, fichier CSV, liste Moxfield/Archidekt, export Cardmarket ou autre ?
+
+15. Lors d'un import, comment traiter les cartes dont le nom, l'édition ou la langue n'est pas reconnu automatiquement ?
+
+16. Les lots, boîtes et decks seront-ils de simples annonces avec titre, description et photos, ou leur contenu devra-t-il être détaillé carte par carte ?
+
+17. Une annonce devra-t-elle suivre les états « disponible », « réservée », « vendue/échangée » et « archivée » ?
+
+18. Les annonces et recherches devront-elles expirer automatiquement ou demander une confirmation régulière afin d'éviter les listes obsolètes ?
+
+19. Un joueur pourra-t-il mettre temporairement en pause ses annonces et recherches sans les supprimer ?
+
+20. Le stock commercial de la boutique devra-t-il apparaître dans l'application dès le pilote ?
+
+
+4. CORRESPONDANCES ENTRE JOUEURS
+
+21. Une correspondance doit-elle générer une notification immédiate, apparaître dans une page dédiée, ou les deux ?
+
+22. Faut-il uniquement rapprocher une carte recherchée d'une carte proposée, ou également détecter les échanges réciproques où deux joueurs possèdent chacun une carte recherchée par l'autre ?
+
+23. Une correspondance est-elle limitée à la communauté de la boutique pilote ?
+
+24. Une correspondance doit-elle tenir compte du prix, de l'état, de la langue et de l'édition, ou commencer par une comparaison simple basée sur le nom de la carte ?
+
+25. L'application doit-elle permettre aux joueurs d'indiquer qu'un échange ou une vente a effectivement eu lieu, même si la discussion et le paiement restent externes ?
+
+
+5. ÉVÉNEMENTS ET INSCRIPTIONS
+
+26. Quels types d'événements seront proposés au lancement : tournois, soirées Commander, avant-premières, initiations, échanges libres ou autres ?
+
+27. Les événements pourront-ils être gratuits ou payants, avec un paiement réalisé directement à la boutique ?
+
+28. Quelles informations seront demandées lors d'une inscription : nom, identifiant joueur, deck, format, niveau ou aucune information supplémentaire ?
+
+29. À quel moment une personne en liste d'attente récupérera-t-elle automatiquement une place : désistement, absence constatée ou décision manuelle du gérant ?
+
+30. Faut-il envoyer des rappels dans l'application avant un événement, et si oui à quelles échéances ?
+
+
+6. RÉSULTATS DEPUIS UNE PHOTO ET CLASSEMENT COMMUNAUTAIRE
+
+31. Quel document sera photographié : feuille de résultats manuscrite, tableau imprimé, écran d'une autre application, captures d'écran ou plusieurs de ces formats ?
+
+32. La présentation de la feuille sera-t-elle standardisée par la boutique afin de faciliter la reconnaissance automatique ?
+
+33. Quelles données doivent être extraites de la photo : joueurs, rondes, adversaires, victoires/défaites/égalités, scores, classement final et/ou départs anticipés ?
+
+34. Le gérant devra-t-il obligatoirement vérifier et corriger les données reconnues avant leur publication ?
+
+35. Que doit faire l'application lorsqu'un nom est ambigu ou ne correspond à aucun membre inscrit ?
+
+36. Les résultats individuels doivent-ils être visibles par toute la communauté ou seulement par le joueur concerné et les organisateurs ?
+
+37. Comment calculer le classement communautaire : points de victoire, participation, position finale, régularité, système Elo ou autre formule ?
+
+38. Le classement sera-t-il global, séparé par format/tag, ou les deux ?
+
+39. Le classement fonctionnera-t-il par saison avec remise à zéro, sur une période glissante, ou sans remise à zéro ?
+
+40. Comment gérer les égalités et les corrections apportées après la publication d'un résultat ?
+
+41. Les photos sources devront-elles être conservées après validation, et pendant combien de temps ?
+
+
+7. ACTUALITÉS, TAGS ET NOTIFICATIONS
+
+42. Quels types de publication faut-il distinguer : actualité, promotion, arrivage, information urgente, sondage et règle permanente ?
+
+43. Certaines publications devront-elles rester épinglées en haut de l'accueil ou avoir une date d'expiration ?
+
+44. Un contenu peut-il cibler plusieurs tags à la fois tout en restant visible dans un fil général ?
+
+45. Quels événements doivent déclencher une notification dans l'application : correspondance de carte, nouvel événement, rappel, place libérée, changement d'horaire, résultat publié ou communication urgente ?
+
+46. Le joueur pourra-t-il personnaliser les notifications reçues, sauf éventuellement les communications urgentes de la boutique ?
+
+47. Les sondages doivent-ils être anonymes, limités dans le temps et/ou réservés à certains tags ?
+
+
+8. MODÉRATION ET ADMINISTRATION
+
+48. Les annonces devront-elles être contrôlées avant leur publication ou modérées uniquement après un signalement ?
+
+49. Qui pourra créer, modifier et supprimer les tags de la communauté ?
+
+50. Faut-il conserver un historique des actions importantes : validation d'un membre, modification d'un résultat, suppression d'une annonce ou changement d'un événement ?
+
+
+9. SUJETS ÉCONOMIQUES — À TRAITER DANS UN SECOND TEMPS
+
+51. Qui sera le client principal du produit : le gérant, les joueurs ou les deux ?
+
+52. Quel modèle économique envisager : abonnement de la boutique, options payantes, commission ou gratuité ?
+
+53. L'intégration future du stock de la boutique ou d'une estimation de prix peut-elle constituer une fonctionnalité payante ?
