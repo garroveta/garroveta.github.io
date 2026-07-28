@@ -115,6 +115,30 @@ La structure du produit doit néanmoins permettre à terme :
 La boutique constitue donc le cœur de la communauté. La ville pourra devenir
 ensuite un niveau de découverte et de mise en relation.
 
+## Démarrage local
+
+Prérequis : une version récente de Node.js et npm.
+
+```bash
+npm install
+npm run dev
+```
+
+Vite affiche ensuite l'adresse locale à ouvrir dans le navigateur.
+
+## Contrôles disponibles
+
+```bash
+# Typage, lint, tests et formatage
+npm run check
+
+# Compilation de production
+npm run build
+
+# Prévisualisation de la compilation
+npm run preview
+```
+
 ## Questions ouvertes
 
 Les décisions qui restent à prendre sont regroupées dans
