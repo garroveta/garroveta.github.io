@@ -1,42 +1,25 @@
-const prototypeAreas = [
-  {
-    title: 'Eventos',
-    description: 'Agenda, inscripciones, listas de espera y clasificaciones.',
-  },
-  {
-    title: 'Cartas',
-    description: 'Ofertas, búsquedas y coincidencias entre miembros.',
-  },
-  {
-    title: 'Comunidad',
-    description: 'Noticias y comunicaciones organizadas por etiquetas.',
-  },
-]
+import { AppHeader } from './components/AppHeader'
+import { AppNavigation } from './components/AppNavigation'
+import { useHashRoute } from './hooks/useHashRoute'
+import { HomePage } from './pages/HomePage'
+import { PlaceholderPage } from './pages/PlaceholderPage'
 
 export function App() {
+  const { activeRoute, navigate } = useHashRoute()
+
   return (
-    <main className="app-shell">
-      <section className="hero" aria-labelledby="page-title">
-        <span className="eyebrow">Prototipo local</span>
-        <h1 id="page-title">MTG Community</h1>
-        <p className="hero__description">
-          Un espacio para organizar la comunidad de jugadores de tu tienda.
-        </p>
-      </section>
+    <div className="app-shell">
+      <AppHeader />
 
-      <section className="prototype-grid" aria-label="Áreas del prototipo">
-        {prototypeAreas.map((area) => (
-          <article className="prototype-card" key={area.title}>
-            <h2>{area.title}</h2>
-            <p>{area.description}</p>
-          </article>
-        ))}
-      </section>
+      <main className="app-content" id="main-content">
+        {activeRoute === 'inicio' ? (
+          <HomePage onNavigate={navigate} />
+        ) : (
+          <PlaceholderPage route={activeRoute} onNavigate={navigate} />
+        )}
+      </main>
 
-      <p className="prototype-status">
-        La estructura inicial está lista. Las experiencias interactivas se
-        añadirán paso a paso.
-      </p>
-    </main>
+      <AppNavigation activeRoute={activeRoute} onNavigate={navigate} />
+    </div>
   )
 }
