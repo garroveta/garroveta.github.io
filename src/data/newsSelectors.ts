@@ -11,6 +11,11 @@ export type NewsListItem = {
   tags: CommunityTag[]
 }
 
+export type NewsFeedOptions = {
+  memberId?: string
+  tagId?: string
+}
+
 function createNewsListItem(
   data: DemoDataSet,
   post: NewsPost,
@@ -31,8 +36,29 @@ function createNewsListItem(
   }
 }
 
-export function getNewsFeed(data: DemoDataSet): NewsListItem[] {
+export function getNewsFeed(
+  data: DemoDataSet,
+  options: NewsFeedOptions = {},
+): NewsListItem[] {
+  const member = options.memberId
+    ? data.members.find(({ id }) => id === options.memberId)
+    : undefined
+
   return data.newsPosts
+    .filter((post) => {
+      if (options.tagId) {
+        return post.tagIds.includes(options.tagId)
+      }
+
+      if (member) {
+        return (
+          post.tagIds.length === 0 ||
+          post.tagIds.some((tagId) => member.tagIds.includes(tagId))
+        )
+      }
+
+      return true
+    })
     .flatMap((post) => {
       const item = createNewsListItem(data, post)
       return item ? [item] : []

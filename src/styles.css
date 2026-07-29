@@ -1084,6 +1084,91 @@ a {
   gap: 0.8rem;
 }
 
+.news-feed-controls {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.segmented-control {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 0.25rem;
+  border-radius: 0.85rem;
+  background: #eae5eb;
+}
+
+.segmented-control button,
+.tag-filter button {
+  border: 0;
+  cursor: pointer;
+}
+
+.segmented-control button {
+  min-height: 2.55rem;
+  border-radius: 0.65rem;
+  color: #716a74;
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.segmented-control button[aria-pressed='true'] {
+  color: #5b2b77;
+  background: #fff;
+  box-shadow: 0 0.2rem 0.8rem rgb(51 43 55 / 8%);
+}
+
+.news-feed-controls > p {
+  margin: 0;
+  color: #817984;
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.tag-filter {
+  display: flex;
+  gap: 0.4rem;
+  padding-bottom: 0.2rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.tag-filter button {
+  flex: 0 0 auto;
+  min-height: 2.25rem;
+  padding: 0 0.7rem;
+  border: 1px solid #ded7e0;
+  border-radius: 999px;
+  color: #716a74;
+  background: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.tag-filter button[aria-pressed='true'] {
+  color: #fff;
+  border-color: #5b2b77;
+  background: #5b2b77;
+}
+
+.segmented-control button:focus-visible,
+.tag-filter button:focus-visible {
+  outline: 3px solid rgb(124 86 137 / 35%);
+  outline-offset: 2px;
+}
+
+.filtered-empty-state {
+  margin: 0;
+  padding: 1.25rem;
+  border: 1px dashed #dcd5dd;
+  border-radius: 1rem;
+  color: #817984;
+  background: #f8f6f8;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
 .publication-card {
   display: grid;
   gap: 0.75rem;

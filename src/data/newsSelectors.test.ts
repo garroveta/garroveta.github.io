@@ -21,4 +21,23 @@ describe('news selectors', () => {
     expect(item?.author.displayName).toBe('Diego Sánchez')
     expect(item?.tags.map(({ name }) => name)).toEqual(['Commander'])
   })
+
+  it('personalizes the feed with general and member-tagged publications', () => {
+    expect(
+      getNewsFeed(demoData, {
+        memberId: demoData.currentMemberId,
+      }).map(({ post }) => post.id),
+    ).toEqual([
+      'news-summer-hours',
+      'news-community-rules',
+      'news-commander-tables',
+      'news-trade-evening',
+    ])
+  })
+
+  it('filters publications by one targeted tag', () => {
+    expect(
+      getNewsFeed(demoData, { tagId: 'tag-pauper' }).map(({ post }) => post.id),
+    ).toEqual(['news-format-poll'])
+  })
 })

@@ -152,7 +152,7 @@ describe('App', () => {
     fireEvent.click(screen.getAllByRole('link', { name: /Noticias/ }).at(-1)!)
 
     expect(
-      screen.getByRole('heading', { name: 'Todas las publicaciones' }),
+      screen.getByRole('heading', { name: 'Publicaciones para ti' }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: 'Nuevo horario de verano' }),
@@ -171,6 +171,38 @@ describe('App', () => {
     expect(
       screen.getByRole('button', { name: 'Volver a las noticias' }),
     ).toBeInTheDocument()
+  })
+
+  it('switches between personalized news and tag filters', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Noticias/ }).at(-1)!)
+
+    expect(
+      screen.queryByRole('heading', {
+        name: '¿Qué formato quieres jugar en agosto?',
+      }),
+    ).not.toBeInTheDocument()
+    expect(screen.getByText(/Commander, Intercambios/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Todas' }))
+
+    expect(
+      screen.getByRole('heading', {
+        name: '¿Qué formato quieres jugar en agosto?',
+      }),
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Commander' }))
+
+    expect(
+      screen.getByRole('heading', { name: 'Nuevas mesas para Commander' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', {
+        name: 'Reposición de sobres y accesorios',
+      }),
+    ).not.toBeInTheDocument()
   })
 
   it('switches and resets the demonstration role', () => {

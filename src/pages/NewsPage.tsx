@@ -160,7 +160,20 @@ function NewsDetail({
 
 export function NewsPage({ data, currentMember }: NewsPageProps) {
   const [selectedPostId, setSelectedPostId] = useState<string>()
-  const feed = getNewsFeed(data)
+  const [feedMode, setFeedMode] = useState<'personalized' | 'all'>(
+    'personalized',
+  )
+  const [activeTagId, setActiveTagId] = useState<string>()
+  const feed = getNewsFeed(data, {
+    memberId: feedMode === 'personalized' ? currentMember.id : undefined,
+    tagId: activeTagId,
+  })
+  const memberTags = data.tags.filter((tag) =>
+    currentMember.tagIds.includes(tag.id),
+  )
+  const publicationTags = data.tags.filter((tag) =>
+    data.newsPosts.some((post) => post.tagIds.includes(tag.id)),
+  )
   const selectedPost = selectedPostId
     ? getNewsById(data, selectedPostId)
     : undefined
@@ -192,19 +205,80 @@ export function NewsPage({ data, currentMember }: NewsPageProps) {
         <div className="section-heading">
           <div>
             <span>Comunidad</span>
-            <h2 id="news-feed-title">Todas las publicaciones</h2>
+            <h2 id="news-feed-title">
+              {feedMode === 'personalized'
+                ? 'Publicaciones para ti'
+                : 'Todas las publicaciones'}
+            </h2>
           </div>
           <p>{feed.length} publicadas</p>
         </div>
 
+        <div className="news-feed-controls">
+          <div className="segmented-control" aria-label="Vista de noticias">
+            <button
+              type="button"
+              aria-pressed={feedMode === 'personalized'}
+              onClick={() => {
+                setFeedMode('personalized')
+                setActiveTagId(undefined)
+              }}
+            >
+              Para mí
+            </button>
+            <button
+              type="button"
+              aria-pressed={feedMode === 'all'}
+              onClick={() => setFeedMode('all')}
+            >
+              Todas
+            </button>
+          </div>
+
+          {feedMode === 'personalized' ? (
+            <p>
+              Incluye avisos generales y tus etiquetas:{' '}
+              <strong>
+                {memberTags.map(({ name }) => name).join(', ') || 'ninguna'}
+              </strong>
+            </p>
+          ) : (
+            <div className="tag-filter" aria-label="Filtrar por etiqueta">
+              <button
+                type="button"
+                aria-pressed={!activeTagId}
+                onClick={() => setActiveTagId(undefined)}
+              >
+                Todas
+              </button>
+              {publicationTags.map((tag) => (
+                <button
+                  key={tag.id}
+                  type="button"
+                  aria-pressed={activeTagId === tag.id}
+                  onClick={() => setActiveTagId(tag.id)}
+                >
+                  {tag.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="publication-list">
-          {feed.map((item) => (
-            <NewsCard
-              item={item}
-              key={item.post.id}
-              onSelect={setSelectedPostId}
-            />
-          ))}
+          {feed.length > 0 ? (
+            feed.map((item) => (
+              <NewsCard
+                item={item}
+                key={item.post.id}
+                onSelect={setSelectedPostId}
+              />
+            ))
+          ) : (
+            <p className="filtered-empty-state">
+              No hay publicaciones para esta etiqueta.
+            </p>
+          )}
         </div>
       </section>
 
