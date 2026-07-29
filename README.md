@@ -1,7 +1,9 @@
-# MTG Community
+# Garroveta
 
 Prototype de webapp mobile-first pour organiser une communauté locale de
-joueurs de Magic: The Gathering autour d'une boutique ou d'un bar à jeux.
+joueurs autour d'une boutique ou d'un bar à jeux. Le pilote couvre les
+événements multi-jeux de CRC Delorean et conserve un espace d'échange de cartes
+initialement centré sur Magic: The Gathering.
 
 ## Problème
 

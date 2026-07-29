@@ -10,13 +10,13 @@ export function AppHeader({ activeRole }: AppHeaderProps) {
 
   return (
     <header className="app-header">
-      <a className="brand" href="#inicio" aria-label="MTG Community, inicio">
+      <a className="brand" href="#inicio" aria-label="Garroveta, inicio">
         <span className="brand__mark" aria-hidden="true">
-          M
+          G
         </span>
         <span className="brand__text">
-          <strong>MTG Community</strong>
-          <small>Tienda piloto · Prototipo</small>
+          <strong>Garroveta</strong>
+          <small>CRC Delorean · Inca</small>
         </span>
       </a>
 

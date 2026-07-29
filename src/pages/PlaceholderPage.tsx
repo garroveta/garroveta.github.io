@@ -19,7 +19,7 @@ export function PlaceholderPage({ route, onNavigate }: PlaceholderPageProps) {
   return (
     <div className="page">
       <header className="page-heading">
-        <span className="page-eyebrow">MTG Community</span>
+        <span className="page-eyebrow">Garroveta</span>
         <h1>{currentItem.label}</h1>
         <p>{currentItem.description}</p>
       </header>

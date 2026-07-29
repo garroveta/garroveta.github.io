@@ -15,6 +15,9 @@ describe('App', () => {
     render(<App />)
 
     expect(
+      screen.getByRole('link', { name: 'Garroveta, inicio' }),
+    ).toBeInTheDocument()
+    expect(
       screen.getByRole('heading', { name: 'Hola, Álex' }),
     ).toBeInTheDocument()
     expect(
