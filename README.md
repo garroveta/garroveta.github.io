@@ -5,9 +5,10 @@ joueurs de Magic: The Gathering autour d'une boutique ou d'un bar à jeux.
 
 ## Problème
 
-La communauté pilote échange aujourd'hui principalement dans un groupe
-WhatsApp d'environ 150 membres. Ce canal reste utile pour les discussions
-spontanées, mais les informations importantes sont rapidement noyées :
+La communauté pilote de CRC Delorean, à Inca, échange aujourd'hui
+principalement dans un groupe WhatsApp d'environ 150 membres. Ce canal reste
+utile pour les discussions spontanées, mais les informations importantes sont
+rapidement noyées :
 
 - les événements et leurs modalités deviennent difficiles à retrouver ;
 - les actualités de la boutique se perdent entre les conversations ;

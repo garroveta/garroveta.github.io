@@ -5,15 +5,27 @@ import {
   getDemoRoleOption,
   type DemoRole,
 } from '../app/demoRoles'
+import { DemoDataSummary } from '../components/DemoDataSummary'
+import type {
+  Community,
+  CommunityMember,
+  DemoDataSummary as DemoDataSummaryValue,
+} from '../domain/types'
 
 type ProfilePageProps = {
   activeRole: DemoRole
+  community: Community
+  currentMember: CommunityMember
+  dataSummary: DemoDataSummaryValue
   onRoleChange: (role: DemoRole) => void
   onReset: () => void
 }
 
 export function ProfilePage({
   activeRole,
+  community,
+  currentMember,
+  dataSummary,
   onRoleChange,
   onReset,
 }: ProfilePageProps) {
@@ -31,18 +43,20 @@ export function ProfilePage({
 
       <section className="profile-summary" aria-labelledby="profile-name">
         <span className="profile-avatar" aria-hidden="true">
-          DM
+          {currentMember.initials}
         </span>
         <div className="profile-summary__identity">
           <span>Perfil activo</span>
-          <h2 id="profile-name">Demo Member</h2>
-          <p>Miembro validado · Tienda piloto</p>
+          <h2 id="profile-name">{currentMember.displayName}</h2>
+          <p>Miembro validado · {community.name}</p>
         </div>
         <span className="current-role">
           <currentRole.icon aria-hidden="true" size={17} />
           {currentRole.label}
         </span>
       </section>
+
+      <DemoDataSummary community={community} summary={dataSummary} />
 
       <section className="role-section" aria-labelledby="role-title">
         <div className="section-heading">

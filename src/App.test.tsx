@@ -39,6 +39,13 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+
+    expect(
+      screen.getByRole('heading', { name: 'CRC Delorean' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Inca')).toBeInTheDocument()
+    expect(screen.getByText('150')).toBeInTheDocument()
+
     fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
 
     expect(screen.getByLabelText('Vista actual: Gerente')).toBeInTheDocument()
