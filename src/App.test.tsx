@@ -254,6 +254,46 @@ describe('App', () => {
     })
   })
 
+  it('browses marketplace offers and the member wanted list', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+
+    expect(
+      screen.getByRole('heading', { name: 'Cartas disponibles' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Sol Ring' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Diego Sánchez')).toBeInTheDocument()
+
+    fireEvent.change(
+      screen.getByRole('searchbox', {
+        name: 'Buscar una carta o miembro',
+      }),
+      { target: { value: 'Sheoldred' } },
+    )
+
+    expect(
+      screen.getByRole('heading', { name: 'Sheoldred, the Apocalypse' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Sol Ring' }),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Mis búsquedas/ }))
+
+    expect(
+      screen.getByRole('heading', { name: 'Cartas buscadas' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Sol Ring' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'The One Ring' }),
+    ).toBeInTheDocument()
+  })
+
   it('switches and resets the demonstration role', () => {
     render(<App />)
 
