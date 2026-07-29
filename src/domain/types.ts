@@ -86,6 +86,7 @@ export type NewsPost = {
   type: NewsPostType
   title: string
   excerpt: string
+  content: string
   publishedAt: ISODateTime
   tagIds: EntityId[]
   pinned: boolean

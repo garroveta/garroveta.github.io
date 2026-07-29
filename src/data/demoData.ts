@@ -302,6 +302,8 @@ export const demoData = {
       title: 'Nuevo horario de verano',
       excerpt:
         'Abrimos más tarde: de miércoles a viernes, a partir de las 17:00.',
+      content:
+        'Durante el verano abrimos los miércoles y jueves de 17:00 a 24:00, y los viernes de 17:00 a 01:00. Los sábados abrimos de 09:00 a 01:00 y los domingos de 09:00 a 23:00. Lunes y martes permanecemos cerrados.',
       publishedAt: '2026-07-28T10:00:00+02:00',
       tagIds: [],
       pinned: true,
@@ -313,6 +315,8 @@ export const demoData = {
       type: 'news',
       title: 'Nuevas mesas para Commander',
       excerpt: 'Este sábado organizaremos las mesas según nivel de potencia.',
+      content:
+        'Para que todas las partidas sean equilibradas, este sábado agruparemos las mesas de Commander según el nivel de potencia de los mazos. Indica tu nivel al llegar y te ayudaremos a encontrar grupo.',
       publishedAt: '2026-07-27T18:30:00+02:00',
       tagIds: ['tag-commander'],
       pinned: false,
@@ -324,6 +328,8 @@ export const demoData = {
       type: 'arrival',
       title: 'Reposición de sobres y accesorios',
       excerpt: 'Ya están disponibles nuevos sobres, fundas y cajas de mazo.',
+      content:
+        'Hemos repuesto sobres, fundas y cajas de mazo en varios colores. Puedes consultar la selección y reservar tus accesorios directamente en el bar.',
       publishedAt: '2026-07-26T12:15:00+02:00',
       tagIds: ['tag-promociones'],
       pinned: false,
@@ -336,6 +342,8 @@ export const demoData = {
       title: '¿Qué formato quieres jugar en agosto?',
       excerpt:
         'Vota entre Pauper, Modern y Draft para el próximo evento abierto.',
+      content:
+        'Queremos preparar el próximo evento abierto con el formato que más apetezca a la comunidad. Elige entre Pauper, Modern y Draft; anunciaremos el resultado y la fecha próximamente.',
       publishedAt: '2026-07-24T16:45:00+02:00',
       tagIds: ['tag-modern', 'tag-pauper', 'tag-draft'],
       pinned: false,
@@ -348,6 +356,8 @@ export const demoData = {
       title: 'Tarde de intercambios',
       excerpt:
         'Reserva una mesa para enseñar tu carpeta y encontrar intercambios.',
+      content:
+        'Trae tu carpeta de cartas y comparte tus búsquedas con otros miembros. La actividad es gratuita y los acuerdos se organizan directamente entre jugadores.',
       publishedAt: '2026-07-22T19:00:00+02:00',
       tagIds: ['tag-intercambios'],
       pinned: false,
@@ -360,6 +370,8 @@ export const demoData = {
       title: 'Normas de convivencia',
       excerpt:
         'Consulta las reglas de la comunidad antes de publicar una oferta.',
+      content:
+        'Trata a los demás miembros con respeto, describe las cartas con claridad y mantén tus anuncios actualizados. Los pagos y los intercambios se acuerdan directamente entre jugadores.',
       publishedAt: '2026-07-20T09:30:00+02:00',
       tagIds: [],
       pinned: true,

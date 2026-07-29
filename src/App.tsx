@@ -7,6 +7,7 @@ import { useDemoRole } from './hooks/useDemoRole'
 import { useHashRoute } from './hooks/useHashRoute'
 import { EventsPage } from './pages/EventsPage'
 import { HomePage } from './pages/HomePage'
+import { NewsPage } from './pages/NewsPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { ProfilePage } from './pages/ProfilePage'
 
@@ -49,6 +50,8 @@ export function App() {
             currentMember={currentMember}
             onDataChange={updateData}
           />
+        ) : activeRoute === 'noticias' ? (
+          <NewsPage data={data} currentMember={currentMember} />
         ) : activeRoute === 'perfil' ? (
           <ProfilePage
             activeRole={activeRole}

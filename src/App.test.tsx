@@ -146,6 +146,33 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
+  it('browses the news feed and opens a publication', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Noticias/ }).at(-1)!)
+
+    expect(
+      screen.getByRole('heading', { name: 'Todas las publicaciones' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Nuevo horario de verano' }),
+    ).toBeInTheDocument()
+
+    const summerNews = screen
+      .getByRole('heading', { name: 'Nuevo horario de verano' })
+      .closest('article')
+    fireEvent.click(
+      within(summerNews as HTMLElement).getByRole('button', { name: 'Leer' }),
+    )
+
+    expect(
+      screen.getByText(/Durante el verano abrimos los miércoles y jueves/),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Volver a las noticias' }),
+    ).toBeInTheDocument()
+  })
+
   it('switches and resets the demonstration role', () => {
     render(<App />)
 
