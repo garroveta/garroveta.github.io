@@ -95,4 +95,43 @@ describe('demoData', () => {
       cardMatches: 5,
     })
   })
+
+  it('contains the pilot summer schedule and requested events', () => {
+    expect(demoData.community.openingHours).toEqual([
+      { day: 'monday' },
+      { day: 'tuesday' },
+      { day: 'wednesday', opensAt: '17:00', closesAt: '24:00' },
+      { day: 'thursday', opensAt: '17:00', closesAt: '24:00' },
+      {
+        day: 'friday',
+        opensAt: '17:00',
+        closesAt: '01:00',
+        closesNextDay: true,
+      },
+      {
+        day: 'saturday',
+        opensAt: '09:00',
+        closesAt: '01:00',
+        closesNextDay: true,
+      },
+      { day: 'sunday', opensAt: '09:00', closesAt: '23:00' },
+    ])
+
+    expect(
+      demoData.events.find(({ id }) => id === 'event-fnm-pauper'),
+    ).toMatchObject({
+      title: 'FNM Pauper',
+      startsAt: '2026-07-31T18:00:00+02:00',
+      tagIds: ['tag-pauper'],
+      description: expect.stringContaining('tres rondas fijas'),
+    })
+
+    expect(
+      demoData.events.find(({ id }) => id === 'event-presentation-hobbit'),
+    ).toMatchObject({
+      title: 'Presentación: The Hobbit',
+      startsAt: '2026-08-08T17:00:00+02:00',
+      capacity: 30,
+    })
+  })
 })

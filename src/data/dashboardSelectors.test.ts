@@ -7,7 +7,7 @@ describe('player dashboard selectors', () => {
   it('selects the next event and the member registration', () => {
     const dashboard = getPlayerDashboard(demoData, demoData.currentMemberId)
 
-    expect(dashboard.nextEvent?.event.id).toBe('event-draft-friday')
+    expect(dashboard.nextEvent?.event.id).toBe('event-fnm-pauper')
     expect(dashboard.nextEvent?.registration?.status).toBe('waitlisted')
   })
 

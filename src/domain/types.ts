@@ -1,6 +1,22 @@
 export type EntityId = string
 export type ISODateTime = string
 
+export type Weekday =
+  | 'monday'
+  | 'tuesday'
+  | 'wednesday'
+  | 'thursday'
+  | 'friday'
+  | 'saturday'
+  | 'sunday'
+
+export type OpeningHours = {
+  day: Weekday
+  opensAt?: string
+  closesAt?: string
+  closesNextDay?: boolean
+}
+
 export type Community = {
   id: EntityId
   name: string
@@ -8,6 +24,7 @@ export type Community = {
   memberCount: number
   accessPolicy: 'approval_required'
   suggestedTagIds: EntityId[]
+  openingHours: OpeningHours[]
 }
 
 export type CommunityTag = {

@@ -18,7 +18,7 @@ describe('App', () => {
       screen.getByRole('heading', { name: 'Hola, Álex' }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { name: 'Friday Night Draft' }),
+      screen.getByRole('heading', { name: 'FNM Pauper' }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: 'Nuevo horario de verano' }),

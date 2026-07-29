@@ -11,6 +11,25 @@ export const demoData = {
     memberCount: 150,
     accessPolicy: 'approval_required',
     suggestedTagIds: ['tag-commander', 'tag-modern', 'tag-pauper', 'tag-draft'],
+    openingHours: [
+      { day: 'monday' },
+      { day: 'tuesday' },
+      { day: 'wednesday', opensAt: '17:00', closesAt: '24:00' },
+      { day: 'thursday', opensAt: '17:00', closesAt: '24:00' },
+      {
+        day: 'friday',
+        opensAt: '17:00',
+        closesAt: '01:00',
+        closesNextDay: true,
+      },
+      {
+        day: 'saturday',
+        opensAt: '09:00',
+        closesAt: '01:00',
+        closesNextDay: true,
+      },
+      { day: 'sunday', opensAt: '09:00', closesAt: '23:00' },
+    ],
   },
   tags: [
     {
@@ -147,15 +166,16 @@ export const demoData = {
   ],
   events: [
     {
-      id: 'event-draft-friday',
+      id: 'event-fnm-pauper',
       communityId,
-      title: 'Friday Night Draft',
-      description: 'Draft de tres rondas con premios para todos los niveles.',
-      startsAt: '2026-07-31T19:00:00+02:00',
-      endsAt: '2026-07-31T23:00:00+02:00',
+      title: 'FNM Pauper',
+      description:
+        'Friday Night Magic en formato Pauper, con tres rondas fijas.',
+      startsAt: '2026-07-31T18:00:00+02:00',
+      endsAt: '2026-07-31T21:00:00+02:00',
       capacity: 24,
       status: 'full',
-      tagIds: ['tag-draft'],
+      tagIds: ['tag-pauper'],
       createdByMemberId: 'member-lucia',
       registrationSummary: {
         confirmed: 24,
@@ -196,16 +216,15 @@ export const demoData = {
       },
     },
     {
-      id: 'event-learn-to-play',
+      id: 'event-presentation-hobbit',
       communityId,
-      title: 'Aprende a jugar a Magic',
-      description:
-        'Sesión gratuita para nuevos jugadores, con material incluido.',
-      startsAt: '2026-08-08T11:00:00+02:00',
-      endsAt: '2026-08-08T13:30:00+02:00',
-      capacity: 16,
+      title: 'Presentación: The Hobbit',
+      description: 'Evento de presentación de The Hobbit con plazas limitadas.',
+      startsAt: '2026-08-08T17:00:00+02:00',
+      endsAt: '2026-08-08T21:00:00+02:00',
+      capacity: 30,
       status: 'scheduled',
-      tagIds: ['tag-principiantes'],
+      tagIds: ['tag-draft'],
       createdByMemberId: 'member-lucia',
       registrationSummary: {
         confirmed: 8,
@@ -239,8 +258,8 @@ export const demoData = {
       registeredAt: '2026-07-24T21:15:00+02:00',
     },
     {
-      id: 'registration-alex-draft',
-      eventId: 'event-draft-friday',
+      id: 'registration-alex-pauper',
+      eventId: 'event-fnm-pauper',
       memberId: 'member-alex',
       status: 'waitlisted',
       registeredAt: '2026-07-28T18:45:00+02:00',
@@ -267,8 +286,8 @@ export const demoData = {
       registeredAt: '2026-07-27T09:50:00+02:00',
     },
     {
-      id: 'registration-nora-learn',
-      eventId: 'event-learn-to-play',
+      id: 'registration-nora-hobbit',
+      eventId: 'event-presentation-hobbit',
       memberId: 'member-nora',
       status: 'confirmed',
       registeredAt: '2026-07-28T11:20:00+02:00',
@@ -281,7 +300,8 @@ export const demoData = {
       authorMemberId: 'member-lucia',
       type: 'urgent',
       title: 'Nuevo horario de verano',
-      excerpt: 'Los viernes y sábados ampliamos el horario hasta medianoche.',
+      excerpt:
+        'Abrimos más tarde: de miércoles a viernes, a partir de las 17:00.',
       publishedAt: '2026-07-28T10:00:00+02:00',
       tagIds: [],
       pinned: true,
