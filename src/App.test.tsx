@@ -205,6 +205,55 @@ describe('App', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('lets a manager publish a targeted communication', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
+    fireEvent.click(screen.getAllByRole('link', { name: /Noticias/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: 'Nueva publicación' }))
+
+    fireEvent.change(screen.getByLabelText('Tipo'), {
+      target: { value: 'urgent' },
+    })
+    fireEvent.change(screen.getByLabelText('Título'), {
+      target: { value: 'Cambio de sala' },
+    })
+    fireEvent.change(screen.getByLabelText('Resumen'), {
+      target: { value: 'El torneo se jugará en la sala principal.' },
+    })
+    fireEvent.change(screen.getByLabelText('Contenido'), {
+      target: {
+        value:
+          'Por motivos de organización, todas las rondas se jugarán en la sala principal.',
+      },
+    })
+    fireEvent.click(screen.getByLabelText('Commander'))
+    fireEvent.click(screen.getByLabelText(/Fijar publicación/))
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar' }))
+
+    expect(
+      screen.getByText('La publicación ya está visible.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Cambio de sala' }),
+    ).toBeInTheDocument()
+    const publishedNews = screen
+      .getByRole('heading', { name: 'Cambio de sala' })
+      .closest('article')
+    expect(
+      within(publishedNews as HTMLElement).getByText(/Lucía Martín/),
+    ).toBeInTheDocument()
+    expect(
+      createLocalDemoRepository(window.localStorage).load().newsPosts.at(-1),
+    ).toMatchObject({
+      title: 'Cambio de sala',
+      type: 'urgent',
+      tagIds: ['tag-commander'],
+      pinned: true,
+    })
+  })
+
   it('switches and resets the demonstration role', () => {
     render(<App />)
 

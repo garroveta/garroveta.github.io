@@ -1,5 +1,6 @@
 import { AppHeader } from './components/AppHeader'
 import { AppNavigation } from './components/AppNavigation'
+import type { DemoRole } from './app/demoRoles'
 import { getDemoDataSummary } from './data/demoData'
 import type { DemoDataSet } from './domain/types'
 import { useDemoData } from './hooks/useDemoData'
@@ -21,11 +22,26 @@ function getCurrentMember(data: DemoDataSet) {
   return member
 }
 
+function getPublishingMember(data: DemoDataSet, activeRole: DemoRole) {
+  const communityRole =
+    activeRole === 'gerente'
+      ? 'manager'
+      : activeRole === 'moderador'
+        ? 'moderator'
+        : 'player'
+
+  return (
+    data.members.find(({ role }) => role === communityRole) ??
+    getCurrentMember(data)
+  )
+}
+
 export function App() {
   const { activeRoute, navigate } = useHashRoute()
   const { activeRole, setActiveRole, resetRole } = useDemoRole()
   const { data, updateData, resetData } = useDemoData()
   const currentMember = getCurrentMember(data)
+  const publishingMember = getPublishingMember(data, activeRole)
   const dataSummary = getDemoDataSummary(data)
 
   const resetDemo = () => {
@@ -51,7 +67,13 @@ export function App() {
             onDataChange={updateData}
           />
         ) : activeRoute === 'noticias' ? (
-          <NewsPage data={data} currentMember={currentMember} />
+          <NewsPage
+            activeRole={activeRole}
+            data={data}
+            currentMember={currentMember}
+            publishingMember={publishingMember}
+            onDataChange={updateData}
+          />
         ) : activeRoute === 'perfil' ? (
           <ProfilePage
             activeRole={activeRole}
