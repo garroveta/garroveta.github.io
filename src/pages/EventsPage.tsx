@@ -11,6 +11,7 @@ import { useState } from 'react'
 
 import {
   cancelEventRegistration,
+  leaveEventWaitlist,
   registerForEvent,
 } from '../data/eventMutations'
 import {
@@ -141,6 +142,7 @@ function EventDetail({
     item.event.status !== 'completed' &&
     item.event.registrationSummary.confirmed < item.event.capacity
   const isConfirmed = item.registration?.status === 'confirmed'
+  const isWaitlisted = item.registration?.status === 'waitlisted'
 
   const handleRegistration = () => {
     if (isConfirmed) {
@@ -151,10 +153,22 @@ function EventDetail({
       return
     }
 
+    if (isWaitlisted) {
+      onDataChange((currentData) =>
+        leaveEventWaitlist(currentData, item.event.id, memberId),
+      )
+      setActionMessage('Has salido de la lista de espera.')
+      return
+    }
+
     onDataChange((currentData) =>
       registerForEvent(currentData, item.event.id, memberId),
     )
-    setActionMessage('Tu plaza está confirmada.')
+    setActionMessage(
+      canRegister
+        ? 'Tu plaza está confirmada.'
+        : 'Te has unido a la lista de espera.',
+    )
   }
 
   return (
@@ -218,19 +232,19 @@ function EventDetail({
           </p>
         ) : null}
 
-        {item.event.status !== 'completed' &&
-        item.registration?.status !== 'waitlisted' ? (
+        {item.event.status !== 'completed' ? (
           <button
             className="primary-button event-action"
             type="button"
-            disabled={!isConfirmed && !canRegister}
             onClick={handleRegistration}
           >
             {isConfirmed
               ? 'Cancelar inscripción'
-              : canRegister
-                ? 'Inscribirme'
-                : 'Evento completo'}
+              : isWaitlisted
+                ? 'Salir de la lista de espera'
+                : canRegister
+                  ? 'Inscribirme'
+                  : 'Unirme a la lista de espera'}
           </button>
         ) : null}
 

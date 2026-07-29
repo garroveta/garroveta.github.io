@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { cancelEventRegistration, registerForEvent } from './eventMutations'
+import {
+  cancelEventRegistration,
+  leaveEventWaitlist,
+  registerForEvent,
+} from './eventMutations'
 import { demoData } from './demoData'
 
 describe('event registration mutations', () => {
@@ -46,9 +50,68 @@ describe('event registration mutations', () => {
     ).toBe('cancelled')
   })
 
-  it('does not register a player when an event is full', () => {
-    expect(registerForEvent(demoData, 'event-fnm-pauper', 'member-nora')).toBe(
+  it('adds a player to the waitlist when an event is full', () => {
+    const updatedData = registerForEvent(
       demoData,
+      'event-fnm-pauper',
+      'member-nora',
     )
+    const event = updatedData.events.find(({ id }) => id === 'event-fnm-pauper')
+
+    expect(event?.registrationSummary).toMatchObject({
+      confirmed: 24,
+      waitlisted: 4,
+    })
+    expect(
+      updatedData.registrations.find(
+        ({ eventId, memberId }) =>
+          eventId === 'event-fnm-pauper' && memberId === 'member-nora',
+      )?.status,
+    ).toBe('waitlisted')
+  })
+
+  it('lets a player leave the waitlist', () => {
+    const updatedData = leaveEventWaitlist(
+      demoData,
+      'event-fnm-pauper',
+      demoData.currentMemberId,
+    )
+
+    expect(
+      updatedData.events.find(({ id }) => id === 'event-fnm-pauper')
+        ?.registrationSummary.waitlisted,
+    ).toBe(2)
+    expect(
+      updatedData.registrations.find(
+        ({ id }) => id === 'registration-alex-pauper',
+      )?.status,
+    ).toBe('cancelled')
+  })
+
+  it('promotes the first waiting player when a place is released', () => {
+    const dataWithConfirmedPlayer = structuredClone(demoData)
+    dataWithConfirmedPlayer.registrations.push({
+      id: 'registration-marta-pauper',
+      eventId: 'event-fnm-pauper',
+      memberId: 'member-marta',
+      status: 'confirmed',
+      registeredAt: '2026-07-20T10:00:00+02:00',
+    })
+
+    const updatedData = cancelEventRegistration(
+      dataWithConfirmedPlayer,
+      'event-fnm-pauper',
+      'member-marta',
+    )
+
+    expect(
+      updatedData.events.find(({ id }) => id === 'event-fnm-pauper')
+        ?.registrationSummary,
+    ).toMatchObject({ confirmed: 24, waitlisted: 2 })
+    expect(
+      updatedData.registrations.find(
+        ({ id }) => id === 'registration-alex-pauper',
+      )?.status,
+    ).toBe('confirmed')
   })
 })

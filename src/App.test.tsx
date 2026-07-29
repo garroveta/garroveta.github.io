@@ -108,6 +108,44 @@ describe('App', () => {
     expect(screen.getByText('8/30 confirmadas')).toBeInTheDocument()
   })
 
+  it('leaves and rejoins the waitlist of a full event', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
+    const pauperCard = screen
+      .getByRole('heading', { name: 'FNM Pauper' })
+      .closest('article')
+
+    fireEvent.click(
+      within(pauperCard as HTMLElement).getByRole('button', {
+        name: 'Ver detalles',
+      }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Salir de la lista de espera' }),
+    )
+
+    expect(
+      screen.getByText('Has salido de la lista de espera.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('2 personas en lista de espera'),
+    ).toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Unirme a la lista de espera',
+      }),
+    )
+
+    expect(
+      screen.getByText('Te has unido a la lista de espera.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('3 personas en lista de espera'),
+    ).toBeInTheDocument()
+  })
+
   it('switches and resets the demonstration role', () => {
     render(<App />)
 

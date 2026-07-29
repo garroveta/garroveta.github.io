@@ -1,4 +1,4 @@
-import type { DemoDataSet } from '../domain/types'
+import type { DemoDataSet, EventRegistration } from '../domain/types'
 import { DEMO_REFERENCE_TIME } from './dashboardSelectors'
 
 function registrationId(memberId: string, eventId: string) {
@@ -13,11 +13,7 @@ export function registerForEvent(
 ): DemoDataSet {
   const event = data.events.find(({ id }) => id === eventId)
 
-  if (
-    !event ||
-    event.status === 'completed' ||
-    event.registrationSummary.confirmed >= event.capacity
-  ) {
+  if (!event || event.status === 'completed') {
     return data
   }
 
@@ -30,13 +26,20 @@ export function registerForEvent(
     return data
   }
 
-  const confirmed = event.registrationSummary.confirmed + 1
+  const hasAvailablePlace = event.registrationSummary.confirmed < event.capacity
+  const registrationStatus: EventRegistration['status'] = hasAvailablePlace
+    ? 'confirmed'
+    : 'waitlisted'
+  const confirmed =
+    event.registrationSummary.confirmed + (hasAvailablePlace ? 1 : 0)
+  const waitlisted =
+    event.registrationSummary.waitlisted + (hasAvailablePlace ? 0 : 1)
   const registrations = existingRegistration
     ? data.registrations.map((registration) =>
         registration.id === existingRegistration.id
           ? {
               ...registration,
-              status: 'confirmed' as const,
+              status: registrationStatus,
               registeredAt,
             }
           : registration,
@@ -47,7 +50,7 @@ export function registerForEvent(
           id: registrationId(memberId, eventId),
           eventId,
           memberId,
-          status: 'confirmed' as const,
+          status: registrationStatus,
           registeredAt,
         },
       ]
@@ -65,6 +68,7 @@ export function registerForEvent(
             registrationSummary: {
               ...candidate.registrationSummary,
               confirmed,
+              waitlisted,
             },
           }
         : candidate,
@@ -90,18 +94,81 @@ export function cancelEventRegistration(
     return data
   }
 
+  const nextWaitlistedRegistration = data.registrations
+    .filter(
+      (candidate) =>
+        candidate.eventId === eventId &&
+        candidate.status === 'waitlisted' &&
+        candidate.id !== registration.id,
+    )
+    .sort(
+      (first, second) =>
+        new Date(first.registeredAt).getTime() -
+        new Date(second.registeredAt).getTime(),
+    )[0]
+  const confirmed = nextWaitlistedRegistration
+    ? event.registrationSummary.confirmed
+    : Math.max(0, event.registrationSummary.confirmed - 1)
+  const waitlisted = nextWaitlistedRegistration
+    ? Math.max(0, event.registrationSummary.waitlisted - 1)
+    : event.registrationSummary.waitlisted
+
   return {
     ...data,
     events: data.events.map((candidate) =>
       candidate.id === eventId
         ? {
             ...candidate,
-            status: 'scheduled' as const,
+            status:
+              confirmed === candidate.capacity
+                ? ('full' as const)
+                : ('scheduled' as const),
             registrationSummary: {
               ...candidate.registrationSummary,
-              confirmed: Math.max(
+              confirmed,
+              waitlisted,
+            },
+          }
+        : candidate,
+    ),
+    registrations: data.registrations.map((candidate) =>
+      candidate.id === registration.id
+        ? { ...candidate, status: 'cancelled' as const }
+        : candidate.id === nextWaitlistedRegistration?.id
+          ? { ...candidate, status: 'confirmed' as const }
+          : candidate,
+    ),
+  }
+}
+
+export function leaveEventWaitlist(
+  data: DemoDataSet,
+  eventId: string,
+  memberId: string,
+): DemoDataSet {
+  const registration = data.registrations.find(
+    (candidate) =>
+      candidate.eventId === eventId &&
+      candidate.memberId === memberId &&
+      candidate.status === 'waitlisted',
+  )
+  const event = data.events.find(({ id }) => id === eventId)
+
+  if (!registration || !event || event.status === 'completed') {
+    return data
+  }
+
+  return {
+    ...data,
+    events: data.events.map((candidate) =>
+      candidate.id === eventId
+        ? {
+            ...candidate,
+            registrationSummary: {
+              ...candidate.registrationSummary,
+              waitlisted: Math.max(
                 0,
-                candidate.registrationSummary.confirmed - 1,
+                candidate.registrationSummary.waitlisted - 1,
               ),
             },
           }
