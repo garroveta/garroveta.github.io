@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { getMarketplaceListings, getMemberWantedCards } from './cardSelectors'
+import {
+  getMarketplaceListings,
+  getMemberCardMatches,
+  getMemberWantedCards,
+} from './cardSelectors'
 import { demoData } from './demoData'
 
 describe('card selectors', () => {
@@ -21,5 +25,19 @@ describe('card selectors', () => {
         ({ card }) => card.name,
       ),
     ).toEqual(['Sol Ring', 'The One Ring'])
+  })
+
+  it('returns the member matches with their offers and sellers', () => {
+    const matches = getMemberCardMatches(demoData, demoData.currentMemberId)
+
+    expect(matches.map(({ card }) => card.name)).toEqual([
+      'Sol Ring',
+      'The One Ring',
+    ])
+    expect(matches[0]).toMatchObject({
+      seller: { displayName: 'Diego Sánchez' },
+      listing: { language: 'es' },
+      match: { status: 'new', score: 100 },
+    })
   })
 })

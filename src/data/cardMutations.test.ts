@@ -50,6 +50,14 @@ describe('card mutations', () => {
         ({ id }) => id === 'wanted-alex-rhystic-study',
       ),
     ).toMatchObject({ quantity: 2, status: 'active' })
+    expect(
+      result.data.cardMatches.find(
+        ({ wantedCardId }) => wantedCardId === 'wanted-alex-rhystic-study',
+      ),
+    ).toMatchObject({
+      listingId: 'listing-rhystic-study',
+      status: 'new',
+    })
   })
 
   it('adds imported quantities to an existing active search', () => {

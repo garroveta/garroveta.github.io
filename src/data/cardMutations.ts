@@ -4,6 +4,7 @@ import type {
   DemoDataSet,
   MarketplaceListing,
 } from '../domain/types'
+import { synchronizeCardMatches } from './cardMatching'
 import { DEMO_REFERENCE_TIME } from './dashboardSelectors'
 
 export type MarketplaceListingInput = {
@@ -96,7 +97,7 @@ export function publishMarketplaceListing(
     `listing-${member.id.replace('member-', '')}-${card.id.replace('card-', '')}`,
   )
 
-  return {
+  return synchronizeCardMatches({
     ...data,
     listings: [
       ...data.listings,
@@ -115,7 +116,7 @@ export function publishMarketplaceListing(
         createdAt,
       },
     ],
-  }
+  })
 }
 
 export function importWantedCards(
@@ -202,10 +203,10 @@ export function importWantedCards(
   }
 
   return {
-    data: {
+    data: synchronizeCardMatches({
       ...data,
       wantedCards,
-    },
+    }),
     imported,
     unknownLines,
   }

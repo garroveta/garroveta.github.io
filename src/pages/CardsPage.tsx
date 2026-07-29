@@ -4,6 +4,7 @@ import {
   Plus,
   Search,
   ShoppingBag,
+  Sparkles,
   Upload,
   UserRound,
   X,
@@ -19,7 +20,9 @@ import {
 } from '../data/cardMutations'
 import {
   getMarketplaceListings,
+  getMemberCardMatches,
   getMemberWantedCards,
+  type MemberCardMatchItem,
   type MarketplaceListingItem,
   type WantedCardItem,
 } from '../data/cardSelectors'
@@ -66,6 +69,12 @@ const cardConditions = Object.keys(conditionLabels) as CardCondition[]
 const offerTypes = Object.keys(
   offerTypeLabels,
 ) as MarketplaceListing['offerType'][]
+
+const matchStatusLabels = {
+  new: 'Nueva',
+  seen: 'Vista',
+  contacted: 'Contactado',
+}
 
 function MarketplaceCard({ item }: { item: MarketplaceListingItem }) {
   return (
@@ -143,6 +152,69 @@ function WantedCardRow({ item }: { item: WantedCardItem }) {
       >
         {item.wantedCard.status === 'active' ? 'Activa' : 'En pausa'}
       </span>
+    </article>
+  )
+}
+
+function MatchCard({ item }: { item: MemberCardMatchItem }) {
+  return (
+    <article className="card-match">
+      <div className="card-match__topline">
+        <span className={`match-status match-status--${item.match.status}`}>
+          <Sparkles aria-hidden="true" size={13} />
+          {matchStatusLabels[item.match.status]}
+        </span>
+        <strong>{item.match.score}% compatible</strong>
+      </div>
+
+      <div className="card-identity">
+        <span aria-hidden="true">{item.card.setCode}</span>
+        <div>
+          <h3>{item.card.name}</h3>
+          <p>
+            {item.card.setName} · #{item.card.collectorNumber}
+          </p>
+        </div>
+      </div>
+
+      <p className="card-match__reason">{item.match.reason}</p>
+
+      <dl className="market-card__facts">
+        <div>
+          <dt>Operación</dt>
+          <dd>{offerTypeLabels[item.listing.offerType]}</dd>
+        </div>
+        <div>
+          <dt>Idioma</dt>
+          <dd>{languageLabels[item.listing.language]}</dd>
+        </div>
+        <div>
+          <dt>Estado</dt>
+          <dd>{conditionLabels[item.listing.condition]}</dd>
+        </div>
+        <div>
+          <dt>Precio</dt>
+          <dd>
+            {item.listing.priceEur
+              ? `${item.listing.priceEur.toFixed(2)} €`
+              : 'A convenir'}
+          </dd>
+        </div>
+      </dl>
+
+      <footer>
+        <span className="member-initials" aria-hidden="true">
+          {item.seller.initials}
+        </span>
+        <span>
+          <small>Disponible por</small>
+          <strong>{item.seller.displayName}</strong>
+        </span>
+      </footer>
+
+      <p className="external-contact-note">
+        El contacto y el pago se acuerdan libremente fuera de la aplicación.
+      </p>
     </article>
   )
 }
@@ -384,7 +456,9 @@ export function CardsPage({
   currentMember,
   onDataChange,
 }: CardsPageProps) {
-  const [activeView, setActiveView] = useState<'market' | 'wanted'>('market')
+  const [activeView, setActiveView] = useState<'matches' | 'market' | 'wanted'>(
+    'matches',
+  )
   const [activeComposer, setActiveComposer] = useState<
     'listing' | 'import' | undefined
   >()
@@ -392,6 +466,7 @@ export function CardsPage({
   const [query, setQuery] = useState('')
   const listings = getMarketplaceListings(data)
   const wantedCards = getMemberWantedCards(data, currentMember.id)
+  const matches = getMemberCardMatches(data, currentMember.id)
   const normalizedQuery = query.trim().toLocaleLowerCase('es')
   const filteredListings = useMemo(
     () =>
@@ -420,6 +495,15 @@ export function CardsPage({
       </header>
 
       <div className="card-view-tabs" aria-label="Secciones de cartas">
+        <button
+          type="button"
+          aria-pressed={activeView === 'matches'}
+          onClick={() => setActiveView('matches')}
+        >
+          <Sparkles aria-hidden="true" size={17} />
+          Coincidencias
+          <span>{matches.length}</span>
+        </button>
         <button
           type="button"
           aria-pressed={activeView === 'market'}
@@ -503,7 +587,29 @@ export function CardsPage({
         {actionMessage}
       </p>
 
-      {activeView === 'market' ? (
+      {activeView === 'matches' ? (
+        <section className="cards-section" aria-labelledby="matches-title">
+          <div className="section-heading">
+            <div>
+              <span>Cruce automático</span>
+              <h2 id="matches-title">Tus coincidencias</h2>
+            </div>
+            <p>{matches.length} encontradas</p>
+          </div>
+
+          <div className="match-grid">
+            {matches.length > 0 ? (
+              matches.map((item) => (
+                <MatchCard item={item} key={item.match.id} />
+              ))
+            ) : (
+              <p className="filtered-empty-state">
+                Aún no hay ofertas compatibles con tus búsquedas.
+              </p>
+            )}
+          </div>
+        </section>
+      ) : activeView === 'market' ? (
         <section className="cards-section" aria-labelledby="market-title">
           <div className="section-heading">
             <div>

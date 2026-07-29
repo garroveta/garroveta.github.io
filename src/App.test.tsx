@@ -258,6 +258,7 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: /Ofertas/ }))
 
     expect(
       screen.getByRole('heading', { name: 'Cartas disponibles' }),
@@ -355,6 +356,38 @@ describe('App', () => {
           ({ memberId }) => memberId === demoData.currentMemberId,
         ),
     ).toHaveLength(4)
+  })
+
+  it('creates and displays automatic matches after an import', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+
+    expect(
+      screen.getByRole('heading', { name: 'Tus coincidencias' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('2 encontradas')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Sol Ring' }),
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Importar lista' }))
+    fireEvent.change(screen.getByLabelText('Una carta por línea'), {
+      target: { value: 'Rhystic Study' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Importar búsquedas' }))
+    fireEvent.click(screen.getByRole('button', { name: /Coincidencias/ }))
+
+    expect(screen.getByText('3 encontradas')).toBeInTheDocument()
+    const newMatch = screen
+      .getByRole('heading', { name: 'Rhystic Study' })
+      .closest('article')
+    expect(
+      within(newMatch as HTMLElement).getByText('Marta Soler'),
+    ).toBeInTheDocument()
+    expect(
+      within(newMatch as HTMLElement).getByText('Nueva'),
+    ).toBeInTheDocument()
   })
 
   it('switches and resets the demonstration role', () => {
