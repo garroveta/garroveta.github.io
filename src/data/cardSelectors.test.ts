@@ -3,9 +3,11 @@ import { describe, expect, it } from 'vitest'
 import {
   getMarketplaceListings,
   getMemberCardMatches,
+  getMemberMarketplaceListings,
   getMemberWantedCards,
 } from './cardSelectors'
 import { demoData } from './demoData'
+import type { DemoDataSet } from '../domain/types'
 
 describe('card selectors', () => {
   it('returns available marketplace listings with cards and members', () => {
@@ -25,6 +27,17 @@ describe('card selectors', () => {
         ({ card }) => card.name,
       ),
     ).toEqual(['Sol Ring', 'The One Ring'])
+  })
+
+  it('returns every listing owned by a member regardless of status', () => {
+    const modifiedData: DemoDataSet = structuredClone(demoData)
+    modifiedData.listings[0].status = 'reserved'
+
+    expect(
+      getMemberMarketplaceListings(modifiedData, 'member-diego').map(
+        ({ listing }) => listing.status,
+      ),
+    ).toEqual(['reserved'])
   })
 
   it('returns the member matches with their offers and sellers', () => {

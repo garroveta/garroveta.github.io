@@ -282,7 +282,7 @@ describe('App', () => {
       screen.queryByRole('heading', { name: 'Sol Ring' }),
     ).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: /Mis búsquedas/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Mis listas/ }))
 
     expect(
       screen.getByRole('heading', { name: 'Cartas buscadas' }),
@@ -388,6 +388,58 @@ describe('App', () => {
     expect(
       within(newMatch as HTMLElement).getByText('Nueva'),
     ).toBeInTheDocument()
+  })
+
+  it('pauses searches and manages the lifecycle of an owned offer', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: /Mis listas/ }))
+
+    const wantedSolRing = screen
+      .getByRole('heading', { name: 'Sol Ring' })
+      .closest('article')
+    fireEvent.click(
+      within(wantedSolRing as HTMLElement).getByRole('button', {
+        name: 'Pausar búsqueda',
+      }),
+    )
+    expect(
+      within(wantedSolRing as HTMLElement).getByText('En pausa'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('La búsqueda está en pausa.')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar carta' }))
+    fireEvent.change(screen.getByLabelText('Carta'), {
+      target: { value: 'card-esper-sentinel' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar oferta' }))
+    fireEvent.click(screen.getByRole('button', { name: /Mis listas/ }))
+
+    const ownedListing = screen
+      .getByRole('heading', { name: 'Esper Sentinel' })
+      .closest('article')
+    fireEvent.click(
+      within(ownedListing as HTMLElement).getByRole('button', {
+        name: 'Marcar reservada',
+      }),
+    )
+    expect(
+      within(ownedListing as HTMLElement).getByText('Reservada'),
+    ).toBeInTheDocument()
+
+    fireEvent.click(
+      within(ownedListing as HTMLElement).getByRole('button', {
+        name: 'Cerrar oferta',
+      }),
+    )
+    expect(
+      within(ownedListing as HTMLElement).getByText('Cerrada'),
+    ).toBeInTheDocument()
+    expect(
+      createLocalDemoRepository(window.localStorage).load().listings.at(-1)
+        ?.status,
+    ).toBe('completed')
   })
 
   it('switches and resets the demonstration role', () => {

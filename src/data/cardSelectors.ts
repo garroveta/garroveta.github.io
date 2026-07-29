@@ -18,6 +18,11 @@ export type WantedCardItem = {
   card: Card
 }
 
+export type MemberMarketplaceListingItem = {
+  listing: MarketplaceListing
+  card: Card
+}
+
 export type MemberCardMatchItem = {
   match: CardMatch
   card: Card
@@ -61,6 +66,23 @@ export function getMemberWantedCards(
     .flatMap((wantedCard) => {
       const card = data.cards.find(({ id }) => id === wantedCard.cardId)
       return card ? [{ wantedCard, card }] : []
+    })
+}
+
+export function getMemberMarketplaceListings(
+  data: DemoDataSet,
+  memberId: string,
+): MemberMarketplaceListingItem[] {
+  return data.listings
+    .filter(({ memberId: listingMemberId }) => listingMemberId === memberId)
+    .sort(
+      (first, second) =>
+        new Date(second.createdAt).getTime() -
+        new Date(first.createdAt).getTime(),
+    )
+    .flatMap((listing) => {
+      const card = data.cards.find(({ id }) => id === listing.cardId)
+      return card ? [{ listing, card }] : []
     })
 }
 

@@ -1,4 +1,5 @@
 import {
+  CheckCircle2,
   Layers3,
   ListChecks,
   Plus,
@@ -19,10 +20,16 @@ import {
   type WantedImportResult,
 } from '../data/cardMutations'
 import {
+  updateMarketplaceListingStatus,
+  updateWantedCardStatus,
+} from '../data/cardLifecycle'
+import {
   getMarketplaceListings,
   getMemberCardMatches,
+  getMemberMarketplaceListings,
   getMemberWantedCards,
   type MemberCardMatchItem,
+  type MemberMarketplaceListingItem,
   type MarketplaceListingItem,
   type WantedCardItem,
 } from '../data/cardSelectors'
@@ -74,6 +81,12 @@ const matchStatusLabels = {
   new: 'Nueva',
   seen: 'Vista',
   contacted: 'Contactado',
+}
+
+const listingStatusLabels: Record<MarketplaceListing['status'], string> = {
+  available: 'Disponible',
+  reserved: 'Reservada',
+  completed: 'Cerrada',
 }
 
 function MarketplaceCard({ item }: { item: MarketplaceListingItem }) {
@@ -130,7 +143,13 @@ function MarketplaceCard({ item }: { item: MarketplaceListingItem }) {
   )
 }
 
-function WantedCardRow({ item }: { item: WantedCardItem }) {
+function WantedCardRow({
+  item,
+  onStatusChange,
+}: {
+  item: WantedCardItem
+  onStatusChange: (status: WantedCardItem['wantedCard']['status']) => void
+}) {
   return (
     <article className="wanted-card-row">
       <span className="card-set-symbol" aria-hidden="true">
@@ -152,6 +171,70 @@ function WantedCardRow({ item }: { item: WantedCardItem }) {
       >
         {item.wantedCard.status === 'active' ? 'Activa' : 'En pausa'}
       </span>
+      <div className="list-management-actions">
+        <button
+          type="button"
+          onClick={() =>
+            onStatusChange(
+              item.wantedCard.status === 'active' ? 'paused' : 'active',
+            )
+          }
+        >
+          {item.wantedCard.status === 'active'
+            ? 'Pausar búsqueda'
+            : 'Reactivar búsqueda'}
+        </button>
+        <button type="button" onClick={() => onStatusChange('fulfilled')}>
+          <CheckCircle2 aria-hidden="true" size={14} />
+          Marcar encontrada
+        </button>
+      </div>
+    </article>
+  )
+}
+
+function MemberListingRow({
+  item,
+  onStatusChange,
+}: {
+  item: MemberMarketplaceListingItem
+  onStatusChange: (status: MarketplaceListing['status']) => void
+}) {
+  return (
+    <article className="member-listing-row">
+      <span className="card-set-symbol" aria-hidden="true">
+        {item.card.setCode}
+      </span>
+      <div>
+        <h3>{item.card.name}</h3>
+        <p>
+          {item.listing.quantity} · {offerTypeLabels[item.listing.offerType]} ·{' '}
+          {languageLabels[item.listing.language]}
+        </p>
+      </div>
+      <span className={`listing-status listing-status--${item.listing.status}`}>
+        {listingStatusLabels[item.listing.status]}
+      </span>
+      {item.listing.status !== 'completed' ? (
+        <div className="list-management-actions">
+          <button
+            type="button"
+            onClick={() =>
+              onStatusChange(
+                item.listing.status === 'available' ? 'reserved' : 'available',
+              )
+            }
+          >
+            {item.listing.status === 'available'
+              ? 'Marcar reservada'
+              : 'Reactivar oferta'}
+          </button>
+          <button type="button" onClick={() => onStatusChange('completed')}>
+            <CheckCircle2 aria-hidden="true" size={14} />
+            Cerrar oferta
+          </button>
+        </div>
+      ) : null}
     </article>
   )
 }
@@ -466,6 +549,7 @@ export function CardsPage({
   const [query, setQuery] = useState('')
   const listings = getMarketplaceListings(data)
   const wantedCards = getMemberWantedCards(data, currentMember.id)
+  const memberListings = getMemberMarketplaceListings(data, currentMember.id)
   const matches = getMemberCardMatches(data, currentMember.id)
   const normalizedQuery = query.trim().toLocaleLowerCase('es')
   const filteredListings = useMemo(
@@ -519,8 +603,8 @@ export function CardsPage({
           onClick={() => setActiveView('wanted')}
         >
           <ListChecks aria-hidden="true" size={17} />
-          Mis búsquedas
-          <span>{wantedCards.length}</span>
+          Mis listas
+          <span>{wantedCards.length + memberListings.length}</span>
         </button>
       </div>
 
@@ -640,6 +724,46 @@ export function CardsPage({
         <section className="cards-section" aria-labelledby="wanted-title">
           <div className="section-heading">
             <div>
+              <span>Tus anuncios</span>
+              <h2>Mis ofertas</h2>
+            </div>
+            <p>{memberListings.length} publicadas</p>
+          </div>
+
+          {memberListings.length > 0 ? (
+            <div className="member-listing-list">
+              {memberListings.map((item) => (
+                <MemberListingRow
+                  item={item}
+                  key={item.listing.id}
+                  onStatusChange={(status) => {
+                    onDataChange((currentData) =>
+                      updateMarketplaceListingStatus(
+                        currentData,
+                        item.listing.id,
+                        currentMember.id,
+                        status,
+                      ),
+                    )
+                    setActionMessage(
+                      status === 'reserved'
+                        ? 'La oferta está reservada.'
+                        : status === 'available'
+                          ? 'La oferta vuelve a estar disponible.'
+                          : 'La oferta se ha cerrado.',
+                    )
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="filtered-empty-state">
+              Todavía no has publicado ninguna oferta.
+            </p>
+          )}
+
+          <div className="section-heading">
+            <div>
               <span>Tu lista</span>
               <h2 id="wanted-title">Cartas buscadas</h2>
             </div>
@@ -648,7 +772,27 @@ export function CardsPage({
 
           <div className="wanted-list">
             {wantedCards.map((item) => (
-              <WantedCardRow item={item} key={item.wantedCard.id} />
+              <WantedCardRow
+                item={item}
+                key={item.wantedCard.id}
+                onStatusChange={(status) => {
+                  onDataChange((currentData) =>
+                    updateWantedCardStatus(
+                      currentData,
+                      item.wantedCard.id,
+                      currentMember.id,
+                      status,
+                    ),
+                  )
+                  setActionMessage(
+                    status === 'paused'
+                      ? 'La búsqueda está en pausa.'
+                      : status === 'active'
+                        ? 'La búsqueda vuelve a estar activa.'
+                        : 'La carta se ha marcado como encontrada.',
+                  )
+                }}
+              />
             ))}
           </div>
 

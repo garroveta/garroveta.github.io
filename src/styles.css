@@ -1674,7 +1674,8 @@ a {
 }
 
 .card-identity h3,
-.wanted-card-row h3 {
+.wanted-card-row h3,
+.member-listing-row h3 {
   margin: 0;
   color: #2c2730;
   font-family: Georgia, 'Times New Roman', serif;
@@ -1684,7 +1685,8 @@ a {
 }
 
 .card-identity p,
-.wanted-card-row p {
+.wanted-card-row p,
+.member-listing-row p {
   margin: 0.25rem 0 0;
   color: #857c87;
   font-size: 0.68rem;
@@ -1784,7 +1786,17 @@ a {
   gap: 0.65rem;
 }
 
-.wanted-card-row {
+.member-listing-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.cards-section > .section-heading:not(:first-child) {
+  margin-top: 1.5rem;
+}
+
+.wanted-card-row,
+.member-listing-row {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
@@ -1817,6 +1829,60 @@ a {
 .wanted-status--paused {
   color: #745f25;
   background: #f5edce;
+}
+
+.listing-status {
+  grid-column: 1 / -1;
+  width: fit-content;
+  padding: 0.25rem 0.48rem;
+  border-radius: 999px;
+  color: #316b5a;
+  background: #dff0e8;
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.listing-status--reserved {
+  color: #745f25;
+  background: #f5edce;
+}
+
+.listing-status--completed {
+  color: #635d66;
+  background: #e9e6ea;
+}
+
+.list-management-actions {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid #eee9e4;
+}
+
+.list-management-actions button {
+  display: inline-flex;
+  min-height: 2.25rem;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0 0.65rem;
+  border: 1px solid #ddd5df;
+  border-radius: 0.65rem;
+  color: #613676;
+  background: #fff;
+  font-size: 0.67rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.list-management-actions button:last-child {
+  color: #4f6c5d;
+}
+
+.list-management-actions button:focus-visible {
+  outline: 3px solid rgb(124 86 137 / 35%);
+  outline-offset: 2px;
 }
 
 .cards-privacy-note {
