@@ -2048,6 +2048,145 @@ a {
   line-height: 1.45;
 }
 
+.match-detail-button {
+  width: 100%;
+  min-height: 2.7rem;
+  margin-top: 0.7rem;
+  border: 0;
+  border-radius: 0.7rem;
+  color: #fff;
+  background: #5b2b77;
+  font-size: 0.74rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.match-detail-button:focus-visible {
+  outline: 3px solid rgb(124 86 137 / 35%);
+  outline-offset: 2px;
+}
+
+.match-detail {
+  max-width: 44rem;
+  padding: clamp(1.2rem, 5vw, 2rem);
+  border: 1px solid #dfd5e3;
+  border-radius: 1.25rem;
+  background: #fff;
+  box-shadow: 0 1rem 2.8rem rgb(51 43 55 / 8%);
+}
+
+.match-detail__card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.match-detail__card > span {
+  display: grid;
+  width: 4rem;
+  height: 4rem;
+  place-items: center;
+  border-radius: 1rem;
+  color: #fff;
+  background: #2d2035;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.match-detail__card p {
+  margin: 0;
+  color: #8a7f8d;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.match-detail__card h1 {
+  margin: 0.2rem 0 0;
+  color: #28222c;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.8rem, 8vw, 3rem);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.match-detail__card small {
+  display: block;
+  margin-top: 0.35rem;
+  color: #827985;
+  font-size: 0.68rem;
+}
+
+.match-contact {
+  margin-top: 1.2rem;
+  padding: 1rem;
+  border-radius: 0.95rem;
+  color: #fff;
+  background: #2d2035;
+}
+
+.match-contact__identity {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.match-contact__identity small {
+  color: #c6b9ca;
+  font-size: 0.62rem;
+}
+
+.match-contact__identity h2 {
+  margin: 0.15rem 0 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.contact-methods {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+.contact-methods > div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 0.7rem;
+  background: rgb(255 255 255 / 7%);
+}
+
+.contact-methods span {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.contact-methods small {
+  color: #bfaec5;
+  font-size: 0.58rem;
+}
+
+.contact-methods strong {
+  overflow-wrap: anywhere;
+  font-size: 0.75rem;
+}
+
+.match-contact > p {
+  margin: 0.8rem 0 0;
+  color: #bfaec5;
+  font-size: 0.64rem;
+  line-height: 1.5;
+}
+
 .app-navigation {
   position: fixed;
   z-index: 30;

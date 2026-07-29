@@ -91,6 +91,9 @@ export const demoData = {
       role: 'player',
       status: 'approved',
       tagIds: ['tag-commander', 'tag-intercambios'],
+      contactMethods: [
+        { kind: 'discord', label: 'Discord', value: 'alex-romero' },
+      ],
       joinedAt: '2024-09-14T18:25:00+02:00',
     },
     {
@@ -101,6 +104,13 @@ export const demoData = {
       role: 'manager',
       status: 'approved',
       tagIds: ['tag-commander', 'tag-draft', 'tag-promociones'],
+      contactMethods: [
+        {
+          kind: 'whatsapp',
+          label: 'WhatsApp',
+          value: 'Disponible en el grupo CRC Delorean',
+        },
+      ],
       joinedAt: '2023-02-01T10:00:00+01:00',
     },
     {
@@ -111,6 +121,9 @@ export const demoData = {
       role: 'moderator',
       status: 'approved',
       tagIds: ['tag-modern', 'tag-intercambios'],
+      contactMethods: [
+        { kind: 'discord', label: 'Discord', value: 'diego-modern' },
+      ],
       joinedAt: '2023-06-12T19:15:00+02:00',
     },
     {
@@ -121,6 +134,13 @@ export const demoData = {
       role: 'player',
       status: 'approved',
       tagIds: ['tag-commander', 'tag-draft'],
+      contactMethods: [
+        {
+          kind: 'whatsapp',
+          label: 'WhatsApp',
+          value: 'Disponible en el grupo CRC Delorean',
+        },
+      ],
       joinedAt: '2024-01-19T20:05:00+01:00',
     },
     {
@@ -131,6 +151,9 @@ export const demoData = {
       role: 'player',
       status: 'approved',
       tagIds: ['tag-modern', 'tag-pauper'],
+      contactMethods: [
+        { kind: 'discord', label: 'Discord', value: 'sergio-pauper' },
+      ],
       joinedAt: '2024-03-22T18:40:00+01:00',
     },
     {
@@ -141,6 +164,13 @@ export const demoData = {
       role: 'player',
       status: 'approved',
       tagIds: ['tag-modern', 'tag-draft'],
+      contactMethods: [
+        {
+          kind: 'email',
+          label: 'Correo',
+          value: 'irene.mtg@example.com',
+        },
+      ],
       joinedAt: '2024-05-04T17:35:00+02:00',
     },
     {
@@ -151,6 +181,13 @@ export const demoData = {
       role: 'player',
       status: 'approved',
       tagIds: ['tag-commander', 'tag-intercambios'],
+      contactMethods: [
+        {
+          kind: 'whatsapp',
+          label: 'WhatsApp',
+          value: 'Disponible en el grupo CRC Delorean',
+        },
+      ],
       joinedAt: '2025-02-16T12:20:00+01:00',
     },
     {
@@ -161,6 +198,9 @@ export const demoData = {
       role: 'player',
       status: 'approved',
       tagIds: ['tag-pauper', 'tag-principiantes'],
+      contactMethods: [
+        { kind: 'discord', label: 'Discord', value: 'nora-pauper' },
+      ],
       joinedAt: '2025-11-08T16:50:00+01:00',
     },
   ],

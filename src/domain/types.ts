@@ -37,6 +37,12 @@ export type CommunityTag = {
 
 export type CommunityRole = 'player' | 'manager' | 'moderator'
 
+export type ContactMethod = {
+  kind: 'whatsapp' | 'email' | 'discord'
+  label: string
+  value: string
+}
+
 export type CommunityMember = {
   id: EntityId
   communityId: EntityId
@@ -45,6 +51,7 @@ export type CommunityMember = {
   role: CommunityRole
   status: 'approved' | 'pending'
   tagIds: EntityId[]
+  contactMethods: ContactMethod[]
   joinedAt: ISODateTime
 }
 

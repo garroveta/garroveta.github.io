@@ -1,7 +1,11 @@
 import {
+  ArrowLeft,
+  AtSign,
   CheckCircle2,
   Layers3,
   ListChecks,
+  Mail,
+  MessageCircle,
   Plus,
   Search,
   ShoppingBag,
@@ -20,6 +24,7 @@ import {
   type WantedImportResult,
 } from '../data/cardMutations'
 import {
+  markCardMatchSeen,
   updateMarketplaceListingStatus,
   updateWantedCardStatus,
 } from '../data/cardLifecycle'
@@ -239,7 +244,13 @@ function MemberListingRow({
   )
 }
 
-function MatchCard({ item }: { item: MemberCardMatchItem }) {
+function MatchCard({
+  item,
+  onSelect,
+}: {
+  item: MemberCardMatchItem
+  onSelect: (matchId: string) => void
+}) {
   return (
     <article className="card-match">
       <div className="card-match__topline">
@@ -298,7 +309,117 @@ function MatchCard({ item }: { item: MemberCardMatchItem }) {
       <p className="external-contact-note">
         El contacto y el pago se acuerdan libremente fuera de la aplicación.
       </p>
+
+      <button
+        className="match-detail-button"
+        type="button"
+        onClick={() => onSelect(item.match.id)}
+      >
+        Ver coincidencia
+      </button>
     </article>
+  )
+}
+
+function MatchDetail({
+  item,
+  onBack,
+}: {
+  item: MemberCardMatchItem
+  onBack: () => void
+}) {
+  const contactIcons = {
+    whatsapp: MessageCircle,
+    email: Mail,
+    discord: AtSign,
+  }
+
+  return (
+    <div className="page">
+      <button className="back-button" type="button" onClick={onBack}>
+        <ArrowLeft aria-hidden="true" size={18} />
+        Volver a las coincidencias
+      </button>
+
+      <article className="match-detail">
+        <div className="card-match__topline">
+          <span className={`match-status match-status--${item.match.status}`}>
+            <Sparkles aria-hidden="true" size={13} />
+            {matchStatusLabels[item.match.status]}
+          </span>
+          <strong>{item.match.score}% compatible</strong>
+        </div>
+
+        <div className="match-detail__card">
+          <span aria-hidden="true">{item.card.setCode}</span>
+          <div>
+            <p>Estás buscando</p>
+            <h1>{item.card.name}</h1>
+            <small>
+              {item.card.setName} · #{item.card.collectorNumber}
+            </small>
+          </div>
+        </div>
+
+        <p className="card-match__reason">{item.match.reason}</p>
+
+        <dl className="market-card__facts">
+          <div>
+            <dt>Operación</dt>
+            <dd>{offerTypeLabels[item.listing.offerType]}</dd>
+          </div>
+          <div>
+            <dt>Idioma</dt>
+            <dd>{languageLabels[item.listing.language]}</dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd>{conditionLabels[item.listing.condition]}</dd>
+          </div>
+          <div>
+            <dt>Precio</dt>
+            <dd>
+              {item.listing.priceEur
+                ? `${item.listing.priceEur.toFixed(2)} €`
+                : 'A convenir'}
+            </dd>
+          </div>
+        </dl>
+
+        <section className="match-contact" aria-labelledby="seller-title">
+          <div className="match-contact__identity">
+            <span className="member-initials" aria-hidden="true">
+              {item.seller.initials}
+            </span>
+            <div>
+              <small>Miembro que ofrece la carta</small>
+              <h2 id="seller-title">{item.seller.displayName}</h2>
+            </div>
+          </div>
+
+          <div className="contact-methods">
+            {item.seller.contactMethods.map((contactMethod) => {
+              const ContactIcon = contactIcons[contactMethod.kind]
+
+              return (
+                <div key={`${contactMethod.kind}-${contactMethod.value}`}>
+                  <ContactIcon aria-hidden="true" size={18} />
+                  <span>
+                    <small>{contactMethod.label}</small>
+                    <strong>{contactMethod.value}</strong>
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+
+          <p>
+            Estos datos solo se muestran porque existe una coincidencia entre
+            vuestras listas.
+          </p>
+        </section>
+      </article>
+    </div>
   )
 }
 
@@ -545,12 +666,16 @@ export function CardsPage({
   const [activeComposer, setActiveComposer] = useState<
     'listing' | 'import' | undefined
   >()
+  const [selectedMatchId, setSelectedMatchId] = useState<string>()
   const [actionMessage, setActionMessage] = useState('')
   const [query, setQuery] = useState('')
   const listings = getMarketplaceListings(data)
   const wantedCards = getMemberWantedCards(data, currentMember.id)
   const memberListings = getMemberMarketplaceListings(data, currentMember.id)
   const matches = getMemberCardMatches(data, currentMember.id)
+  const selectedMatch = matches.find(
+    ({ match }) => match.id === selectedMatchId,
+  )
   const normalizedQuery = query.trim().toLocaleLowerCase('es')
   const filteredListings = useMemo(
     () =>
@@ -563,6 +688,15 @@ export function CardsPage({
       ),
     [listings, normalizedQuery],
   )
+
+  if (selectedMatch) {
+    return (
+      <MatchDetail
+        item={selectedMatch}
+        onBack={() => setSelectedMatchId(undefined)}
+      />
+    )
+  }
 
   return (
     <div className="page">
@@ -684,7 +818,16 @@ export function CardsPage({
           <div className="match-grid">
             {matches.length > 0 ? (
               matches.map((item) => (
-                <MatchCard item={item} key={item.match.id} />
+                <MatchCard
+                  item={item}
+                  key={item.match.id}
+                  onSelect={(matchId) => {
+                    setSelectedMatchId(matchId)
+                    onDataChange((currentData) =>
+                      markCardMatchSeen(currentData, matchId, currentMember.id),
+                    )
+                  }}
+                />
               ))
             ) : (
               <p className="filtered-empty-state">

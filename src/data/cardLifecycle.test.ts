@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  markCardMatchSeen,
   updateMarketplaceListingStatus,
   updateWantedCardStatus,
 } from './cardLifecycle'
@@ -64,5 +65,19 @@ describe('card list lifecycle', () => {
         ({ wantedCardId }) => wantedCardId === 'wanted-alex-sol-ring',
       ),
     ).toBe(true)
+  })
+
+  it('marks a match as seen only for its buyer', () => {
+    expect(
+      markCardMatchSeen(demoData, 'match-alex-sol-ring', 'member-diego'),
+    ).toBe(demoData)
+
+    expect(
+      markCardMatchSeen(
+        demoData,
+        'match-alex-sol-ring',
+        demoData.currentMemberId,
+      ).cardMatches.find(({ id }) => id === 'match-alex-sol-ring')?.status,
+    ).toBe('seen')
   })
 })

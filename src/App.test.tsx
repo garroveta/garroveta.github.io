@@ -390,6 +390,40 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
+  it('opens a match and reveals the seller contact authorized for it', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+    const solRingMatch = screen
+      .getByRole('heading', { name: 'Sol Ring' })
+      .closest('article')
+    fireEvent.click(
+      within(solRingMatch as HTMLElement).getByRole('button', {
+        name: 'Ver coincidencia',
+      }),
+    )
+
+    expect(
+      screen.getByRole('heading', { name: 'Diego Sánchez' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('diego-modern')).toBeInTheDocument()
+    expect(
+      screen.getByText(/solo se muestran porque existe una coincidencia/),
+    ).toBeInTheDocument()
+    expect(
+      createLocalDemoRepository(window.localStorage)
+        .load()
+        .cardMatches.find(({ id }) => id === 'match-alex-sol-ring')?.status,
+    ).toBe('seen')
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Volver a las coincidencias' }),
+    )
+    expect(
+      screen.getByRole('heading', { name: 'Tus coincidencias' }),
+    ).toBeInTheDocument()
+  })
+
   it('pauses searches and manages the lifecycle of an owned offer', () => {
     render(<App />)
 

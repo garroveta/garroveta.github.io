@@ -50,3 +50,27 @@ export function updateWantedCardStatus(
     ),
   })
 }
+
+export function markCardMatchSeen(
+  data: DemoDataSet,
+  matchId: string,
+  memberId: string,
+): DemoDataSet {
+  const match = data.cardMatches.find(
+    (candidate) =>
+      candidate.id === matchId && candidate.buyerMemberId === memberId,
+  )
+
+  if (!match || match.status !== 'new') {
+    return data
+  }
+
+  return {
+    ...data,
+    cardMatches: data.cardMatches.map((candidate) =>
+      candidate.id === matchId
+        ? { ...candidate, status: 'seen' as const }
+        : candidate,
+    ),
+  }
+}
