@@ -43,10 +43,38 @@ describe('App', () => {
     fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
 
     expect(screen.getByRole('heading', { name: 'Eventos' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Próximos eventos' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'FNM Pauper' }),
+    ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Eventos' })).toHaveAttribute(
       'aria-current',
       'page',
     )
+  })
+
+  it('opens an event detail and returns to the agenda', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
+    fireEvent.click(screen.getAllByRole('button', { name: 'Ver detalles' })[0])
+
+    expect(
+      screen.getByRole('heading', { name: 'FNM Pauper' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('CRC Delorean')).toBeInTheDocument()
+    expect(screen.getByText('24/24 confirmadas')).toBeInTheDocument()
+    expect(
+      screen.getByText('3 personas en lista de espera'),
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Volver a la agenda' }))
+
+    expect(
+      screen.getByRole('heading', { name: 'Próximos eventos' }),
+    ).toBeInTheDocument()
   })
 
   it('switches and resets the demonstration role', () => {

@@ -5,6 +5,7 @@ import type { DemoDataSet } from './domain/types'
 import { useDemoData } from './hooks/useDemoData'
 import { useDemoRole } from './hooks/useDemoRole'
 import { useHashRoute } from './hooks/useHashRoute'
+import { EventsPage } from './pages/EventsPage'
 import { HomePage } from './pages/HomePage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { ProfilePage } from './pages/ProfilePage'
@@ -42,6 +43,8 @@ export function App() {
             currentMember={currentMember}
             onNavigate={navigate}
           />
+        ) : activeRoute === 'eventos' ? (
+          <EventsPage data={data} currentMember={currentMember} />
         ) : activeRoute === 'perfil' ? (
           <ProfilePage
             activeRole={activeRole}
