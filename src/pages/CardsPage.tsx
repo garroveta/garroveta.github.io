@@ -1,18 +1,29 @@
 import {
   Layers3,
   ListChecks,
+  Plus,
   Search,
   ShoppingBag,
+  Upload,
   UserRound,
+  X,
 } from 'lucide-react'
+import type { FormEvent } from 'react'
 import { useMemo, useState } from 'react'
 
+import {
+  importWantedCards,
+  publishMarketplaceListing,
+  type MarketplaceListingInput,
+  type WantedImportResult,
+} from '../data/cardMutations'
 import {
   getMarketplaceListings,
   getMemberWantedCards,
   type MarketplaceListingItem,
   type WantedCardItem,
 } from '../data/cardSelectors'
+import type { DemoDataUpdater } from '../data/demoRepository'
 import type {
   CardCondition,
   CardLanguage,
@@ -24,6 +35,7 @@ import type {
 type CardsPageProps = {
   data: DemoDataSet
   currentMember: CommunityMember
+  onDataChange: (updater: DemoDataUpdater) => void
 }
 
 const languageLabels: Record<CardLanguage, string> = {
@@ -48,6 +60,12 @@ const offerTypeLabels: Record<MarketplaceListing['offerType'], string> = {
   trade: 'Intercambio',
   sale_or_trade: 'Venta o intercambio',
 }
+
+const cardLanguages = Object.keys(languageLabels) as CardLanguage[]
+const cardConditions = Object.keys(conditionLabels) as CardCondition[]
+const offerTypes = Object.keys(
+  offerTypeLabels,
+) as MarketplaceListing['offerType'][]
 
 function MarketplaceCard({ item }: { item: MarketplaceListingItem }) {
   return (
@@ -129,8 +147,248 @@ function WantedCardRow({ item }: { item: WantedCardItem }) {
   )
 }
 
-export function CardsPage({ data, currentMember }: CardsPageProps) {
+function ComposerHeading({
+  title,
+  onClose,
+}: {
+  title: string
+  onClose: () => void
+}) {
+  return (
+    <div className="card-composer__heading">
+      <div>
+        <span>Datos guardados localmente</span>
+        <h2>{title}</h2>
+      </div>
+      <button type="button" aria-label="Cerrar formulario" onClick={onClose}>
+        <X aria-hidden="true" size={18} />
+      </button>
+    </div>
+  )
+}
+
+function ListingComposer({
+  data,
+  memberId,
+  onClose,
+  onDataChange,
+  onPublished,
+}: {
+  data: DemoDataSet
+  memberId: string
+  onClose: () => void
+  onDataChange: (updater: DemoDataUpdater) => void
+  onPublished: () => void
+}) {
+  const [cardId, setCardId] = useState(data.cards[0]?.id ?? '')
+  const [quantity, setQuantity] = useState(1)
+  const [language, setLanguage] = useState<CardLanguage>('es')
+  const [condition, setCondition] = useState<CardCondition>('near_mint')
+  const [finish, setFinish] = useState<MarketplaceListing['finish']>('nonfoil')
+  const [offerType, setOfferType] =
+    useState<MarketplaceListing['offerType']>('trade')
+  const [priceEur, setPriceEur] = useState('')
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const input: MarketplaceListingInput = {
+      memberId,
+      cardId,
+      quantity,
+      language,
+      condition,
+      finish,
+      offerType,
+      priceEur: priceEur ? Number(priceEur) : undefined,
+    }
+    onDataChange((currentData) => publishMarketplaceListing(currentData, input))
+    onPublished()
+  }
+
+  return (
+    <form
+      className="card-composer"
+      aria-label="Publicar una carta"
+      onSubmit={handleSubmit}
+    >
+      <ComposerHeading title="Publicar una carta" onClose={onClose} />
+
+      <label className="form-field">
+        <span>Carta</span>
+        <select
+          value={cardId}
+          onChange={(event) => setCardId(event.target.value)}
+        >
+          {data.cards.map((card) => (
+            <option key={card.id} value={card.id}>
+              {card.name} · {card.setCode}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <div className="card-form-grid">
+        <label className="form-field">
+          <span>Cantidad</span>
+          <input
+            required
+            min={1}
+            type="number"
+            value={quantity}
+            onChange={(event) => setQuantity(Number(event.target.value))}
+          />
+        </label>
+        <label className="form-field">
+          <span>Idioma</span>
+          <select
+            value={language}
+            onChange={(event) =>
+              setLanguage(event.target.value as CardLanguage)
+            }
+          >
+            {cardLanguages.map((cardLanguage) => (
+              <option key={cardLanguage} value={cardLanguage}>
+                {languageLabels[cardLanguage]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="form-field">
+          <span>Estado</span>
+          <select
+            value={condition}
+            onChange={(event) =>
+              setCondition(event.target.value as CardCondition)
+            }
+          >
+            {cardConditions.map((cardCondition) => (
+              <option key={cardCondition} value={cardCondition}>
+                {conditionLabels[cardCondition]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="form-field">
+          <span>Acabado</span>
+          <select
+            value={finish}
+            onChange={(event) =>
+              setFinish(event.target.value as MarketplaceListing['finish'])
+            }
+          >
+            <option value="nonfoil">No foil</option>
+            <option value="foil">Foil</option>
+          </select>
+        </label>
+        <label className="form-field">
+          <span>Operación</span>
+          <select
+            value={offerType}
+            onChange={(event) =>
+              setOfferType(
+                event.target.value as MarketplaceListing['offerType'],
+              )
+            }
+          >
+            {offerTypes.map((type) => (
+              <option key={type} value={type}>
+                {offerTypeLabels[type]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="form-field">
+          <span>Precio opcional (€)</span>
+          <input
+            min={0}
+            step="0.01"
+            type="number"
+            value={priceEur}
+            onChange={(event) => setPriceEur(event.target.value)}
+          />
+        </label>
+      </div>
+
+      <div className="composer-actions">
+        <button className="secondary-button" type="button" onClick={onClose}>
+          Cancelar
+        </button>
+        <button className="primary-button" type="submit">
+          Publicar oferta
+        </button>
+      </div>
+    </form>
+  )
+}
+
+function WantedImportComposer({
+  data,
+  memberId,
+  onClose,
+  onDataChange,
+  onImported,
+}: {
+  data: DemoDataSet
+  memberId: string
+  onClose: () => void
+  onDataChange: (updater: DemoDataUpdater) => void
+  onImported: (result: WantedImportResult) => void
+}) {
+  const [rawList, setRawList] = useState('')
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const result = importWantedCards(data, memberId, rawList)
+    onDataChange(result.data)
+    onImported(result)
+  }
+
+  return (
+    <form
+      className="card-composer"
+      aria-label="Importar lista de búsquedas"
+      onSubmit={handleSubmit}
+    >
+      <ComposerHeading title="Importar una lista" onClose={onClose} />
+
+      <label className="form-field">
+        <span>Una carta por línea</span>
+        <textarea
+          required
+          rows={7}
+          placeholder={'2x Sol Ring\nRhystic Study\nEsper Sentinel x3'}
+          value={rawList}
+          onChange={(event) => setRawList(event.target.value)}
+        />
+      </label>
+
+      <p className="import-help">
+        El prototipo reconoce nombres exactos del catálogo de demostración. Las
+        búsquedas importadas aceptan español o inglés y acabado no foil.
+      </p>
+
+      <div className="composer-actions">
+        <button className="secondary-button" type="button" onClick={onClose}>
+          Cancelar
+        </button>
+        <button className="primary-button" type="submit">
+          Importar búsquedas
+        </button>
+      </div>
+    </form>
+  )
+}
+
+export function CardsPage({
+  data,
+  currentMember,
+  onDataChange,
+}: CardsPageProps) {
   const [activeView, setActiveView] = useState<'market' | 'wanted'>('market')
+  const [activeComposer, setActiveComposer] = useState<
+    'listing' | 'import' | undefined
+  >()
+  const [actionMessage, setActionMessage] = useState('')
   const [query, setQuery] = useState('')
   const listings = getMarketplaceListings(data)
   const wantedCards = getMemberWantedCards(data, currentMember.id)
@@ -181,6 +439,69 @@ export function CardsPage({ data, currentMember }: CardsPageProps) {
           <span>{wantedCards.length}</span>
         </button>
       </div>
+
+      <div className="card-actions">
+        <button
+          className="secondary-button"
+          type="button"
+          onClick={() => {
+            setActionMessage('')
+            setActiveComposer('listing')
+          }}
+        >
+          <Plus aria-hidden="true" size={16} />
+          Publicar carta
+        </button>
+        <button
+          className="secondary-button"
+          type="button"
+          onClick={() => {
+            setActionMessage('')
+            setActiveComposer('import')
+          }}
+        >
+          <Upload aria-hidden="true" size={16} />
+          Importar lista
+        </button>
+      </div>
+
+      {activeComposer === 'listing' ? (
+        <ListingComposer
+          data={data}
+          memberId={currentMember.id}
+          onClose={() => setActiveComposer(undefined)}
+          onDataChange={onDataChange}
+          onPublished={() => {
+            setActiveComposer(undefined)
+            setActiveView('market')
+            setActionMessage('Tu carta ya aparece en las ofertas.')
+          }}
+        />
+      ) : activeComposer === 'import' ? (
+        <WantedImportComposer
+          data={data}
+          memberId={currentMember.id}
+          onClose={() => setActiveComposer(undefined)}
+          onDataChange={onDataChange}
+          onImported={(result) => {
+            setActiveComposer(undefined)
+            setActiveView('wanted')
+            setActionMessage(
+              result.imported.length > 0
+                ? `${result.imported.length} búsquedas importadas.${
+                    result.unknownLines.length > 0
+                      ? ` No reconocidas: ${result.unknownLines.join(', ')}.`
+                      : ''
+                  }`
+                : 'No se ha reconocido ninguna carta.',
+            )
+          }}
+        />
+      ) : null}
+
+      <p className="action-message card-action-message" aria-live="polite">
+        {actionMessage}
+      </p>
 
       {activeView === 'market' ? (
         <section className="cards-section" aria-labelledby="market-title">

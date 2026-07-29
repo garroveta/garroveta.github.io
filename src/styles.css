@@ -1817,6 +1817,88 @@ a {
   line-height: 1.5;
 }
 
+.card-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+}
+
+.card-actions .secondary-button {
+  min-width: 0;
+  padding: 0 0.55rem;
+  font-size: 0.72rem;
+}
+
+.card-composer {
+  display: grid;
+  gap: 1rem;
+  max-width: 44rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #ded5e1;
+  border-radius: 1.2rem;
+  background: #fff;
+  box-shadow: 0 0.8rem 2.2rem rgb(51 43 55 / 7%);
+}
+
+.card-composer__heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.card-composer__heading span {
+  color: #867989;
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.card-composer__heading h2 {
+  margin: 0.25rem 0 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.45rem;
+  font-weight: 500;
+}
+
+.card-composer__heading > button {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 0.7rem;
+  color: #685f6b;
+  background: #f0ecef;
+  cursor: pointer;
+}
+
+.card-composer__heading > button:focus-visible {
+  outline: 3px solid rgb(124 86 137 / 35%);
+  outline-offset: 2px;
+}
+
+.card-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.import-help {
+  margin: -0.25rem 0 0;
+  color: #827985;
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+.card-action-message {
+  margin-top: 0.55rem;
+}
+
 .app-navigation {
   position: fixed;
   z-index: 30;

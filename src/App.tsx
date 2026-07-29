@@ -68,7 +68,11 @@ export function App() {
             onDataChange={updateData}
           />
         ) : activeRoute === 'cartas' ? (
-          <CardsPage data={data} currentMember={currentMember} />
+          <CardsPage
+            data={data}
+            currentMember={currentMember}
+            onDataChange={updateData}
+          />
         ) : activeRoute === 'noticias' ? (
           <NewsPage
             activeRole={activeRole}

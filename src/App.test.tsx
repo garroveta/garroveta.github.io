@@ -294,6 +294,69 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
+  it('publishes a card offer in the local marketplace', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar carta' }))
+    fireEvent.change(screen.getByLabelText('Carta'), {
+      target: { value: 'card-esper-sentinel' },
+    })
+    fireEvent.change(screen.getByLabelText('Cantidad'), {
+      target: { value: '2' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar oferta' }))
+
+    expect(
+      screen.getByText('Tu carta ya aparece en las ofertas.'),
+    ).toBeInTheDocument()
+    const publishedListing = screen
+      .getByRole('heading', { name: 'Esper Sentinel' })
+      .closest('article')
+    expect(
+      within(publishedListing as HTMLElement).getByText('Álex Romero'),
+    ).toBeInTheDocument()
+    expect(
+      createLocalDemoRepository(window.localStorage).load().listings.at(-1),
+    ).toMatchObject({
+      cardId: 'card-esper-sentinel',
+      memberId: demoData.currentMemberId,
+      quantity: 2,
+    })
+  })
+
+  it('imports a wanted-card list and reports unknown names', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: 'Importar lista' }))
+    fireEvent.change(screen.getByLabelText('Una carta por línea'), {
+      target: {
+        value: '2x Rhystic Study\nEsper Sentinel\nCarta desconocida',
+      },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Importar búsquedas' }))
+
+    expect(
+      screen.getByText(
+        '2 búsquedas importadas. No reconocidas: Carta desconocida.',
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Rhystic Study' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Esper Sentinel' }),
+    ).toBeInTheDocument()
+    expect(
+      createLocalDemoRepository(window.localStorage)
+        .load()
+        .wantedCards.filter(
+          ({ memberId }) => memberId === demoData.currentMemberId,
+        ),
+    ).toHaveLength(4)
+  })
+
   it('switches and resets the demonstration role', () => {
     render(<App />)
 
