@@ -149,6 +149,7 @@ export const demoData = {
       role: 'player',
       status: 'approved',
       tagIds: ['tag-commander', 'tag-intercambios'],
+      favoriteGameIds: ['game-mtg', 'game-one-piece'],
       contactMethods: [
         { kind: 'discord', label: 'Discord', value: 'alex-romero' },
       ],
@@ -162,6 +163,15 @@ export const demoData = {
       role: 'manager',
       status: 'approved',
       tagIds: ['tag-commander', 'tag-draft', 'tag-promociones'],
+      favoriteGameIds: [
+        'game-mtg',
+        'game-one-piece',
+        'game-dragon-ball',
+        'game-gundam',
+        'game-marvel',
+        'game-warhammer-40k',
+        'game-dungeons-dragons',
+      ],
       contactMethods: [
         {
           kind: 'whatsapp',
@@ -179,6 +189,7 @@ export const demoData = {
       role: 'moderator',
       status: 'approved',
       tagIds: ['tag-modern', 'tag-intercambios'],
+      favoriteGameIds: ['game-mtg', 'game-warhammer-40k'],
       contactMethods: [
         { kind: 'discord', label: 'Discord', value: 'diego-modern' },
       ],
@@ -192,6 +203,7 @@ export const demoData = {
       role: 'player',
       status: 'approved',
       tagIds: ['tag-commander', 'tag-draft'],
+      favoriteGameIds: ['game-mtg', 'game-marvel'],
       contactMethods: [
         {
           kind: 'whatsapp',
@@ -209,6 +221,7 @@ export const demoData = {
       role: 'player',
       status: 'approved',
       tagIds: ['tag-modern', 'tag-pauper'],
+      favoriteGameIds: ['game-mtg', 'game-gundam'],
       contactMethods: [
         { kind: 'discord', label: 'Discord', value: 'sergio-pauper' },
       ],
@@ -222,6 +235,7 @@ export const demoData = {
       role: 'player',
       status: 'approved',
       tagIds: ['tag-modern', 'tag-draft'],
+      favoriteGameIds: ['game-mtg', 'game-dragon-ball'],
       contactMethods: [
         {
           kind: 'email',
@@ -239,6 +253,7 @@ export const demoData = {
       role: 'player',
       status: 'approved',
       tagIds: ['tag-commander', 'tag-intercambios'],
+      favoriteGameIds: ['game-mtg', 'game-dungeons-dragons'],
       contactMethods: [
         {
           kind: 'whatsapp',
@@ -256,6 +271,7 @@ export const demoData = {
       role: 'player',
       status: 'approved',
       tagIds: ['tag-pauper', 'tag-principiantes'],
+      favoriteGameIds: ['game-mtg', 'game-one-piece'],
       contactMethods: [
         { kind: 'discord', label: 'Discord', value: 'nora-pauper' },
       ],

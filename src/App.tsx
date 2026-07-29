@@ -85,9 +85,11 @@ export function App() {
           <ProfilePage
             activeRole={activeRole}
             community={data.community}
+            games={data.games}
             currentMember={currentMember}
             dataSummary={dataSummary}
             onRoleChange={setActiveRole}
+            onDataChange={updateData}
             onReset={resetDemo}
           />
         ) : (

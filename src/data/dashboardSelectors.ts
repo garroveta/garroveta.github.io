@@ -2,6 +2,7 @@ import type {
   Card,
   CardMatch,
   CommunityEvent,
+  CommunityGame,
   CommunityMember,
   DemoDataSet,
   EventRegistration,
@@ -13,6 +14,7 @@ export const DEMO_REFERENCE_TIME = '2026-07-29T12:00:00+02:00'
 
 export type DashboardEvent = {
   event: CommunityEvent
+  game?: CommunityGame
   registration?: EventRegistration
 }
 
@@ -50,11 +52,14 @@ export function getPlayerDashboard(
   }
 
   const referenceTimestamp = new Date(referenceTime).getTime()
+  const favoriteGameIds = new Set(member.favoriteGameIds)
   const nextEvent = data.events
     .filter(
       (event) =>
         event.status !== 'completed' &&
-        new Date(event.startsAt).getTime() >= referenceTimestamp,
+        new Date(event.startsAt).getTime() >= referenceTimestamp &&
+        (favoriteGameIds.size === 0 ||
+          (event.gameId ? favoriteGameIds.has(event.gameId) : false)),
     )
     .sort(
       (first, second) =>
@@ -102,6 +107,9 @@ export function getPlayerDashboard(
     nextEvent: nextEvent
       ? {
           event: nextEvent,
+          game: nextEvent.gameId
+            ? data.games.find(({ id }) => id === nextEvent.gameId)
+            : undefined,
           registration: nextEventRegistration,
         }
       : undefined,

@@ -21,9 +21,7 @@ describe('App', () => {
       screen.getByRole('heading', { name: 'Hola, Álex' }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', {
-        name: 'Store Championship Dragon Ball',
-      }),
+      screen.getByRole('heading', { name: 'Torneo Modern' }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: 'Nuevo horario de verano' }),
@@ -113,6 +111,25 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'FNM Pauper' }),
     ).toBeInTheDocument()
+  })
+
+  it('saves the player favorite games from the profile', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+
+    const onePieceButton = screen.getByRole('button', { name: /One Piece/ })
+    const gundamButton = screen.getByRole('button', { name: /Gundam/ })
+
+    expect(onePieceButton).toHaveAttribute('aria-pressed', 'true')
+    expect(gundamButton).toHaveAttribute('aria-pressed', 'false')
+
+    fireEvent.click(onePieceButton)
+    fireEvent.click(gundamButton)
+
+    expect(onePieceButton).toHaveAttribute('aria-pressed', 'false')
+    expect(gundamButton).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByText('2 seleccionados')).toBeInTheDocument()
   })
 
   it('registers for an available event and cancels the registration', () => {

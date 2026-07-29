@@ -62,6 +62,7 @@ export type CommunityMember = {
   role: CommunityRole
   status: 'approved' | 'pending'
   tagIds: EntityId[]
+  favoriteGameIds: EntityId[]
   contactMethods: ContactMethod[]
   joinedAt: ISODateTime
 }

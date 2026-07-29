@@ -7,10 +7,26 @@ describe('player dashboard selectors', () => {
   it('selects the next event and the member registration', () => {
     const dashboard = getPlayerDashboard(demoData, demoData.currentMemberId)
 
-    expect(dashboard.nextEvent?.event.id).toBe(
-      'event-dragon-ball-store-championship',
-    )
+    expect(dashboard.nextEvent?.event.id).toBe('event-modern-tournament')
+    expect(dashboard.nextEvent?.game?.shortName).toBe('MTG')
     expect(dashboard.nextEvent?.registration).toBeUndefined()
+  })
+
+  it('uses the member favorite games to personalize the next event', () => {
+    const onePieceOnly = structuredClone(demoData)
+    const member = onePieceOnly.members.find(
+      ({ id }) => id === onePieceOnly.currentMemberId,
+    )
+
+    if (!member) {
+      throw new Error('Missing demo member.')
+    }
+
+    member.favoriteGameIds = ['game-one-piece']
+
+    expect(
+      getPlayerDashboard(onePieceOnly, member.id).nextEvent?.event.id,
+    ).toBe('event-one-piece-store-championship')
   })
 
   it('selects the latest relevant pinned news', () => {

@@ -1,4 +1,5 @@
 import { Check, RotateCcw } from 'lucide-react'
+import type { CSSProperties } from 'react'
 
 import {
   demoRoleOptions,
@@ -6,8 +7,11 @@ import {
   type DemoRole,
 } from '../app/demoRoles'
 import { DemoDataSummary } from '../components/DemoDataSummary'
+import { toggleFavoriteGame } from '../data/memberPreferences'
+import type { DemoDataUpdater } from '../data/demoRepository'
 import type {
   Community,
+  CommunityGame,
   CommunityMember,
   DemoDataSummary as DemoDataSummaryValue,
 } from '../domain/types'
@@ -15,18 +19,22 @@ import type {
 type ProfilePageProps = {
   activeRole: DemoRole
   community: Community
+  games: CommunityGame[]
   currentMember: CommunityMember
   dataSummary: DemoDataSummaryValue
   onRoleChange: (role: DemoRole) => void
+  onDataChange: (updater: DemoDataUpdater) => void
   onReset: () => void
 }
 
 export function ProfilePage({
   activeRole,
   community,
+  games,
   currentMember,
   dataSummary,
   onRoleChange,
+  onDataChange,
   onReset,
 }: ProfilePageProps) {
   const currentRole = getDemoRoleOption(activeRole)
@@ -57,6 +65,52 @@ export function ProfilePage({
       </section>
 
       <DemoDataSummary community={community} summary={dataSummary} />
+
+      <section className="game-preferences" aria-labelledby="favorite-games">
+        <div className="section-heading">
+          <div>
+            <span>Tu agenda</span>
+            <h2 id="favorite-games">Mis juegos</h2>
+          </div>
+          <p>{currentMember.favoriteGameIds.length} seleccionados</p>
+        </div>
+        <p>
+          Elige los juegos que quieres seguir. Garroveta usará esta selección
+          para destacar tu próximo evento.
+        </p>
+
+        <div className="favorite-game-options">
+          {games.map((game) => {
+            const isFavorite = currentMember.favoriteGameIds.includes(game.id)
+
+            return (
+              <button
+                type="button"
+                key={game.id}
+                aria-pressed={isFavorite}
+                onClick={() =>
+                  onDataChange((data) =>
+                    toggleFavoriteGame(data, currentMember.id, game.id),
+                  )
+                }
+              >
+                <span
+                  className="favorite-game-color"
+                  style={{ '--game-color': game.color } as CSSProperties}
+                  aria-hidden="true"
+                />
+                <span>
+                  <strong>{game.shortName}</strong>
+                  <small>{game.name}</small>
+                </span>
+                <span className="favorite-game-check" aria-hidden="true">
+                  {isFavorite ? <Check size={16} strokeWidth={3} /> : null}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </section>
 
       <section className="role-section" aria-labelledby="role-title">
         <div className="section-heading">

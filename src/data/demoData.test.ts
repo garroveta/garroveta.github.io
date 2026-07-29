@@ -46,6 +46,9 @@ describe('demoData', () => {
     for (const member of demoData.members) {
       expect(member.communityId).toBe(demoData.community.id)
       member.tagIds.forEach((tagId) => expect(tagIds.has(tagId)).toBe(true))
+      member.favoriteGameIds.forEach((gameId) =>
+        expect(gameIds.has(gameId)).toBe(true),
+      )
     }
 
     for (const event of demoData.events) {

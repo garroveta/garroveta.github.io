@@ -95,7 +95,7 @@ function NextEventCard({
     )
   }
 
-  const { event, registration } = dashboardEvent
+  const { event, game, registration } = dashboardEvent
   const eventDate = new Date(event.startsAt)
   const registrationLabel = registration
     ? registrationLabels[registration.status]
@@ -118,6 +118,14 @@ function NextEventCard({
         </time>
 
         <div className="event-card__content">
+          {game ? (
+            <span
+              className="dashboard-game"
+              style={{ '--game-color': game.color } as React.CSSProperties}
+            >
+              {game.shortName}
+            </span>
+          ) : null}
           <h2 id="event-title">{event.title}</h2>
           <p>{event.description}</p>
           <div className="event-meta">
