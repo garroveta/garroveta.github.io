@@ -3,6 +3,8 @@ node_modules/
 
 # Production build
 dist/
+.wrangler/
+.dev.vars*
 
 # Test coverage
 coverage/
