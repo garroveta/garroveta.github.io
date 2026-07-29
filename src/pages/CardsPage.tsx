@@ -23,6 +23,7 @@ import {
   type MarketplaceListingInput,
   type WantedImportResult,
 } from '../data/cardMutations'
+import { completeCardDeal } from '../data/cardDeals'
 import {
   markCardMatchSeen,
   updateMarketplaceListingStatus,
@@ -41,6 +42,7 @@ import {
 import type { DemoDataUpdater } from '../data/demoRepository'
 import type {
   CardCondition,
+  CardDeal,
   CardLanguage,
   CommunityMember,
   DemoDataSet,
@@ -86,6 +88,7 @@ const matchStatusLabels = {
   new: 'Nueva',
   seen: 'Vista',
   contacted: 'Contactado',
+  completed: 'Completada',
 }
 
 const listingStatusLabels: Record<MarketplaceListing['status'], string> = {
@@ -323,10 +326,14 @@ function MatchCard({
 
 function MatchDetail({
   item,
+  deal,
   onBack,
+  onComplete,
 }: {
   item: MemberCardMatchItem
+  deal?: CardDeal
   onBack: () => void
+  onComplete: (type: CardDeal['type']) => void
 }) {
   const contactIcons = {
     whatsapp: MessageCircle,
@@ -418,6 +425,42 @@ function MatchDetail({
             vuestras listas.
           </p>
         </section>
+
+        {deal ? (
+          <section className="completed-deal" aria-live="polite">
+            <CheckCircle2 aria-hidden="true" size={22} />
+            <div>
+              <strong>Operación registrada</strong>
+              <p>
+                {deal.type === 'trade'
+                  ? 'Intercambio realizado'
+                  : 'Venta realizada'}{' '}
+                con {item.seller.displayName}.
+              </p>
+            </div>
+          </section>
+        ) : (
+          <div className="deal-actions">
+            {item.listing.offerType !== 'sale' ? (
+              <button
+                className="primary-button"
+                type="button"
+                onClick={() => onComplete('trade')}
+              >
+                Marcar intercambio realizado
+              </button>
+            ) : null}
+            {item.listing.offerType !== 'trade' ? (
+              <button
+                className="primary-button"
+                type="button"
+                onClick={() => onComplete('sale')}
+              >
+                Marcar venta realizada
+              </button>
+            ) : null}
+          </div>
+        )}
       </article>
     </div>
   )
@@ -676,6 +719,9 @@ export function CardsPage({
   const selectedMatch = matches.find(
     ({ match }) => match.id === selectedMatchId,
   )
+  const selectedDeal = selectedMatchId
+    ? data.cardDeals.find(({ matchId }) => matchId === selectedMatchId)
+    : undefined
   const normalizedQuery = query.trim().toLocaleLowerCase('es')
   const filteredListings = useMemo(
     () =>
@@ -692,8 +738,19 @@ export function CardsPage({
   if (selectedMatch) {
     return (
       <MatchDetail
+        deal={selectedDeal}
         item={selectedMatch}
         onBack={() => setSelectedMatchId(undefined)}
+        onComplete={(type) =>
+          onDataChange((currentData) =>
+            completeCardDeal(
+              currentData,
+              selectedMatch.match.id,
+              currentMember.id,
+              type,
+            ),
+          )
+        }
       />
     )
   }

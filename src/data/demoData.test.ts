@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import type { DemoDataSet } from '../domain/types'
 import { demoData, getDemoDataSummary } from './demoData'
 
 function expectUniqueIds(items: Array<{ id: string }>) {
@@ -18,6 +19,7 @@ describe('demoData', () => {
     expectUniqueIds(demoData.listings)
     expectUniqueIds(demoData.wantedCards)
     expectUniqueIds(demoData.cardMatches)
+    expectUniqueIds(demoData.cardDeals)
   })
 
   it('keeps all community references consistent', () => {
@@ -25,6 +27,10 @@ describe('demoData', () => {
     const tagIds = new Set(demoData.tags.map(({ id }) => id))
     const eventIds = new Set(demoData.events.map(({ id }) => id))
     const cardIds = new Set(demoData.cards.map(({ id }) => id))
+    const listingIds = new Set(demoData.listings.map(({ id }) => id))
+    const wantedCardIds = new Set(demoData.wantedCards.map(({ id }) => id))
+    const matchIds = new Set(demoData.cardMatches.map(({ id }) => id))
+    const cardDeals: DemoDataSet['cardDeals'] = demoData.cardDeals
 
     expect(memberIds.has(demoData.currentMemberId)).toBe(true)
     expect(demoData.community.memberCount).toBeGreaterThanOrEqual(
@@ -66,6 +72,14 @@ describe('demoData', () => {
       expect(wantedCard.communityId).toBe(demoData.community.id)
       expect(memberIds.has(wantedCard.memberId)).toBe(true)
       expect(cardIds.has(wantedCard.cardId)).toBe(true)
+    }
+
+    for (const deal of cardDeals) {
+      expect(matchIds.has(deal.matchId)).toBe(true)
+      expect(listingIds.has(deal.listingId)).toBe(true)
+      expect(wantedCardIds.has(deal.wantedCardId)).toBe(true)
+      expect(memberIds.has(deal.buyerMemberId)).toBe(true)
+      expect(memberIds.has(deal.sellerMemberId)).toBe(true)
     }
   })
 

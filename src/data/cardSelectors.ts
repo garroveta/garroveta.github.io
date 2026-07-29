@@ -94,6 +94,7 @@ export function getMemberCardMatches(
     new: 0,
     seen: 1,
     contacted: 2,
+    completed: 3,
   }
 
   return data.cardMatches

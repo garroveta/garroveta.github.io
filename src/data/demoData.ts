@@ -679,6 +679,7 @@ export const demoData = {
       createdAt: '2026-07-28T17:40:05+02:00',
     },
   ],
+  cardDeals: [],
 } satisfies DemoDataSet
 
 export function getDemoDataSummary(

@@ -147,8 +147,20 @@ export type CardMatch = {
   sellerMemberId: EntityId
   score: number
   reason: string
-  status: 'new' | 'seen' | 'contacted'
+  status: 'new' | 'seen' | 'contacted' | 'completed'
   createdAt: ISODateTime
+}
+
+export type CardDeal = {
+  id: EntityId
+  communityId: EntityId
+  matchId: EntityId
+  wantedCardId: EntityId
+  listingId: EntityId
+  buyerMemberId: EntityId
+  sellerMemberId: EntityId
+  type: 'sale' | 'trade'
+  completedAt: ISODateTime
 }
 
 export type DemoDataSet = {
@@ -163,6 +175,7 @@ export type DemoDataSet = {
   listings: MarketplaceListing[]
   wantedCards: WantedCard[]
   cardMatches: CardMatch[]
+  cardDeals: CardDeal[]
 }
 
 export type DemoDataSummary = {

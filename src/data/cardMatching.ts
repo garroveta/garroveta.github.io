@@ -33,7 +33,9 @@ export function synchronizeCardMatches(
     ]),
   )
   const matchIds = data.cardMatches.map(({ id }) => id)
-  const cardMatches: CardMatch[] = []
+  const cardMatches: CardMatch[] = data.cardMatches.filter(
+    ({ status }) => status === 'completed',
+  )
 
   for (const wantedCard of data.wantedCards) {
     if (wantedCard.status !== 'active') {

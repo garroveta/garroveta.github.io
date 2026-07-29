@@ -2025,6 +2025,11 @@ a {
   background: #dff0e8;
 }
 
+.match-status--completed {
+  color: #635d66;
+  background: #e9e6ea;
+}
+
 .card-match__reason {
   margin: 0.75rem 0 0;
   color: #6c6170;
@@ -2185,6 +2190,39 @@ a {
   color: #bfaec5;
   font-size: 0.64rem;
   line-height: 1.5;
+}
+
+.deal-actions {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.deal-actions .primary-button {
+  width: 100%;
+}
+
+.completed-deal {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.7rem;
+  margin-top: 1rem;
+  padding: 0.9rem;
+  border: 1px solid #bcd8ca;
+  border-radius: 0.85rem;
+  color: #315f50;
+  background: #e5f2eb;
+}
+
+.completed-deal strong {
+  font-size: 0.82rem;
+}
+
+.completed-deal p {
+  margin: 0.25rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
 }
 
 .app-navigation {

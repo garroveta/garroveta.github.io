@@ -424,6 +424,42 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
+  it('records a completed trade from its match detail', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+    const solRingMatch = screen
+      .getByRole('heading', { name: 'Sol Ring' })
+      .closest('article')
+    fireEvent.click(
+      within(solRingMatch as HTMLElement).getByRole('button', {
+        name: 'Ver coincidencia',
+      }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Marcar intercambio realizado',
+      }),
+    )
+
+    expect(screen.getByText('Operación registrada')).toBeInTheDocument()
+    expect(
+      screen.getByText('Intercambio realizado con Diego Sánchez.'),
+    ).toBeInTheDocument()
+
+    const storedData = createLocalDemoRepository(window.localStorage).load()
+    expect(storedData.cardDeals).toEqual([
+      expect.objectContaining({
+        matchId: 'match-alex-sol-ring',
+        type: 'trade',
+      }),
+    ])
+    expect(
+      storedData.cardMatches.find(({ id }) => id === 'match-alex-sol-ring')
+        ?.status,
+    ).toBe('completed')
+  })
+
   it('pauses searches and manages the lifecycle of an owned offer', () => {
     render(<App />)
 

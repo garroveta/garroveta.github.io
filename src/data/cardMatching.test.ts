@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { importWantedCards } from './cardMutations'
 import { synchronizeCardMatches } from './cardMatching'
+import { completeCardDeal } from './cardDeals'
 import { demoData } from './demoData'
 
 describe('card matching', () => {
@@ -51,5 +52,20 @@ describe('card matching', () => {
           wantedCardId === 'wanted-alex-lightning-bolt-foil',
       ),
     ).toBe(false)
+  })
+
+  it('preserves completed matches in the history', () => {
+    const completedData = completeCardDeal(
+      demoData,
+      'match-alex-sol-ring',
+      demoData.currentMemberId,
+      'trade',
+    )
+
+    expect(
+      synchronizeCardMatches(completedData).cardMatches.find(
+        ({ id }) => id === 'match-alex-sol-ring',
+      )?.status,
+    ).toBe('completed')
   })
 })
