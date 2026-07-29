@@ -89,6 +89,32 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
+  it('filters events by game and activity', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: 'One Piece' }))
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Store Championship One Piece',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'FNM Pauper' }),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Torneo' }))
+
+    expect(screen.getByText('1 programados')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Restablecer' }))
+
+    expect(
+      screen.getByRole('heading', { name: 'FNM Pauper' }),
+    ).toBeInTheDocument()
+  })
+
   it('registers for an available event and cancels the registration', () => {
     render(<App />)
 

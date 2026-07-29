@@ -3,6 +3,7 @@ import type {
   CommunityGame,
   CommunityTag,
   DemoDataSet,
+  EventType,
   EventRegistration,
 } from '../domain/types'
 import { DEMO_REFERENCE_TIME } from './dashboardSelectors'
@@ -17,6 +18,11 @@ export type EventListItem = {
 export type EventAgenda = {
   upcoming: EventListItem[]
   past: EventListItem[]
+}
+
+export type EventAgendaFilters = {
+  gameId?: string
+  type?: EventType
 }
 
 function byStartTime(first: EventListItem, second: EventListItem) {
@@ -73,6 +79,20 @@ export function getEventAgenda(
           new Date(event.startsAt).getTime() < referenceTimestamp,
       )
       .sort((first, second) => byStartTime(second, first)),
+  }
+}
+
+export function filterEventAgenda(
+  agenda: EventAgenda,
+  filters: EventAgendaFilters,
+): EventAgenda {
+  const matches = ({ event }: EventListItem) =>
+    (!filters.gameId || event.gameId === filters.gameId) &&
+    (!filters.type || event.type === filters.type)
+
+  return {
+    upcoming: agenda.upcoming.filter(matches),
+    past: agenda.past.filter(matches),
   }
 }
 

@@ -15,12 +15,13 @@ import {
   registerForEvent,
 } from '../data/eventMutations'
 import {
+  filterEventAgenda,
   getEventAgenda,
   getEventById,
   type EventListItem,
 } from '../data/eventSelectors'
 import type { DemoDataUpdater } from '../data/demoRepository'
-import type { CommunityMember, DemoDataSet } from '../domain/types'
+import type { CommunityMember, DemoDataSet, EventType } from '../domain/types'
 
 type EventsPageProps = {
   data: DemoDataSet
@@ -326,7 +327,13 @@ export function EventsPage({
   onDataChange,
 }: EventsPageProps) {
   const [selectedEventId, setSelectedEventId] = useState<string>()
-  const agenda = getEventAgenda(data, currentMember.id)
+  const [selectedGameId, setSelectedGameId] = useState<string>()
+  const [selectedType, setSelectedType] = useState<EventType>()
+  const completeAgenda = getEventAgenda(data, currentMember.id)
+  const agenda = filterEventAgenda(completeAgenda, {
+    gameId: selectedGameId,
+    type: selectedType,
+  })
   const upcomingDays = groupEventsByDay(agenda.upcoming)
   const pastDays = groupEventsByDay(agenda.past)
   const selectedEvent = selectedEventId
@@ -356,6 +363,76 @@ export function EventsPage({
         </p>
       </header>
 
+      <section className="event-filter-panel" aria-labelledby="event-filters">
+        <div className="section-heading">
+          <div>
+            <span>Personaliza la agenda</span>
+            <h2 id="event-filters">Filtrar eventos</h2>
+          </div>
+          {selectedGameId || selectedType ? (
+            <button
+              className="filter-reset"
+              type="button"
+              onClick={() => {
+                setSelectedGameId(undefined)
+                setSelectedType(undefined)
+              }}
+            >
+              Restablecer
+            </button>
+          ) : null}
+        </div>
+
+        <div className="event-filter-group">
+          <strong>Juego</strong>
+          <div className="event-filter-chips" aria-label="Filtrar por juego">
+            <button
+              type="button"
+              aria-pressed={!selectedGameId}
+              onClick={() => setSelectedGameId(undefined)}
+            >
+              Todos
+            </button>
+            {data.games.map((game) => (
+              <button
+                type="button"
+                key={game.id}
+                aria-pressed={selectedGameId === game.id}
+                onClick={() => setSelectedGameId(game.id)}
+              >
+                {game.shortName}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="event-filter-group">
+          <strong>Actividad</strong>
+          <div
+            className="event-filter-chips"
+            aria-label="Filtrar por actividad"
+          >
+            <button
+              type="button"
+              aria-pressed={!selectedType}
+              onClick={() => setSelectedType(undefined)}
+            >
+              Todas
+            </button>
+            {(Object.keys(eventTypeLabels) as EventType[]).map((type) => (
+              <button
+                type="button"
+                key={type}
+                aria-pressed={selectedType === type}
+                onClick={() => setSelectedType(type)}
+              >
+                {eventTypeLabels[type]}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="agenda-section" aria-labelledby="upcoming-events">
         <div className="section-heading">
           <div>
@@ -365,15 +442,21 @@ export function EventsPage({
           <p>{agenda.upcoming.length} programados</p>
         </div>
 
-        <div className="agenda-list">
-          {upcomingDays.map((group) => (
-            <EventDay
-              group={group}
-              key={group.dateKey}
-              onSelect={setSelectedEventId}
-            />
-          ))}
-        </div>
+        {upcomingDays.length > 0 ? (
+          <div className="agenda-list">
+            {upcomingDays.map((group) => (
+              <EventDay
+                group={group}
+                key={group.dateKey}
+                onSelect={setSelectedEventId}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="filtered-empty-state">
+            No hay próximos eventos para estos filtros.
+          </p>
+        )}
       </section>
 
       <section className="agenda-section" aria-labelledby="past-events">
@@ -384,15 +467,21 @@ export function EventsPage({
           </div>
         </div>
 
-        <div className="agenda-list agenda-list--past">
-          {pastDays.map((group) => (
-            <EventDay
-              group={group}
-              key={group.dateKey}
-              onSelect={setSelectedEventId}
-            />
-          ))}
-        </div>
+        {pastDays.length > 0 ? (
+          <div className="agenda-list agenda-list--past">
+            {pastDays.map((group) => (
+              <EventDay
+                group={group}
+                key={group.dateKey}
+                onSelect={setSelectedEventId}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="filtered-empty-state">
+            No hay eventos pasados para estos filtros.
+          </p>
+        )}
       </section>
     </div>
   )

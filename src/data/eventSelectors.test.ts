@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import { demoData } from './demoData'
-import { getEventAgenda, getEventById } from './eventSelectors'
+import {
+  filterEventAgenda,
+  getEventAgenda,
+  getEventById,
+} from './eventSelectors'
 
 describe('event selectors', () => {
   it('orders upcoming events and keeps past events separate', () => {
@@ -35,5 +39,21 @@ describe('event selectors', () => {
     expect(item?.game?.shortName).toBe('MTG')
     expect(item?.tags.map(({ name }) => name)).toEqual(['Pauper'])
     expect(item?.registration?.status).toBe('waitlisted')
+  })
+
+  it('combines game and activity filters', () => {
+    const agenda = getEventAgenda(demoData, demoData.currentMemberId)
+    const filteredAgenda = filterEventAgenda(agenda, {
+      gameId: 'game-mtg',
+      type: 'tournament',
+    })
+
+    expect(filteredAgenda.upcoming.map(({ event }) => event.id)).toEqual([
+      'event-modern-tournament',
+      'event-fnm-pauper',
+    ])
+    expect(filteredAgenda.past.map(({ event }) => event.id)).toEqual([
+      'event-store-championship',
+    ])
   })
 })
