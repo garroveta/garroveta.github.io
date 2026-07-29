@@ -836,33 +836,49 @@ a {
 
 .agenda-list {
   display: grid;
-  gap: 0.8rem;
+  gap: 1.2rem;
+}
+
+.agenda-day {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.agenda-day__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.agenda-day__heading time {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #4f4553;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.agenda-day__heading > span {
+  color: #918895;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.agenda-day__events {
+  display: grid;
+  gap: 0.7rem;
 }
 
 .agenda-card {
-  display: grid;
-  grid-template-columns: 4.6rem minmax(0, 1fr);
-  gap: 0.9rem;
   padding: 1rem;
   border: 1px solid #e5e0da;
   border-radius: 1.1rem;
   background: #fff;
   box-shadow: 0 0.6rem 1.6rem rgb(51 43 55 / 5%);
-}
-
-.agenda-card__date {
-  display: grid;
-  min-height: 4.6rem;
-  place-items: center;
-  align-content: center;
-  gap: 0.35rem;
-  border-radius: 0.85rem;
-  color: #5e356e;
-  background: #f1e9f4;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 0.95rem;
-  text-align: center;
-  text-transform: capitalize;
 }
 
 .agenda-card__body {
@@ -895,6 +911,11 @@ a {
 .event-tags .event-game {
   color: #fff;
   background: var(--tag-color);
+}
+
+.event-tags .event-type {
+  color: #655d68;
+  background: #eeeae5;
 }
 
 .agenda-registration {
@@ -2330,7 +2351,7 @@ a {
     align-items: center;
   }
 
-  .agenda-list {
+  .agenda-day__events {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

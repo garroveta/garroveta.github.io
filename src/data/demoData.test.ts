@@ -51,7 +51,9 @@ describe('demoData', () => {
     for (const event of demoData.events) {
       expect(event.communityId).toBe(demoData.community.id)
       expect(memberIds.has(event.createdByMemberId)).toBe(true)
-      expect(gameIds.has(event.gameId)).toBe(true)
+      if (event.gameId) {
+        expect(gameIds.has(event.gameId)).toBe(true)
+      }
       expect(event.registrationSummary.confirmed).toBeLessThanOrEqual(
         event.capacity,
       )
@@ -111,7 +113,7 @@ describe('demoData', () => {
   it('exposes the expected pilot summary', () => {
     expect(getDemoDataSummary()).toEqual({
       members: 150,
-      events: 5,
+      events: 12,
       newsPosts: 6,
       cardMatches: 5,
     })

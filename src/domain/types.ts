@@ -72,10 +72,14 @@ export type EventRegistrationSummary = {
   attended?: number
 }
 
+export type EventType =
+  'tournament' | 'league' | 'draft' | 'casual' | 'workshop' | 'launch'
+
 export type CommunityEvent = {
   id: EntityId
   communityId: EntityId
-  gameId: EntityId
+  gameId?: EntityId
+  type: EventType
   title: string
   description: string
   startsAt: ISODateTime

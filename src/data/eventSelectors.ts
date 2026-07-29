@@ -9,7 +9,7 @@ import { DEMO_REFERENCE_TIME } from './dashboardSelectors'
 
 export type EventListItem = {
   event: CommunityEvent
-  game: CommunityGame
+  game?: CommunityGame
   tags: CommunityTag[]
   registration?: EventRegistration
 }
@@ -45,16 +45,10 @@ export function getEventAgenda(
   )
 
   const items = data.events.flatMap((event) => {
-    const game = gamesById.get(event.gameId)
-
-    if (!game) {
-      return []
-    }
-
     return [
       {
         event,
-        game,
+        game: event.gameId ? gamesById.get(event.gameId) : undefined,
         tags: event.tagIds.flatMap((tagId) => {
           const tag = tagsById.get(tagId)
           return tag ? [tag] : []

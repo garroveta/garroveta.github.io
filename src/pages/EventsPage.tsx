@@ -35,12 +35,6 @@ const eventDateFormatter = new Intl.DateTimeFormat('es-ES', {
   timeZone: 'Europe/Madrid',
 })
 
-const eventShortDateFormatter = new Intl.DateTimeFormat('es-ES', {
-  day: 'numeric',
-  month: 'short',
-  timeZone: 'Europe/Madrid',
-})
-
 const timeFormatter = new Intl.DateTimeFormat('es-ES', {
   hour: '2-digit',
   minute: '2-digit',
@@ -54,15 +48,56 @@ const registrationLabels = {
   cancelled: 'Inscripción cancelada',
 }
 
+const eventTypeLabels = {
+  tournament: 'Torneo',
+  league: 'Liga',
+  draft: 'Draft',
+  casual: 'Juego libre',
+  workshop: 'Taller',
+  launch: 'Presentación',
+}
+
+type EventDayGroup = {
+  dateKey: string
+  date: Date
+  items: EventListItem[]
+}
+
+function groupEventsByDay(items: EventListItem[]): EventDayGroup[] {
+  const groups = new Map<string, EventDayGroup>()
+
+  for (const item of items) {
+    const date = new Date(item.event.startsAt)
+    const dateKey = new Intl.DateTimeFormat('sv-SE', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      timeZone: 'Europe/Madrid',
+    }).format(date)
+    const group = groups.get(dateKey)
+
+    if (group) {
+      group.items.push(item)
+    } else {
+      groups.set(dateKey, { dateKey, date, items: [item] })
+    }
+  }
+
+  return [...groups.values()]
+}
+
 function EventTags({ item }: { item: EventListItem }) {
   return (
     <div className="event-tags" aria-label="Juego y formatos">
-      <span
-        className="event-game"
-        style={{ '--tag-color': item.game.color } as CSSProperties}
-      >
-        {item.game.shortName}
-      </span>
+      {item.game ? (
+        <span
+          className="event-game"
+          style={{ '--tag-color': item.game.color } as CSSProperties}
+        >
+          {item.game.shortName}
+        </span>
+      ) : null}
+      <span className="event-type">{eventTypeLabels[item.event.type]}</span>
       {item.tags.map((tag) => (
         <span
           key={tag.id}
@@ -86,11 +121,6 @@ function EventListCard({
 
   return (
     <article className="agenda-card">
-      <time className="agenda-card__date" dateTime={item.event.startsAt}>
-        <CalendarDays aria-hidden="true" size={17} />
-        {eventShortDateFormatter.format(startsAt)}
-      </time>
-
       <div className="agenda-card__body">
         <div className="agenda-card__topline">
           <EventTags item={item} />
@@ -125,6 +155,34 @@ function EventListCard({
         </button>
       </div>
     </article>
+  )
+}
+
+function EventDay({
+  group,
+  onSelect,
+}: {
+  group: EventDayGroup
+  onSelect: (eventId: string) => void
+}) {
+  return (
+    <section className="agenda-day">
+      <header className="agenda-day__heading">
+        <time dateTime={group.dateKey}>
+          <CalendarDays aria-hidden="true" size={17} />
+          {eventDateFormatter.format(group.date)}
+        </time>
+        <span>
+          {group.items.length}{' '}
+          {group.items.length === 1 ? 'actividad' : 'actividades'}
+        </span>
+      </header>
+      <div className="agenda-day__events">
+        {group.items.map((item) => (
+          <EventListCard item={item} key={item.event.id} onSelect={onSelect} />
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -269,6 +327,8 @@ export function EventsPage({
 }: EventsPageProps) {
   const [selectedEventId, setSelectedEventId] = useState<string>()
   const agenda = getEventAgenda(data, currentMember.id)
+  const upcomingDays = groupEventsByDay(agenda.upcoming)
+  const pastDays = groupEventsByDay(agenda.past)
   const selectedEvent = selectedEventId
     ? getEventById(data, currentMember.id, selectedEventId)
     : undefined
@@ -306,10 +366,10 @@ export function EventsPage({
         </div>
 
         <div className="agenda-list">
-          {agenda.upcoming.map((item) => (
-            <EventListCard
-              item={item}
-              key={item.event.id}
+          {upcomingDays.map((group) => (
+            <EventDay
+              group={group}
+              key={group.dateKey}
               onSelect={setSelectedEventId}
             />
           ))}
@@ -325,10 +385,10 @@ export function EventsPage({
         </div>
 
         <div className="agenda-list agenda-list--past">
-          {agenda.past.map((item) => (
-            <EventListCard
-              item={item}
-              key={item.event.id}
+          {pastDays.map((group) => (
+            <EventDay
+              group={group}
+              key={group.dateKey}
               onSelect={setSelectedEventId}
             />
           ))}

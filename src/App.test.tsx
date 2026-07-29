@@ -21,7 +21,9 @@ describe('App', () => {
       screen.getByRole('heading', { name: 'Hola, Álex' }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { name: 'FNM Pauper' }),
+      screen.getByRole('heading', {
+        name: 'Store Championship Dragon Ball',
+      }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: 'Nuevo horario de verano' }),
@@ -62,7 +64,14 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
-    fireEvent.click(screen.getAllByRole('button', { name: 'Ver detalles' })[0])
+    const pauperCard = screen
+      .getByRole('heading', { name: 'FNM Pauper' })
+      .closest('article')
+    fireEvent.click(
+      within(pauperCard as HTMLElement).getByRole('button', {
+        name: 'Ver detalles',
+      }),
+    )
 
     expect(
       screen.getByRole('heading', { name: 'FNM Pauper' }),
