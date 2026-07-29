@@ -31,6 +31,64 @@ export const demoData = {
       { day: 'sunday', opensAt: '09:00', closesAt: '23:00' },
     ],
   },
+  games: [
+    {
+      id: 'game-mtg',
+      communityId,
+      name: 'Magic: The Gathering',
+      shortName: 'MTG',
+      category: 'card_game',
+      color: '#b14f2f',
+    },
+    {
+      id: 'game-one-piece',
+      communityId,
+      name: 'One Piece Card Game',
+      shortName: 'One Piece',
+      category: 'card_game',
+      color: '#b33b3b',
+    },
+    {
+      id: 'game-dragon-ball',
+      communityId,
+      name: 'Dragon Ball Super Card Game',
+      shortName: 'Dragon Ball',
+      category: 'card_game',
+      color: '#d37a24',
+    },
+    {
+      id: 'game-gundam',
+      communityId,
+      name: 'Gundam Card Game',
+      shortName: 'Gundam',
+      category: 'card_game',
+      color: '#3569a8',
+    },
+    {
+      id: 'game-marvel',
+      communityId,
+      name: 'Marvel',
+      shortName: 'Marvel',
+      category: 'card_game',
+      color: '#9e2f42',
+    },
+    {
+      id: 'game-warhammer-40k',
+      communityId,
+      name: 'Warhammer 40,000',
+      shortName: 'Warhammer 40K',
+      category: 'miniatures',
+      color: '#53616d',
+    },
+    {
+      id: 'game-dungeons-dragons',
+      communityId,
+      name: 'Dungeons & Dragons',
+      shortName: 'D&D',
+      category: 'role_playing_game',
+      color: '#7f3540',
+    },
+  ],
   tags: [
     {
       id: 'tag-commander',
@@ -208,6 +266,7 @@ export const demoData = {
     {
       id: 'event-fnm-pauper',
       communityId,
+      gameId: 'game-mtg',
       title: 'FNM Pauper',
       description:
         'Friday Night Magic en formato Pauper, con tres rondas fijas.',
@@ -225,6 +284,7 @@ export const demoData = {
     {
       id: 'event-commander-night',
       communityId,
+      gameId: 'game-mtg',
       title: 'Noche de Commander',
       description:
         'Mesas casuales y búsqueda de grupo según nivel de potencia.',
@@ -242,6 +302,7 @@ export const demoData = {
     {
       id: 'event-modern-league',
       communityId,
+      gameId: 'game-mtg',
       title: 'Liga Modern · Jornada 4',
       description: 'Cuarta jornada de la liga comunitaria de Modern.',
       startsAt: '2026-08-05T19:30:00+02:00',
@@ -258,6 +319,7 @@ export const demoData = {
     {
       id: 'event-presentation-hobbit',
       communityId,
+      gameId: 'game-mtg',
       title: 'Presentación: The Hobbit',
       description: 'Evento de presentación de The Hobbit con plazas limitadas.',
       startsAt: '2026-08-08T17:00:00+02:00',
@@ -274,6 +336,7 @@ export const demoData = {
     {
       id: 'event-store-championship',
       communityId,
+      gameId: 'game-mtg',
       title: 'Campeonato de la comunidad',
       description: 'Evento competitivo con clasificación comunitaria.',
       startsAt: '2026-07-25T10:30:00+02:00',

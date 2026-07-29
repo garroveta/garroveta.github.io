@@ -56,7 +56,13 @@ const registrationLabels = {
 
 function EventTags({ item }: { item: EventListItem }) {
   return (
-    <div className="event-tags" aria-label="Formatos">
+    <div className="event-tags" aria-label="Juego y formatos">
+      <span
+        className="event-game"
+        style={{ '--tag-color': item.game.color } as CSSProperties}
+      >
+        {item.game.shortName}
+      </span>
       {item.tags.map((tag) => (
         <span
           key={tag.id}

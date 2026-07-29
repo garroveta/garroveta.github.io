@@ -892,6 +892,11 @@ a {
   font-weight: 800;
 }
 
+.event-tags .event-game {
+  color: #fff;
+  background: var(--tag-color);
+}
+
 .agenda-registration {
   color: #73502d;
   font-size: 0.66rem;

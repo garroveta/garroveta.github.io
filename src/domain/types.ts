@@ -35,6 +35,17 @@ export type CommunityTag = {
   color: string
 }
 
+export type GameCategory = 'card_game' | 'miniatures' | 'role_playing_game'
+
+export type CommunityGame = {
+  id: EntityId
+  communityId: EntityId
+  name: string
+  shortName: string
+  category: GameCategory
+  color: string
+}
+
 export type CommunityRole = 'player' | 'manager' | 'moderator'
 
 export type ContactMethod = {
@@ -64,6 +75,7 @@ export type EventRegistrationSummary = {
 export type CommunityEvent = {
   id: EntityId
   communityId: EntityId
+  gameId: EntityId
   title: string
   description: string
   startsAt: ISODateTime
@@ -166,6 +178,7 @@ export type CardDeal = {
 export type DemoDataSet = {
   currentMemberId: EntityId
   community: Community
+  games: CommunityGame[]
   tags: CommunityTag[]
   members: CommunityMember[]
   events: CommunityEvent[]

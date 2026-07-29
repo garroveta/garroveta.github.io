@@ -10,6 +10,7 @@ function expectUniqueIds(items: Array<{ id: string }>) {
 
 describe('demoData', () => {
   it('contains unique identifiers in every collection', () => {
+    expectUniqueIds(demoData.games)
     expectUniqueIds(demoData.tags)
     expectUniqueIds(demoData.members)
     expectUniqueIds(demoData.events)
@@ -24,6 +25,7 @@ describe('demoData', () => {
 
   it('keeps all community references consistent', () => {
     const memberIds = new Set(demoData.members.map(({ id }) => id))
+    const gameIds = new Set(demoData.games.map(({ id }) => id))
     const tagIds = new Set(demoData.tags.map(({ id }) => id))
     const eventIds = new Set(demoData.events.map(({ id }) => id))
     const cardIds = new Set(demoData.cards.map(({ id }) => id))
@@ -37,6 +39,10 @@ describe('demoData', () => {
       demoData.members.length,
     )
 
+    for (const game of demoData.games) {
+      expect(game.communityId).toBe(demoData.community.id)
+    }
+
     for (const member of demoData.members) {
       expect(member.communityId).toBe(demoData.community.id)
       member.tagIds.forEach((tagId) => expect(tagIds.has(tagId)).toBe(true))
@@ -45,6 +51,7 @@ describe('demoData', () => {
     for (const event of demoData.events) {
       expect(event.communityId).toBe(demoData.community.id)
       expect(memberIds.has(event.createdByMemberId)).toBe(true)
+      expect(gameIds.has(event.gameId)).toBe(true)
       expect(event.registrationSummary.confirmed).toBeLessThanOrEqual(
         event.capacity,
       )

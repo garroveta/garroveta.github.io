@@ -25,6 +25,7 @@ describe('event selectors', () => {
       'event-fnm-pauper',
     )
 
+    expect(item?.game.shortName).toBe('MTG')
     expect(item?.tags.map(({ name }) => name)).toEqual(['Pauper'])
     expect(item?.registration?.status).toBe('waitlisted')
   })
