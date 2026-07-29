@@ -23,7 +23,7 @@ function getCurrentMember(data: DemoDataSet) {
 export function App() {
   const { activeRoute, navigate } = useHashRoute()
   const { activeRole, setActiveRole, resetRole } = useDemoRole()
-  const { data, resetData } = useDemoData()
+  const { data, updateData, resetData } = useDemoData()
   const currentMember = getCurrentMember(data)
   const dataSummary = getDemoDataSummary(data)
 
@@ -44,7 +44,11 @@ export function App() {
             onNavigate={navigate}
           />
         ) : activeRoute === 'eventos' ? (
-          <EventsPage data={data} currentMember={currentMember} />
+          <EventsPage
+            data={data}
+            currentMember={currentMember}
+            onDataChange={updateData}
+          />
         ) : activeRoute === 'perfil' ? (
           <ProfilePage
             activeRole={activeRole}

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { App } from './App'
@@ -75,6 +75,37 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Próximos eventos' }),
     ).toBeInTheDocument()
+  })
+
+  it('registers for an available event and cancels the registration', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
+    const hobbitCard = screen
+      .getByRole('heading', { name: 'Presentación: The Hobbit' })
+      .closest('article')
+
+    fireEvent.click(
+      within(hobbitCard as HTMLElement).getByRole('button', {
+        name: 'Ver detalles',
+      }),
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Inscribirme' }))
+
+    expect(screen.getByText('Tu plaza está confirmada.')).toBeInTheDocument()
+    expect(screen.getByText('9/30 confirmadas')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Cancelar inscripción' }),
+    ).toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Cancelar inscripción' }),
+    )
+
+    expect(
+      screen.getByText('Tu inscripción se ha cancelado.'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('8/30 confirmadas')).toBeInTheDocument()
   })
 
   it('switches and resets the demonstration role', () => {

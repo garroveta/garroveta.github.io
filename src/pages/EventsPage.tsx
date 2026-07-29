@@ -10,15 +10,21 @@ import type { CSSProperties } from 'react'
 import { useState } from 'react'
 
 import {
+  cancelEventRegistration,
+  registerForEvent,
+} from '../data/eventMutations'
+import {
   getEventAgenda,
   getEventById,
   type EventListItem,
 } from '../data/eventSelectors'
+import type { DemoDataUpdater } from '../data/demoRepository'
 import type { CommunityMember, DemoDataSet } from '../domain/types'
 
 type EventsPageProps = {
   data: DemoDataSet
   currentMember: CommunityMember
+  onDataChange: (updater: DemoDataUpdater) => void
 }
 
 const eventDateFormatter = new Intl.DateTimeFormat('es-ES', {
@@ -118,14 +124,38 @@ function EventListCard({
 function EventDetail({
   item,
   communityName,
+  memberId,
   onBack,
+  onDataChange,
 }: {
   item: EventListItem
   communityName: string
+  memberId: string
   onBack: () => void
+  onDataChange: (updater: DemoDataUpdater) => void
 }) {
+  const [actionMessage, setActionMessage] = useState('')
   const startsAt = new Date(item.event.startsAt)
   const endsAt = new Date(item.event.endsAt)
+  const canRegister =
+    item.event.status !== 'completed' &&
+    item.event.registrationSummary.confirmed < item.event.capacity
+  const isConfirmed = item.registration?.status === 'confirmed'
+
+  const handleRegistration = () => {
+    if (isConfirmed) {
+      onDataChange((currentData) =>
+        cancelEventRegistration(currentData, item.event.id, memberId),
+      )
+      setActionMessage('Tu inscripción se ha cancelado.')
+      return
+    }
+
+    onDataChange((currentData) =>
+      registerForEvent(currentData, item.event.id, memberId),
+    )
+    setActionMessage('Tu plaza está confirmada.')
+  }
 
   return (
     <div className="page event-detail-page">
@@ -187,12 +217,36 @@ function EventDetail({
             {registrationLabels[item.registration.status]}
           </p>
         ) : null}
+
+        {item.event.status !== 'completed' &&
+        item.registration?.status !== 'waitlisted' ? (
+          <button
+            className="primary-button event-action"
+            type="button"
+            disabled={!isConfirmed && !canRegister}
+            onClick={handleRegistration}
+          >
+            {isConfirmed
+              ? 'Cancelar inscripción'
+              : canRegister
+                ? 'Inscribirme'
+                : 'Evento completo'}
+          </button>
+        ) : null}
+
+        <p className="action-message" aria-live="polite">
+          {actionMessage}
+        </p>
       </article>
     </div>
   )
 }
 
-export function EventsPage({ data, currentMember }: EventsPageProps) {
+export function EventsPage({
+  data,
+  currentMember,
+  onDataChange,
+}: EventsPageProps) {
   const [selectedEventId, setSelectedEventId] = useState<string>()
   const agenda = getEventAgenda(data, currentMember.id)
   const selectedEvent = selectedEventId
@@ -204,7 +258,9 @@ export function EventsPage({ data, currentMember }: EventsPageProps) {
       <EventDetail
         item={selectedEvent}
         communityName={data.community.name}
+        memberId={currentMember.id}
         onBack={() => setSelectedEventId(undefined)}
+        onDataChange={onDataChange}
       />
     )
   }
