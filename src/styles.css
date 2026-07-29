@@ -530,6 +530,16 @@ a {
   line-height: 1.45;
 }
 
+.storage-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.65rem 0 0;
+  color: #d6c6da;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
 .role-section {
   margin-top: 2rem;
 }

@@ -1,16 +1,16 @@
 import { AppHeader } from './components/AppHeader'
 import { AppNavigation } from './components/AppNavigation'
-import { demoData, getDemoDataSummary } from './data/demoData'
+import { getDemoDataSummary } from './data/demoData'
+import type { DemoDataSet } from './domain/types'
+import { useDemoData } from './hooks/useDemoData'
 import { useDemoRole } from './hooks/useDemoRole'
 import { useHashRoute } from './hooks/useHashRoute'
 import { HomePage } from './pages/HomePage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { ProfilePage } from './pages/ProfilePage'
 
-function getCurrentMember() {
-  const member = demoData.members.find(
-    ({ id }) => id === demoData.currentMemberId,
-  )
+function getCurrentMember(data: DemoDataSet) {
+  const member = data.members.find(({ id }) => id === data.currentMemberId)
 
   if (!member) {
     throw new Error('No se ha encontrado el miembro activo de demostración.')
@@ -19,12 +19,17 @@ function getCurrentMember() {
   return member
 }
 
-const currentMember = getCurrentMember()
-const dataSummary = getDemoDataSummary()
-
 export function App() {
   const { activeRoute, navigate } = useHashRoute()
   const { activeRole, setActiveRole, resetRole } = useDemoRole()
+  const { data, resetData } = useDemoData()
+  const currentMember = getCurrentMember(data)
+  const dataSummary = getDemoDataSummary(data)
+
+  const resetDemo = () => {
+    resetRole()
+    resetData()
+  }
 
   return (
     <div className="app-shell">
@@ -36,11 +41,11 @@ export function App() {
         ) : activeRoute === 'perfil' ? (
           <ProfilePage
             activeRole={activeRole}
-            community={demoData.community}
+            community={data.community}
             currentMember={currentMember}
             dataSummary={dataSummary}
             onRoleChange={setActiveRole}
-            onReset={resetRole}
+            onReset={resetDemo}
           />
         ) : (
           <PlaceholderPage route={activeRoute} onNavigate={navigate} />

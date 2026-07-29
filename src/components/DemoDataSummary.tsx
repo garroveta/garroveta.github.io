@@ -1,6 +1,7 @@
 import {
   ArrowLeftRight,
   CalendarDays,
+  HardDrive,
   MapPin,
   Newspaper,
   UsersRound,
@@ -66,6 +67,10 @@ export function DemoDataSummary({ community, summary }: DemoDataSummaryProps) {
       <p className="demo-data-note">
         Los nombres de miembros y el contenido son ficticios para esta
         demostración.
+      </p>
+      <p className="storage-status">
+        <HardDrive aria-hidden="true" size={14} />
+        Datos guardados en este navegador
       </p>
     </section>
   )

@@ -2,10 +2,13 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { App } from './App'
+import { demoData } from './data/demoData'
+import { createLocalDemoRepository } from './data/demoRepository'
 
 describe('App', () => {
   beforeEach(() => {
     window.history.replaceState(null, '', '/')
+    window.localStorage.clear()
   })
 
   it('presents the mobile application navigation', () => {
@@ -45,6 +48,9 @@ describe('App', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('Inca')).toBeInTheDocument()
     expect(screen.getByText('150')).toBeInTheDocument()
+    expect(
+      screen.getByText('Datos guardados en este navegador'),
+    ).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
 
@@ -61,5 +67,22 @@ describe('App', () => {
       'aria-pressed',
       'true',
     )
+  })
+
+  it('restores the original local data from the profile', () => {
+    const repository = createLocalDemoRepository(window.localStorage)
+    const modifiedData = structuredClone(demoData)
+    modifiedData.community.memberCount = 151
+    repository.save(modifiedData)
+
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    expect(screen.getByText('151')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Restablecer' }))
+
+    expect(screen.getByText('150')).toBeInTheDocument()
+    expect(repository.load().community.memberCount).toBe(150)
   })
 })

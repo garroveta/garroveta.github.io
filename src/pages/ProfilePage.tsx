@@ -101,7 +101,10 @@ export function ProfilePage({
       <section className="reset-panel">
         <div>
           <strong>Restaurar la demostración</strong>
-          <p>Vuelve a la vista de jugador utilizada al iniciar el prototipo.</p>
+          <p>
+            Vuelve a la vista de jugador y recupera los datos iniciales del
+            prototipo.
+          </p>
         </div>
         <button className="secondary-button" type="button" onClick={onReset}>
           <RotateCcw aria-hidden="true" size={17} />
