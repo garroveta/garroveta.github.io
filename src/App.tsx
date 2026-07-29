@@ -37,7 +37,11 @@ export function App() {
 
       <main className="app-content" id="main-content">
         {activeRoute === 'inicio' ? (
-          <HomePage onNavigate={navigate} />
+          <HomePage
+            data={data}
+            currentMember={currentMember}
+            onNavigate={navigate}
+          />
         ) : activeRoute === 'perfil' ? (
           <ProfilePage
             activeRole={activeRole}

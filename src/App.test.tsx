@@ -14,7 +14,18 @@ describe('App', () => {
   it('presents the mobile application navigation', () => {
     render(<App />)
 
-    expect(screen.getByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Hola, Álex' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Friday Night Draft' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Nuevo horario de verano' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: '2 coincidencias nuevas' }),
+    ).toBeInTheDocument()
     expect(
       screen.getByRole('navigation', { name: 'Navegación principal' }),
     ).toBeInTheDocument()
