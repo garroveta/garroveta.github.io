@@ -2,7 +2,7 @@ import { demoData } from './demoData'
 import type { DemoDataSet } from '../domain/types'
 
 export const DEMO_STORAGE_KEY = 'mtg-community:demo-data'
-export const DEMO_STORAGE_VERSION = 8
+export const DEMO_STORAGE_VERSION = 9
 
 type DemoStorageEnvelope = {
   version: number
