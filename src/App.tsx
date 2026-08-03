@@ -63,8 +63,10 @@ export function App() {
           />
         ) : activeRoute === 'eventos' ? (
           <EventsPage
+            activeRole={activeRole}
             data={data}
             currentMember={currentMember}
+            publishingMember={publishingMember}
             onDataChange={updateData}
           />
         ) : activeRoute === 'cartas' ? (

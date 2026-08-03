@@ -4,14 +4,19 @@ import {
   ChevronRight,
   Clock3,
   MapPin,
+  Plus,
   UsersRound,
+  X,
 } from 'lucide-react'
 import type { CSSProperties } from 'react'
+import type { FormEvent } from 'react'
 import { useState } from 'react'
 
+import type { DemoRole } from '../app/demoRoles'
 import {
   cancelEventRegistration,
   leaveEventWaitlist,
+  publishCommunityEvent,
   registerForEvent,
 } from '../data/eventMutations'
 import {
@@ -24,8 +29,10 @@ import type { DemoDataUpdater } from '../data/demoRepository'
 import type { CommunityMember, DemoDataSet, EventType } from '../domain/types'
 
 type EventsPageProps = {
+  activeRole: DemoRole
   data: DemoDataSet
   currentMember: CommunityMember
+  publishingMember: CommunityMember
   onDataChange: (updater: DemoDataUpdater) => void
 }
 
@@ -56,6 +63,213 @@ const eventTypeLabels = {
   casual: 'Juego libre',
   workshop: 'Taller',
   launch: 'Presentación',
+}
+
+function madridOffsetForDate(date: string) {
+  const offsetName = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/Madrid',
+    timeZoneName: 'longOffset',
+  })
+    .formatToParts(new Date(`${date}T12:00:00Z`))
+    .find(({ type }) => type === 'timeZoneName')
+    ?.value.replace('GMT', '')
+
+  return offsetName || '+01:00'
+}
+
+function buildMadridIso(date: string, time: string) {
+  return `${date}T${time}:00${madridOffsetForDate(date)}`
+}
+
+function nextCalendarDate(date: string) {
+  const nextDate = new Date(`${date}T12:00:00Z`)
+  nextDate.setUTCDate(nextDate.getUTCDate() + 1)
+  return nextDate.toISOString().slice(0, 10)
+}
+
+function EventComposer({
+  data,
+  publishingMember,
+  onClose,
+  onDataChange,
+  onPublished,
+}: {
+  data: DemoDataSet
+  publishingMember: CommunityMember
+  onClose: () => void
+  onDataChange: (updater: DemoDataUpdater) => void
+  onPublished: () => void
+}) {
+  const [gameId, setGameId] = useState(data.games[0]?.id ?? '')
+  const [type, setType] = useState<EventType>('tournament')
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [date, setDate] = useState('2026-08-15')
+  const [startsAt, setStartsAt] = useState('17:00')
+  const [endsAt, setEndsAt] = useState('21:00')
+  const [capacity, setCapacity] = useState('24')
+  const [tagIds, setTagIds] = useState<string[]>([])
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const endDate = endsAt <= startsAt ? nextCalendarDate(date) : date
+
+    onDataChange((currentData) =>
+      publishCommunityEvent(currentData, {
+        createdByMemberId: publishingMember.id,
+        gameId,
+        type,
+        title,
+        description,
+        startsAt: buildMadridIso(date, startsAt),
+        endsAt: buildMadridIso(endDate, endsAt),
+        capacity: Number(capacity),
+        tagIds,
+      }),
+    )
+    onPublished()
+  }
+
+  const toggleTag = (tagId: string) => {
+    setTagIds((currentTagIds) =>
+      currentTagIds.includes(tagId)
+        ? currentTagIds.filter((candidate) => candidate !== tagId)
+        : [...currentTagIds, tagId],
+    )
+  }
+
+  return (
+    <form className="event-composer" onSubmit={handleSubmit}>
+      <div className="event-composer__heading">
+        <div>
+          <span>Herramienta del gerente</span>
+          <h2>Crear un evento</h2>
+        </div>
+        <button type="button" onClick={onClose} aria-label="Cerrar formulario">
+          <X aria-hidden="true" size={18} />
+        </button>
+      </div>
+
+      <div className="event-composer__grid">
+        <label className="form-field">
+          <span>Juego</span>
+          <select
+            value={gameId}
+            onChange={(event) => setGameId(event.target.value)}
+            required
+          >
+            {data.games.map((game) => (
+              <option key={game.id} value={game.id}>
+                {game.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="form-field">
+          <span>Tipo de actividad</span>
+          <select
+            value={type}
+            onChange={(event) => setType(event.target.value as EventType)}
+          >
+            {(Object.keys(eventTypeLabels) as EventType[]).map((eventType) => (
+              <option key={eventType} value={eventType}>
+                {eventTypeLabels[eventType]}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <label className="form-field">
+        <span>Título</span>
+        <input
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          placeholder="Ej. Liga One Piece"
+          required
+        />
+      </label>
+
+      <label className="form-field">
+        <span>Descripción</span>
+        <textarea
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+          placeholder="Información útil para los participantes"
+          rows={3}
+          required
+        />
+      </label>
+
+      <div className="event-composer__grid event-composer__grid--schedule">
+        <label className="form-field">
+          <span>Fecha</span>
+          <input
+            type="date"
+            value={date}
+            onChange={(event) => setDate(event.target.value)}
+            required
+          />
+        </label>
+        <label className="form-field">
+          <span>Inicio</span>
+          <input
+            type="time"
+            value={startsAt}
+            onChange={(event) => setStartsAt(event.target.value)}
+            required
+          />
+        </label>
+        <label className="form-field">
+          <span>Fin</span>
+          <input
+            type="time"
+            value={endsAt}
+            onChange={(event) => setEndsAt(event.target.value)}
+            required
+          />
+        </label>
+        <label className="form-field">
+          <span>Plazas</span>
+          <input
+            type="number"
+            value={capacity}
+            onChange={(event) => setCapacity(event.target.value)}
+            min="1"
+            max="500"
+            required
+          />
+        </label>
+      </div>
+
+      <fieldset className="composer-tags">
+        <legend>Etiquetas opcionales</legend>
+        <p>Ayudan a los jugadores a identificar el formato y el público.</p>
+        <div>
+          {data.tags.map((tag) => (
+            <label key={tag.id}>
+              <input
+                type="checkbox"
+                checked={tagIds.includes(tag.id)}
+                onChange={() => toggleTag(tag.id)}
+              />
+              <span>{tag.name}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <div className="composer-actions">
+        <button className="secondary-button" type="button" onClick={onClose}>
+          Cancelar
+        </button>
+        <button className="primary-button" type="submit">
+          Publicar evento
+        </button>
+      </div>
+    </form>
+  )
 }
 
 type EventDayGroup = {
@@ -322,13 +536,17 @@ function EventDetail({
 }
 
 export function EventsPage({
+  activeRole,
   data,
   currentMember,
+  publishingMember,
   onDataChange,
 }: EventsPageProps) {
   const [selectedEventId, setSelectedEventId] = useState<string>()
   const [selectedGameId, setSelectedGameId] = useState<string>()
   const [selectedType, setSelectedType] = useState<EventType>()
+  const [isComposerOpen, setIsComposerOpen] = useState(false)
+  const [publicationMessage, setPublicationMessage] = useState('')
   const completeAgenda = getEventAgenda(data, currentMember.id)
   const agenda = filterEventAgenda(completeAgenda, {
     gameId: selectedGameId,
@@ -362,6 +580,40 @@ export function EventsPage({
           inscripción.
         </p>
       </header>
+
+      {activeRole === 'gerente' ? (
+        <div className="manager-event-tools">
+          {isComposerOpen ? (
+            <EventComposer
+              data={data}
+              publishingMember={publishingMember}
+              onClose={() => setIsComposerOpen(false)}
+              onDataChange={onDataChange}
+              onPublished={() => {
+                setIsComposerOpen(false)
+                setSelectedGameId(undefined)
+                setSelectedType(undefined)
+                setPublicationMessage('El evento ya aparece en la agenda.')
+              }}
+            />
+          ) : (
+            <button
+              className="primary-button"
+              type="button"
+              onClick={() => {
+                setPublicationMessage('')
+                setIsComposerOpen(true)
+              }}
+            >
+              <Plus aria-hidden="true" size={17} />
+              Nuevo evento
+            </button>
+          )}
+          <p className="action-message" aria-live="polite">
+            {publicationMessage}
+          </p>
+        </div>
+      ) : null}
 
       <section className="event-filter-panel" aria-labelledby="event-filters">
         <div className="section-heading">

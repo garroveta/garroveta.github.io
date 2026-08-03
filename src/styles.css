@@ -932,6 +932,70 @@ a {
   box-shadow: 0 0.6rem 1.6rem rgb(51 43 55 / 5%);
 }
 
+.manager-event-tools {
+  margin-top: 1.5rem;
+}
+
+.event-composer {
+  display: grid;
+  gap: 1rem;
+  max-width: 48rem;
+  padding: 1rem;
+  border: 1px solid #ded5e1;
+  border-radius: 1.2rem;
+  background: #fff;
+  box-shadow: 0 0.8rem 2.2rem rgb(51 43 55 / 7%);
+}
+
+.event-composer__heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.event-composer__heading span {
+  color: #867989;
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.event-composer__heading h2 {
+  margin: 0.25rem 0 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.45rem;
+  font-weight: 500;
+}
+
+.event-composer__heading > button {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 0.7rem;
+  color: #685f6b;
+  background: #f0ecef;
+  cursor: pointer;
+}
+
+.event-composer__heading > button:focus-visible {
+  outline: 3px solid rgb(124 86 137 / 35%);
+  outline-offset: 2px;
+}
+
+.event-composer__grid {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.event-composer__grid--schedule {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .event-filter-panel .section-heading {
   margin-bottom: 1rem;
 }
@@ -2518,6 +2582,14 @@ a {
 
   .event-detail__facts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .event-composer__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .event-composer__grid--schedule {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .publication-list {

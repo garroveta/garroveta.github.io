@@ -3,11 +3,54 @@ import { describe, expect, it } from 'vitest'
 import {
   cancelEventRegistration,
   leaveEventWaitlist,
+  publishCommunityEvent,
   registerForEvent,
 } from './eventMutations'
 import { demoData } from './demoData'
 
 describe('event registration mutations', () => {
+  it('lets the manager publish a multi-game event', () => {
+    const updatedData = publishCommunityEvent(demoData, {
+      createdByMemberId: 'member-lucia',
+      gameId: 'game-one-piece',
+      type: 'tournament',
+      title: '  Torneo de prueba  ',
+      description: '  Evento para probar el formulario.  ',
+      startsAt: '2026-08-15T17:00:00+02:00',
+      endsAt: '2026-08-15T21:00:00+02:00',
+      capacity: 20,
+      tagIds: ['tag-principiantes', 'unknown-tag'],
+    })
+
+    expect(updatedData.events.at(-1)).toMatchObject({
+      id: 'event-torneo-de-prueba',
+      gameId: 'game-one-piece',
+      title: 'Torneo de prueba',
+      description: 'Evento para probar el formulario.',
+      capacity: 20,
+      tagIds: ['tag-principiantes'],
+      createdByMemberId: 'member-lucia',
+      registrationSummary: { confirmed: 0, waitlisted: 0 },
+    })
+    expect(demoData.events).toHaveLength(11)
+  })
+
+  it('rejects event publication from a player', () => {
+    expect(
+      publishCommunityEvent(demoData, {
+        createdByMemberId: demoData.currentMemberId,
+        gameId: 'game-mtg',
+        type: 'casual',
+        title: 'Evento no autorizado',
+        description: 'No debe publicarse.',
+        startsAt: '2026-08-15T17:00:00+02:00',
+        endsAt: '2026-08-15T20:00:00+02:00',
+        capacity: 8,
+        tagIds: [],
+      }),
+    ).toBe(demoData)
+  })
+
   it('confirms a registration when a place is available', () => {
     const updatedData = registerForEvent(
       demoData,

@@ -1,5 +1,97 @@
-import type { DemoDataSet, EventRegistration } from '../domain/types'
+import type { DemoDataSet, EventRegistration, EventType } from '../domain/types'
 import { DEMO_REFERENCE_TIME } from './dashboardSelectors'
+
+export type CommunityEventInput = {
+  createdByMemberId: string
+  gameId: string
+  type: EventType
+  title: string
+  description: string
+  startsAt: string
+  endsAt: string
+  capacity: number
+  tagIds: string[]
+}
+
+function slugify(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 40)
+}
+
+function createEventId(data: DemoDataSet, title: string) {
+  const baseId = `event-${slugify(title) || 'actividad'}`
+  let candidateId = baseId
+  let suffix = 2
+
+  while (data.events.some(({ id }) => id === candidateId)) {
+    candidateId = `${baseId}-${suffix}`
+    suffix += 1
+  }
+
+  return candidateId
+}
+
+export function publishCommunityEvent(
+  data: DemoDataSet,
+  input: CommunityEventInput,
+): DemoDataSet {
+  const creator = data.members.find(({ id }) => id === input.createdByMemberId)
+  const game = data.games.find(({ id }) => id === input.gameId)
+  const title = input.title.trim()
+  const description = input.description.trim()
+  const startsAt = new Date(input.startsAt)
+  const endsAt = new Date(input.endsAt)
+  const capacity = Math.floor(input.capacity)
+
+  if (
+    !creator ||
+    creator.role !== 'manager' ||
+    !game ||
+    !title ||
+    !description ||
+    Number.isNaN(startsAt.getTime()) ||
+    Number.isNaN(endsAt.getTime()) ||
+    endsAt <= startsAt ||
+    capacity < 1
+  ) {
+    return data
+  }
+
+  const validTagIds = new Set(data.tags.map(({ id }) => id))
+  const tagIds = [...new Set(input.tagIds)].filter((tagId) =>
+    validTagIds.has(tagId),
+  )
+
+  return {
+    ...data,
+    events: [
+      ...data.events,
+      {
+        id: createEventId(data, title),
+        communityId: data.community.id,
+        gameId: game.id,
+        type: input.type,
+        title,
+        description,
+        startsAt: input.startsAt,
+        endsAt: input.endsAt,
+        capacity,
+        status: 'scheduled',
+        tagIds,
+        createdByMemberId: creator.id,
+        registrationSummary: {
+          confirmed: 0,
+          waitlisted: 0,
+        },
+      },
+    ],
+  }
+}
 
 function registrationId(memberId: string, eventId: string) {
   return `registration-${memberId}-${eventId}`

@@ -309,6 +309,49 @@ describe('App', () => {
     })
   })
 
+  it('lets a manager publish a multi-game event', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
+    fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: 'Nuevo evento' }))
+
+    fireEvent.change(screen.getByLabelText('Juego'), {
+      target: { value: 'game-one-piece' },
+    })
+    fireEvent.change(screen.getByLabelText('Tipo de actividad'), {
+      target: { value: 'league' },
+    })
+    fireEvent.change(screen.getByLabelText('Título'), {
+      target: { value: 'Liga One Piece' },
+    })
+    fireEvent.change(screen.getByLabelText('Descripción'), {
+      target: { value: 'Cuatro jornadas abiertas a la comunidad.' },
+    })
+    fireEvent.change(screen.getByLabelText('Plazas'), {
+      target: { value: '16' },
+    })
+    fireEvent.click(screen.getByLabelText('Principiantes'))
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar evento' }))
+
+    expect(
+      screen.getByText('El evento ya aparece en la agenda.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Liga One Piece' }),
+    ).toBeInTheDocument()
+    expect(
+      createLocalDemoRepository(window.localStorage).load().events.at(-1),
+    ).toMatchObject({
+      gameId: 'game-one-piece',
+      type: 'league',
+      title: 'Liga One Piece',
+      capacity: 16,
+      tagIds: ['tag-principiantes'],
+    })
+  })
+
   it('browses marketplace offers and the member wanted list', () => {
     render(<App />)
 
