@@ -5,6 +5,8 @@ joueurs autour d'une boutique ou d'un bar à jeux. Le pilote couvre les
 événements multi-jeux de CRC Delorean et conserve un espace d'échange de cartes
 initialement centré sur Magic: The Gathering.
 
+Démo publique : [garroveta.github.io](https://garroveta.github.io/)
+
 ## Problème
 
 La communauté pilote de CRC Delorean, à Inca, échange aujourd'hui
