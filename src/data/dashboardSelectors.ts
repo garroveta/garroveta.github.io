@@ -31,6 +31,21 @@ export type PlayerDashboard = {
   newMatches: DashboardMatch[]
 }
 
+export type ManagerDashboardEvent = {
+  event: CommunityEvent
+  game?: CommunityGame
+  occupancyRate: number
+}
+
+export type ManagerDashboard = {
+  upcomingEvents: ManagerDashboardEvent[]
+  totalConfirmed: number
+  totalWaitlisted: number
+  fullEvents: number
+  attentionEvents: ManagerDashboardEvent[]
+  latestNews: NewsPost[]
+}
+
 function byMostRecent(
   first: { createdAt: string },
   second: { createdAt: string },
@@ -115,5 +130,64 @@ export function getPlayerDashboard(
       : undefined,
     highlightedNews,
     newMatches,
+  }
+}
+
+export function getManagerDashboard(
+  data: DemoDataSet,
+  referenceTime = DEMO_REFERENCE_TIME,
+): ManagerDashboard {
+  const referenceTimestamp = new Date(referenceTime).getTime()
+  const gamesById = new Map(data.games.map((game) => [game.id, game]))
+  const upcomingEvents = data.events
+    .filter(
+      (event) =>
+        event.status !== 'completed' &&
+        new Date(event.startsAt).getTime() >= referenceTimestamp,
+    )
+    .sort(
+      (first, second) =>
+        new Date(first.startsAt).getTime() -
+        new Date(second.startsAt).getTime(),
+    )
+    .map((event) => ({
+      event,
+      game: event.gameId ? gamesById.get(event.gameId) : undefined,
+      occupancyRate:
+        event.capacity > 0
+          ? Math.min(
+              100,
+              Math.round(
+                (event.registrationSummary.confirmed / event.capacity) * 100,
+              ),
+            )
+          : 0,
+    }))
+  const attentionEvents = upcomingEvents.filter(
+    ({ event, occupancyRate }) =>
+      event.registrationSummary.waitlisted > 0 || occupancyRate >= 90,
+  )
+
+  return {
+    upcomingEvents,
+    totalConfirmed: upcomingEvents.reduce(
+      (total, { event }) => total + event.registrationSummary.confirmed,
+      0,
+    ),
+    totalWaitlisted: upcomingEvents.reduce(
+      (total, { event }) => total + event.registrationSummary.waitlisted,
+      0,
+    ),
+    fullEvents: upcomingEvents.filter(
+      ({ event }) => event.registrationSummary.confirmed >= event.capacity,
+    ).length,
+    attentionEvents,
+    latestNews: [...data.newsPosts]
+      .sort(
+        (first, second) =>
+          new Date(second.publishedAt).getTime() -
+          new Date(first.publishedAt).getTime(),
+      )
+      .slice(0, 2),
   }
 }

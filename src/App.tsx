@@ -57,8 +57,10 @@ export function App() {
       <main className="app-content" id="main-content">
         {activeRoute === 'inicio' ? (
           <HomePage
+            activeRole={activeRole}
             data={data}
             currentMember={currentMember}
+            publishingMember={publishingMember}
             onNavigate={navigate}
           />
         ) : activeRoute === 'eventos' ? (

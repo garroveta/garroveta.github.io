@@ -1,24 +1,33 @@
 import {
+  AlertCircle,
   ArrowRight,
   ArrowLeftRight,
   BellRing,
+  CalendarDays,
   Clock3,
   MapPin,
+  Megaphone,
   Sparkles,
+  UserCheck,
   UsersRound,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 
+import type { DemoRole } from '../app/demoRoles'
 import type { AppRoute } from '../app/navigation'
 import {
+  getManagerDashboard,
   getPlayerDashboard,
   type DashboardEvent,
+  type ManagerDashboardEvent,
 } from '../data/dashboardSelectors'
 import type { CommunityMember, DemoDataSet } from '../domain/types'
 
 type HomePageProps = {
+  activeRole: DemoRole
   data: DemoDataSet
   currentMember: CommunityMember
+  publishingMember: CommunityMember
   onNavigate: (route: AppRoute) => void
 }
 
@@ -148,7 +157,205 @@ function NextEventCard({
   )
 }
 
-export function HomePage({ data, currentMember, onNavigate }: HomePageProps) {
+function ManagerMetric({
+  icon,
+  label,
+  value,
+  detail,
+}: {
+  icon: ReactNode
+  label: string
+  value: number
+  detail: string
+}) {
+  return (
+    <article className="manager-metric">
+      <span className="manager-metric__icon" aria-hidden="true">
+        {icon}
+      </span>
+      <div>
+        <strong>{value}</strong>
+        <span>{label}</span>
+        <small>{detail}</small>
+      </div>
+    </article>
+  )
+}
+
+function ManagerEventRow({ item }: { item: ManagerDashboardEvent }) {
+  const startsAt = new Date(item.event.startsAt)
+
+  return (
+    <article className="manager-event-row">
+      <time dateTime={item.event.startsAt}>
+        <strong>{eventDateFormatter.format(startsAt)}</strong>
+        <span>{timeFormatter.format(startsAt)}</span>
+      </time>
+      <div className="manager-event-row__content">
+        <div>
+          <span>{item.game?.shortName ?? 'Comunidad'}</span>
+          <h3>{item.event.title}</h3>
+        </div>
+        <div className="occupancy-summary">
+          <span>
+            {item.event.registrationSummary.confirmed}/{item.event.capacity}
+          </span>
+          <div aria-label={`${item.occupancyRate}% de ocupación`}>
+            <span style={{ width: `${item.occupancyRate}%` }} />
+          </div>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function ManagerHome({
+  data,
+  manager,
+  onNavigate,
+}: {
+  data: DemoDataSet
+  manager: CommunityMember
+  onNavigate: (route: AppRoute) => void
+}) {
+  const dashboard = getManagerDashboard(data)
+  const firstName = manager.displayName.split(' ')[0]
+
+  return (
+    <div className="page manager-dashboard">
+      <header className="page-heading dashboard-heading">
+        <span className="page-eyebrow">
+          <MapPin aria-hidden="true" size={13} />
+          {data.community.name} · {data.community.city}
+        </span>
+        <h1>Hola, {firstName}</h1>
+        <p>Este es el estado de la tienda y de sus próximas actividades.</p>
+      </header>
+
+      <section className="manager-metrics" aria-label="Resumen de la agenda">
+        <ManagerMetric
+          icon={<CalendarDays size={18} />}
+          label="Próximos eventos"
+          value={dashboard.upcomingEvents.length}
+          detail="En la agenda"
+        />
+        <ManagerMetric
+          icon={<UserCheck size={18} />}
+          label="Plazas confirmadas"
+          value={dashboard.totalConfirmed}
+          detail="En próximos eventos"
+        />
+        <ManagerMetric
+          icon={<UsersRound size={18} />}
+          label="En lista de espera"
+          value={dashboard.totalWaitlisted}
+          detail="Requieren seguimiento"
+        />
+        <ManagerMetric
+          icon={<AlertCircle size={18} />}
+          label="Eventos completos"
+          value={dashboard.fullEvents}
+          detail="Sin plazas libres"
+        />
+      </section>
+
+      <div className="manager-dashboard__grid">
+        <section className="dashboard-card manager-agenda-card">
+          <div className="dashboard-card__topline">
+            <span className="dashboard-label">
+              <CalendarDays aria-hidden="true" size={15} />
+              Operación
+            </span>
+            <span>{dashboard.upcomingEvents.length} programados</span>
+          </div>
+          <h2>Próximos eventos</h2>
+          <div className="manager-event-list">
+            {dashboard.upcomingEvents.slice(0, 4).map((item) => (
+              <ManagerEventRow item={item} key={item.event.id} />
+            ))}
+          </div>
+          <DashboardLink route="eventos" onNavigate={onNavigate}>
+            Gestionar agenda
+          </DashboardLink>
+        </section>
+
+        <section className="dashboard-card manager-attention-card">
+          <div className="dashboard-card__topline">
+            <span className="dashboard-label">
+              <AlertCircle aria-hidden="true" size={15} />
+              Atención
+            </span>
+            <span>{dashboard.attentionEvents.length} avisos</span>
+          </div>
+          <h2>Acciones prioritarias</h2>
+          {dashboard.attentionEvents.length > 0 ? (
+            <div className="manager-alert-list">
+              {dashboard.attentionEvents.slice(0, 3).map(({ event }) => (
+                <article key={event.id}>
+                  <strong>{event.title}</strong>
+                  <p>
+                    {event.registrationSummary.waitlisted > 0
+                      ? `${event.registrationSummary.waitlisted} personas en lista de espera.`
+                      : 'El evento está casi completo.'}
+                  </p>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="manager-clear-state">
+              No hay incidencias pendientes en la agenda.
+            </p>
+          )}
+          <DashboardLink route="eventos" onNavigate={onNavigate}>
+            Revisar participantes
+          </DashboardLink>
+        </section>
+
+        <section className="dashboard-card manager-news-card">
+          <div className="dashboard-card__topline">
+            <span className="dashboard-label">
+              <Megaphone aria-hidden="true" size={15} />
+              Comunicación
+            </span>
+          </div>
+          <h2>Últimas publicaciones</h2>
+          <div className="manager-news-list">
+            {dashboard.latestNews.map((post) => (
+              <article key={post.id}>
+                <span>
+                  {post.type === 'urgent' ? 'Importante' : 'Publicada'}
+                </span>
+                <strong>{post.title}</strong>
+                <small>{post.excerpt}</small>
+              </article>
+            ))}
+          </div>
+          <DashboardLink route="noticias" onNavigate={onNavigate}>
+            Crear una comunicación
+          </DashboardLink>
+        </section>
+      </div>
+    </div>
+  )
+}
+
+export function HomePage({
+  activeRole,
+  data,
+  currentMember,
+  publishingMember,
+  onNavigate,
+}: HomePageProps) {
+  if (activeRole === 'gerente') {
+    return (
+      <ManagerHome
+        data={data}
+        manager={publishingMember}
+        onNavigate={onNavigate}
+      />
+    )
+  }
+
   const dashboard = getPlayerDashboard(data, currentMember.id)
   const firstName = currentMember.displayName.split(' ')[0]
 

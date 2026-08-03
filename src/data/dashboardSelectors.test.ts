@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { demoData } from './demoData'
-import { getPlayerDashboard } from './dashboardSelectors'
+import { getManagerDashboard, getPlayerDashboard } from './dashboardSelectors'
 
 describe('player dashboard selectors', () => {
   it('selects the next event and the member registration', () => {
@@ -46,5 +46,23 @@ describe('player dashboard selectors', () => {
     expect(
       dashboard.newMatches.map(({ seller }) => seller.displayName),
     ).toEqual(['Diego Sánchez', 'Sergio Gil'])
+  })
+})
+
+describe('manager dashboard selectors', () => {
+  it('summarizes upcoming events and operational alerts', () => {
+    const dashboard = getManagerDashboard(demoData)
+
+    expect(dashboard.upcomingEvents).toHaveLength(10)
+    expect(dashboard.upcomingEvents[0]).toMatchObject({
+      event: { id: 'event-dragon-ball-store-championship' },
+      game: { shortName: 'Dragon Ball' },
+    })
+    expect(dashboard.totalWaitlisted).toBe(3)
+    expect(dashboard.fullEvents).toBe(1)
+    expect(dashboard.attentionEvents.map(({ event }) => event.id)).toContain(
+      'event-fnm-pauper',
+    )
+    expect(dashboard.latestNews[0].id).toBe('news-summer-hours')
   })
 })

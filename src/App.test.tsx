@@ -132,6 +132,36 @@ describe('App', () => {
     expect(screen.getByText('2 seleccionados')).toBeInTheDocument()
   })
 
+  it('shows the operational dashboard in manager mode', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
+    fireEvent.click(screen.getByRole('link', { name: 'Inicio' }))
+
+    expect(
+      screen.getByRole('heading', { name: 'Hola, Lucía' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Acciones prioritarias' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Últimas publicaciones' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('3 personas en lista de espera.'),
+    ).toBeInTheDocument()
+    const waitlistMetric = screen
+      .getByText('En lista de espera')
+      .closest('article')
+    expect(
+      within(waitlistMetric as HTMLElement).getByText('3'),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: '2 coincidencias nuevas' }),
+    ).not.toBeInTheDocument()
+  })
+
   it('registers for an available event and cancels the registration', () => {
     render(<App />)
 
