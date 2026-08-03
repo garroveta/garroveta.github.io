@@ -65,14 +65,6 @@ export const demoData = {
       color: '#3569a8',
     },
     {
-      id: 'game-marvel',
-      communityId,
-      name: 'Marvel',
-      shortName: 'Marvel',
-      category: 'card_game',
-      color: '#9e2f42',
-    },
-    {
       id: 'game-warhammer-40k',
       communityId,
       name: 'Warhammer 40,000',
@@ -168,7 +160,6 @@ export const demoData = {
         'game-one-piece',
         'game-dragon-ball',
         'game-gundam',
-        'game-marvel',
         'game-warhammer-40k',
         'game-dungeons-dragons',
       ],
@@ -203,7 +194,7 @@ export const demoData = {
       role: 'player',
       status: 'approved',
       tagIds: ['tag-commander', 'tag-draft'],
-      favoriteGameIds: ['game-mtg', 'game-marvel'],
+      favoriteGameIds: ['game-mtg'],
       contactMethods: [
         {
           kind: 'whatsapp',
@@ -402,24 +393,6 @@ export const demoData = {
       createdByMemberId: 'member-lucia',
       registrationSummary: {
         confirmed: 26,
-        waitlisted: 0,
-      },
-    },
-    {
-      id: 'event-marvel-draft-night',
-      communityId,
-      gameId: 'game-marvel',
-      type: 'draft',
-      title: 'Draft Night Marvel',
-      description: 'Tarde de draft dedicada al juego de cartas de Marvel.',
-      startsAt: '2026-08-01T17:00:00+02:00',
-      endsAt: '2026-08-01T21:00:00+02:00',
-      capacity: 24,
-      status: 'scheduled',
-      tagIds: ['tag-draft'],
-      createdByMemberId: 'member-lucia',
-      registrationSummary: {
-        confirmed: 14,
         waitlisted: 0,
       },
     },

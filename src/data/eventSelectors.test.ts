@@ -19,7 +19,6 @@ describe('event selectors', () => {
       'event-fnm-pauper',
       'event-gundam-store-championship-friday',
       'event-one-piece-store-championship',
-      'event-marvel-draft-night',
       'event-commander-night',
       'event-modern-league',
       'event-presentation-hobbit',

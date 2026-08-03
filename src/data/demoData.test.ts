@@ -116,7 +116,7 @@ describe('demoData', () => {
   it('exposes the expected pilot summary', () => {
     expect(getDemoDataSummary()).toEqual({
       members: 150,
-      events: 12,
+      events: 11,
       newsPosts: 6,
       cardMatches: 5,
     })
