@@ -1315,6 +1315,136 @@ a {
   margin-top: 1.25rem;
 }
 
+.participant-manager {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e9e3df;
+}
+
+.participant-demo-note {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.75rem;
+  color: #746b77;
+  background: #f6f2f7;
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.participant-group + .participant-group {
+  margin-top: 1.15rem;
+}
+
+.participant-group__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.55rem;
+  color: #5c5360;
+  font-size: 0.76rem;
+}
+
+.participant-group__heading span {
+  display: grid;
+  min-width: 1.6rem;
+  min-height: 1.6rem;
+  place-items: center;
+  border-radius: 999px;
+  color: #643778;
+  background: #f1eaf4;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.participant-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.participant-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.7rem;
+  border: 1px solid #e7e1e5;
+  border-radius: 0.85rem;
+  background: #fbfafb;
+}
+
+.participant-row__identity {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.participant-row__identity strong {
+  overflow: hidden;
+  color: #39323c;
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.participant-row__identity small {
+  color: #817984;
+  font-size: 0.68rem;
+}
+
+.waitlist-position {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 0.65rem;
+  color: #775329;
+  background: #f6e7d2;
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.participant-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
+  gap: 0.4rem;
+}
+
+.participant-row__actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2.25rem;
+  padding: 0 0.65rem;
+  border: 1px solid #d9cfdd;
+  border-radius: 0.65rem;
+  color: #613676;
+  background: #fff;
+  font-size: 0.67rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.participant-row__actions .participant-remove {
+  color: #89514d;
+}
+
+.participant-row__actions button:focus-visible {
+  outline: 3px solid rgb(124 86 137 / 35%);
+  outline-offset: 2px;
+}
+
+.participant-empty {
+  margin: 0;
+  padding: 0.8rem;
+  border-radius: 0.75rem;
+  color: #8a818c;
+  background: #f7f4f1;
+  font-size: 0.72rem;
+}
+
 .action-message {
   min-height: 1.25rem;
   margin: 0.6rem 0 0;
@@ -2582,6 +2712,15 @@ a {
 
   .event-detail__facts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .participant-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .participant-row__actions {
+    grid-column: auto;
+    justify-content: flex-end;
   }
 
   .event-composer__grid {

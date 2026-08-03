@@ -273,3 +273,127 @@ export function leaveEventWaitlist(
     ),
   }
 }
+
+export function setEventAttendance(
+  data: DemoDataSet,
+  eventId: string,
+  memberId: string,
+  attended: boolean,
+): DemoDataSet {
+  const registration = data.registrations.find(
+    (candidate) =>
+      candidate.eventId === eventId &&
+      candidate.memberId === memberId &&
+      (candidate.status === 'confirmed' || candidate.status === 'attended'),
+  )
+  const event = data.events.find(({ id }) => id === eventId)
+
+  if (!registration || !event) {
+    return data
+  }
+
+  const nextStatus: EventRegistration['status'] = attended
+    ? 'attended'
+    : 'confirmed'
+
+  if (registration.status === nextStatus) {
+    return data
+  }
+
+  const attendedCount = Math.max(
+    0,
+    (event.registrationSummary.attended ?? 0) + (attended ? 1 : -1),
+  )
+
+  return {
+    ...data,
+    events: data.events.map((candidate) =>
+      candidate.id === eventId
+        ? {
+            ...candidate,
+            registrationSummary: {
+              ...candidate.registrationSummary,
+              attended: attendedCount,
+            },
+          }
+        : candidate,
+    ),
+    registrations: data.registrations.map((candidate) =>
+      candidate.id === registration.id
+        ? { ...candidate, status: nextStatus }
+        : candidate,
+    ),
+  }
+}
+
+export function removeEventParticipant(
+  data: DemoDataSet,
+  eventId: string,
+  memberId: string,
+): DemoDataSet {
+  const registration = data.registrations.find(
+    (candidate) =>
+      candidate.eventId === eventId &&
+      candidate.memberId === memberId &&
+      candidate.status !== 'cancelled',
+  )
+  const event = data.events.find(({ id }) => id === eventId)
+
+  if (!registration || !event || event.status === 'completed') {
+    return data
+  }
+
+  if (registration.status === 'waitlisted') {
+    return leaveEventWaitlist(data, eventId, memberId)
+  }
+
+  const nextWaitlistedRegistration = data.registrations
+    .filter(
+      (candidate) =>
+        candidate.eventId === eventId && candidate.status === 'waitlisted',
+    )
+    .sort(
+      (first, second) =>
+        new Date(first.registeredAt).getTime() -
+        new Date(second.registeredAt).getTime(),
+    )[0]
+  const confirmed = nextWaitlistedRegistration
+    ? event.registrationSummary.confirmed
+    : Math.max(0, event.registrationSummary.confirmed - 1)
+  const waitlisted = nextWaitlistedRegistration
+    ? Math.max(0, event.registrationSummary.waitlisted - 1)
+    : event.registrationSummary.waitlisted
+  const attended = Math.max(
+    0,
+    (event.registrationSummary.attended ?? 0) -
+      (registration.status === 'attended' ? 1 : 0),
+  )
+
+  return {
+    ...data,
+    events: data.events.map((candidate) =>
+      candidate.id === eventId
+        ? {
+            ...candidate,
+            status:
+              confirmed === candidate.capacity
+                ? ('full' as const)
+                : ('scheduled' as const),
+            registrationSummary: {
+              ...candidate.registrationSummary,
+              confirmed,
+              waitlisted,
+              attended,
+            },
+          }
+        : candidate,
+    ),
+    registrations: data.registrations.map((candidate) =>
+      candidate.id === registration.id
+        ? { ...candidate, status: 'cancelled' as const }
+        : candidate.id === nextWaitlistedRegistration?.id
+          ? { ...candidate, status: 'confirmed' as const }
+          : candidate,
+    ),
+  }
+}

@@ -352,6 +352,55 @@ describe('App', () => {
     })
   })
 
+  it('lets a manager record attendance and release a participant place', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
+    fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
+    const commanderCard = screen
+      .getByRole('heading', { name: 'Noche de Commander' })
+      .closest('article')
+    fireEvent.click(
+      within(commanderCard as HTMLElement).getByRole('button', {
+        name: 'Ver detalles',
+      }),
+    )
+
+    expect(
+      screen.getByRole('heading', { name: 'Participantes' }),
+    ).toBeInTheDocument()
+    const alexParticipant = screen.getByText('Álex Romero').closest('article')
+    fireEvent.click(
+      within(alexParticipant as HTMLElement).getByRole('button', {
+        name: 'Registrar asistencia',
+      }),
+    )
+
+    expect(
+      within(alexParticipant as HTMLElement).getByText('Presente'),
+    ).toBeInTheDocument()
+    expect(
+      within(alexParticipant as HTMLElement).getByRole('button', {
+        name: 'Anular asistencia',
+      }),
+    ).toBeInTheDocument()
+
+    fireEvent.click(
+      within(alexParticipant as HTMLElement).getByRole('button', {
+        name: 'Liberar plaza',
+      }),
+    )
+
+    expect(screen.queryByText('Álex Romero')).not.toBeInTheDocument()
+    expect(
+      createLocalDemoRepository(window.localStorage)
+        .load()
+        .registrations.find(({ id }) => id === 'registration-alex-commander')
+        ?.status,
+    ).toBe('cancelled')
+  })
+
   it('browses marketplace offers and the member wanted list', () => {
     render(<App />)
 

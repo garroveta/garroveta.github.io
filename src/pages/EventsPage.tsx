@@ -1,10 +1,13 @@
 import {
   ArrowLeft,
   CalendarDays,
+  CheckCircle2,
   ChevronRight,
   Clock3,
   MapPin,
   Plus,
+  RotateCcw,
+  UserMinus,
   UsersRound,
   X,
 } from 'lucide-react'
@@ -18,11 +21,14 @@ import {
   leaveEventWaitlist,
   publishCommunityEvent,
   registerForEvent,
+  removeEventParticipant,
+  setEventAttendance,
 } from '../data/eventMutations'
 import {
   filterEventAgenda,
   getEventAgenda,
   getEventById,
+  getEventParticipants,
   type EventListItem,
 } from '../data/eventSelectors'
 import type { DemoDataUpdater } from '../data/demoRepository'
@@ -402,12 +408,16 @@ function EventDay({
 }
 
 function EventDetail({
+  activeRole,
+  data,
   item,
   communityName,
   memberId,
   onBack,
   onDataChange,
 }: {
+  activeRole: DemoRole
+  data: DemoDataSet
   item: EventListItem
   communityName: string
   memberId: string
@@ -505,13 +515,13 @@ function EventDetail({
           </p>
         ) : null}
 
-        {item.registration ? (
+        {item.registration && activeRole !== 'gerente' ? (
           <p className="event-detail__registration">
             {registrationLabels[item.registration.status]}
           </p>
         ) : null}
 
-        {item.event.status !== 'completed' ? (
+        {item.event.status !== 'completed' && activeRole !== 'gerente' ? (
           <button
             className="primary-button event-action"
             type="button"
@@ -530,8 +540,157 @@ function EventDetail({
         <p className="action-message" aria-live="polite">
           {actionMessage}
         </p>
+
+        {activeRole === 'gerente' ? (
+          <EventParticipantManager
+            data={data}
+            eventId={item.event.id}
+            onDataChange={onDataChange}
+          />
+        ) : null}
       </article>
     </div>
+  )
+}
+
+function EventParticipantManager({
+  data,
+  eventId,
+  onDataChange,
+}: {
+  data: DemoDataSet
+  eventId: string
+  onDataChange: (updater: DemoDataUpdater) => void
+}) {
+  const participants = getEventParticipants(data, eventId)
+  const event = data.events.find(({ id }) => id === eventId)
+  const registered = participants.filter(
+    ({ registration }) => registration.status !== 'waitlisted',
+  )
+  const waitlisted = participants.filter(
+    ({ registration }) => registration.status === 'waitlisted',
+  )
+  const totalRegistrations = event
+    ? event.registrationSummary.confirmed + event.registrationSummary.waitlisted
+    : 0
+
+  const removeParticipant = (memberId: string) => {
+    onDataChange((currentData) =>
+      removeEventParticipant(currentData, eventId, memberId),
+    )
+  }
+
+  const changeAttendance = (memberId: string, attended: boolean) => {
+    onDataChange((currentData) =>
+      setEventAttendance(currentData, eventId, memberId, attended),
+    )
+  }
+
+  return (
+    <section
+      className="participant-manager"
+      aria-labelledby="participants-title"
+    >
+      <div className="section-heading">
+        <div>
+          <span>Organización</span>
+          <h2 id="participants-title">Participantes</h2>
+        </div>
+        <p>{totalRegistrations} inscripciones</p>
+      </div>
+
+      {participants.length < totalRegistrations ? (
+        <p className="participant-demo-note">
+          El prototipo muestra {participants.length} perfiles detallados de las{' '}
+          {totalRegistrations} inscripciones simuladas.
+        </p>
+      ) : null}
+
+      <div className="participant-group">
+        <div className="participant-group__heading">
+          <strong>Plaza confirmada</strong>
+          <span>{event?.registrationSummary.confirmed ?? 0}</span>
+        </div>
+        {registered.length > 0 ? (
+          <div className="participant-list">
+            {registered.map(({ member, registration }) => {
+              const hasAttended = registration.status === 'attended'
+
+              return (
+                <article className="participant-row" key={registration.id}>
+                  <span className="member-initials" aria-hidden="true">
+                    {member.initials}
+                  </span>
+                  <div className="participant-row__identity">
+                    <strong>{member.displayName}</strong>
+                    <small>{hasAttended ? 'Presente' : 'Confirmada'}</small>
+                  </div>
+                  <div className="participant-row__actions">
+                    <button
+                      type="button"
+                      onClick={() => changeAttendance(member.id, !hasAttended)}
+                    >
+                      {hasAttended ? (
+                        <RotateCcw aria-hidden="true" size={14} />
+                      ) : (
+                        <CheckCircle2 aria-hidden="true" size={14} />
+                      )}
+                      {hasAttended
+                        ? 'Anular asistencia'
+                        : 'Registrar asistencia'}
+                    </button>
+                    <button
+                      className="participant-remove"
+                      type="button"
+                      onClick={() => removeParticipant(member.id)}
+                    >
+                      <UserMinus aria-hidden="true" size={14} />
+                      Liberar plaza
+                    </button>
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        ) : (
+          <p className="participant-empty">No hay perfiles detallados.</p>
+        )}
+      </div>
+
+      <div className="participant-group">
+        <div className="participant-group__heading">
+          <strong>Lista de espera</strong>
+          <span>{event?.registrationSummary.waitlisted ?? 0}</span>
+        </div>
+        {waitlisted.length > 0 ? (
+          <div className="participant-list">
+            {waitlisted.map(({ member, registration, waitlistPosition }) => (
+              <article className="participant-row" key={registration.id}>
+                <span className="waitlist-position" aria-hidden="true">
+                  {waitlistPosition}
+                </span>
+                <div className="participant-row__identity">
+                  <strong>{member.displayName}</strong>
+                  <small>En espera</small>
+                </div>
+                <div className="participant-row__actions">
+                  <button
+                    className="participant-remove"
+                    type="button"
+                    onClick={() => removeParticipant(member.id)}
+                  >
+                    <UserMinus aria-hidden="true" size={14} />
+                    Quitar de la lista
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="participant-empty">No hay nadie en espera.</p>
+        )}
+      </div>
+    </section>
   )
 }
 
@@ -561,6 +720,8 @@ export function EventsPage({
   if (selectedEvent) {
     return (
       <EventDetail
+        activeRole={activeRole}
+        data={data}
         item={selectedEvent}
         communityName={data.community.name}
         memberId={currentMember.id}

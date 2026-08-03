@@ -5,6 +5,7 @@ import {
   filterEventAgenda,
   getEventAgenda,
   getEventById,
+  getEventParticipants,
 } from './eventSelectors'
 
 describe('event selectors', () => {
@@ -54,5 +55,16 @@ describe('event selectors', () => {
     expect(filteredAgenda.past.map(({ event }) => event.id)).toEqual([
       'event-store-championship',
     ])
+  })
+
+  it('joins event registrations with members and orders the waitlist', () => {
+    const participants = getEventParticipants(demoData, 'event-fnm-pauper')
+
+    expect(participants).toHaveLength(1)
+    expect(participants[0]).toMatchObject({
+      member: { displayName: 'Álex Romero' },
+      registration: { status: 'waitlisted' },
+      waitlistPosition: 1,
+    })
   })
 })

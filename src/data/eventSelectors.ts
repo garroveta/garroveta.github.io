@@ -1,6 +1,7 @@
 import type {
   CommunityEvent,
   CommunityGame,
+  CommunityMember,
   CommunityTag,
   DemoDataSet,
   EventType,
@@ -23,6 +24,12 @@ export type EventAgenda = {
 export type EventAgendaFilters = {
   gameId?: string
   type?: EventType
+}
+
+export type EventParticipant = {
+  registration: EventRegistration
+  member: CommunityMember
+  waitlistPosition?: number
 }
 
 function byStartTime(first: EventListItem, second: EventListItem) {
@@ -106,4 +113,52 @@ export function getEventById(
   return [...agenda.upcoming, ...agenda.past].find(
     ({ event }) => event.id === eventId,
   )
+}
+
+export function getEventParticipants(
+  data: DemoDataSet,
+  eventId: string,
+): EventParticipant[] {
+  const membersById = new Map(data.members.map((member) => [member.id, member]))
+  const registrations = data.registrations
+    .filter(
+      (registration) =>
+        registration.eventId === eventId && registration.status !== 'cancelled',
+    )
+    .sort((first, second) => {
+      const statusOrder = {
+        attended: 0,
+        confirmed: 1,
+        waitlisted: 2,
+        cancelled: 3,
+      }
+
+      return (
+        statusOrder[first.status] - statusOrder[second.status] ||
+        new Date(first.registeredAt).getTime() -
+          new Date(second.registeredAt).getTime()
+      )
+    })
+  let waitlistPosition = 0
+
+  return registrations.flatMap((registration) => {
+    const member = membersById.get(registration.memberId)
+
+    if (!member) {
+      return []
+    }
+
+    if (registration.status === 'waitlisted') {
+      waitlistPosition += 1
+    }
+
+    return [
+      {
+        registration,
+        member,
+        waitlistPosition:
+          registration.status === 'waitlisted' ? waitlistPosition : undefined,
+      },
+    ]
+  })
 }
