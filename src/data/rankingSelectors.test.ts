@@ -1,0 +1,82 @@
+import { describe, expect, it } from 'vitest'
+
+import { demoData } from './demoData'
+import {
+  getCommunityLeaderboard,
+  getCommunityPoints,
+  getLatestEventStandings,
+} from './rankingSelectors'
+
+describe('rankingSelectors', () => {
+  it('applies the simple community points scale', () => {
+    expect([1, 2, 3, 4, 5, 6, 10, 11].map(getCommunityPoints)).toEqual([
+      10, 8, 6, 5, 4, 3, 3, 1,
+    ])
+  })
+
+  it('lists completed standings from the most recent event', () => {
+    const standings = getLatestEventStandings(demoData)
+
+    expect(standings[0]).toMatchObject({
+      event: { title: 'Win a Box Pauper' },
+      game: { shortName: 'MTG' },
+      format: { shortName: 'Pauper' },
+      eventKind: { shortName: 'Win a Box' },
+    })
+  })
+
+  it('builds a six-month MTG Pauper ranking across all event kinds', () => {
+    const ranking = getCommunityLeaderboard(demoData, {
+      gameId: 'game-mtg',
+      formatId: 'format-mtg-pauper',
+      months: 6,
+    })
+
+    expect(
+      ranking
+        .slice(0, 3)
+        .map(({ member, points }) => [member.displayName, points]),
+    ).toEqual([
+      ['Carla Pons', 47],
+      ['Sergio Gil', 46],
+      ['Biel Ferrer', 42],
+    ])
+    expect(ranking.every(({ member }) => member.status === 'approved')).toBe(
+      true,
+    )
+    expect(ranking.some(({ member }) => member.displayName === 'Toni M.')).toBe(
+      false,
+    )
+  })
+
+  it('filters the cumulative ranking by FNM and rolling period', () => {
+    const sixMonths = getCommunityLeaderboard(demoData, {
+      gameId: 'game-mtg',
+      formatId: 'format-mtg-pauper',
+      competitionEventKindId: 'event-kind-fnm',
+      months: 6,
+    })
+    const twelveMonths = getCommunityLeaderboard(demoData, {
+      gameId: 'game-mtg',
+      formatId: 'format-mtg-pauper',
+      competitionEventKindId: 'event-kind-fnm',
+      months: 12,
+    })
+
+    expect(sixMonths[0]).toMatchObject({ points: 38, eventsPlayed: 5 })
+    expect(twelveMonths[0].eventsPlayed).toBe(6)
+  })
+
+  it('keeps games separate', () => {
+    const onePieceRanking = getCommunityLeaderboard(demoData, {
+      gameId: 'game-one-piece',
+      months: 6,
+    })
+
+    expect(onePieceRanking[0]).toMatchObject({
+      member: { displayName: 'Marc Vidal' },
+      points: 10,
+      eventWins: 1,
+    })
+  })
+})

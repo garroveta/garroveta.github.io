@@ -46,6 +46,20 @@ export type CommunityGame = {
   color: string
 }
 
+export type CompetitionFormat = {
+  id: EntityId
+  gameId: EntityId
+  name: string
+  shortName: string
+  color: string
+}
+
+export type CompetitionEventKind = {
+  id: EntityId
+  name: string
+  shortName: string
+}
+
 export type CommunityRole = 'player' | 'manager' | 'moderator'
 
 export type ContactMethod = {
@@ -80,6 +94,9 @@ export type CommunityEvent = {
   id: EntityId
   communityId: EntityId
   gameId?: EntityId
+  formatId?: EntityId
+  competitionEventKindId?: EntityId
+  countsForCommunityRanking?: boolean
   type: EventType
   title: string
   description: string
@@ -90,6 +107,18 @@ export type CommunityEvent = {
   tagIds: EntityId[]
   createdByMemberId: EntityId
   registrationSummary: EventRegistrationSummary
+}
+
+export type EventStandingEntry = {
+  rank: number
+  memberId?: EntityId
+  displayName: string
+}
+
+export type EventStanding = {
+  id: EntityId
+  eventId: EntityId
+  entries: EventStandingEntry[]
 }
 
 export type EventRegistration = {
@@ -184,9 +213,12 @@ export type DemoDataSet = {
   currentMemberId: EntityId
   community: Community
   games: CommunityGame[]
+  competitionFormats: CompetitionFormat[]
+  competitionEventKinds: CompetitionEventKind[]
   tags: CommunityTag[]
   members: CommunityMember[]
   events: CommunityEvent[]
+  eventStandings: EventStanding[]
   registrations: EventRegistration[]
   newsPosts: NewsPost[]
   cards: Card[]

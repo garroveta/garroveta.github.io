@@ -11,9 +11,12 @@ function expectUniqueIds(items: Array<{ id: string }>) {
 describe('demoData', () => {
   it('contains unique identifiers in every collection', () => {
     expectUniqueIds(demoData.games)
+    expectUniqueIds(demoData.competitionFormats)
+    expectUniqueIds(demoData.competitionEventKinds)
     expectUniqueIds(demoData.tags)
     expectUniqueIds(demoData.members)
     expectUniqueIds(demoData.events)
+    expectUniqueIds(demoData.eventStandings)
     expectUniqueIds(demoData.registrations)
     expectUniqueIds(demoData.newsPosts)
     expectUniqueIds(demoData.cards)
@@ -26,6 +29,10 @@ describe('demoData', () => {
   it('keeps all community references consistent', () => {
     const memberIds = new Set(demoData.members.map(({ id }) => id))
     const gameIds = new Set(demoData.games.map(({ id }) => id))
+    const formatIds = new Set(demoData.competitionFormats.map(({ id }) => id))
+    const competitionEventKindIds = new Set(
+      demoData.competitionEventKinds.map(({ id }) => id),
+    )
     const tagIds = new Set(demoData.tags.map(({ id }) => id))
     const eventIds = new Set(demoData.events.map(({ id }) => id))
     const cardIds = new Set(demoData.cards.map(({ id }) => id))
@@ -51,16 +58,38 @@ describe('demoData', () => {
       )
     }
 
+    for (const format of demoData.competitionFormats) {
+      expect(gameIds.has(format.gameId)).toBe(true)
+    }
+
     for (const event of demoData.events) {
       expect(event.communityId).toBe(demoData.community.id)
       expect(memberIds.has(event.createdByMemberId)).toBe(true)
       if (event.gameId) {
         expect(gameIds.has(event.gameId)).toBe(true)
       }
+      if (event.formatId) {
+        expect(formatIds.has(event.formatId)).toBe(true)
+      }
+      if (event.competitionEventKindId) {
+        expect(competitionEventKindIds.has(event.competitionEventKindId)).toBe(
+          true,
+        )
+      }
       expect(event.registrationSummary.confirmed).toBeLessThanOrEqual(
         event.capacity,
       )
       event.tagIds.forEach((tagId) => expect(tagIds.has(tagId)).toBe(true))
+    }
+
+    for (const standing of demoData.eventStandings) {
+      expect(eventIds.has(standing.eventId)).toBe(true)
+      for (const entry of standing.entries) {
+        if (entry.memberId) {
+          expect(memberIds.has(entry.memberId)).toBe(true)
+        }
+        expect(entry.rank).toBeGreaterThan(0)
+      }
     }
 
     for (const registration of demoData.registrations) {
@@ -116,7 +145,7 @@ describe('demoData', () => {
   it('exposes the expected pilot summary', () => {
     expect(getDemoDataSummary()).toEqual({
       members: 150,
-      events: 11,
+      events: 22,
       newsPosts: 6,
       cardMatches: 5,
     })
