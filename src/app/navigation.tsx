@@ -3,11 +3,13 @@ import {
   House,
   Newspaper,
   Search,
+  Trophy,
   UserRound,
   type LucideIcon,
 } from 'lucide-react'
 
-export type AppRoute = 'inicio' | 'eventos' | 'cartas' | 'noticias' | 'perfil'
+export type AppRoute =
+  'inicio' | 'eventos' | 'ranking' | 'cartas' | 'noticias' | 'perfil'
 
 export type NavigationItem = {
   id: AppRoute
@@ -28,6 +30,12 @@ export const navigationItems: NavigationItem[] = [
     label: 'Eventos',
     icon: CalendarDays,
     description: 'Agenda, inscripciones, listas de espera y clasificaciones.',
+  },
+  {
+    id: 'ranking',
+    label: 'Ranking',
+    icon: Trophy,
+    description: 'Resultados recientes y clasificación de la comunidad.',
   },
   {
     id: 'cartas',

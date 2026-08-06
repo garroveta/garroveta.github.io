@@ -58,6 +58,32 @@ describe('App', () => {
     )
   })
 
+  it('opens the latest community event standings', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Ranking' }))
+
+    expect(
+      screen.getByRole('heading', { name: 'Clasificaciones' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'MTG · Pauper' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Win a Box Pauper' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Carla Pons')).toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /FNM Pauper.*24 de julio de 2026/,
+      }),
+    )
+
+    expect(screen.getByText('16 participantes')).toBeInTheDocument()
+    expect(screen.getByText('Sergio Gil')).toBeInTheDocument()
+  })
+
   it('opens an event detail and returns to the agenda', () => {
     render(<App />)
 

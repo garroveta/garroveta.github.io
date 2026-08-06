@@ -57,19 +57,21 @@ export function getEventAgenda(
       .map((registration) => [registration.eventId, registration]),
   )
 
-  const items = data.events.flatMap((event) => {
-    return [
-      {
-        event,
-        game: event.gameId ? gamesById.get(event.gameId) : undefined,
-        tags: event.tagIds.flatMap((tagId) => {
-          const tag = tagsById.get(tagId)
-          return tag ? [tag] : []
-        }),
-        registration: registrationsByEventId.get(event.id),
-      },
-    ]
-  })
+  const items = data.events
+    .filter(({ listedInAgenda }) => listedInAgenda !== false)
+    .flatMap((event) => {
+      return [
+        {
+          event,
+          game: event.gameId ? gamesById.get(event.gameId) : undefined,
+          tags: event.tagIds.flatMap((tagId) => {
+            const tag = tagsById.get(tagId)
+            return tag ? [tag] : []
+          }),
+          registration: registrationsByEventId.get(event.id),
+        },
+      ]
+    })
 
   return {
     upcoming: items

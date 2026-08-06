@@ -97,6 +97,7 @@ export type CommunityEvent = {
   formatId?: EntityId
   competitionEventKindId?: EntityId
   countsForCommunityRanking?: boolean
+  listedInAgenda?: boolean
   type: EventType
   title: string
   description: string

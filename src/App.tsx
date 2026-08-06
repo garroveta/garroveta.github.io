@@ -12,6 +12,7 @@ import { HomePage } from './pages/HomePage'
 import { NewsPage } from './pages/NewsPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { ProfilePage } from './pages/ProfilePage'
+import { RankingsPage } from './pages/RankingsPage'
 
 function getCurrentMember(data: DemoDataSet) {
   const member = data.members.find(({ id }) => id === data.currentMemberId)
@@ -71,6 +72,8 @@ export function App() {
             publishingMember={publishingMember}
             onDataChange={updateData}
           />
+        ) : activeRoute === 'ranking' ? (
+          <RankingsPage data={data} />
         ) : activeRoute === 'cartas' ? (
           <CardsPage
             data={data}
