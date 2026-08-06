@@ -12,6 +12,7 @@ import { demoData } from './demoData'
 
 describe('event registration mutations', () => {
   it('lets the manager publish a multi-game event', () => {
+    const originalEventCount = demoData.events.length
     const updatedData = publishCommunityEvent(demoData, {
       createdByMemberId: 'member-lucia',
       gameId: 'game-one-piece',
@@ -34,7 +35,8 @@ describe('event registration mutations', () => {
       createdByMemberId: 'member-lucia',
       registrationSummary: { confirmed: 0, waitlisted: 0 },
     })
-    expect(demoData.events).toHaveLength(11)
+    expect(updatedData.events).toHaveLength(originalEventCount + 1)
+    expect(demoData.events).toHaveLength(originalEventCount)
   })
 
   it('rejects event publication from a player', () => {

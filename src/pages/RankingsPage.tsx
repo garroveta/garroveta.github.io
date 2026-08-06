@@ -1,6 +1,8 @@
 import {
   CalendarDays,
   ChevronRight,
+  Crown,
+  ListOrdered,
   Medal,
   Sparkles,
   Trophy,
@@ -10,8 +12,11 @@ import {
 import { useMemo, useState } from 'react'
 
 import {
+  getCommunityLeaderboard,
   getCommunityPoints,
   getLatestEventStandings,
+  type CommunityRankingPlayer,
+  type RankingFilters,
   type ResolvedEventStanding,
 } from '../data/rankingSelectors'
 import type { DemoDataSet } from '../domain/types'
@@ -19,6 +24,8 @@ import type { DemoDataSet } from '../domain/types'
 type RankingsPageProps = {
   data: DemoDataSet
 }
+
+type RankingView = 'community' | 'events'
 
 const eventDateFormatter = new Intl.DateTimeFormat('es-ES', {
   day: 'numeric',
@@ -136,8 +143,233 @@ function EventRankingDetail({ item }: { item: ResolvedEventStanding }) {
   )
 }
 
+function TopPlayerCard({ player }: { player: CommunityRankingPlayer }) {
+  return (
+    <article className={`top-player-card top-player-card--${player.rank}`}>
+      <span className="top-player-card__rank">
+        {player.rank === 1 ? <Crown aria-hidden="true" size={16} /> : null}#
+        {player.rank}
+      </span>
+      <span className="top-player-card__avatar">{player.member.initials}</span>
+      <div>
+        <h3>{player.member.displayName}</h3>
+        <p>
+          {player.eventsPlayed} eventos · {player.podiums} podios
+        </p>
+      </div>
+      <strong>{player.points} pts</strong>
+    </article>
+  )
+}
+
+function CommunityRanking({ data }: { data: DemoDataSet }) {
+  const [gameId, setGameId] = useState('game-mtg')
+  const [formatId, setFormatId] = useState('format-mtg-pauper')
+  const [eventKindId, setEventKindId] = useState('')
+  const [months, setMonths] = useState<RankingFilters['months']>(6)
+  const [limit, setLimit] = useState<10 | 20>(10)
+  const games = data.games.filter(
+    ({ category }) => category !== 'role_playing_game',
+  )
+  const formats = data.competitionFormats.filter(
+    (format) => format.gameId === gameId,
+  )
+  const ranking = useMemo(
+    () =>
+      getCommunityLeaderboard(data, {
+        gameId,
+        formatId: formatId || undefined,
+        competitionEventKindId: eventKindId || undefined,
+        months,
+      }),
+    [data, eventKindId, formatId, gameId, months],
+  )
+  const selectedGame = data.games.find(({ id }) => id === gameId)
+  const selectedFormat = data.competitionFormats.find(
+    ({ id }) => id === formatId,
+  )
+  const selectedEventKind = data.competitionEventKinds.find(
+    ({ id }) => id === eventKindId,
+  )
+  const rankingTitle = [
+    selectedGame?.shortName,
+    selectedFormat?.shortName ?? 'Todos los formatos',
+    selectedEventKind?.shortName ?? 'Todos los eventos',
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
+  const changeGame = (nextGameId: string) => {
+    setGameId(nextGameId)
+    setFormatId(nextGameId === 'game-mtg' ? 'format-mtg-pauper' : '')
+    setEventKindId('')
+  }
+
+  return (
+    <section
+      className="community-ranking"
+      aria-labelledby="community-ranking-title"
+    >
+      <div className="ranking-filter-panel">
+        <div className="ranking-filter-panel__heading">
+          <div>
+            <span>Personaliza el ranking</span>
+            <h2>Filtros</h2>
+          </div>
+          <span className="ranking-period-summary">Últimos {months} meses</span>
+        </div>
+
+        <div className="ranking-select-grid">
+          <label className="form-field">
+            <span>Juego</span>
+            <select
+              value={gameId}
+              onChange={(event) => changeGame(event.target.value)}
+            >
+              {games.map((game) => (
+                <option key={game.id} value={game.id}>
+                  {game.shortName}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="form-field">
+            <span>Formato</span>
+            <select
+              value={formatId}
+              onChange={(event) => setFormatId(event.target.value)}
+            >
+              <option value="">Todos los formatos</option>
+              {formats.map((format) => (
+                <option key={format.id} value={format.id}>
+                  {format.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="form-field">
+            <span>Tipo de evento</span>
+            <select
+              value={eventKindId}
+              onChange={(event) => setEventKindId(event.target.value)}
+            >
+              <option value="">Todos los eventos</option>
+              {data.competitionEventKinds.map((eventKind) => (
+                <option key={eventKind.id} value={eventKind.id}>
+                  {eventKind.shortName}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="ranking-choice-row">
+          <div>
+            <span>Periodo</span>
+            <div className="ranking-segmented" aria-label="Periodo del ranking">
+              {([3, 6, 12] as const).map((period) => (
+                <button
+                  key={period}
+                  type="button"
+                  aria-pressed={months === period}
+                  onClick={() => setMonths(period)}
+                >
+                  {period} meses
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <span>Clasificación</span>
+            <div className="ranking-segmented" aria-label="Tamaño del ranking">
+              {([10, 20] as const).map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  aria-pressed={limit === size}
+                  onClick={() => setLimit(size)}
+                >
+                  Top {size}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="community-ranking__heading">
+        <div>
+          <span>Clasificación acumulada</span>
+          <h2 id="community-ranking-title">{rankingTitle}</h2>
+        </div>
+        <p>{ranking.length} jugadores clasificados</p>
+      </div>
+
+      {ranking.length > 0 ? (
+        <>
+          <div className="top-five" aria-label="Top 5 de la comunidad">
+            {ranking.slice(0, 5).map((player) => (
+              <TopPlayerCard key={player.member.id} player={player} />
+            ))}
+          </div>
+
+          <div className="ranking-table-wrap cumulative-ranking-table-wrap">
+            <table
+              className="ranking-table cumulative-ranking-table"
+              aria-label="Clasificación acumulada"
+            >
+              <thead>
+                <tr>
+                  <th scope="col">Pos.</th>
+                  <th scope="col">Jugador</th>
+                  <th scope="col">Eventos</th>
+                  <th scope="col">Victorias</th>
+                  <th scope="col">Podios</th>
+                  <th scope="col">Puntos</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ranking.slice(0, limit).map((player) => (
+                  <tr key={player.member.id}>
+                    <td>
+                      <span
+                        className={`ranking-position ranking-position--${player.rank}`}
+                      >
+                        {player.rank}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="ranking-player-name">
+                        {player.member.displayName}
+                      </span>
+                    </td>
+                    <td>{player.eventsPlayed}</td>
+                    <td>{player.eventWins}</td>
+                    <td>{player.podiums}</td>
+                    <td>
+                      <strong>{player.points}</strong>
+                      <span className="ranking-points-label"> pts</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : (
+        <div className="ranking-empty-state">
+          <ListOrdered aria-hidden="true" size={28} />
+          <h3>Aún no hay resultados con estos filtros.</h3>
+          <p>Prueba otro formato, tipo de evento o periodo.</p>
+        </div>
+      )}
+    </section>
+  )
+}
+
 export function RankingsPage({ data }: RankingsPageProps) {
   const standings = useMemo(() => getLatestEventStandings(data), [data])
+  const [activeView, setActiveView] = useState<RankingView>('community')
   const [selectedStandingId, setSelectedStandingId] = useState(
     standings[0]?.standing.id ?? '',
   )
@@ -177,31 +409,64 @@ export function RankingsPage({ data }: RankingsPageProps) {
         </span>
       </section>
 
-      {selectedStanding ? <EventRankingDetail item={selectedStanding} /> : null}
-
-      <section
-        className="latest-results"
-        aria-labelledby="latest-results-title"
+      <div
+        className="ranking-view-tabs"
+        role="tablist"
+        aria-label="Vistas de clasificación"
       >
-        <div className="section-heading">
-          <div>
-            <span>Historial</span>
-            <h2 id="latest-results-title">Últimos resultados</h2>
-          </div>
-          <p>{standings.length} clasificaciones</p>
-        </div>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeView === 'community'}
+          onClick={() => setActiveView('community')}
+        >
+          <Trophy aria-hidden="true" size={17} />
+          Comunidad
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeView === 'events'}
+          onClick={() => setActiveView('events')}
+        >
+          <CalendarDays aria-hidden="true" size={17} />
+          Últimos eventos
+        </button>
+      </div>
 
-        <div className="result-card-grid">
-          {standings.map((item) => (
-            <EventRankingCard
-              key={item.standing.id}
-              item={item}
-              selected={item.standing.id === selectedStanding?.standing.id}
-              onSelect={() => setSelectedStandingId(item.standing.id)}
-            />
-          ))}
-        </div>
-      </section>
+      {activeView === 'community' ? (
+        <CommunityRanking data={data} />
+      ) : (
+        <>
+          {selectedStanding ? (
+            <EventRankingDetail item={selectedStanding} />
+          ) : null}
+
+          <section
+            className="latest-results"
+            aria-labelledby="latest-results-title"
+          >
+            <div className="section-heading">
+              <div>
+                <span>Historial</span>
+                <h2 id="latest-results-title">Últimos resultados</h2>
+              </div>
+              <p>{standings.length} clasificaciones</p>
+            </div>
+
+            <div className="result-card-grid">
+              {standings.map((item) => (
+                <EventRankingCard
+                  key={item.standing.id}
+                  item={item}
+                  selected={item.standing.id === selectedStanding?.standing.id}
+                  onSelect={() => setSelectedStandingId(item.standing.id)}
+                />
+              ))}
+            </div>
+          </section>
+        </>
+      )}
 
       <aside className="ranking-method-note">
         <Medal aria-hidden="true" size={20} />

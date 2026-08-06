@@ -69,6 +69,9 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'MTG · Pauper' }),
     ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Últimos eventos' }))
+
     expect(
       screen.getByRole('heading', { name: 'Win a Box Pauper' }),
     ).toBeInTheDocument()
@@ -82,6 +85,50 @@ describe('App', () => {
 
     expect(screen.getByText('16 participantes')).toBeInTheDocument()
     expect(screen.getByText('Sergio Gil')).toBeInTheDocument()
+  })
+
+  it('filters the cumulative community ranking', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Ranking' }))
+
+    expect(screen.getByRole('tab', { name: 'Comunidad' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    expect(
+      screen.getByRole('heading', {
+        name: 'MTG · Pauper · Todos los eventos',
+      }),
+    ).toBeInTheDocument()
+
+    const rankingTable = screen.getByRole('table', {
+      name: 'Clasificación acumulada',
+    })
+    expect(
+      within(rankingTable).getByRole('row', {
+        name: /1 Carla Pons 6 2 5 47pts/,
+      }),
+    ).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Tipo de evento'), {
+      target: { value: 'event-kind-fnm' },
+    })
+
+    expect(
+      screen.getByRole('heading', { name: 'MTG · Pauper · FNM' }),
+    ).toBeInTheDocument()
+    expect(
+      within(rankingTable).getByRole('row', {
+        name: /1 Sergio Gil 5 2 5 38pts/,
+      }),
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Top 20' }))
+    expect(screen.getByRole('button', { name: 'Top 20' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
   })
 
   it('opens an event detail and returns to the agenda', () => {

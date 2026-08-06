@@ -2836,6 +2836,252 @@ a {
   max-width: 44rem;
 }
 
+.ranking-view-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+  padding: 0.35rem;
+  border: 1px solid #ded7e0;
+  border-radius: 0.95rem;
+  background: #f0ecef;
+}
+
+.ranking-view-tabs button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  border: 0;
+  border-radius: 0.7rem;
+  color: #756c77;
+  background: transparent;
+  font-size: 0.76rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ranking-view-tabs button[aria-selected='true'] {
+  color: #5b2b77;
+  background: #fff;
+  box-shadow: 0 0.35rem 0.9rem rgb(51 43 55 / 8%);
+}
+
+.community-ranking {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.ranking-filter-panel {
+  padding: 1rem;
+  border: 1px solid #e2dce4;
+  border-radius: 1.1rem;
+  background: #fff;
+  box-shadow: 0 0.7rem 1.8rem rgb(51 43 55 / 5%);
+}
+
+.ranking-filter-panel__heading,
+.community-ranking__heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.ranking-filter-panel__heading > div > span,
+.community-ranking__heading > div > span {
+  color: #7c5689;
+  font-size: 0.65rem;
+  font-weight: 850;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.ranking-filter-panel__heading h2,
+.community-ranking__heading h2 {
+  margin: 0.2rem 0 0;
+  color: #2f2933;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.3rem;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.ranking-period-summary {
+  flex: 0 0 auto;
+  padding: 0.35rem 0.5rem;
+  border-radius: 999px;
+  color: #684776;
+  background: #f2ebf5;
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+.ranking-select-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.ranking-choice-row {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee9ef;
+}
+
+.ranking-choice-row > div > span {
+  display: block;
+  margin-bottom: 0.45rem;
+  color: #665c69;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.ranking-segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.ranking-segmented button {
+  min-height: 2.35rem;
+  padding: 0 0.7rem;
+  border: 1px solid #ded7e0;
+  border-radius: 0.65rem;
+  color: #716873;
+  background: #f8f6f8;
+  font-size: 0.68rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ranking-segmented button[aria-pressed='true'] {
+  border-color: #704184;
+  color: #fff;
+  background: #5b2b77;
+}
+
+.community-ranking__heading {
+  align-items: start;
+}
+
+.community-ranking__heading h2 {
+  font-size: clamp(1.4rem, 5vw, 2rem);
+}
+
+.community-ranking__heading > p {
+  margin: 0.15rem 0 0;
+  color: #8b838d;
+  font-size: 0.68rem;
+  text-align: right;
+}
+
+.top-five {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.top-player-card {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.8rem;
+  border: 1px solid #e3dde5;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 0.5rem 1.4rem rgb(51 43 55 / 5%);
+}
+
+.top-player-card--1 {
+  border-color: #d8b75c;
+  background:
+    radial-gradient(circle at 100% 0, rgb(222 178 61 / 18%), transparent 35%),
+    #fffaf0;
+}
+
+.top-player-card__rank {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  color: #7c5689;
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+.top-player-card--1 .top-player-card__rank {
+  color: #8a621f;
+}
+
+.top-player-card__avatar {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
+  border-radius: 0.75rem;
+  color: #fff;
+  background: #6a3a7e;
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.top-player-card--1 .top-player-card__avatar {
+  background: #99702b;
+}
+
+.top-player-card h3 {
+  margin: 0;
+  color: #332e36;
+  font-size: 0.8rem;
+}
+
+.top-player-card p {
+  margin: 0.16rem 0 0;
+  color: #8b838d;
+  font-size: 0.64rem;
+}
+
+.top-player-card > strong {
+  color: #5b2b77;
+  font-size: 0.82rem;
+}
+
+.top-player-card--1 > strong {
+  color: #855d1d;
+}
+
+.cumulative-ranking-table {
+  min-width: 42rem;
+}
+
+.cumulative-ranking-table th:nth-child(n + 3):not(:last-child),
+.cumulative-ranking-table td:nth-child(n + 3):not(:last-child) {
+  width: 5.5rem;
+  text-align: center;
+}
+
+.ranking-empty-state {
+  padding: 2rem 1rem;
+  border: 1px dashed #d9d1dc;
+  border-radius: 1rem;
+  color: #7f7582;
+  background: #faf8fa;
+  text-align: center;
+}
+
+.ranking-empty-state h3 {
+  margin: 0.7rem 0 0;
+  color: #4c4550;
+  font-size: 0.95rem;
+}
+
+.ranking-empty-state p {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+}
+
 .pauper-highlight {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -3312,6 +3558,22 @@ a {
 
   .result-card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ranking-select-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .ranking-choice-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .top-five {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .top-player-card--1 {
+    grid-column: 1 / -1;
   }
 
   .publication-list {
