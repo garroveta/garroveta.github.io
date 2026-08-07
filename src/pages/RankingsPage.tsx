@@ -1,5 +1,6 @@
 import {
   CalendarDays,
+  ChevronDown,
   ChevronRight,
   Crown,
   ListOrdered,
@@ -19,7 +20,7 @@ import {
   type RankingFilters,
   type ResolvedEventStanding,
 } from '../data/rankingSelectors'
-import type { DemoDataSet } from '../domain/types'
+import type { DemoDataSet, EventStandingEntry } from '../domain/types'
 
 type RankingsPageProps = {
   data: DemoDataSet
@@ -69,6 +70,144 @@ function EventRankingCard({
         <ChevronRight aria-hidden="true" size={16} />
       </span>
     </button>
+  )
+}
+
+function MobileEventStandingList({
+  entries,
+  eventTitle,
+}: {
+  entries: EventStandingEntry[]
+  eventTitle: string
+}) {
+  const [expandedEntries, setExpandedEntries] = useState<Set<number>>(
+    () => new Set(),
+  )
+  const allExpanded =
+    entries.length > 0 &&
+    entries.every((_, index) => expandedEntries.has(index))
+
+  const toggleEntry = (index: number) => {
+    setExpandedEntries((current) => {
+      const next = new Set(current)
+
+      if (next.has(index)) {
+        next.delete(index)
+      } else {
+        next.add(index)
+      }
+
+      return next
+    })
+  }
+
+  const toggleAll = () => {
+    setExpandedEntries(
+      allExpanded ? new Set() : new Set(entries.map((_, index) => index)),
+    )
+  }
+
+  return (
+    <section
+      className="mobile-standing"
+      aria-label={`Clasificación móvil de ${eventTitle}`}
+    >
+      <div className="mobile-standing__toolbar">
+        <span>Clasificación</span>
+        <button type="button" onClick={toggleAll}>
+          {allExpanded ? 'Ocultar desempates' : 'Mostrar todos los desempates'}
+        </button>
+      </div>
+
+      <ol className="mobile-standing__list">
+        {entries.map((entry, index) => {
+          const isExpanded = expandedEntries.has(index)
+          const detailsId = `mobile-tiebreakers-${index}`
+
+          return (
+            <li
+              className={`mobile-standing-card mobile-standing-card--${entry.rank}`}
+              key={`${entry.rank}-${entry.displayName}-${index}`}
+            >
+              <div className="mobile-standing-card__main">
+                <span
+                  className={`ranking-position ranking-position--${entry.rank}`}
+                  aria-label={`Posición ${entry.rank}`}
+                >
+                  {entry.rank}
+                </span>
+                <div className="mobile-standing-card__identity">
+                  <strong>{entry.displayName}</strong>
+                  {!entry.memberId ? (
+                    <span className="ranking-guest">
+                      <UserRound aria-hidden="true" size={12} />
+                      Invitado
+                    </span>
+                  ) : null}
+                </div>
+                <div className="mobile-standing-points">
+                  <span className="mobile-standing-point mobile-standing-point--event">
+                    <strong>{entry.eventPoints}</strong>
+                    <small>pts evento</small>
+                  </span>
+                  <span className="mobile-standing-point mobile-standing-point--community">
+                    <strong>+{getCommunityPoints(entry.rank)}</strong>
+                    <small>comunidad</small>
+                  </span>
+                </div>
+              </div>
+
+              <div className="mobile-standing-card__summary">
+                <span>
+                  V/D/E{' '}
+                  <strong>
+                    {entry.wins}/{entry.losses}/{entry.draws}
+                  </strong>
+                </span>
+                <button
+                  type="button"
+                  aria-label={`${isExpanded ? 'Ocultar' : 'Desempates'} de ${entry.displayName}`}
+                  aria-controls={detailsId}
+                  aria-expanded={isExpanded}
+                  onClick={() => toggleEntry(index)}
+                >
+                  {isExpanded ? 'Ocultar' : 'Desempates'}
+                  <ChevronDown aria-hidden="true" size={15} />
+                </button>
+              </div>
+
+              {isExpanded ? (
+                <div
+                  className="mobile-standing-card__tiebreakers"
+                  id={detailsId}
+                >
+                  <span>
+                    <abbr title="Porcentaje de victorias de los oponentes">
+                      %VPO
+                    </abbr>
+                    <strong>
+                      {formatPercentage(entry.opponentMatchWinPercentage)}
+                    </strong>
+                  </span>
+                  <span>
+                    <abbr title="Porcentaje de juegos ganados">%JG</abbr>
+                    <strong>{formatPercentage(entry.gameWinPercentage)}</strong>
+                  </span>
+                  <span>
+                    <abbr title="Porcentaje de juegos ganados por los oponentes">
+                      %JGO
+                    </abbr>
+                    <strong>
+                      {formatPercentage(entry.opponentGameWinPercentage)}
+                    </strong>
+                  </span>
+                </div>
+              ) : null}
+            </li>
+          )
+        })}
+      </ol>
+    </section>
   )
 }
 
@@ -123,7 +262,13 @@ function EventRankingDetail({ item }: { item: ResolvedEventStanding }) {
         </div>
       </div>
 
-      <div className="ranking-table-wrap">
+      <MobileEventStandingList
+        key={item.standing.id}
+        entries={item.standing.entries}
+        eventTitle={item.event.title}
+      />
+
+      <div className="ranking-table-wrap event-standing-desktop">
         <table
           className="ranking-table event-standing-table"
           aria-label={`Clasificación de ${item.event.title}`}

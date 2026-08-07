@@ -75,7 +75,7 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Win a Box Pauper' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Carla Pons')).toBeInTheDocument()
+    expect(screen.getAllByText('Carla Pons')).not.toHaveLength(0)
     expect(
       screen.getByRole('columnheader', { name: 'Pts evento' }),
     ).toBeInTheDocument()
@@ -94,6 +94,26 @@ describe('App', () => {
       screen.getByText('+10', { selector: '.community-points-value' }),
     ).toBeInTheDocument()
 
+    const mobileRanking = screen.getByRole('region', {
+      name: 'Clasificación móvil de Win a Box Pauper',
+    })
+    const firstMobileEntry = within(mobileRanking).getAllByRole('listitem')[0]
+    expect(within(firstMobileEntry).getByText('3/0/0')).toBeInTheDocument()
+    expect(within(firstMobileEntry).queryByText('%VPO')).not.toBeInTheDocument()
+
+    fireEvent.click(
+      within(firstMobileEntry).getByRole('button', {
+        name: 'Desempates de Carla Pons',
+      }),
+    )
+
+    expect(within(firstMobileEntry).getByText('%VPO')).toBeInTheDocument()
+    expect(
+      within(firstMobileEntry).getByRole('button', {
+        name: 'Ocultar de Carla Pons',
+      }),
+    ).toHaveAttribute('aria-expanded', 'true')
+
     fireEvent.click(
       screen.getByRole('button', {
         name: /FNM Pauper.*24 de julio de 2026/,
@@ -101,7 +121,7 @@ describe('App', () => {
     )
 
     expect(screen.getByText('16 participantes')).toBeInTheDocument()
-    expect(screen.getByText('Sergio Gil')).toBeInTheDocument()
+    expect(screen.getAllByText('Sergio Gil')).not.toHaveLength(0)
   })
 
   it('filters the cumulative community ranking', () => {
