@@ -158,13 +158,17 @@ function MobileEventStandingList({
                   className="mobile-standing-event-points"
                   aria-label={`${entry.eventPoints} puntos del evento`}
                 >
-                  <strong>{entry.eventPoints}</strong> pts evento
+                  <strong>{entry.eventPoints}</strong> pts
                 </span>
-                <span className="mobile-standing-record">
-                  V/D/E{' '}
-                  <strong>
-                    {entry.wins}/{entry.losses}/{entry.draws}
-                  </strong>
+                <span
+                  className="mobile-standing-record"
+                  aria-label={`${entry.wins} victorias, ${entry.losses} derrotas y ${entry.draws} empates`}
+                >
+                  <strong>{entry.wins}V</strong>
+                  <span aria-hidden="true"> · </span>
+                  <strong>{entry.losses}D</strong>
+                  <span aria-hidden="true"> · </span>
+                  <strong>{entry.draws}E</strong>
                 </span>
                 <button
                   type="button"
@@ -214,8 +218,6 @@ function MobileEventStandingList({
 }
 
 function EventRankingDetail({ item }: { item: ResolvedEventStanding }) {
-  const winner = item.standing.entries[0]
-
   return (
     <section
       className="event-ranking-detail"
@@ -242,27 +244,6 @@ function EventRankingDetail({ item }: { item: ResolvedEventStanding }) {
           </span>
         </div>
       </header>
-
-      <div className="ranking-points-legend" aria-label="Tipos de puntos">
-        <div>
-          <span className="ranking-points-sample ranking-points-sample--event">
-            {winner?.eventPoints ?? 0}
-          </span>
-          <span>
-            <strong>Puntos del evento</strong>
-            <small>Resultado oficial de las rondas</small>
-          </span>
-        </div>
-        <div>
-          <span className="ranking-points-sample ranking-points-sample--community">
-            +{winner ? getCommunityPoints(winner.rank) : 0}
-          </span>
-          <span>
-            <strong>Puntos comunidad</strong>
-            <small>Valor acumulado en Garroveta</small>
-          </span>
-        </div>
-      </div>
 
       <MobileEventStandingList
         key={item.standing.id}
@@ -380,7 +361,9 @@ function TopPlayerCard({ player }: { player: CommunityRankingPlayer }) {
           {player.eventsPlayed} eventos · {player.podiums} podios
         </p>
       </div>
-      <strong>{player.points} pts comunidad</strong>
+      <strong aria-label={`${player.points} puntos comunidad`}>
+        {player.points} pts
+      </strong>
     </article>
   )
 }
@@ -545,10 +528,66 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
                 <tr>
                   <th scope="col">Pos.</th>
                   <th scope="col">Jugador</th>
-                  <th scope="col">Eventos</th>
-                  <th scope="col">Victorias</th>
-                  <th scope="col">Podios</th>
-                  <th scope="col">Pts comunidad</th>
+                  <th scope="col" aria-label="Eventos">
+                    <span
+                      className="ranking-column-label--full"
+                      aria-hidden="true"
+                    >
+                      Eventos
+                    </span>
+                    <abbr
+                      className="ranking-column-label--short"
+                      title="Eventos"
+                      aria-hidden="true"
+                    >
+                      Ev.
+                    </abbr>
+                  </th>
+                  <th scope="col" aria-label="Victorias">
+                    <span
+                      className="ranking-column-label--full"
+                      aria-hidden="true"
+                    >
+                      Victorias
+                    </span>
+                    <abbr
+                      className="ranking-column-label--short"
+                      title="Victorias"
+                      aria-hidden="true"
+                    >
+                      Vict.
+                    </abbr>
+                  </th>
+                  <th scope="col" aria-label="Podios">
+                    <span
+                      className="ranking-column-label--full"
+                      aria-hidden="true"
+                    >
+                      Podios
+                    </span>
+                    <abbr
+                      className="ranking-column-label--short"
+                      title="Podios"
+                      aria-hidden="true"
+                    >
+                      Pod.
+                    </abbr>
+                  </th>
+                  <th scope="col" aria-label="Puntos comunidad">
+                    <span
+                      className="ranking-column-label--full"
+                      aria-hidden="true"
+                    >
+                      Puntos comunidad
+                    </span>
+                    <abbr
+                      className="ranking-column-label--short"
+                      title="Puntos comunidad"
+                      aria-hidden="true"
+                    >
+                      Pts
+                    </abbr>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -570,11 +609,9 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
                     <td>{player.eventWins}</td>
                     <td>{player.podiums}</td>
                     <td>
-                      <strong>{player.points}</strong>
-                      <span className="ranking-points-label">
-                        {' '}
-                        pts comunidad
-                      </span>
+                      <strong aria-label={`${player.points} puntos comunidad`}>
+                        {player.points}
+                      </strong>
                     </td>
                   </tr>
                 ))}

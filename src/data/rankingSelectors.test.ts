@@ -43,7 +43,7 @@ describe('rankingSelectors', () => {
         .slice(0, 3)
         .map(({ member, points }) => [member.displayName, points]),
     ).toEqual([
-      ['Carla Pons', 47],
+      ['Carla Pons Alcover', 47],
       ['Sergio Gil', 46],
       ['Biel Ferrer', 42],
     ])

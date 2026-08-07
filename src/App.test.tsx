@@ -75,7 +75,7 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Win a Box Pauper' }),
     ).toBeInTheDocument()
-    expect(screen.getAllByText('Carla Pons')).not.toHaveLength(0)
+    expect(screen.getAllByText('Carla Pons Alcover')).not.toHaveLength(0)
     expect(
       screen.getByRole('columnheader', { name: 'Pts evento' }),
     ).toBeInTheDocument()
@@ -98,26 +98,29 @@ describe('App', () => {
       name: 'Clasificación móvil de Win a Box Pauper',
     })
     const firstMobileEntry = within(mobileRanking).getAllByRole('listitem')[0]
-    expect(within(firstMobileEntry).getByText('3/0/0')).toBeInTheDocument()
+    expect(
+      within(firstMobileEntry).getByLabelText(
+        '3 victorias, 0 derrotas y 0 empates',
+      ),
+    ).toBeInTheDocument()
     expect(
       within(firstMobileEntry).getByLabelText('9 puntos del evento'),
     ).toBeInTheDocument()
     expect(
       within(firstMobileEntry).getByLabelText('Más 10 puntos comunidad'),
     ).toBeInTheDocument()
-    expect(within(firstMobileEntry).getByText('pts evento')).toBeInTheDocument()
     expect(within(firstMobileEntry).queryByText('%VPO')).not.toBeInTheDocument()
 
     fireEvent.click(
       within(firstMobileEntry).getByRole('button', {
-        name: 'Desempates de Carla Pons',
+        name: 'Desempates de Carla Pons Alcover',
       }),
     )
 
     expect(within(firstMobileEntry).getByText('%VPO')).toBeInTheDocument()
     expect(
       within(firstMobileEntry).getByRole('button', {
-        name: 'Ocultar de Carla Pons',
+        name: 'Ocultar de Carla Pons Alcover',
       }),
     ).toHaveAttribute('aria-expanded', 'true')
 
@@ -151,7 +154,7 @@ describe('App', () => {
     })
     expect(
       within(rankingTable).getByRole('row', {
-        name: /1 Carla Pons 6 2 5 47pts/,
+        name: /1 Carla Pons Alcover 6 2 5 47/,
       }),
     ).toBeInTheDocument()
 
@@ -164,7 +167,7 @@ describe('App', () => {
     ).toBeInTheDocument()
     expect(
       within(rankingTable).getByRole('row', {
-        name: /1 Sergio Gil 5 2 5 38pts/,
+        name: /1 Sergio Gil 5 2 5 38 puntos comunidad/,
       }),
     ).toBeInTheDocument()
 

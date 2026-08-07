@@ -3035,6 +3035,8 @@ a {
   margin: 0;
   color: #332e36;
   font-size: 0.8rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .top-player-card p {
@@ -3053,14 +3055,47 @@ a {
   color: #855d1d;
 }
 
-.cumulative-ranking-table {
-  min-width: 42rem;
+.ranking-table.cumulative-ranking-table {
+  min-width: 100%;
+  table-layout: fixed;
 }
 
 .cumulative-ranking-table th:nth-child(n + 3):not(:last-child),
 .cumulative-ranking-table td:nth-child(n + 3):not(:last-child) {
-  width: 5.5rem;
+  width: 2.35rem;
   text-align: center;
+}
+
+.cumulative-ranking-table th,
+.cumulative-ranking-table td {
+  padding-inline: 0.1rem;
+}
+
+.cumulative-ranking-table th {
+  font-size: 0.58rem;
+  letter-spacing: 0.035em;
+}
+
+.cumulative-ranking-table th:first-child,
+.cumulative-ranking-table td:first-child {
+  width: 2.2rem;
+}
+
+.cumulative-ranking-table th:last-child,
+.cumulative-ranking-table td:last-child {
+  width: 2.6rem;
+}
+
+.cumulative-ranking-table td:last-child strong {
+  font-size: 0.86rem;
+}
+
+.ranking-column-label--short {
+  text-decoration: none;
+}
+
+.ranking-column-label--full {
+  display: none;
 }
 
 .ranking-empty-state {
@@ -3207,57 +3242,11 @@ a {
   gap: 0.32rem;
 }
 
-.ranking-points-legend {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.4rem;
-  margin-top: 0.7rem;
-}
-
-.ranking-points-legend > div {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem;
-  border: 1px solid #e7e0e8;
-  border-radius: 0.8rem;
-  background: #faf8fa;
-}
-
-.ranking-points-legend > div > span:last-child {
-  display: grid;
-  gap: 0.1rem;
-}
-
-.ranking-points-legend strong {
-  color: #3d3740;
-  font-size: 0.7rem;
-}
-
-.ranking-points-legend small {
-  display: none;
-  color: #8b838d;
-  font-size: 0.61rem;
-}
-
-.ranking-points-sample {
-  display: inline-grid;
-  min-width: 2rem;
-  min-height: 1.8rem;
-  place-items: center;
-  border-radius: 0.62rem;
-  font-size: 0.72rem;
-  font-weight: 900;
-}
-
-.ranking-points-sample--event,
 .event-points-value {
   color: #485464;
   background: #e9edf2;
 }
 
-.ranking-points-sample--community,
 .community-points-value {
   color: #fff;
   background: #633777;
@@ -3374,10 +3363,11 @@ a {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 0.55rem;
+  gap: 0.45rem;
   margin-top: 0.35rem;
-  padding-top: 0.3rem;
-  border-top: 1px solid #eee9ef;
+  padding: 0.28rem 0.35rem;
+  border-radius: 0.48rem;
+  background: #f8f5f8;
 }
 
 .mobile-standing-card__summary > span {
@@ -3395,8 +3385,20 @@ a {
   white-space: nowrap;
 }
 
+.mobile-standing-event-points {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.18rem;
+}
+
 .mobile-standing-event-points strong {
-  font-size: 0.7rem;
+  color: #5b2b77;
+  font-size: 0.75rem;
+}
+
+.mobile-standing-record {
+  padding-left: 0.45rem;
+  border-left: 1px solid #ded7e0;
 }
 
 .mobile-standing-card__summary button {
@@ -3405,7 +3407,7 @@ a {
   align-items: center;
   gap: 0.2rem;
   margin-left: auto;
-  padding: 0 0 0 0.4rem;
+  padding: 0 0 0 0.3rem;
 }
 
 .mobile-standing-card__summary button[aria-expanded='true'] svg {
@@ -3538,9 +3540,16 @@ a {
 }
 
 .ranking-player-name {
+  display: block;
   color: #332e36;
   font-size: 0.8rem;
   font-weight: 750;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.cumulative-ranking-table .ranking-player-name {
+  font-size: 0.75rem;
 }
 
 .ranking-guest {
@@ -3729,17 +3738,9 @@ a {
     padding-left: 2rem;
   }
 
-  .ranking-points-legend {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .event-ranking-detail {
     margin-inline: 0;
     padding: clamp(1rem, 4vw, 1.5rem);
-  }
-
-  .ranking-points-legend small {
-    display: inline;
   }
 
   .mobile-standing {
@@ -3872,6 +3873,44 @@ a {
 
   .top-player-card--1 {
     grid-column: 1 / -1;
+  }
+
+  .ranking-table.cumulative-ranking-table {
+    min-width: 42rem;
+    table-layout: auto;
+  }
+
+  .cumulative-ranking-table th:nth-child(n + 3):not(:last-child),
+  .cumulative-ranking-table td:nth-child(n + 3):not(:last-child) {
+    width: 5.5rem;
+  }
+
+  .cumulative-ranking-table th,
+  .cumulative-ranking-table td {
+    padding-inline: 0.75rem;
+  }
+
+  .cumulative-ranking-table th {
+    font-size: 0.65rem;
+    letter-spacing: 0.07em;
+  }
+
+  .cumulative-ranking-table th:first-child,
+  .cumulative-ranking-table td:first-child {
+    width: 4rem;
+  }
+
+  .cumulative-ranking-table th:last-child,
+  .cumulative-ranking-table td:last-child {
+    width: 5rem;
+  }
+
+  .ranking-column-label--short {
+    display: none;
+  }
+
+  .ranking-column-label--full {
+    display: inline;
   }
 
   .publication-list {

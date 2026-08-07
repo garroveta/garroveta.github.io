@@ -11,17 +11,17 @@ const rankingMemberNames = {
   'member-diego': 'Diego Sánchez',
   'member-marta': 'Marta Soler',
   'member-sergio': 'Sergio Gil',
-  'member-irene': 'Irene Costa',
+  'member-irene': 'Irene Costa Villalonga',
   'member-hugo': 'Hugo Torres',
-  'member-nora': 'Nora Vega',
-  'member-carla': 'Carla Pons',
+  'member-nora': 'Nora Vega Santandreu',
+  'member-carla': 'Carla Pons Alcover',
   'member-biel': 'Biel Ferrer',
-  'member-julia': 'Júlia Serra',
+  'member-julia': 'Júlia Serra Oliver',
   'member-marc': 'Marc Vidal',
   'member-laia': 'Laia Riera',
   'member-pau': 'Pau Coll',
   'member-aina': 'Aina Mir',
-  'member-joan': 'Joan Roig',
+  'member-joan': 'Joan Roig de la Fuente',
 } as const
 
 type RankingMemberId = keyof typeof rankingMemberNames
@@ -451,7 +451,7 @@ export const demoData = {
     {
       id: 'member-irene',
       communityId,
-      displayName: 'Irene Costa',
+      displayName: 'Irene Costa Villalonga',
       initials: 'IC',
       role: 'player',
       status: 'approved',
@@ -487,7 +487,7 @@ export const demoData = {
     {
       id: 'member-nora',
       communityId,
-      displayName: 'Nora Vega',
+      displayName: 'Nora Vega Santandreu',
       initials: 'NV',
       role: 'player',
       status: 'approved',
@@ -501,7 +501,7 @@ export const demoData = {
     {
       id: 'member-carla',
       communityId,
-      displayName: 'Carla Pons',
+      displayName: 'Carla Pons Alcover',
       initials: 'CP',
       role: 'player',
       status: 'approved',
@@ -525,7 +525,7 @@ export const demoData = {
     {
       id: 'member-julia',
       communityId,
-      displayName: 'Júlia Serra',
+      displayName: 'Júlia Serra Oliver',
       initials: 'JS',
       role: 'player',
       status: 'approved',
@@ -585,7 +585,7 @@ export const demoData = {
     {
       id: 'member-joan',
       communityId,
-      displayName: 'Joan Roig',
+      displayName: 'Joan Roig de la Fuente',
       initials: 'JR',
       role: 'player',
       status: 'approved',
@@ -1074,15 +1074,31 @@ export const demoData = {
         { rank: 1, memberId: 'member-marta', displayName: 'Marta Soler' },
         { rank: 1, memberId: 'member-hugo', displayName: 'Hugo Torres' },
         { rank: 2, memberId: 'member-aina', displayName: 'Aina Mir' },
-        { rank: 2, memberId: 'member-joan', displayName: 'Joan Roig' },
+        {
+          rank: 2,
+          memberId: 'member-joan',
+          displayName: 'Joan Roig de la Fuente',
+        },
         { rank: 3, memberId: 'member-laia', displayName: 'Laia Riera' },
         { rank: 3, memberId: 'member-pau', displayName: 'Pau Coll' },
         { rank: 4, memberId: 'member-alex', displayName: 'Álex Romero' },
-        { rank: 4, memberId: 'member-nora', displayName: 'Nora Vega' },
-        { rank: 5, memberId: 'member-julia', displayName: 'Júlia Serra' },
+        {
+          rank: 4,
+          memberId: 'member-nora',
+          displayName: 'Nora Vega Santandreu',
+        },
+        {
+          rank: 5,
+          memberId: 'member-julia',
+          displayName: 'Júlia Serra Oliver',
+        },
         { rank: 5, memberId: 'member-biel', displayName: 'Biel Ferrer' },
         { rank: 6, memberId: 'member-diego', displayName: 'Diego Sánchez' },
-        { rank: 6, memberId: 'member-irene', displayName: 'Irene Costa' },
+        {
+          rank: 6,
+          memberId: 'member-irene',
+          displayName: 'Irene Costa Villalonga',
+        },
       ]),
     },
     {
