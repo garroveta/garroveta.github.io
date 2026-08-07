@@ -13,7 +13,7 @@ describe('card selectors', () => {
   it('returns available marketplace listings with cards and members', () => {
     const listings = getMarketplaceListings(demoData)
 
-    expect(listings).toHaveLength(6)
+    expect(listings).toHaveLength(9)
     expect(listings[0]).toMatchObject({
       card: { name: 'Sol Ring' },
       member: { displayName: 'Diego Sánchez' },
@@ -26,7 +26,7 @@ describe('card selectors', () => {
       getMemberWantedCards(demoData, demoData.currentMemberId).map(
         ({ card }) => card.name,
       ),
-    ).toEqual(['Sol Ring', 'The One Ring'])
+    ).toEqual(['Sol Ring', 'The One Ring', 'Cyclonic Rift'])
   })
 
   it('returns every listing owned by a member regardless of status', () => {
@@ -37,16 +37,19 @@ describe('card selectors', () => {
       getMemberMarketplaceListings(modifiedData, 'member-diego').map(
         ({ listing }) => listing.status,
       ),
-    ).toEqual(['reserved'])
+    ).toEqual(['reserved', 'available'])
   })
 
   it('returns the member matches with their offers and sellers', () => {
     const matches = getMemberCardMatches(demoData, demoData.currentMemberId)
 
-    expect(matches.map(({ card }) => card.name)).toEqual([
-      'Sol Ring',
-      'The One Ring',
-    ])
+    expect(matches).toHaveLength(6)
+    expect(matches.filter(({ card }) => card.name === 'Sol Ring')).toHaveLength(
+      3,
+    )
+    expect(
+      matches.filter(({ card }) => card.name === 'The One Ring'),
+    ).toHaveLength(2)
     expect(matches[0]).toMatchObject({
       seller: { displayName: 'Diego Sánchez' },
       listing: { language: 'es' },

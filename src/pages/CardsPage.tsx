@@ -2,6 +2,7 @@ import {
   ArrowLeft,
   AtSign,
   CheckCircle2,
+  ChevronRight,
   Layers3,
   ListChecks,
   Mail,
@@ -247,79 +248,110 @@ function MemberListingRow({
   )
 }
 
-function MatchCard({
-  item,
+type MatchGrouping = 'card' | 'member'
+
+function groupCardMatches(
+  matches: MemberCardMatchItem[],
+  grouping: MatchGrouping,
+) {
+  const groups = new Map<string, MemberCardMatchItem[]>()
+
+  for (const item of matches) {
+    const key = grouping === 'card' ? item.card.id : item.seller.id
+    const group = groups.get(key) ?? []
+    group.push(item)
+    groups.set(key, group)
+  }
+
+  return [...groups.values()]
+}
+
+function MatchGroupCard({
+  items,
+  grouping,
   onSelect,
 }: {
-  item: MemberCardMatchItem
+  items: MemberCardMatchItem[]
+  grouping: MatchGrouping
   onSelect: (matchId: string) => void
 }) {
-  return (
-    <article className="card-match">
-      <div className="card-match__topline">
-        <span className={`match-status match-status--${item.match.status}`}>
-          <Sparkles aria-hidden="true" size={13} />
-          {matchStatusLabels[item.match.status]}
-        </span>
-        <strong>{item.match.score}% compatible</strong>
-      </div>
+  const firstItem = items[0]
 
-      <div className="card-identity">
-        <span aria-hidden="true">{item.card.setCode}</span>
+  if (!firstItem) {
+    return null
+  }
+
+  const isCardGroup = grouping === 'card'
+
+  return (
+    <article className="match-group-card">
+      <header className="match-group-card__header">
+        <span
+          className={isCardGroup ? 'card-set-symbol' : 'member-initials'}
+          aria-hidden="true"
+        >
+          {isCardGroup ? firstItem.card.setCode : firstItem.seller.initials}
+        </span>
         <div>
-          <h3>{item.card.name}</h3>
+          <h3>
+            {isCardGroup ? firstItem.card.name : firstItem.seller.displayName}
+          </h3>
           <p>
-            {item.card.setName} · #{item.card.collectorNumber}
+            {isCardGroup
+              ? `${firstItem.card.setName} · #${firstItem.card.collectorNumber}`
+              : `${items.length} ${items.length === 1 ? 'carta buscada disponible' : 'cartas buscadas disponibles'}`}
           </p>
         </div>
+        <strong className="match-group-card__count">
+          {items.length}{' '}
+          {isCardGroup
+            ? items.length === 1
+              ? 'miembro'
+              : 'miembros'
+            : items.length === 1
+              ? 'carta'
+              : 'cartas'}
+        </strong>
+      </header>
+
+      <div className="match-group-card__list">
+        {items.map((item) => {
+          const primaryLabel = isCardGroup
+            ? item.seller.displayName
+            : item.card.name
+          const symbol = isCardGroup ? item.seller.initials : item.card.setCode
+
+          return (
+            <button
+              className="compact-match-row"
+              type="button"
+              key={item.match.id}
+              aria-label={`Ver coincidencia de ${item.card.name} con ${item.seller.displayName}`}
+              onClick={() => onSelect(item.match.id)}
+            >
+              <span
+                className={isCardGroup ? 'member-initials' : 'card-set-symbol'}
+                aria-hidden="true"
+              >
+                {symbol}
+              </span>
+              <span className="compact-match-row__identity">
+                <strong>{primaryLabel}</strong>
+                <small>
+                  {matchStatusLabels[item.match.status]} ·{' '}
+                  {offerTypeLabels[item.listing.offerType]} ·{' '}
+                  {languageLabels[item.listing.language]} ·{' '}
+                  {conditionLabels[item.listing.condition]}
+                </small>
+              </span>
+              <span className="compact-match-row__score">
+                {item.match.score}%
+              </span>
+              <ChevronRight aria-hidden="true" size={16} />
+            </button>
+          )
+        })}
       </div>
-
-      <p className="card-match__reason">{item.match.reason}</p>
-
-      <dl className="market-card__facts">
-        <div>
-          <dt>Operación</dt>
-          <dd>{offerTypeLabels[item.listing.offerType]}</dd>
-        </div>
-        <div>
-          <dt>Idioma</dt>
-          <dd>{languageLabels[item.listing.language]}</dd>
-        </div>
-        <div>
-          <dt>Estado</dt>
-          <dd>{conditionLabels[item.listing.condition]}</dd>
-        </div>
-        <div>
-          <dt>Precio</dt>
-          <dd>
-            {item.listing.priceEur
-              ? `${item.listing.priceEur.toFixed(2)} €`
-              : 'A convenir'}
-          </dd>
-        </div>
-      </dl>
-
-      <footer>
-        <span className="member-initials" aria-hidden="true">
-          {item.seller.initials}
-        </span>
-        <span>
-          <small>Disponible por</small>
-          <strong>{item.seller.displayName}</strong>
-        </span>
-      </footer>
-
-      <p className="external-contact-note">
-        El contacto y el pago se acuerdan libremente fuera de la aplicación.
-      </p>
-
-      <button
-        className="match-detail-button"
-        type="button"
-        onClick={() => onSelect(item.match.id)}
-      >
-        Ver coincidencia
-      </button>
     </article>
   )
 }
@@ -710,12 +742,14 @@ export function CardsPage({
     'listing' | 'import' | undefined
   >()
   const [selectedMatchId, setSelectedMatchId] = useState<string>()
+  const [matchGrouping, setMatchGrouping] = useState<MatchGrouping>('card')
   const [actionMessage, setActionMessage] = useState('')
   const [query, setQuery] = useState('')
   const listings = getMarketplaceListings(data)
   const wantedCards = getMemberWantedCards(data, currentMember.id)
   const memberListings = getMemberMarketplaceListings(data, currentMember.id)
   const matches = getMemberCardMatches(data, currentMember.id)
+  const groupedMatches = groupCardMatches(matches, matchGrouping)
   const selectedMatch = matches.find(
     ({ match }) => match.id === selectedMatchId,
   )
@@ -869,15 +903,40 @@ export function CardsPage({
               <span>Cruce automático</span>
               <h2 id="matches-title">Tus coincidencias</h2>
             </div>
-            <p>{matches.length} encontradas</p>
+            <p>{matches.length} ofertas compatibles</p>
           </div>
 
-          <div className="match-grid">
+          <div className="match-grouping-control">
+            <span>Organizar</span>
+            <div role="group" aria-label="Organizar coincidencias">
+              <button
+                type="button"
+                aria-pressed={matchGrouping === 'card'}
+                onClick={() => setMatchGrouping('card')}
+              >
+                Por carta
+              </button>
+              <button
+                type="button"
+                aria-pressed={matchGrouping === 'member'}
+                onClick={() => setMatchGrouping('member')}
+              >
+                Por miembro
+              </button>
+            </div>
+          </div>
+
+          <div className="match-group-grid">
             {matches.length > 0 ? (
-              matches.map((item) => (
-                <MatchCard
-                  item={item}
-                  key={item.match.id}
+              groupedMatches.map((items) => (
+                <MatchGroupCard
+                  items={items}
+                  grouping={matchGrouping}
+                  key={
+                    matchGrouping === 'card'
+                      ? items[0]?.card.id
+                      : items[0]?.seller.id
+                  }
                   onSelect={(matchId) => {
                     setSelectedMatchId(matchId)
                     onDataChange((currentData) =>

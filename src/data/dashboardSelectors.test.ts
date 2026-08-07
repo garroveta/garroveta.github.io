@@ -38,14 +38,16 @@ describe('player dashboard selectors', () => {
   it('joins new matches with cards and sellers', () => {
     const dashboard = getPlayerDashboard(demoData, demoData.currentMemberId)
 
-    expect(dashboard.newMatches).toHaveLength(2)
+    expect(dashboard.newMatches).toHaveLength(4)
     expect(dashboard.newMatches.map(({ card }) => card.name)).toEqual([
       'Sol Ring',
       'The One Ring',
+      'The One Ring',
+      'Cyclonic Rift',
     ])
     expect(
       dashboard.newMatches.map(({ seller }) => seller.displayName),
-    ).toEqual(['Diego Sánchez', 'Sergio Gil'])
+    ).toEqual(['Diego Sánchez', 'Sergio Gil', 'Diego Sánchez', 'Hugo Torres'])
   })
 })
 

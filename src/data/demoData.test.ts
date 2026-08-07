@@ -155,7 +155,7 @@ describe('demoData', () => {
       members: 150,
       events: 22,
       newsPosts: 6,
-      cardMatches: 5,
+      cardMatches: 9,
     })
   })
 

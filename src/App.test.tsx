@@ -27,7 +27,7 @@ describe('App', () => {
       screen.getByRole('heading', { name: 'Nuevo horario de verano' }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { name: '2 coincidencias nuevas' }),
+      screen.getByRole('heading', { name: '4 coincidencias nuevas' }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('navigation', { name: 'Navegación principal' }),
@@ -573,10 +573,8 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Cartas disponibles' }),
     ).toBeInTheDocument()
-    expect(
-      screen.getByRole('heading', { name: 'Sol Ring' }),
-    ).toBeInTheDocument()
-    expect(screen.getByText('Diego Sánchez')).toBeInTheDocument()
+    expect(screen.getAllByRole('heading', { name: 'Sol Ring' })).toHaveLength(3)
+    expect(screen.getAllByText('Diego Sánchez')).not.toHaveLength(0)
 
     fireEvent.change(
       screen.getByRole('searchbox', {
@@ -665,7 +663,7 @@ describe('App', () => {
         .wantedCards.filter(
           ({ memberId }) => memberId === demoData.currentMemberId,
         ),
-    ).toHaveLength(4)
+    ).toHaveLength(5)
   })
 
   it('creates and displays automatic matches after an import', () => {
@@ -676,10 +674,40 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Tus coincidencias' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('2 encontradas')).toBeInTheDocument()
+    expect(screen.getByText('6 ofertas compatibles')).toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: 'Sol Ring' }),
     ).toBeInTheDocument()
+
+    const solRingGroup = screen
+      .getByRole('heading', { name: 'Sol Ring' })
+      .closest('article')
+    expect(
+      within(solRingGroup as HTMLElement).getByText('Diego Sánchez'),
+    ).toBeInTheDocument()
+    expect(
+      within(solRingGroup as HTMLElement).getByText('Marta Soler'),
+    ).toBeInTheDocument()
+    expect(
+      within(solRingGroup as HTMLElement).getByText('Sergio Gil'),
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Por miembro' }))
+    const diegoGroup = screen
+      .getByRole('heading', { name: 'Diego Sánchez' })
+      .closest('article')
+    expect(
+      within(diegoGroup as HTMLElement).getByRole('button', {
+        name: 'Ver coincidencia de Sol Ring con Diego Sánchez',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      within(diegoGroup as HTMLElement).getByRole('button', {
+        name: 'Ver coincidencia de The One Ring con Diego Sánchez',
+      }),
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Por carta' }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Importar lista' }))
     fireEvent.change(screen.getByLabelText('Una carta por línea'), {
@@ -688,7 +716,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Importar búsquedas' }))
     fireEvent.click(screen.getByRole('button', { name: /Coincidencias/ }))
 
-    expect(screen.getByText('3 encontradas')).toBeInTheDocument()
+    expect(screen.getByText('7 ofertas compatibles')).toBeInTheDocument()
     const newMatch = screen
       .getByRole('heading', { name: 'Rhystic Study' })
       .closest('article')
@@ -696,7 +724,7 @@ describe('App', () => {
       within(newMatch as HTMLElement).getByText('Marta Soler'),
     ).toBeInTheDocument()
     expect(
-      within(newMatch as HTMLElement).getByText('Nueva'),
+      within(newMatch as HTMLElement).getByText(/Nueva/),
     ).toBeInTheDocument()
   })
 
@@ -709,7 +737,7 @@ describe('App', () => {
       .closest('article')
     fireEvent.click(
       within(solRingMatch as HTMLElement).getByRole('button', {
-        name: 'Ver coincidencia',
+        name: 'Ver coincidencia de Sol Ring con Diego Sánchez',
       }),
     )
 
@@ -743,7 +771,7 @@ describe('App', () => {
       .closest('article')
     fireEvent.click(
       within(solRingMatch as HTMLElement).getByRole('button', {
-        name: 'Ver coincidencia',
+        name: 'Ver coincidencia de Sol Ring con Diego Sánchez',
       }),
     )
     fireEvent.click(
