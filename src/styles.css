@@ -3352,12 +3352,6 @@ a {
   margin: 0.2rem 0 0;
 }
 
-.mobile-standing-points {
-  display: flex;
-  grid-column: auto;
-  gap: 0.3rem;
-}
-
 .mobile-standing-point {
   display: inline-grid;
   min-width: 2.35rem;
@@ -3371,11 +3365,6 @@ a {
   font-size: 0.7rem;
 }
 
-.mobile-standing-point--event {
-  color: #485464;
-  background: #e9edf2;
-}
-
 .mobile-standing-point--community {
   color: #fff;
   background: #633777;
@@ -3384,8 +3373,8 @@ a {
 .mobile-standing-card__summary {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
+  justify-content: flex-start;
+  gap: 0.55rem;
   margin-top: 0.35rem;
   padding-top: 0.3rem;
   border-top: 1px solid #eee9ef;
@@ -3401,11 +3390,21 @@ a {
   color: #453e48;
 }
 
+.mobile-standing-event-points,
+.mobile-standing-record {
+  white-space: nowrap;
+}
+
+.mobile-standing-event-points strong {
+  font-size: 0.7rem;
+}
+
 .mobile-standing-card__summary button {
   display: inline-flex;
   min-height: 1.5rem;
   align-items: center;
   gap: 0.2rem;
+  margin-left: auto;
   padding: 0 0 0 0.4rem;
 }
 

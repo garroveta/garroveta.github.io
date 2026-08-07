@@ -145,24 +145,22 @@ function MobileEventStandingList({
                     </span>
                   ) : null}
                 </div>
-                <div className="mobile-standing-points">
-                  <span
-                    className="mobile-standing-point mobile-standing-point--event"
-                    aria-label={`${entry.eventPoints} puntos del evento`}
-                  >
-                    <strong>{entry.eventPoints}</strong>
-                  </span>
-                  <span
-                    className="mobile-standing-point mobile-standing-point--community"
-                    aria-label={`Más ${getCommunityPoints(entry.rank)} puntos comunidad`}
-                  >
-                    <strong>+{getCommunityPoints(entry.rank)}</strong>
-                  </span>
-                </div>
+                <span
+                  className="mobile-standing-point mobile-standing-point--community"
+                  aria-label={`Más ${getCommunityPoints(entry.rank)} puntos comunidad`}
+                >
+                  <strong>+{getCommunityPoints(entry.rank)}</strong>
+                </span>
               </div>
 
               <div className="mobile-standing-card__summary">
-                <span>
+                <span
+                  className="mobile-standing-event-points"
+                  aria-label={`${entry.eventPoints} puntos del evento`}
+                >
+                  <strong>{entry.eventPoints}</strong> pts evento
+                </span>
+                <span className="mobile-standing-record">
                   V/D/E{' '}
                   <strong>
                     {entry.wins}/{entry.losses}/{entry.draws}

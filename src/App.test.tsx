@@ -105,9 +105,7 @@ describe('App', () => {
     expect(
       within(firstMobileEntry).getByLabelText('Más 10 puntos comunidad'),
     ).toBeInTheDocument()
-    expect(
-      within(firstMobileEntry).queryByText('pts evento'),
-    ).not.toBeInTheDocument()
+    expect(within(firstMobileEntry).getByText('pts evento')).toBeInTheDocument()
     expect(within(firstMobileEntry).queryByText('%VPO')).not.toBeInTheDocument()
 
     fireEvent.click(
