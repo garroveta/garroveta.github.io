@@ -2,10 +2,8 @@ import {
   CalendarDays,
   ChevronDown,
   ChevronRight,
-  Crown,
   ListOrdered,
   Medal,
-  Sparkles,
   Trophy,
   UserRound,
   UsersRound,
@@ -16,7 +14,6 @@ import {
   getCommunityLeaderboard,
   getCommunityPoints,
   getLatestEventStandings,
-  type CommunityRankingPlayer,
   type RankingFilters,
   type ResolvedEventStanding,
 } from '../data/rankingSelectors'
@@ -347,27 +344,6 @@ function EventRankingDetail({ item }: { item: ResolvedEventStanding }) {
   )
 }
 
-function TopPlayerCard({ player }: { player: CommunityRankingPlayer }) {
-  return (
-    <article className={`top-player-card top-player-card--${player.rank}`}>
-      <span className="top-player-card__rank">
-        {player.rank === 1 ? <Crown aria-hidden="true" size={16} /> : null}#
-        {player.rank}
-      </span>
-      <span className="top-player-card__avatar">{player.member.initials}</span>
-      <div>
-        <h3>{player.member.displayName}</h3>
-        <p>
-          {player.eventsPlayed} eventos · {player.podiums} podios
-        </p>
-      </div>
-      <strong aria-label={`${player.points} puntos comunidad`}>
-        {player.points} pts
-      </strong>
-    </article>
-  )
-}
-
 function CommunityRanking({ data }: { data: DemoDataSet }) {
   const [gameId, setGameId] = useState('game-mtg')
   const [formatId, setFormatId] = useState('format-mtg-pauper')
@@ -416,92 +392,106 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
       className="community-ranking"
       aria-labelledby="community-ranking-title"
     >
-      <div className="ranking-filter-panel">
-        <div className="ranking-filter-panel__heading">
-          <div>
-            <span>Personaliza el ranking</span>
-            <h2>Filtros</h2>
+      <details className="ranking-filter-panel">
+        <summary>
+          <span className="ranking-filter-summary__title">Filtros</span>
+          <span className="ranking-filter-summary__value">
+            {selectedGame?.shortName} ·{' '}
+            {selectedFormat?.shortName ?? 'Todos los formatos'} ·{' '}
+            {selectedEventKind?.shortName ?? 'Todos los eventos'} · {months}{' '}
+            meses · Top {limit}
+          </span>
+          <span className="ranking-filter-summary__action">
+            Modificar
+            <ChevronDown aria-hidden="true" size={16} />
+          </span>
+        </summary>
+
+        <div className="ranking-filter-panel__content">
+          <div className="ranking-select-grid">
+            <label className="form-field">
+              <span>Juego</span>
+              <select
+                value={gameId}
+                onChange={(event) => changeGame(event.target.value)}
+              >
+                {games.map((game) => (
+                  <option key={game.id} value={game.id}>
+                    {game.shortName}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="form-field">
+              <span>Formato</span>
+              <select
+                value={formatId}
+                onChange={(event) => setFormatId(event.target.value)}
+              >
+                <option value="">Todos los formatos</option>
+                {formats.map((format) => (
+                  <option key={format.id} value={format.id}>
+                    {format.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="form-field">
+              <span>Tipo de evento</span>
+              <select
+                value={eventKindId}
+                onChange={(event) => setEventKindId(event.target.value)}
+              >
+                <option value="">Todos los eventos</option>
+                {data.competitionEventKinds.map((eventKind) => (
+                  <option key={eventKind.id} value={eventKind.id}>
+                    {eventKind.shortName}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
-          <span className="ranking-period-summary">Últimos {months} meses</span>
-        </div>
 
-        <div className="ranking-select-grid">
-          <label className="form-field">
-            <span>Juego</span>
-            <select
-              value={gameId}
-              onChange={(event) => changeGame(event.target.value)}
-            >
-              {games.map((game) => (
-                <option key={game.id} value={game.id}>
-                  {game.shortName}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="form-field">
-            <span>Formato</span>
-            <select
-              value={formatId}
-              onChange={(event) => setFormatId(event.target.value)}
-            >
-              <option value="">Todos los formatos</option>
-              {formats.map((format) => (
-                <option key={format.id} value={format.id}>
-                  {format.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="form-field">
-            <span>Tipo de evento</span>
-            <select
-              value={eventKindId}
-              onChange={(event) => setEventKindId(event.target.value)}
-            >
-              <option value="">Todos los eventos</option>
-              {data.competitionEventKinds.map((eventKind) => (
-                <option key={eventKind.id} value={eventKind.id}>
-                  {eventKind.shortName}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <div className="ranking-choice-row">
-          <div>
-            <span>Periodo</span>
-            <div className="ranking-segmented" aria-label="Periodo del ranking">
-              {([3, 6, 12] as const).map((period) => (
-                <button
-                  key={period}
-                  type="button"
-                  aria-pressed={months === period}
-                  onClick={() => setMonths(period)}
-                >
-                  {period} meses
-                </button>
-              ))}
+          <div className="ranking-choice-row">
+            <div>
+              <span>Periodo</span>
+              <div
+                className="ranking-segmented"
+                aria-label="Periodo del ranking"
+              >
+                {([3, 6, 12] as const).map((period) => (
+                  <button
+                    key={period}
+                    type="button"
+                    aria-pressed={months === period}
+                    onClick={() => setMonths(period)}
+                  >
+                    {period} meses
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <span>Clasificación</span>
+              <div
+                className="ranking-segmented"
+                aria-label="Tamaño del ranking"
+              >
+                {([10, 20] as const).map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    aria-pressed={limit === size}
+                    onClick={() => setLimit(size)}
+                  >
+                    Top {size}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-          <div>
-            <span>Clasificación</span>
-            <div className="ranking-segmented" aria-label="Tamaño del ranking">
-              {([10, 20] as const).map((size) => (
-                <button
-                  key={size}
-                  type="button"
-                  aria-pressed={limit === size}
-                  onClick={() => setLimit(size)}
-                >
-                  Top {size}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
-      </div>
+      </details>
 
       <div className="community-ranking__heading">
         <div>
@@ -513,12 +503,6 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
 
       {ranking.length > 0 ? (
         <>
-          <div className="top-five" aria-label="Top 5 de la comunidad">
-            {ranking.slice(0, 5).map((player) => (
-              <TopPlayerCard key={player.member.id} player={player} />
-            ))}
-          </div>
-
           <div className="ranking-table-wrap cumulative-ranking-table-wrap">
             <table
               className="ranking-table cumulative-ranking-table"
@@ -668,27 +652,6 @@ export function RankingsPage({ data }: RankingsPageProps) {
           de CRC DeLorean.
         </p>
       </header>
-
-      <section
-        className="pauper-highlight"
-        aria-labelledby="pauper-highlight-title"
-      >
-        <span className="pauper-highlight__icon">
-          <Sparkles aria-hidden="true" size={22} />
-        </span>
-        <div>
-          <span>El formato más activo</span>
-          <h2 id="pauper-highlight-title">MTG · Pauper</h2>
-          <p>
-            FNM casi cada viernes y un torneo Win a Box durante el fin de
-            semana.
-          </p>
-        </div>
-        <span className="pauper-highlight__trophy">
-          <Trophy aria-hidden="true" size={22} />
-          Ranking activo
-        </span>
-      </section>
 
       <div
         className="ranking-view-tabs"

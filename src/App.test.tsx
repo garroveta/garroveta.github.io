@@ -66,10 +66,6 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Clasificaciones' }),
     ).toBeInTheDocument()
-    expect(
-      screen.getByRole('heading', { name: 'MTG · Pauper' }),
-    ).toBeInTheDocument()
-
     fireEvent.click(screen.getByRole('tab', { name: 'Últimos eventos' }))
 
     expect(
@@ -143,6 +139,16 @@ describe('App', () => {
       'aria-selected',
       'true',
     )
+    expect(screen.queryByText('El formato más activo')).not.toBeInTheDocument()
+    expect(
+      screen.queryByLabelText('Top 5 de la comunidad'),
+    ).not.toBeInTheDocument()
+
+    const rankingFilters = screen.getByText('Filtros').closest('details')
+    expect(rankingFilters).not.toHaveAttribute('open')
+    fireEvent.click(screen.getByText('Modificar'))
+    expect(rankingFilters).toHaveAttribute('open')
+
     expect(
       screen.getByRole('heading', {
         name: 'MTG · Pauper · Todos los eventos',
