@@ -26,17 +26,107 @@ const rankingMemberNames = {
 
 type RankingMemberId = keyof typeof rankingMemberNames
 
+type StandingIdentity = Pick<
+  EventStandingEntry,
+  'rank' | 'memberId' | 'displayName'
+>
+
+function roundPercentage(value: number) {
+  return Math.round(value * 10) / 10
+}
+
+function getRoundCount(participantCount: number) {
+  if (participantCount > 24) {
+    return 5
+  }
+
+  if (participantCount > 16) {
+    return 4
+  }
+
+  return 3
+}
+
+function getMatchRecord(rank: number, participantCount: number) {
+  const rounds = getRoundCount(participantCount)
+  const percentile = rank / participantCount
+
+  if (rank === 1) {
+    return { wins: rounds, losses: 0, draws: 0 }
+  }
+
+  if (percentile <= 0.22) {
+    return { wins: rounds - 1, losses: 0, draws: 1 }
+  }
+
+  if (percentile <= 0.52) {
+    return { wins: rounds - 1, losses: 1, draws: 0 }
+  }
+
+  if (percentile <= 0.88) {
+    return { wins: Math.max(1, rounds - 2), losses: 2, draws: 0 }
+  }
+
+  return rank === participantCount
+    ? { wins: 0, losses: rounds, draws: 0 }
+    : { wins: 1, losses: rounds - 1, draws: 0 }
+}
+
+function addStandingStatistics(
+  entries: StandingIdentity[],
+): EventStandingEntry[] {
+  const participantCount = Math.max(...entries.map(({ rank }) => rank))
+
+  return entries.map((entry) => {
+    const { wins, losses, draws } = getMatchRecord(entry.rank, participantCount)
+    const rounds = wins + losses + draws
+    const matchWinPercentage = ((wins + draws * 0.5) / rounds) * 100
+    const tieBreakPosition = Math.max(0, participantCount - entry.rank)
+    const opponentMatchWinPercentage = roundPercentage(
+      Math.min(75, 33.3 + (tieBreakPosition / participantCount) * 38),
+    )
+    const gameWinPercentage =
+      entry.rank === 1
+        ? 100
+        : roundPercentage(
+            Math.min(
+              100,
+              Math.max(33, matchWinPercentage - (entry.rank % 4) * 1.2),
+            ),
+          )
+    const opponentGameWinPercentage = roundPercentage(
+      Math.min(
+        75,
+        Math.max(33, opponentMatchWinPercentage + ((entry.rank % 3) - 1) * 2.4),
+      ),
+    )
+
+    return {
+      ...entry,
+      eventPoints: wins * 3 + draws,
+      wins,
+      losses,
+      draws,
+      opponentMatchWinPercentage,
+      gameWinPercentage,
+      opponentGameWinPercentage,
+    }
+  })
+}
+
 function buildStanding(
   memberIds: RankingMemberId[],
   guests: string[] = [],
 ): EventStandingEntry[] {
-  return [
+  const entries = [
     ...memberIds.map((memberId) => ({
       memberId,
       displayName: rankingMemberNames[memberId],
     })),
     ...guests.map((displayName) => ({ displayName })),
   ].map((entry, index) => ({ ...entry, rank: index + 1 }))
+
+  return addStandingStatistics(entries)
 }
 
 export const demoData = {
@@ -980,7 +1070,7 @@ export const demoData = {
     {
       id: 'standing-win-a-box-2hg-2026-07-18',
       eventId: 'event-result-win-a-box-2hg-2026-07-18',
-      entries: [
+      entries: addStandingStatistics([
         { rank: 1, memberId: 'member-marta', displayName: 'Marta Soler' },
         { rank: 1, memberId: 'member-hugo', displayName: 'Hugo Torres' },
         { rank: 2, memberId: 'member-aina', displayName: 'Aina Mir' },
@@ -993,7 +1083,7 @@ export const demoData = {
         { rank: 5, memberId: 'member-biel', displayName: 'Biel Ferrer' },
         { rank: 6, memberId: 'member-diego', displayName: 'Diego Sánchez' },
         { rank: 6, memberId: 'member-irene', displayName: 'Irene Costa' },
-      ],
+      ]),
     },
     {
       id: 'standing-fnm-pauper-2026-07-17',

@@ -23,6 +23,12 @@ describe('rankingSelectors', () => {
       format: { shortName: 'Pauper' },
       eventKind: { shortName: 'Win a Box' },
     })
+    expect(standings[0].standing.entries.slice(0, 4)).toMatchObject([
+      { rank: 1, eventPoints: 9, wins: 3, losses: 0, draws: 0 },
+      { rank: 2, eventPoints: 7, wins: 2, losses: 0, draws: 1 },
+      { rank: 3, eventPoints: 7, wins: 2, losses: 0, draws: 1 },
+      { rank: 4, eventPoints: 6, wins: 2, losses: 1, draws: 0 },
+    ])
   })
 
   it('builds a six-month MTG Pauper ranking across all event kinds', () => {

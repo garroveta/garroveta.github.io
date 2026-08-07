@@ -89,6 +89,14 @@ describe('demoData', () => {
           expect(memberIds.has(entry.memberId)).toBe(true)
         }
         expect(entry.rank).toBeGreaterThan(0)
+        expect(entry.eventPoints).toBe(entry.wins * 3 + entry.draws)
+        expect(entry.wins + entry.losses + entry.draws).toBeGreaterThan(0)
+        expect(entry.opponentMatchWinPercentage).toBeGreaterThanOrEqual(0)
+        expect(entry.opponentMatchWinPercentage).toBeLessThanOrEqual(100)
+        expect(entry.gameWinPercentage).toBeGreaterThanOrEqual(0)
+        expect(entry.gameWinPercentage).toBeLessThanOrEqual(100)
+        expect(entry.opponentGameWinPercentage).toBeGreaterThanOrEqual(0)
+        expect(entry.opponentGameWinPercentage).toBeLessThanOrEqual(100)
       }
     }
 

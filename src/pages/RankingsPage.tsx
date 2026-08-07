@@ -34,6 +34,10 @@ const eventDateFormatter = new Intl.DateTimeFormat('es-ES', {
   timeZone: 'Europe/Madrid',
 })
 
+function formatPercentage(value: number) {
+  return `${value.toFixed(1)} %`
+}
+
 function EventRankingCard({
   item,
   selected,
@@ -69,6 +73,8 @@ function EventRankingCard({
 }
 
 function EventRankingDetail({ item }: { item: ResolvedEventStanding }) {
+  const winner = item.standing.entries[0]
+
   return (
     <section
       className="event-ranking-detail"
@@ -96,13 +102,70 @@ function EventRankingDetail({ item }: { item: ResolvedEventStanding }) {
         </div>
       </header>
 
+      <div className="ranking-points-legend" aria-label="Tipos de puntos">
+        <div>
+          <span className="ranking-points-sample ranking-points-sample--event">
+            {winner?.eventPoints ?? 0}
+          </span>
+          <span>
+            <strong>Puntos del evento</strong>
+            <small>Resultado oficial de las rondas</small>
+          </span>
+        </div>
+        <div>
+          <span className="ranking-points-sample ranking-points-sample--community">
+            +{winner ? getCommunityPoints(winner.rank) : 0}
+          </span>
+          <span>
+            <strong>Puntos comunidad</strong>
+            <small>Valor acumulado en Garroveta</small>
+          </span>
+        </div>
+      </div>
+
       <div className="ranking-table-wrap">
-        <table className="ranking-table">
+        <table
+          className="ranking-table event-standing-table"
+          aria-label={`Clasificación de ${item.event.title}`}
+        >
           <thead>
             <tr>
               <th scope="col">Pos.</th>
               <th scope="col">Jugador</th>
-              <th scope="col">Puntos</th>
+              <th scope="col">Pts evento</th>
+              <th scope="col">
+                <abbr
+                  aria-label="Victorias / derrotas / empates"
+                  title="Victorias / derrotas / empates"
+                >
+                  V/D/E
+                </abbr>
+              </th>
+              <th scope="col">
+                <abbr
+                  aria-label="Porcentaje de victorias de los oponentes"
+                  title="Porcentaje de victorias de los oponentes"
+                >
+                  %VPO
+                </abbr>
+              </th>
+              <th scope="col">
+                <abbr
+                  aria-label="Porcentaje de juegos ganados"
+                  title="Porcentaje de juegos ganados"
+                >
+                  %JG
+                </abbr>
+              </th>
+              <th scope="col">
+                <abbr
+                  aria-label="Porcentaje de juegos ganados por los oponentes"
+                  title="Porcentaje de juegos ganados por los oponentes"
+                >
+                  %JGO
+                </abbr>
+              </th>
+              <th scope="col">Pts comunidad</th>
             </tr>
           </thead>
           <tbody>
@@ -127,8 +190,20 @@ function EventRankingDetail({ item }: { item: ResolvedEventStanding }) {
                   ) : null}
                 </td>
                 <td>
-                  <strong>{getCommunityPoints(entry.rank)}</strong>
-                  <span className="ranking-points-label"> pts</span>
+                  <strong className="event-points-value">
+                    {entry.eventPoints}
+                  </strong>
+                </td>
+                <td className="ranking-record">
+                  {entry.wins}/{entry.losses}/{entry.draws}
+                </td>
+                <td>{formatPercentage(entry.opponentMatchWinPercentage)}</td>
+                <td>{formatPercentage(entry.gameWinPercentage)}</td>
+                <td>{formatPercentage(entry.opponentGameWinPercentage)}</td>
+                <td>
+                  <strong className="community-points-value">
+                    +{getCommunityPoints(entry.rank)}
+                  </strong>
                 </td>
               </tr>
             ))}
@@ -136,8 +211,9 @@ function EventRankingDetail({ item }: { item: ResolvedEventStanding }) {
         </table>
       </div>
       <p className="ranking-table-note">
-        Estos puntos se suman al ranking de la comunidad cuando el jugador está
-        vinculado a un perfil Garroveta.
+        V/D/E significa victorias, derrotas y empates. Los puntos del evento y
+        sus porcentajes conservan las estadísticas del torneo; solo los puntos
+        comunidad se suman al ranking Garroveta de los miembros vinculados.
       </p>
     </section>
   )
@@ -157,7 +233,7 @@ function TopPlayerCard({ player }: { player: CommunityRankingPlayer }) {
           {player.eventsPlayed} eventos · {player.podiums} podios
         </p>
       </div>
-      <strong>{player.points} pts</strong>
+      <strong>{player.points} pts comunidad</strong>
     </article>
   )
 }
@@ -325,7 +401,7 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
                   <th scope="col">Eventos</th>
                   <th scope="col">Victorias</th>
                   <th scope="col">Podios</th>
-                  <th scope="col">Puntos</th>
+                  <th scope="col">Pts comunidad</th>
                 </tr>
               </thead>
               <tbody>
@@ -348,7 +424,10 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
                     <td>{player.podiums}</td>
                     <td>
                       <strong>{player.points}</strong>
-                      <span className="ranking-points-label"> pts</span>
+                      <span className="ranking-points-label">
+                        {' '}
+                        pts comunidad
+                      </span>
                     </td>
                   </tr>
                 ))}
@@ -473,9 +552,9 @@ export function RankingsPage({ data }: RankingsPageProps) {
         <div>
           <strong>Un barómetro simple para empezar</strong>
           <p>
-            Cada resultado atribuye entre 10 puntos para el primer puesto y 1
-            punto de participación. El sistema podrá evolucionar con la prueba
-            piloto.
+            Los puntos oficiales siguen visibles en cada evento. Garroveta
+            atribuye por separado entre 10 puntos al primer puesto y 1 punto de
+            participación para construir esta clasificación comunitaria.
           </p>
         </div>
       </aside>

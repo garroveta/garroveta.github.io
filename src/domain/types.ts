@@ -114,6 +114,13 @@ export type EventStandingEntry = {
   rank: number
   memberId?: EntityId
   displayName: string
+  eventPoints: number
+  wins: number
+  losses: number
+  draws: number
+  opponentMatchWinPercentage: number
+  gameWinPercentage: number
+  opponentGameWinPercentage: number
 }
 
 export type EventStanding = {

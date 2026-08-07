@@ -76,6 +76,23 @@ describe('App', () => {
       screen.getByRole('heading', { name: 'Win a Box Pauper' }),
     ).toBeInTheDocument()
     expect(screen.getByText('Carla Pons')).toBeInTheDocument()
+    expect(
+      screen.getByRole('columnheader', { name: 'Pts evento' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('columnheader', { name: 'Pts comunidad' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('columnheader', {
+        name: 'Victorias / derrotas / empates',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('9', { selector: '.event-points-value' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('+10', { selector: '.community-points-value' }),
+    ).toBeInTheDocument()
 
     fireEvent.click(
       screen.getByRole('button', {

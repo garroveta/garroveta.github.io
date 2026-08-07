@@ -3045,7 +3045,8 @@ a {
 
 .top-player-card > strong {
   color: #5b2b77;
-  font-size: 0.82rem;
+  font-size: 0.7rem;
+  text-align: right;
 }
 
 .top-player-card--1 > strong {
@@ -3205,6 +3206,60 @@ a {
   gap: 0.32rem;
 }
 
+.ranking-points-legend {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.ranking-points-legend > div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem;
+  border: 1px solid #e7e0e8;
+  border-radius: 0.8rem;
+  background: #faf8fa;
+}
+
+.ranking-points-legend > div > span:last-child {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.ranking-points-legend strong {
+  color: #3d3740;
+  font-size: 0.7rem;
+}
+
+.ranking-points-legend small {
+  color: #8b838d;
+  font-size: 0.61rem;
+}
+
+.ranking-points-sample {
+  display: inline-grid;
+  min-width: 2.4rem;
+  min-height: 2.15rem;
+  place-items: center;
+  border-radius: 0.62rem;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.ranking-points-sample--event,
+.event-points-value {
+  color: #485464;
+  background: #e9edf2;
+}
+
+.ranking-points-sample--community,
+.community-points-value {
+  color: #fff;
+  background: #633777;
+}
+
 .ranking-table-wrap {
   margin-top: 1.25rem;
   overflow-x: auto;
@@ -3216,6 +3271,27 @@ a {
   width: 100%;
   min-width: 25rem;
   border-collapse: collapse;
+}
+
+.event-standing-table {
+  min-width: 58rem;
+}
+
+.event-standing-table th:nth-child(n + 3),
+.event-standing-table td:nth-child(n + 3) {
+  width: 6.3rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.event-standing-table th:last-child,
+.event-standing-table td:last-child {
+  width: 7.4rem;
+  text-align: center;
+}
+
+.event-standing-table abbr {
+  text-decoration: none;
 }
 
 .ranking-table th,
@@ -3295,6 +3371,23 @@ a {
 .ranking-points-label {
   color: #8b838d;
   font-size: 0.67rem;
+}
+
+.event-points-value,
+.community-points-value {
+  display: inline-flex;
+  min-width: 2rem;
+  min-height: 1.65rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.35rem;
+  border-radius: 0.5rem;
+  font-size: 0.72rem;
+}
+
+.ranking-record {
+  color: #4f4852;
+  font-weight: 800;
 }
 
 .ranking-table-note {
@@ -3450,6 +3543,10 @@ a {
   .app-content {
     padding-right: 2rem;
     padding-left: 2rem;
+  }
+
+  .ranking-points-legend {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .dashboard-grid {
