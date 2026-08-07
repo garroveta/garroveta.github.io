@@ -672,6 +672,50 @@ describe('App', () => {
     })
   })
 
+  it('switches marketplace offers to a readable Scryfall image gallery', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: /Ofertas/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Imágenes' }))
+
+    expect(screen.getByLabelText('Galería de ofertas')).toBeInTheDocument()
+    expect(screen.getAllByRole('img')).toHaveLength(12)
+    expect(screen.getAllByRole('img')[0].getAttribute('src')).toContain(
+      'https://cards.scryfall.io/large/',
+    )
+    expect(screen.getByText('1–12 de 159')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '4 por fila' }))
+    expect(screen.getAllByRole('img')).toHaveLength(20)
+    expect(screen.getByText('1–20 de 159')).toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getAllByRole('button', { name: 'Ampliar Sol Ring' })[0],
+    )
+    const imageDialog = screen.getByRole('dialog')
+    expect(imageDialog).toBeInTheDocument()
+    expect(
+      within(imageDialog).getByRole('heading', { name: 'Sol Ring' }),
+    ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar imagen' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tabla' }))
+    expect(
+      screen.getByRole('table', { name: 'Ofertas de cartas disponibles' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('1–20 de 159')).toBeInTheDocument()
+
+    const firstTableRow = screen.getAllByRole('row')[1]
+    fireEvent.click(
+      within(firstTableRow).getByRole('button', { name: 'Ampliar Sol Ring' }),
+    )
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar imagen' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
   it('imports a wanted-card list and reports unknown names', () => {
     render(<App />)
 

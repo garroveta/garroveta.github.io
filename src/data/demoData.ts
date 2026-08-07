@@ -166,17 +166,37 @@ const marketplaceCardNames = [
   'Yawgmoth, Thran Physician',
 ] as const
 
-const marketplaceSets = [
-  ['M3C', 'Modern Horizons 3 Commander'],
-  ['MH3', 'Modern Horizons 3'],
-  ['OTJ', 'Outlaws of Thunder Junction'],
-  ['MKM', 'Murders at Karlov Manor'],
-  ['LCI', 'The Lost Caverns of Ixalan'],
-  ['WOE', 'Wilds of Eldraine'],
-  ['MOM', 'March of the Machine'],
-  ['BRO', 'The Brothers’ War'],
-  ['DMU', 'Dominaria United'],
-  ['2X2', 'Double Masters 2022'],
+const marketplacePrintings = [
+  ['2X2', 'Double Masters 2022', '298'],
+  ['UMA', 'Ultimate Masters', '236'],
+  ['2XM', 'Double Masters', '190'],
+  ['RAV', 'Ravnica: City of Guilds', '153'],
+  ['2XM', 'Double Masters', '118'],
+  ['NEO', 'Kamigawa: Neon Dynasty', '266'],
+  ['DSC', 'Duskmourn: House of Horror Commander', '113'],
+  ['2XM', 'Double Masters', '240'],
+  ['DSC', 'Duskmourn: House of Horror Commander', '114'],
+  ['CMM', 'Commander Masters', '150'],
+  ['2X2', 'Double Masters 2022', '107'],
+  ['INR', 'Innistrad Remastered', '5'],
+  ['NEO', 'Kamigawa: Neon Dynasty', '141'],
+  ['2X2', 'Double Masters 2022', '50'],
+  ['DMR', 'Dominaria Remastered', '50'],
+  ['2XM', 'Double Masters', '127'],
+  ['CMM', 'Commander Masters', '396'],
+  ['JOU', 'Journey into Nyx', '163'],
+  ['2X2', 'Double Masters 2022', '57'],
+  ['2XM', 'Double Masters', '274'],
+  ['DMR', 'Dominaria Remastered', '59'],
+  ['2X2', 'Double Masters 2022', '23'],
+  ['MH2', 'Modern Horizons 2', '138'],
+  ['DMR', 'Dominaria Remastered', '31'],
+  ['2X2', 'Double Masters 2022', '32'],
+  ['2XM', 'Double Masters', '109'],
+  ['MH2', 'Modern Horizons 2', '259'],
+  ['DMR', 'Dominaria Remastered', '108'],
+  ['2XM', 'Double Masters', '306'],
+  ['DMR', 'Dominaria Remastered', '110'],
 ] as const
 
 const marketplaceSellerIds = [
@@ -219,14 +239,15 @@ const marketplaceOfferTypes: MarketplaceListing['offerType'][] = [
 const generatedMarketplaceCards: Card[] = Array.from(
   { length: 150 },
   (_, index) => {
-    const [setCode, setName] = marketplaceSets[index % marketplaceSets.length]
+    const [setCode, setName, collectorNumber] =
+      marketplacePrintings[index % marketplacePrintings.length]
 
     return {
       id: `card-marketplace-demo-${index + 1}`,
       name: marketplaceCardNames[index % marketplaceCardNames.length],
       setName,
       setCode,
-      collectorNumber: String(10 + ((index * 17) % 390)),
+      collectorNumber,
     }
   },
 )
@@ -1577,7 +1598,7 @@ export const demoData = {
       name: 'Sol Ring',
       setName: 'Commander Masters',
       setCode: 'CMM',
-      collectorNumber: '396',
+      collectorNumber: '410',
     },
     {
       id: 'card-the-one-ring',

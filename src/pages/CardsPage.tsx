@@ -3,6 +3,7 @@ import {
   AtSign,
   CheckCircle2,
   ChevronRight,
+  LayoutGrid,
   Layers3,
   ListChecks,
   Mail,
@@ -11,6 +12,7 @@ import {
   Search,
   ShoppingBag,
   Sparkles,
+  Table2,
   Upload,
   UserRound,
   X,
@@ -41,6 +43,7 @@ import {
   type WantedCardItem,
 } from '../data/cardSelectors'
 import type { DemoDataUpdater } from '../data/demoRepository'
+import { getScryfallCardImage } from '../data/scryfallImages'
 import type {
   CardCondition,
   CardDeal,
@@ -84,7 +87,11 @@ const cardConditions = Object.keys(conditionLabels) as CardCondition[]
 const offerTypes = Object.keys(
   offerTypeLabels,
 ) as MarketplaceListing['offerType'][]
-const MARKET_PAGE_SIZE = 20
+const MARKET_TABLE_PAGE_SIZE = 20
+const MARKET_GALLERY_PAGE_SIZES = {
+  2: 12,
+  4: 20,
+} as const
 
 const matchStatusLabels = {
   new: 'Nueva',
@@ -102,9 +109,11 @@ const listingStatusLabels: Record<MarketplaceListing['status'], string> = {
 function MarketplaceTable({
   items,
   onMemberSelect,
+  onPreview,
 }: {
   items: MarketplaceListingItem[]
   onMemberSelect: (memberId: string) => void
+  onPreview: (listingId: string) => void
 }) {
   return (
     <div className="market-table-wrap">
@@ -136,9 +145,23 @@ function MarketplaceTable({
             <tr key={item.listing.id}>
               <td>
                 <div className="market-table__card">
-                  <span className="card-set-symbol" aria-hidden="true">
-                    {item.card.setCode}
-                  </span>
+                  <button
+                    className="market-table__card-preview"
+                    type="button"
+                    aria-label={`Ampliar ${item.card.name}`}
+                    onClick={() => onPreview(item.listing.id)}
+                  >
+                    {getScryfallCardImage(item.card.name) ? (
+                      <img
+                        src={getScryfallCardImage(item.card.name)}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ) : (
+                      <span>{item.card.setCode}</span>
+                    )}
+                  </button>
                   <span>
                     <strong>{item.card.name}</strong>
                     <small>
@@ -179,14 +202,159 @@ function MarketplaceTable({
                 {item.listing.quantity}
               </td>
               <td className="market-table__price">
-                {item.listing.priceEur
-                  ? `${item.listing.priceEur.toFixed(2)} €`
-                  : 'A convenir'}
+                {item.listing.priceEur ? (
+                  `${item.listing.priceEur.toFixed(2)} €`
+                ) : (
+                  <>
+                    <span
+                      className="market-table__price-mobile"
+                      aria-label="A convenir"
+                    >
+                      —
+                    </span>
+                    <span className="market-table__price-desktop">
+                      A convenir
+                    </span>
+                  </>
+                )}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+    </div>
+  )
+}
+
+function MarketplaceGallery({
+  items,
+  columns,
+  onMemberSelect,
+  onPreview,
+}: {
+  items: MarketplaceListingItem[]
+  columns: 2 | 4
+  onMemberSelect: (memberId: string) => void
+  onPreview: (listingId: string) => void
+}) {
+  return (
+    <div
+      className={`market-gallery market-gallery--${columns}`}
+      aria-label="Galería de ofertas"
+    >
+      {items.map((item) => {
+        const imageUrl = getScryfallCardImage(item.card.name)
+
+        return (
+          <article className="market-gallery-card" key={item.listing.id}>
+            <button
+              className="market-gallery-card__image"
+              type="button"
+              aria-label={`Ampliar ${item.card.name}`}
+              onClick={() => onPreview(item.listing.id)}
+            >
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt={`${item.card.name}, imagen de Scryfall`}
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : (
+                <span>{item.card.setCode}</span>
+              )}
+            </button>
+            <div className="market-gallery-card__content">
+              <div>
+                <h3>{item.card.name}</h3>
+                <p>
+                  {item.card.setName} · #{item.card.collectorNumber}
+                  {item.listing.finish === 'foil' ? ' · Foil' : ''}
+                </p>
+              </div>
+              <dl>
+                <div>
+                  <dt>Oferta</dt>
+                  <dd>{offerTypeLabels[item.listing.offerType]}</dd>
+                </div>
+                <div>
+                  <dt>Idioma</dt>
+                  <dd>{languageLabels[item.listing.language]}</dd>
+                </div>
+                <div>
+                  <dt>Estado</dt>
+                  <dd>{conditionLabels[item.listing.condition]}</dd>
+                </div>
+                <div>
+                  <dt>Precio</dt>
+                  <dd>
+                    {item.listing.priceEur
+                      ? `${item.listing.priceEur.toFixed(2)} €`
+                      : 'A convenir'}
+                  </dd>
+                </div>
+              </dl>
+              <button
+                className="market-gallery-card__member"
+                type="button"
+                onClick={() => onMemberSelect(item.member.id)}
+              >
+                <span className="member-initials" aria-hidden="true">
+                  {item.member.initials}
+                </span>
+                <span>
+                  <small>Disponible por</small>
+                  <strong>{item.member.displayName}</strong>
+                </span>
+              </button>
+            </div>
+          </article>
+        )
+      })}
+    </div>
+  )
+}
+
+function CardImagePreview({
+  item,
+  onClose,
+}: {
+  item: MarketplaceListingItem
+  onClose: () => void
+}) {
+  const imageUrl = getScryfallCardImage(item.card.name)
+
+  return (
+    <div
+      className="card-image-preview"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="card-image-preview-title"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose()
+        }
+      }}
+    >
+      <div className="card-image-preview__panel">
+        <button
+          className="card-image-preview__close"
+          type="button"
+          aria-label="Cerrar imagen"
+          onClick={onClose}
+        >
+          <X aria-hidden="true" size={20} />
+        </button>
+        {imageUrl ? (
+          <img src={imageUrl} alt={`${item.card.name}, imagen ampliada`} />
+        ) : null}
+        <div>
+          <h2 id="card-image-preview-title">{item.card.name}</h2>
+          <p>
+            {item.card.setName} · Disponible por {item.member.displayName}
+          </p>
+        </div>
+      </div>
     </div>
   )
 }
@@ -783,8 +951,13 @@ export function CardsPage({
   const [selectedMatchId, setSelectedMatchId] = useState<string>()
   const [matchGrouping, setMatchGrouping] = useState<MatchGrouping>('card')
   const [marketPage, setMarketPage] = useState(1)
+  const [marketDisplay, setMarketDisplay] = useState<'table' | 'gallery'>(
+    'table',
+  )
+  const [marketGalleryColumns, setMarketGalleryColumns] = useState<2 | 4>(2)
   const [selectedMarketplaceMemberId, setSelectedMarketplaceMemberId] =
     useState('')
+  const [selectedImageListingId, setSelectedImageListingId] = useState('')
   const [actionMessage, setActionMessage] = useState('')
   const [query, setQuery] = useState('')
   const listings = getMarketplaceListings(data)
@@ -817,15 +990,22 @@ export function CardsPage({
       ),
     [listings, normalizedQuery, selectedMarketplaceMemberId],
   )
+  const marketPageSize =
+    marketDisplay === 'table'
+      ? MARKET_TABLE_PAGE_SIZE
+      : MARKET_GALLERY_PAGE_SIZES[marketGalleryColumns]
   const marketPageCount = Math.max(
     1,
-    Math.ceil(filteredListings.length / MARKET_PAGE_SIZE),
+    Math.ceil(filteredListings.length / marketPageSize),
   )
   const activeMarketPage = Math.min(marketPage, marketPageCount)
-  const marketPageStart = (activeMarketPage - 1) * MARKET_PAGE_SIZE
+  const marketPageStart = (activeMarketPage - 1) * marketPageSize
   const visibleListings = filteredListings.slice(
     marketPageStart,
-    marketPageStart + MARKET_PAGE_SIZE,
+    marketPageStart + marketPageSize,
+  )
+  const selectedImageListing = listings.find(
+    ({ listing }) => listing.id === selectedImageListingId,
   )
 
   if (selectedMatch) {
@@ -1035,6 +1215,65 @@ export function CardsPage({
             />
           </label>
 
+          <div
+            className="market-display-switch"
+            role="group"
+            aria-label="Vista de ofertas"
+          >
+            <button
+              type="button"
+              aria-pressed={marketDisplay === 'table'}
+              onClick={() => {
+                setMarketDisplay('table')
+                setMarketPage(1)
+              }}
+            >
+              <Table2 aria-hidden="true" size={16} />
+              Tabla
+            </button>
+            <button
+              type="button"
+              aria-pressed={marketDisplay === 'gallery'}
+              onClick={() => {
+                setMarketDisplay('gallery')
+                setMarketPage(1)
+              }}
+            >
+              <LayoutGrid aria-hidden="true" size={16} />
+              Imágenes
+            </button>
+          </div>
+
+          {marketDisplay === 'gallery' ? (
+            <div
+              className="market-gallery-density"
+              role="group"
+              aria-label="Cartas por línea"
+            >
+              <span>Densidad</span>
+              <button
+                type="button"
+                aria-pressed={marketGalleryColumns === 2}
+                onClick={() => {
+                  setMarketGalleryColumns(2)
+                  setMarketPage(1)
+                }}
+              >
+                2 por fila
+              </button>
+              <button
+                type="button"
+                aria-pressed={marketGalleryColumns === 4}
+                onClick={() => {
+                  setMarketGalleryColumns(4)
+                  setMarketPage(1)
+                }}
+              >
+                4 por fila
+              </button>
+            </div>
+          ) : null}
+
           {selectedMarketplaceMember ? (
             <div className="market-member-filter" role="status">
               <span>
@@ -1054,25 +1293,48 @@ export function CardsPage({
           ) : null}
 
           {visibleListings.length > 0 ? (
-            <MarketplaceTable
-              items={visibleListings}
-              onMemberSelect={(memberId) => {
-                setSelectedMarketplaceMemberId(memberId)
-                setMarketPage(1)
-              }}
-            />
+            marketDisplay === 'table' ? (
+              <MarketplaceTable
+                items={visibleListings}
+                onMemberSelect={(memberId) => {
+                  setSelectedMarketplaceMemberId(memberId)
+                  setMarketPage(1)
+                }}
+                onPreview={setSelectedImageListingId}
+              />
+            ) : (
+              <MarketplaceGallery
+                items={visibleListings}
+                columns={marketGalleryColumns}
+                onMemberSelect={(memberId) => {
+                  setSelectedMarketplaceMemberId(memberId)
+                  setMarketPage(1)
+                }}
+                onPreview={setSelectedImageListingId}
+              />
+            )
           ) : (
             <p className="filtered-empty-state">
               No hay ofertas que coincidan con esta búsqueda.
             </p>
           )}
 
+          {visibleListings.length > 0 ? (
+            <p className="scryfall-credit">
+              Imágenes de cartas proporcionadas por{' '}
+              <a href="https://scryfall.com" target="_blank" rel="noreferrer">
+                Scryfall
+              </a>
+              .
+            </p>
+          ) : null}
+
           {filteredListings.length > 0 ? (
             <nav className="market-pagination" aria-label="Páginas de ofertas">
               <p>
                 {marketPageStart + 1}–
                 {Math.min(
-                  marketPageStart + MARKET_PAGE_SIZE,
+                  marketPageStart + marketPageSize,
                   filteredListings.length,
                 )}{' '}
                 de {filteredListings.length}
@@ -1184,6 +1446,12 @@ export function CardsPage({
           </p>
         </section>
       )}
+      {selectedImageListing ? (
+        <CardImagePreview
+          item={selectedImageListing}
+          onClose={() => setSelectedImageListingId('')}
+        />
+      ) : null}
     </div>
   )
 }
