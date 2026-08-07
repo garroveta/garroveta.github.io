@@ -353,7 +353,7 @@ function EventRankingDetail({
 
 function CommunityRanking({ data }: { data: DemoDataSet }) {
   const [gameId, setGameId] = useState('game-mtg')
-  const [formatId, setFormatId] = useState('format-mtg-pauper')
+  const [formatId, setFormatId] = useState('')
   const [eventKindId, setEventKindId] = useState('')
   const [months, setMonths] = useState<RankingFilters['months']>(6)
   const [limit, setLimit] = useState<10 | 20>(10)
@@ -390,7 +390,7 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
 
   const changeGame = (nextGameId: string) => {
     setGameId(nextGameId)
-    setFormatId(nextGameId === 'game-mtg' ? 'format-mtg-pauper' : '')
+    setFormatId('')
     setEventKindId('')
   }
 

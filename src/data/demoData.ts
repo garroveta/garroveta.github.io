@@ -1,7 +1,11 @@
 import type {
+  Card,
+  CardCondition,
+  CardLanguage,
   DemoDataSet,
   DemoDataSummary,
   EventStandingEntry,
+  MarketplaceListing,
 } from '../domain/types'
 
 const communityId = 'community-crc-delorean'
@@ -128,6 +132,131 @@ function buildStanding(
 
   return addStandingStatistics(entries)
 }
+
+const marketplaceCardNames = [
+  'Aether Vial',
+  'Ancient Tomb',
+  'Atraxa, Praetors’ Voice',
+  'Birds of Paradise',
+  'Blood Moon',
+  'Boseiju, Who Endures',
+  'Brainstorm',
+  'Chrome Mox',
+  'Counterspell',
+  'Demonic Tutor',
+  'Dockside Extortionist',
+  'Emrakul, the Promised End',
+  'Fable of the Mirror-Breaker',
+  'Force of Negation',
+  'Force of Will',
+  'Goblin Guide',
+  'Jeweled Lotus',
+  'Mana Confluence',
+  'Mana Drain',
+  'Mishra’s Bauble',
+  'Mystic Remora',
+  'Path to Exile',
+  'Ragavan, Nimble Pilferer',
+  'Swords to Plowshares',
+  'Teferi’s Protection',
+  'Thoughtseize',
+  'Urza’s Saga',
+  'Vampiric Tutor',
+  'Walking Ballista',
+  'Yawgmoth, Thran Physician',
+] as const
+
+const marketplaceSets = [
+  ['M3C', 'Modern Horizons 3 Commander'],
+  ['MH3', 'Modern Horizons 3'],
+  ['OTJ', 'Outlaws of Thunder Junction'],
+  ['MKM', 'Murders at Karlov Manor'],
+  ['LCI', 'The Lost Caverns of Ixalan'],
+  ['WOE', 'Wilds of Eldraine'],
+  ['MOM', 'March of the Machine'],
+  ['BRO', 'The Brothers’ War'],
+  ['DMU', 'Dominaria United'],
+  ['2X2', 'Double Masters 2022'],
+] as const
+
+const marketplaceSellerIds = [
+  'member-marta',
+  'member-sergio',
+  'member-irene',
+  'member-hugo',
+  'member-nora',
+  'member-carla',
+  'member-biel',
+  'member-julia',
+  'member-marc',
+  'member-laia',
+  'member-pau',
+  'member-aina',
+  'member-joan',
+] as const
+
+const marketplaceLanguages: CardLanguage[] = [
+  'es',
+  'en',
+  'fr',
+  'de',
+  'it',
+  'pt',
+  'jp',
+]
+const marketplaceConditions: CardCondition[] = [
+  'mint',
+  'near_mint',
+  'excellent',
+  'good',
+]
+const marketplaceOfferTypes: MarketplaceListing['offerType'][] = [
+  'sale',
+  'trade',
+  'sale_or_trade',
+]
+
+const generatedMarketplaceCards: Card[] = Array.from(
+  { length: 150 },
+  (_, index) => {
+    const [setCode, setName] = marketplaceSets[index % marketplaceSets.length]
+
+    return {
+      id: `card-marketplace-demo-${index + 1}`,
+      name: marketplaceCardNames[index % marketplaceCardNames.length],
+      setName,
+      setCode,
+      collectorNumber: String(10 + ((index * 17) % 390)),
+    }
+  },
+)
+
+const generatedMarketplaceListings: MarketplaceListing[] =
+  generatedMarketplaceCards.map((card, index) => {
+    const offerType =
+      marketplaceOfferTypes[index % marketplaceOfferTypes.length]
+    const priceEur =
+      offerType === 'trade'
+        ? undefined
+        : Math.round((1.5 + ((index * 137) % 14500) / 100) * 100) / 100
+
+    return {
+      id: `listing-marketplace-demo-${index + 1}`,
+      communityId,
+      memberId: marketplaceSellerIds[index % marketplaceSellerIds.length],
+      cardId: card.id,
+      quantity: 1 + (index % 4),
+      language: marketplaceLanguages[index % marketplaceLanguages.length],
+      condition: marketplaceConditions[index % marketplaceConditions.length],
+      finish: index % 7 === 0 ? 'foil' : 'nonfoil',
+      offerType,
+      priceEur,
+      status: 'available',
+      createdAt: new Date(
+        Date.UTC(2026, 5, 30, 12, 0) - index * 60 * 60 * 1000,
+      ).toISOString(),
+    }
+  })
 
 export const demoData = {
   currentMemberId: 'member-alex',
@@ -380,8 +509,8 @@ export const demoData = {
     {
       id: 'member-lucia',
       communityId,
-      displayName: 'Lucía Martín',
-      initials: 'LM',
+      displayName: 'Tomás',
+      initials: 'T',
       role: 'manager',
       status: 'approved',
       tagIds: ['tag-commander', 'tag-draft', 'tag-promociones'],
@@ -1492,6 +1621,7 @@ export const demoData = {
       setCode: 'MH2',
       collectorNumber: '12',
     },
+    ...generatedMarketplaceCards,
   ],
   listings: [
     {
@@ -1617,6 +1747,7 @@ export const demoData = {
       status: 'available',
       createdAt: '2026-07-25T12:35:00+02:00',
     },
+    ...generatedMarketplaceListings,
   ],
   wantedCards: [
     {

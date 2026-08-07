@@ -84,6 +84,7 @@ const cardConditions = Object.keys(conditionLabels) as CardCondition[]
 const offerTypes = Object.keys(
   offerTypeLabels,
 ) as MarketplaceListing['offerType'][]
+const MARKET_PAGE_SIZE = 20
 
 const matchStatusLabels = {
   new: 'Nueva',
@@ -98,57 +99,95 @@ const listingStatusLabels: Record<MarketplaceListing['status'], string> = {
   completed: 'Cerrada',
 }
 
-function MarketplaceCard({ item }: { item: MarketplaceListingItem }) {
+function MarketplaceTable({
+  items,
+  onMemberSelect,
+}: {
+  items: MarketplaceListingItem[]
+  onMemberSelect: (memberId: string) => void
+}) {
   return (
-    <article className="market-card">
-      <div className="card-identity">
-        <span aria-hidden="true">{item.card.setCode}</span>
-        <div>
-          <h3>{item.card.name}</h3>
-          <p>
-            {item.card.setName} · #{item.card.collectorNumber}
-          </p>
-        </div>
-      </div>
-
-      <div className="market-card__badges">
-        <span>{offerTypeLabels[item.listing.offerType]}</span>
-        {item.listing.finish === 'foil' ? <span>Foil</span> : null}
-      </div>
-
-      <dl className="market-card__facts">
-        <div>
-          <dt>Cantidad</dt>
-          <dd>{item.listing.quantity}</dd>
-        </div>
-        <div>
-          <dt>Idioma</dt>
-          <dd>{languageLabels[item.listing.language]}</dd>
-        </div>
-        <div>
-          <dt>Estado</dt>
-          <dd>{conditionLabels[item.listing.condition]}</dd>
-        </div>
-        <div>
-          <dt>Precio</dt>
-          <dd>
-            {item.listing.priceEur
-              ? `${item.listing.priceEur.toFixed(2)} €`
-              : 'A convenir'}
-          </dd>
-        </div>
-      </dl>
-
-      <footer>
-        <span className="member-initials" aria-hidden="true">
-          {item.member.initials}
-        </span>
-        <span>
-          <small>Publicado por</small>
-          <strong>{item.member.displayName}</strong>
-        </span>
-      </footer>
-    </article>
+    <div className="market-table-wrap">
+      <table
+        className="market-table"
+        aria-label="Ofertas de cartas disponibles"
+      >
+        <thead>
+          <tr>
+            <th scope="col">Carta</th>
+            <th scope="col">Miembro</th>
+            <th className="market-table__wide" scope="col">
+              Oferta
+            </th>
+            <th className="market-table__wide" scope="col">
+              Idioma
+            </th>
+            <th className="market-table__wide" scope="col">
+              Estado
+            </th>
+            <th scope="col">
+              <abbr title="Cantidad">Cant.</abbr>
+            </th>
+            <th scope="col">Precio</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <tr key={item.listing.id}>
+              <td>
+                <div className="market-table__card">
+                  <span className="card-set-symbol" aria-hidden="true">
+                    {item.card.setCode}
+                  </span>
+                  <span>
+                    <strong>{item.card.name}</strong>
+                    <small>
+                      {item.card.setName} · #{item.card.collectorNumber}
+                      {item.listing.finish === 'foil' ? ' · Foil' : ''}
+                    </small>
+                    <small className="market-table__mobile-meta">
+                      {offerTypeLabels[item.listing.offerType]} ·{' '}
+                      {languageLabels[item.listing.language]} ·{' '}
+                      {conditionLabels[item.listing.condition]}
+                    </small>
+                  </span>
+                </div>
+              </td>
+              <td>
+                <button
+                  className="market-table__member"
+                  type="button"
+                  aria-label={`Ver cartas de ${item.member.displayName}`}
+                  onClick={() => onMemberSelect(item.member.id)}
+                >
+                  <span className="member-initials" aria-hidden="true">
+                    {item.member.initials}
+                  </span>
+                  <span>{item.member.displayName}</span>
+                </button>
+              </td>
+              <td className="market-table__wide">
+                {offerTypeLabels[item.listing.offerType]}
+              </td>
+              <td className="market-table__wide">
+                {languageLabels[item.listing.language]}
+              </td>
+              <td className="market-table__wide">
+                {conditionLabels[item.listing.condition]}
+              </td>
+              <td className="market-table__quantity">
+                {item.listing.quantity}
+              </td>
+              <td className="market-table__price">
+                {item.listing.priceEur
+                  ? `${item.listing.priceEur.toFixed(2)} €`
+                  : 'A convenir'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }
 
@@ -743,6 +782,9 @@ export function CardsPage({
   >()
   const [selectedMatchId, setSelectedMatchId] = useState<string>()
   const [matchGrouping, setMatchGrouping] = useState<MatchGrouping>('card')
+  const [marketPage, setMarketPage] = useState(1)
+  const [selectedMarketplaceMemberId, setSelectedMarketplaceMemberId] =
+    useState('')
   const [actionMessage, setActionMessage] = useState('')
   const [query, setQuery] = useState('')
   const listings = getMarketplaceListings(data)
@@ -757,16 +799,33 @@ export function CardsPage({
     ? data.cardDeals.find(({ matchId }) => matchId === selectedMatchId)
     : undefined
   const normalizedQuery = query.trim().toLocaleLowerCase('es')
+  const selectedMarketplaceMember = data.members.find(
+    ({ id }) => id === selectedMarketplaceMemberId,
+  )
   const filteredListings = useMemo(
     () =>
       listings.filter(
         ({ card, member }) =>
-          !normalizedQuery ||
-          card.name.toLocaleLowerCase('es').includes(normalizedQuery) ||
-          card.setName.toLocaleLowerCase('es').includes(normalizedQuery) ||
-          member.displayName.toLocaleLowerCase('es').includes(normalizedQuery),
+          (!selectedMarketplaceMemberId ||
+            member.id === selectedMarketplaceMemberId) &&
+          (!normalizedQuery ||
+            card.name.toLocaleLowerCase('es').includes(normalizedQuery) ||
+            card.setName.toLocaleLowerCase('es').includes(normalizedQuery) ||
+            member.displayName
+              .toLocaleLowerCase('es')
+              .includes(normalizedQuery)),
       ),
-    [listings, normalizedQuery],
+    [listings, normalizedQuery, selectedMarketplaceMemberId],
+  )
+  const marketPageCount = Math.max(
+    1,
+    Math.ceil(filteredListings.length / MARKET_PAGE_SIZE),
+  )
+  const activeMarketPage = Math.min(marketPage, marketPageCount)
+  const marketPageStart = (activeMarketPage - 1) * MARKET_PAGE_SIZE
+  const visibleListings = filteredListings.slice(
+    marketPageStart,
+    marketPageStart + MARKET_PAGE_SIZE,
   )
 
   if (selectedMatch) {
@@ -969,15 +1028,78 @@ export function CardsPage({
               type="search"
               placeholder="Buscar carta, edición o miembro"
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => {
+                setQuery(event.target.value)
+                setMarketPage(1)
+              }}
             />
           </label>
 
-          <div className="market-grid">
-            {filteredListings.map((item) => (
-              <MarketplaceCard item={item} key={item.listing.id} />
-            ))}
-          </div>
+          {selectedMarketplaceMember ? (
+            <div className="market-member-filter" role="status">
+              <span>
+                Cartas disponibles de{' '}
+                <strong>{selectedMarketplaceMember.displayName}</strong>
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedMarketplaceMemberId('')
+                  setMarketPage(1)
+                }}
+              >
+                Ver todos
+              </button>
+            </div>
+          ) : null}
+
+          {visibleListings.length > 0 ? (
+            <MarketplaceTable
+              items={visibleListings}
+              onMemberSelect={(memberId) => {
+                setSelectedMarketplaceMemberId(memberId)
+                setMarketPage(1)
+              }}
+            />
+          ) : (
+            <p className="filtered-empty-state">
+              No hay ofertas que coincidan con esta búsqueda.
+            </p>
+          )}
+
+          {filteredListings.length > 0 ? (
+            <nav className="market-pagination" aria-label="Páginas de ofertas">
+              <p>
+                {marketPageStart + 1}–
+                {Math.min(
+                  marketPageStart + MARKET_PAGE_SIZE,
+                  filteredListings.length,
+                )}{' '}
+                de {filteredListings.length}
+              </p>
+              {marketPageCount > 1 ? (
+                <div>
+                  <button
+                    type="button"
+                    disabled={activeMarketPage === 1}
+                    onClick={() => setMarketPage(activeMarketPage - 1)}
+                  >
+                    Anterior
+                  </button>
+                  <span>
+                    {activeMarketPage}/{marketPageCount}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={activeMarketPage === marketPageCount}
+                    onClick={() => setMarketPage(activeMarketPage + 1)}
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              ) : null}
+            </nav>
+          ) : null}
         </section>
       ) : (
         <section className="cards-section" aria-labelledby="wanted-title">

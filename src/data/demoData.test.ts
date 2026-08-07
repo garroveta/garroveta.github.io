@@ -159,6 +159,27 @@ describe('demoData', () => {
     })
   })
 
+  it('includes a varied 150-card marketplace inventory for display tests', () => {
+    const generatedListings = demoData.listings.filter(({ id }) =>
+      id.startsWith('listing-marketplace-demo-'),
+    )
+
+    expect(generatedListings).toHaveLength(150)
+    expect(
+      new Set(generatedListings.map(({ language }) => language)).size,
+    ).toBe(7)
+    expect(
+      new Set(generatedListings.map(({ condition }) => condition)).size,
+    ).toBe(4)
+    expect(
+      new Set(generatedListings.map(({ offerType }) => offerType)).size,
+    ).toBe(3)
+    expect(generatedListings.some(({ finish }) => finish === 'foil')).toBe(true)
+    expect(
+      generatedListings.some(({ priceEur }) => priceEur === undefined),
+    ).toBe(true)
+  })
+
   it('contains the pilot summer schedule and requested events', () => {
     expect(demoData.community.openingHours).toEqual([
       { day: 'monday' },

@@ -160,9 +160,10 @@ describe('App', () => {
 
     expect(
       screen.getByRole('heading', {
-        name: 'MTG · Pauper · Todos los eventos',
+        name: 'MTG · Todos los formatos · Todos los eventos',
       }),
     ).toBeInTheDocument()
+    expect(screen.getByLabelText('Formato')).toHaveValue('')
 
     const rankingTable = screen.getByRole('table', {
       name: 'Clasificación acumulada',
@@ -175,9 +176,7 @@ describe('App', () => {
     expect(rankingLegend).toHaveTextContent('Pod. podios')
     expect(rankingLegend).toHaveTextContent('Pts puntos comunidad')
     expect(
-      within(rankingTable).getByRole('row', {
-        name: /1 Carla Pons Alcover 6 2 5 47/,
-      }),
+      within(rankingTable).getByText('Carla Pons Alcover'),
     ).toBeInTheDocument()
 
     fireEvent.change(screen.getByLabelText('Tipo de evento'), {
@@ -185,7 +184,9 @@ describe('App', () => {
     })
 
     expect(
-      screen.getByRole('heading', { name: 'MTG · Pauper · FNM' }),
+      screen.getByRole('heading', {
+        name: 'MTG · Todos los formatos · FNM',
+      }),
     ).toBeInTheDocument()
     expect(
       within(rankingTable).getByRole('row', {
@@ -282,7 +283,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('link', { name: 'Inicio' }))
 
     expect(
-      screen.getByRole('heading', { name: 'Hola, Lucía' }),
+      screen.getByRole('heading', { name: 'Hola, Tomás' }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: 'Acciones prioritarias' }),
@@ -469,7 +470,7 @@ describe('App', () => {
       .getByRole('heading', { name: 'Cambio de sala' })
       .closest('article')
     expect(
-      within(publishedNews as HTMLElement).getByText(/Lucía Martín/),
+      within(publishedNews as HTMLElement).getByText(/Tomás/),
     ).toBeInTheDocument()
     expect(
       createLocalDemoRepository(window.localStorage).load().newsPosts.at(-1),
@@ -582,8 +583,38 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Cartas disponibles' }),
     ).toBeInTheDocument()
-    expect(screen.getAllByRole('heading', { name: 'Sol Ring' })).toHaveLength(3)
-    expect(screen.getAllByText('Diego Sánchez')).not.toHaveLength(0)
+    const marketplaceTable = screen.getByRole('table', {
+      name: 'Ofertas de cartas disponibles',
+    })
+    expect(
+      within(marketplaceTable).getAllByRole('row', { name: /Sol Ring/ }),
+    ).toHaveLength(3)
+    expect(
+      within(marketplaceTable).getAllByText('Diego Sánchez'),
+    ).not.toHaveLength(0)
+    expect(screen.getByText('1–20 de 159')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }))
+    expect(screen.getByText('21–40 de 159')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Anterior' }))
+    expect(screen.getByText('1–20 de 159')).toBeInTheDocument()
+
+    fireEvent.click(
+      within(marketplaceTable).getAllByRole('button', {
+        name: 'Ver cartas de Marta Soler',
+      })[0],
+    )
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Cartas disponibles de Marta Soler',
+    )
+    expect(
+      screen.queryByRole('button', { name: 'Ver cartas de Diego Sánchez' }),
+    ).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Ver todos' }))
+    expect(
+      screen.getAllByRole('button', {
+        name: 'Ver cartas de Diego Sánchez',
+      }),
+    ).not.toHaveLength(0)
 
     fireEvent.change(
       screen.getByRole('searchbox', {
@@ -593,11 +624,9 @@ describe('App', () => {
     )
 
     expect(
-      screen.getByRole('heading', { name: 'Sheoldred, the Apocalypse' }),
+      screen.getByRole('row', { name: /Sheoldred, the Apocalypse/ }),
     ).toBeInTheDocument()
-    expect(
-      screen.queryByRole('heading', { name: 'Sol Ring' }),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('row', { name: /Sol Ring/ })).toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: /Mis listas/ }))
 
@@ -628,11 +657,11 @@ describe('App', () => {
     expect(
       screen.getByText('Tu carta ya aparece en las ofertas.'),
     ).toBeInTheDocument()
-    const publishedListing = screen
-      .getByRole('heading', { name: 'Esper Sentinel' })
-      .closest('article')
+    const publishedListing = screen.getByRole('row', {
+      name: /Esper Sentinel/,
+    })
     expect(
-      within(publishedListing as HTMLElement).getByText('Álex Romero'),
+      within(publishedListing).getByText('Álex Romero'),
     ).toBeInTheDocument()
     expect(
       createLocalDemoRepository(window.localStorage).load().listings.at(-1),

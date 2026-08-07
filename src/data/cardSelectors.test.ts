@@ -13,7 +13,7 @@ describe('card selectors', () => {
   it('returns available marketplace listings with cards and members', () => {
     const listings = getMarketplaceListings(demoData)
 
-    expect(listings).toHaveLength(9)
+    expect(listings).toHaveLength(159)
     expect(listings[0]).toMatchObject({
       card: { name: 'Sol Ring' },
       member: { displayName: 'Diego Sánchez' },
