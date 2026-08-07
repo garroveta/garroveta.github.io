@@ -3948,6 +3948,8 @@ a {
 .ranking-table.cumulative-ranking-table th:first-child,
 .ranking-table.cumulative-ranking-table td:first-child {
   width: 2.25rem;
+  padding-left: 0.18rem;
+  text-align: left;
 }
 
 .cumulative-ranking-table th:last-child,
