@@ -3247,6 +3247,7 @@ a {
 }
 
 .event-ranking-detail {
+  scroll-margin-top: 6.5rem;
   margin-inline: -0.35rem;
   padding: 0.65rem;
   border: 1px solid #ded6e2;

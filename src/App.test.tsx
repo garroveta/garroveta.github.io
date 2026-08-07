@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { App } from './App'
 import { demoData } from './data/demoData'
@@ -59,6 +59,11 @@ describe('App', () => {
   })
 
   it('opens the latest community event standings', () => {
+    const scrollIntoView = vi.fn()
+    Object.defineProperty(Element.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    })
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Ranking' }))
@@ -126,6 +131,10 @@ describe('App', () => {
       }),
     )
 
+    expect(scrollIntoView).toHaveBeenCalledWith({
+      behavior: 'auto',
+      block: 'start',
+    })
     expect(screen.getByText('16 participantes')).toBeInTheDocument()
     expect(screen.getAllByText('Sergio Gil')).not.toHaveLength(0)
   })

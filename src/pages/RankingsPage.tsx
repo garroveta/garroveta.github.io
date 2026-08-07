@@ -8,7 +8,7 @@ import {
   UserRound,
   UsersRound,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState, type RefObject } from 'react'
 
 import {
   getCommunityLeaderboard,
@@ -214,9 +214,16 @@ function MobileEventStandingList({
   )
 }
 
-function EventRankingDetail({ item }: { item: ResolvedEventStanding }) {
+function EventRankingDetail({
+  item,
+  sectionRef,
+}: {
+  item: ResolvedEventStanding
+  sectionRef: RefObject<HTMLElement | null>
+}) {
   return (
     <section
+      ref={sectionRef}
       className="event-ranking-detail"
       aria-labelledby="event-ranking-title"
     >
@@ -634,6 +641,7 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
 
 export function RankingsPage({ data }: RankingsPageProps) {
   const standings = useMemo(() => getLatestEventStandings(data), [data])
+  const rankingDetailRef = useRef<HTMLElement>(null)
   const [activeView, setActiveView] = useState<RankingView>('community')
   const [selectedStandingId, setSelectedStandingId] = useState(
     standings[0]?.standing.id ?? '',
@@ -683,7 +691,10 @@ export function RankingsPage({ data }: RankingsPageProps) {
       ) : (
         <>
           {selectedStanding ? (
-            <EventRankingDetail item={selectedStanding} />
+            <EventRankingDetail
+              item={selectedStanding}
+              sectionRef={rankingDetailRef}
+            />
           ) : null}
 
           <section
@@ -704,7 +715,13 @@ export function RankingsPage({ data }: RankingsPageProps) {
                   key={item.standing.id}
                   item={item}
                   selected={item.standing.id === selectedStanding?.standing.id}
-                  onSelect={() => setSelectedStandingId(item.standing.id)}
+                  onSelect={() => {
+                    setSelectedStandingId(item.standing.id)
+                    rankingDetailRef.current?.scrollIntoView({
+                      behavior: 'auto',
+                      block: 'start',
+                    })
+                  }}
                 />
               ))}
             </div>
