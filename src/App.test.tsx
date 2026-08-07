@@ -152,6 +152,13 @@ describe('App', () => {
     const rankingTable = screen.getByRole('table', {
       name: 'Clasificación acumulada',
     })
+    const rankingLegend = screen.getByRole('note', {
+      name: 'Leyenda del ranking comunitario',
+    })
+    expect(rankingLegend).toHaveTextContent('Ev. eventos')
+    expect(rankingLegend).toHaveTextContent('Vict. victorias')
+    expect(rankingLegend).toHaveTextContent('Pod. podios')
+    expect(rankingLegend).toHaveTextContent('Pts puntos comunidad')
     expect(
       within(rankingTable).getByRole('row', {
         name: /1 Carla Pons Alcover 6 2 5 47/,

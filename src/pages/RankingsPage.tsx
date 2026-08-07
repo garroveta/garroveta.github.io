@@ -618,6 +618,24 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
               </tbody>
             </table>
           </div>
+          <div
+            className="cumulative-ranking-legend"
+            role="note"
+            aria-label="Leyenda del ranking comunitario"
+          >
+            <span>
+              <abbr title="Eventos">Ev.</abbr> eventos
+            </span>
+            <span>
+              <abbr title="Victorias">Vict.</abbr> victorias
+            </span>
+            <span>
+              <abbr title="Podios">Pod.</abbr> podios
+            </span>
+            <span>
+              <abbr title="Puntos comunidad">Pts</abbr> puntos comunidad
+            </span>
+          </div>
         </>
       ) : (
         <div className="ranking-empty-state">

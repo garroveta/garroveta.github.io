@@ -3098,6 +3098,26 @@ a {
   display: none;
 }
 
+.cumulative-ranking-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  margin-top: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #ebe5ed;
+  border-radius: 0.65rem;
+  color: #817884;
+  background: #faf8fa;
+  font-size: 0.61rem;
+  line-height: 1.35;
+}
+
+.cumulative-ranking-legend abbr {
+  color: #5b2b77;
+  font-weight: 850;
+  text-decoration: none;
+}
+
 .ranking-empty-state {
   padding: 2rem 1rem;
   border: 1px dashed #d9d1dc;
@@ -3911,6 +3931,10 @@ a {
 
   .ranking-column-label--full {
     display: inline;
+  }
+
+  .cumulative-ranking-legend {
+    display: none;
   }
 
   .publication-list {
