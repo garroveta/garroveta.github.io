@@ -99,6 +99,15 @@ describe('App', () => {
     })
     const firstMobileEntry = within(mobileRanking).getAllByRole('listitem')[0]
     expect(within(firstMobileEntry).getByText('3/0/0')).toBeInTheDocument()
+    expect(
+      within(firstMobileEntry).getByLabelText('9 puntos del evento'),
+    ).toBeInTheDocument()
+    expect(
+      within(firstMobileEntry).getByLabelText('Más 10 puntos comunidad'),
+    ).toBeInTheDocument()
+    expect(
+      within(firstMobileEntry).queryByText('pts evento'),
+    ).not.toBeInTheDocument()
     expect(within(firstMobileEntry).queryByText('%VPO')).not.toBeInTheDocument()
 
     fireEvent.click(

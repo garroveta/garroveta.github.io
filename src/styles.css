@@ -3146,7 +3146,8 @@ a {
 }
 
 .event-ranking-detail {
-  padding: clamp(1rem, 4vw, 1.5rem);
+  margin-inline: -0.35rem;
+  padding: 0.65rem;
   border: 1px solid #ded6e2;
   border-radius: 1.25rem;
   background: #fff;
@@ -3208,16 +3209,17 @@ a {
 
 .ranking-points-legend {
   display: grid;
-  gap: 0.55rem;
-  margin-top: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin-top: 0.7rem;
 }
 
 .ranking-points-legend > div {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.65rem;
+  gap: 0.4rem;
+  padding: 0.45rem;
   border: 1px solid #e7e0e8;
   border-radius: 0.8rem;
   background: #faf8fa;
@@ -3234,14 +3236,15 @@ a {
 }
 
 .ranking-points-legend small {
+  display: none;
   color: #8b838d;
   font-size: 0.61rem;
 }
 
 .ranking-points-sample {
   display: inline-grid;
-  min-width: 2.4rem;
-  min-height: 2.15rem;
+  min-width: 2rem;
+  min-height: 1.8rem;
   place-items: center;
   border-radius: 0.62rem;
   font-size: 0.72rem;
@@ -3261,7 +3264,7 @@ a {
 }
 
 .mobile-standing {
-  margin-top: 1.25rem;
+  margin-top: 0.75rem;
 }
 
 .mobile-standing__toolbar {
@@ -3269,7 +3272,7 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  margin-bottom: 0.55rem;
+  margin-bottom: 0.35rem;
 }
 
 .mobile-standing__toolbar > span {
@@ -3298,7 +3301,7 @@ a {
 
 .mobile-standing__list {
   display: grid;
-  gap: 0.55rem;
+  gap: 0.35rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -3306,9 +3309,9 @@ a {
 
 .mobile-standing-card {
   min-width: 0;
-  padding: 0.75rem;
+  padding: 0.5rem;
   border: 1px solid #e5dfe7;
-  border-radius: 0.9rem;
+  border-radius: 0.7rem;
   background: #fff;
   box-shadow: 0 0.4rem 1.2rem rgb(51 43 55 / 4%);
 }
@@ -3320,9 +3323,16 @@ a {
 
 .mobile-standing-card__main {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.45rem;
+}
+
+.mobile-standing-card .ranking-position {
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 0.5rem;
+  font-size: 0.68rem;
 }
 
 .mobile-standing-card__identity {
@@ -3333,7 +3343,7 @@ a {
   display: block;
   overflow: hidden;
   color: #332e36;
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -3343,33 +3353,22 @@ a {
 }
 
 .mobile-standing-points {
-  display: grid;
-  grid-column: 2;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.4rem;
+  display: flex;
+  grid-column: auto;
+  gap: 0.3rem;
 }
 
 .mobile-standing-point {
-  display: flex;
-  min-width: 0;
-  align-items: baseline;
-  gap: 0.28rem;
-  padding: 0.42rem 0.5rem;
-  border-radius: 0.58rem;
+  display: inline-grid;
+  min-width: 2.35rem;
+  min-height: 1.7rem;
+  place-items: center;
+  padding: 0.2rem 0.35rem;
+  border-radius: 0.5rem;
 }
 
 .mobile-standing-point strong {
-  flex: 0 0 auto;
-  font-size: 0.76rem;
-}
-
-.mobile-standing-point small {
-  min-width: 0;
-  overflow: hidden;
-  font-size: 0.57rem;
-  font-weight: 750;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 0.7rem;
 }
 
 .mobile-standing-point--event {
@@ -3387,8 +3386,8 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 0.7rem;
-  margin-top: 0.6rem;
-  padding-top: 0.55rem;
+  margin-top: 0.35rem;
+  padding-top: 0.3rem;
   border-top: 1px solid #eee9ef;
 }
 
@@ -3404,7 +3403,7 @@ a {
 
 .mobile-standing-card__summary button {
   display: inline-flex;
-  min-height: 1.9rem;
+  min-height: 1.5rem;
   align-items: center;
   gap: 0.2rem;
   padding: 0 0 0 0.4rem;
@@ -3418,8 +3417,8 @@ a {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.35rem;
-  margin-top: 0.55rem;
-  padding: 0.55rem;
+  margin-top: 0.35rem;
+  padding: 0.4rem;
   border-radius: 0.65rem;
   background: #f7f4f7;
 }
@@ -3733,6 +3732,15 @@ a {
 
   .ranking-points-legend {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .event-ranking-detail {
+    margin-inline: 0;
+    padding: clamp(1rem, 4vw, 1.5rem);
+  }
+
+  .ranking-points-legend small {
+    display: inline;
   }
 
   .mobile-standing {
