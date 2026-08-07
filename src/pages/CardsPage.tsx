@@ -45,6 +45,7 @@ import {
 import type { DemoDataUpdater } from '../data/demoRepository'
 import { getScryfallCardImage } from '../data/scryfallImages'
 import type {
+  Card,
   CardCondition,
   CardDeal,
   CardLanguage,
@@ -88,6 +89,7 @@ const offerTypes = Object.keys(
   offerTypeLabels,
 ) as MarketplaceListing['offerType'][]
 const MARKET_TABLE_PAGE_SIZE = 20
+const MY_LISTS_PAGE_SIZE = 10
 const MARKET_GALLERY_PAGE_SIZES = {
   2: 12,
   4: 20,
@@ -113,7 +115,7 @@ function MarketplaceTable({
 }: {
   items: MarketplaceListingItem[]
   onMemberSelect: (memberId: string) => void
-  onPreview: (listingId: string) => void
+  onPreview: (item: MarketplaceListingItem) => void
 }) {
   return (
     <div className="market-table-wrap">
@@ -149,7 +151,7 @@ function MarketplaceTable({
                     className="market-table__card-preview"
                     type="button"
                     aria-label={`Ampliar ${item.card.name}`}
-                    onClick={() => onPreview(item.listing.id)}
+                    onClick={() => onPreview(item)}
                   >
                     {getScryfallCardImage(item.card.name) ? (
                       <img
@@ -235,7 +237,7 @@ function MarketplaceGallery({
   items: MarketplaceListingItem[]
   columns: 2 | 4
   onMemberSelect: (memberId: string) => void
-  onPreview: (listingId: string) => void
+  onPreview: (item: MarketplaceListingItem) => void
 }) {
   return (
     <div
@@ -251,7 +253,7 @@ function MarketplaceGallery({
               className="market-gallery-card__image"
               type="button"
               aria-label={`Ampliar ${item.card.name}`}
-              onClick={() => onPreview(item.listing.id)}
+              onClick={() => onPreview(item)}
             >
               {imageUrl ? (
                 <img
@@ -316,13 +318,15 @@ function MarketplaceGallery({
 }
 
 function CardImagePreview({
-  item,
+  card,
+  description,
   onClose,
 }: {
-  item: MarketplaceListingItem
+  card: Card
+  description: string
   onClose: () => void
 }) {
-  const imageUrl = getScryfallCardImage(item.card.name)
+  const imageUrl = getScryfallCardImage(card.name)
 
   return (
     <div
@@ -346,13 +350,11 @@ function CardImagePreview({
           <X aria-hidden="true" size={20} />
         </button>
         {imageUrl ? (
-          <img src={imageUrl} alt={`${item.card.name}, imagen ampliada`} />
+          <img src={imageUrl} alt={`${card.name}, imagen ampliada`} />
         ) : null}
         <div>
-          <h2 id="card-image-preview-title">{item.card.name}</h2>
-          <p>
-            {item.card.setName} · Disponible por {item.member.displayName}
-          </p>
+          <h2 id="card-image-preview-title">{card.name}</h2>
+          <p>{description}</p>
         </div>
       </div>
     </div>
@@ -361,16 +363,29 @@ function CardImagePreview({
 
 function WantedCardRow({
   item,
+  onPreview,
   onStatusChange,
 }: {
   item: WantedCardItem
+  onPreview: () => void
   onStatusChange: (status: WantedCardItem['wantedCard']['status']) => void
 }) {
+  const imageUrl = getScryfallCardImage(item.card.name)
+
   return (
     <article className="wanted-card-row">
-      <span className="card-set-symbol" aria-hidden="true">
-        {item.card.setCode}
-      </span>
+      <button
+        className="my-list-card-preview"
+        type="button"
+        aria-label={`Ampliar ${item.card.name}`}
+        onClick={onPreview}
+      >
+        {imageUrl ? (
+          <img src={imageUrl} alt="" loading="lazy" decoding="async" />
+        ) : (
+          <span>{item.card.setCode}</span>
+        )}
+      </button>
       <div>
         <h3>{item.card.name}</h3>
         <p>
@@ -390,19 +405,26 @@ function WantedCardRow({
       <div className="list-management-actions">
         <button
           type="button"
+          aria-label={
+            item.wantedCard.status === 'active'
+              ? 'Pausar búsqueda'
+              : 'Reactivar búsqueda'
+          }
           onClick={() =>
             onStatusChange(
               item.wantedCard.status === 'active' ? 'paused' : 'active',
             )
           }
         >
-          {item.wantedCard.status === 'active'
-            ? 'Pausar búsqueda'
-            : 'Reactivar búsqueda'}
+          {item.wantedCard.status === 'active' ? 'Pausar' : 'Reactivar'}
         </button>
-        <button type="button" onClick={() => onStatusChange('fulfilled')}>
+        <button
+          type="button"
+          aria-label="Marcar encontrada"
+          onClick={() => onStatusChange('fulfilled')}
+        >
           <CheckCircle2 aria-hidden="true" size={14} />
-          Marcar encontrada
+          Encontrada
         </button>
       </div>
     </article>
@@ -411,16 +433,29 @@ function WantedCardRow({
 
 function MemberListingRow({
   item,
+  onPreview,
   onStatusChange,
 }: {
   item: MemberMarketplaceListingItem
+  onPreview: () => void
   onStatusChange: (status: MarketplaceListing['status']) => void
 }) {
+  const imageUrl = getScryfallCardImage(item.card.name)
+
   return (
     <article className="member-listing-row">
-      <span className="card-set-symbol" aria-hidden="true">
-        {item.card.setCode}
-      </span>
+      <button
+        className="my-list-card-preview"
+        type="button"
+        aria-label={`Ampliar ${item.card.name}`}
+        onClick={onPreview}
+      >
+        {imageUrl ? (
+          <img src={imageUrl} alt="" loading="lazy" decoding="async" />
+        ) : (
+          <span>{item.card.setCode}</span>
+        )}
+      </button>
       <div>
         <h3>{item.card.name}</h3>
         <p>
@@ -476,10 +511,12 @@ function groupCardMatches(
 function MatchGroupCard({
   items,
   grouping,
+  onPreview,
   onSelect,
 }: {
   items: MemberCardMatchItem[]
   grouping: MatchGrouping
+  onPreview: (item: MemberCardMatchItem) => void
   onSelect: (matchId: string) => void
 }) {
   const firstItem = items[0]
@@ -493,12 +530,25 @@ function MatchGroupCard({
   return (
     <article className="match-group-card">
       <header className="match-group-card__header">
-        <span
-          className={isCardGroup ? 'card-set-symbol' : 'member-initials'}
-          aria-hidden="true"
-        >
-          {isCardGroup ? firstItem.card.setCode : firstItem.seller.initials}
-        </span>
+        {isCardGroup ? (
+          <button
+            className="match-card-preview"
+            type="button"
+            aria-label={`Ampliar ${firstItem.card.name}`}
+            onClick={() => onPreview(firstItem)}
+          >
+            <img
+              src={getScryfallCardImage(firstItem.card.name)}
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+          </button>
+        ) : (
+          <span className="member-initials" aria-hidden="true">
+            {firstItem.seller.initials}
+          </span>
+        )}
         <div>
           <h3>
             {isCardGroup ? firstItem.card.name : firstItem.seller.displayName}
@@ -526,7 +576,7 @@ function MatchGroupCard({
           const primaryLabel = isCardGroup
             ? item.seller.displayName
             : item.card.name
-          const symbol = isCardGroup ? item.seller.initials : item.card.setCode
+          const imageUrl = getScryfallCardImage(item.card.name)
 
           return (
             <button
@@ -536,12 +586,23 @@ function MatchGroupCard({
               aria-label={`Ver coincidencia de ${item.card.name} con ${item.seller.displayName}`}
               onClick={() => onSelect(item.match.id)}
             >
-              <span
-                className={isCardGroup ? 'member-initials' : 'card-set-symbol'}
-                aria-hidden="true"
-              >
-                {symbol}
-              </span>
+              {isCardGroup ? (
+                <span className="member-initials" aria-hidden="true">
+                  {item.seller.initials}
+                </span>
+              ) : imageUrl ? (
+                <img
+                  className="compact-match-row__card-image"
+                  src={imageUrl}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : (
+                <span className="card-set-symbol" aria-hidden="true">
+                  {item.card.setCode}
+                </span>
+              )}
               <span className="compact-match-row__identity">
                 <strong>{primaryLabel}</strong>
                 <small>
@@ -957,7 +1018,13 @@ export function CardsPage({
   const [marketGalleryColumns, setMarketGalleryColumns] = useState<2 | 4>(2)
   const [selectedMarketplaceMemberId, setSelectedMarketplaceMemberId] =
     useState('')
-  const [selectedImageListingId, setSelectedImageListingId] = useState('')
+  const [myListsView, setMyListsView] = useState<'wanted' | 'offers'>('wanted')
+  const [myListsQuery, setMyListsQuery] = useState('')
+  const [myListsPage, setMyListsPage] = useState(1)
+  const [selectedCardPreview, setSelectedCardPreview] = useState<{
+    card: Card
+    description: string
+  }>()
   const [actionMessage, setActionMessage] = useState('')
   const [query, setQuery] = useState('')
   const listings = getMarketplaceListings(data)
@@ -1004,8 +1071,34 @@ export function CardsPage({
     marketPageStart,
     marketPageStart + marketPageSize,
   )
-  const selectedImageListing = listings.find(
-    ({ listing }) => listing.id === selectedImageListingId,
+  const normalizedMyListsQuery = myListsQuery.trim().toLocaleLowerCase('es')
+  const filteredMemberListings = memberListings.filter(
+    ({ card }) =>
+      !normalizedMyListsQuery ||
+      card.name.toLocaleLowerCase('es').includes(normalizedMyListsQuery) ||
+      card.setName.toLocaleLowerCase('es').includes(normalizedMyListsQuery),
+  )
+  const filteredWantedCards = wantedCards.filter(
+    ({ card }) =>
+      !normalizedMyListsQuery ||
+      card.name.toLocaleLowerCase('es').includes(normalizedMyListsQuery) ||
+      card.setName.toLocaleLowerCase('es').includes(normalizedMyListsQuery),
+  )
+  const activeMyListItems =
+    myListsView === 'offers' ? filteredMemberListings : filteredWantedCards
+  const myListsPageCount = Math.max(
+    1,
+    Math.ceil(activeMyListItems.length / MY_LISTS_PAGE_SIZE),
+  )
+  const activeMyListsPage = Math.min(myListsPage, myListsPageCount)
+  const myListsPageStart = (activeMyListsPage - 1) * MY_LISTS_PAGE_SIZE
+  const visibleMemberListings = filteredMemberListings.slice(
+    myListsPageStart,
+    myListsPageStart + MY_LISTS_PAGE_SIZE,
+  )
+  const visibleWantedCards = filteredWantedCards.slice(
+    myListsPageStart,
+    myListsPageStart + MY_LISTS_PAGE_SIZE,
   )
 
   if (selectedMatch) {
@@ -1033,12 +1126,13 @@ export function CardsPage({
       <header className="page-heading">
         <span className="page-eyebrow">
           <Layers3 aria-hidden="true" size={14} />
-          Mercado de la comunidad
+          Mercado MTG de la comunidad
         </span>
         <h1>Cartas</h1>
         <p>
-          Encuentra ofertas persistentes y consulta las cartas que estás
-          buscando, sin rebuscar entre fotos y mensajes antiguos.
+          Por ahora, esta sección está dedicada exclusivamente a cartas de
+          Magic: The Gathering. Encuentra ofertas y búsquedas sin rebuscar entre
+          fotos y mensajes antiguos.
         </p>
       </header>
 
@@ -1176,6 +1270,12 @@ export function CardsPage({
                       ? items[0]?.card.id
                       : items[0]?.seller.id
                   }
+                  onPreview={(item) =>
+                    setSelectedCardPreview({
+                      card: item.card,
+                      description: `${item.card.setName} · Disponible por ${item.seller.displayName}`,
+                    })
+                  }
                   onSelect={(matchId) => {
                     setSelectedMatchId(matchId)
                     onDataChange((currentData) =>
@@ -1300,7 +1400,12 @@ export function CardsPage({
                   setSelectedMarketplaceMemberId(memberId)
                   setMarketPage(1)
                 }}
-                onPreview={setSelectedImageListingId}
+                onPreview={(item) =>
+                  setSelectedCardPreview({
+                    card: item.card,
+                    description: `${item.card.setName} · Disponible por ${item.member.displayName}`,
+                  })
+                }
               />
             ) : (
               <MarketplaceGallery
@@ -1310,7 +1415,12 @@ export function CardsPage({
                   setSelectedMarketplaceMemberId(memberId)
                   setMarketPage(1)
                 }}
-                onPreview={setSelectedImageListingId}
+                onPreview={(item) =>
+                  setSelectedCardPreview({
+                    card: item.card,
+                    description: `${item.card.setName} · Disponible por ${item.member.displayName}`,
+                  })
+                }
               />
             )
           ) : (
@@ -1364,80 +1474,190 @@ export function CardsPage({
           ) : null}
         </section>
       ) : (
-        <section className="cards-section" aria-labelledby="wanted-title">
+        <section className="cards-section" aria-labelledby="my-lists-title">
           <div className="section-heading">
             <div>
-              <span>Tus anuncios</span>
-              <h2>Mis ofertas</h2>
+              <span>Tu colección</span>
+              <h2 id="my-lists-title">Mis listas</h2>
             </div>
-            <p>{memberListings.length} publicadas</p>
+            <p>{memberListings.length + wantedCards.length} elementos</p>
           </div>
 
-          {memberListings.length > 0 ? (
-            <div className="member-listing-list">
-              {memberListings.map((item) => (
-                <MemberListingRow
-                  item={item}
-                  key={item.listing.id}
-                  onStatusChange={(status) => {
-                    onDataChange((currentData) =>
-                      updateMarketplaceListingStatus(
-                        currentData,
-                        item.listing.id,
-                        currentMember.id,
-                        status,
-                      ),
-                    )
-                    setActionMessage(
-                      status === 'reserved'
-                        ? 'La oferta está reservada.'
-                        : status === 'available'
-                          ? 'La oferta vuelve a estar disponible.'
-                          : 'La oferta se ha cerrado.',
-                    )
-                  }}
-                />
-              ))}
-            </div>
+          <div
+            className="my-lists-switch"
+            role="group"
+            aria-label="Tipo de lista"
+          >
+            <button
+              type="button"
+              aria-pressed={myListsView === 'wanted'}
+              onClick={() => {
+                setMyListsView('wanted')
+                setMyListsPage(1)
+              }}
+            >
+              Buscadas <span>{wantedCards.length}</span>
+            </button>
+            <button
+              type="button"
+              aria-pressed={myListsView === 'offers'}
+              onClick={() => {
+                setMyListsView('offers')
+                setMyListsPage(1)
+              }}
+            >
+              Mis ofertas <span>{memberListings.length}</span>
+            </button>
+          </div>
+
+          <label className="card-search my-lists-search">
+            <Search aria-hidden="true" size={17} />
+            <span className="visually-hidden">Buscar en mis listas</span>
+            <input
+              type="search"
+              placeholder="Buscar en mis listas"
+              value={myListsQuery}
+              onChange={(event) => {
+                setMyListsQuery(event.target.value)
+                setMyListsPage(1)
+              }}
+            />
+          </label>
+
+          {myListsView === 'offers' ? (
+            <>
+              <div className="compact-list-heading">
+                <h2>Mis ofertas</h2>
+                <span>{filteredMemberListings.length} publicadas</span>
+              </div>
+              {visibleMemberListings.length > 0 ? (
+                <div className="member-listing-list">
+                  {visibleMemberListings.map((item) => (
+                    <MemberListingRow
+                      item={item}
+                      key={item.listing.id}
+                      onPreview={() =>
+                        setSelectedCardPreview({
+                          card: item.card,
+                          description: `${item.card.setName} · Tu oferta`,
+                        })
+                      }
+                      onStatusChange={(status) => {
+                        onDataChange((currentData) =>
+                          updateMarketplaceListingStatus(
+                            currentData,
+                            item.listing.id,
+                            currentMember.id,
+                            status,
+                          ),
+                        )
+                        setActionMessage(
+                          status === 'reserved'
+                            ? 'La oferta está reservada.'
+                            : status === 'available'
+                              ? 'La oferta vuelve a estar disponible.'
+                              : 'La oferta se ha cerrado.',
+                        )
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="filtered-empty-state">
+                  No hay ofertas que coincidan con esta búsqueda.
+                </p>
+              )}
+            </>
           ) : (
-            <p className="filtered-empty-state">
-              Todavía no has publicado ninguna oferta.
-            </p>
+            <>
+              <div className="compact-list-heading">
+                <h2 id="wanted-title">Cartas buscadas</h2>
+                <span>{filteredWantedCards.length} activas</span>
+              </div>
+              {visibleWantedCards.length > 0 ? (
+                <div className="wanted-list">
+                  {visibleWantedCards.map((item) => (
+                    <WantedCardRow
+                      item={item}
+                      key={item.wantedCard.id}
+                      onPreview={() =>
+                        setSelectedCardPreview({
+                          card: item.card,
+                          description: `${item.card.setName} · En tu lista de búsqueda`,
+                        })
+                      }
+                      onStatusChange={(status) => {
+                        onDataChange((currentData) =>
+                          updateWantedCardStatus(
+                            currentData,
+                            item.wantedCard.id,
+                            currentMember.id,
+                            status,
+                          ),
+                        )
+                        setActionMessage(
+                          status === 'paused'
+                            ? 'La búsqueda está en pausa.'
+                            : status === 'active'
+                              ? 'La búsqueda vuelve a estar activa.'
+                              : 'La carta se ha marcado como encontrada.',
+                        )
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="filtered-empty-state">
+                  No hay búsquedas que coincidan con este filtro.
+                </p>
+              )}
+            </>
           )}
 
-          <div className="section-heading">
-            <div>
-              <span>Tu lista</span>
-              <h2 id="wanted-title">Cartas buscadas</h2>
-            </div>
-            <p>{wantedCards.length} activas</p>
-          </div>
+          {activeMyListItems.length > 0 ? (
+            <nav
+              className="market-pagination"
+              aria-label="Páginas de mis listas"
+            >
+              <p>
+                {myListsPageStart + 1}–
+                {Math.min(
+                  myListsPageStart + MY_LISTS_PAGE_SIZE,
+                  activeMyListItems.length,
+                )}{' '}
+                de {activeMyListItems.length}
+              </p>
+              {myListsPageCount > 1 ? (
+                <div>
+                  <button
+                    type="button"
+                    disabled={activeMyListsPage === 1}
+                    onClick={() => setMyListsPage(activeMyListsPage - 1)}
+                  >
+                    Anterior
+                  </button>
+                  <span>
+                    {activeMyListsPage}/{myListsPageCount}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={activeMyListsPage === myListsPageCount}
+                    onClick={() => setMyListsPage(activeMyListsPage + 1)}
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              ) : null}
+            </nav>
+          ) : null}
 
-          <div className="wanted-list">
-            {wantedCards.map((item) => (
-              <WantedCardRow
-                item={item}
-                key={item.wantedCard.id}
-                onStatusChange={(status) => {
-                  onDataChange((currentData) =>
-                    updateWantedCardStatus(
-                      currentData,
-                      item.wantedCard.id,
-                      currentMember.id,
-                      status,
-                    ),
-                  )
-                  setActionMessage(
-                    status === 'paused'
-                      ? 'La búsqueda está en pausa.'
-                      : status === 'active'
-                        ? 'La búsqueda vuelve a estar activa.'
-                        : 'La carta se ha marcado como encontrada.',
-                  )
-                }}
-              />
-            ))}
-          </div>
+          <p className="scryfall-credit">
+            Imágenes de cartas proporcionadas por{' '}
+            <a href="https://scryfall.com" target="_blank" rel="noreferrer">
+              Scryfall
+            </a>
+            .
+          </p>
 
           <p className="cards-privacy-note">
             <UserRound aria-hidden="true" size={15} />
@@ -1446,10 +1666,11 @@ export function CardsPage({
           </p>
         </section>
       )}
-      {selectedImageListing ? (
+      {selectedCardPreview ? (
         <CardImagePreview
-          item={selectedImageListing}
-          onClose={() => setSelectedImageListingId('')}
+          card={selectedCardPreview.card}
+          description={selectedCardPreview.description}
+          onClose={() => setSelectedCardPreview(undefined)}
         />
       ) : null}
     </div>

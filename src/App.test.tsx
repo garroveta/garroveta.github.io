@@ -639,6 +639,11 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'The One Ring' }),
     ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ampliar Sol Ring' }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar imagen' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('publishes a card offer in the local marketplace', () => {
@@ -774,6 +779,14 @@ describe('App', () => {
       within(solRingGroup as HTMLElement).getByText('Sergio Gil'),
     ).toBeInTheDocument()
 
+    fireEvent.click(
+      within(solRingGroup as HTMLElement).getByRole('button', {
+        name: 'Ampliar Sol Ring',
+      }),
+    )
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar imagen' }))
+
     fireEvent.click(screen.getByRole('button', { name: 'Por miembro' }))
     const diegoGroup = screen
       .getByRole('heading', { name: 'Diego Sánchez' })
@@ -905,6 +918,7 @@ describe('App', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Publicar oferta' }))
     fireEvent.click(screen.getByRole('button', { name: /Mis listas/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Mis ofertas/ }))
 
     const ownedListing = screen
       .getByRole('heading', { name: 'Esper Sentinel' })
