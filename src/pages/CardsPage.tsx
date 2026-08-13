@@ -191,18 +191,19 @@ function MarketplaceTable({
                       {item.card.setName} · #{item.card.collectorNumber}
                       {item.listing.finish === 'foil' ? ' · Foil' : ''}
                     </small>
+                    <small className="market-table__mobile-meta">
+                      {languageLabels[item.listing.language]} ·{' '}
+                      {conditionLabels[item.listing.condition]}
+                    </small>
                     <button
                       className="market-table__member"
                       type="button"
                       aria-label={`Ver cartas de ${item.member.displayName}`}
                       onClick={() => onMemberSelect(item.member.id)}
                     >
-                      {item.member.displayName}
+                      Ver <span>{item.member.displayName}</span>
+                      <span aria-hidden="true">→</span>
                     </button>
-                    <small className="market-table__mobile-meta">
-                      {languageLabels[item.listing.language]} ·{' '}
-                      {conditionLabels[item.listing.condition]}
-                    </small>
                   </span>
                 </div>
               </td>
