@@ -4,7 +4,9 @@ import {
   cancelMarketplaceReservation,
   markCardMatchSeen,
   reserveMarketplaceListing,
+  updateMarketplaceListingDetails,
   updateMarketplaceListingStatus,
+  updateWantedCardDetails,
   updateWantedCardStatus,
 } from './cardLifecycle'
 import { demoData } from './demoData'
@@ -113,6 +115,48 @@ describe('card list lifecycle', () => {
         'member-sergio',
       ),
     ).toBe(reservedData)
+  })
+
+  it('updates the editable details of owned wanted cards and offers', () => {
+    const wantedData = updateWantedCardDetails(
+      demoData,
+      'wanted-alex-sol-ring',
+      demoData.currentMemberId,
+      {
+        quantity: 4,
+        acceptedLanguages: ['fr'],
+        acceptedFinishes: ['foil'],
+      },
+    )
+    expect(
+      wantedData.wantedCards.find(({ id }) => id === 'wanted-alex-sol-ring'),
+    ).toMatchObject({
+      quantity: 4,
+      acceptedLanguages: ['fr'],
+      acceptedFinishes: ['foil'],
+    })
+
+    const listingData = updateMarketplaceListingDetails(
+      demoData,
+      'listing-sol-ring',
+      'member-diego',
+      {
+        quantity: 3,
+        language: 'fr',
+        condition: 'good',
+        finish: 'foil',
+        priceEur: 4.75,
+      },
+    )
+    expect(
+      listingData.listings.find(({ id }) => id === 'listing-sol-ring'),
+    ).toMatchObject({
+      quantity: 3,
+      language: 'fr',
+      condition: 'good',
+      finish: 'foil',
+      priceEur: 4.75,
+    })
   })
 
   it('marks a match as seen only for its buyer', () => {

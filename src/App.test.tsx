@@ -805,6 +805,13 @@ describe('App', () => {
       },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Analizar lista' }))
+    const rhysticQuantity = await screen.findByLabelText(
+      'Cantidad buscada de Rhystic Study',
+    )
+    fireEvent.change(rhysticQuantity, { target: { value: '4' } })
+    fireEvent.click(screen.getByLabelText('Inglés para Rhystic Study'))
+    fireEvent.click(screen.getByLabelText('No foil para Rhystic Study'))
+    fireEvent.click(screen.getByLabelText('Foil para Rhystic Study'))
     fireEvent.click(
       await screen.findByRole('button', { name: 'Importar búsquedas' }),
     )
@@ -820,13 +827,25 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Esper Sentinel' }),
     ).toBeInTheDocument()
+    const storedWantedCards = createLocalDemoRepository(
+      window.localStorage,
+    ).load().wantedCards
     expect(
-      createLocalDemoRepository(window.localStorage)
-        .load()
-        .wantedCards.filter(
-          ({ memberId }) => memberId === demoData.currentMemberId,
-        ),
+      storedWantedCards.filter(
+        ({ memberId }) => memberId === demoData.currentMemberId,
+      ),
     ).toHaveLength(5)
+    expect(
+      storedWantedCards.find(
+        ({ memberId, cardId }) =>
+          memberId === demoData.currentMemberId &&
+          cardId === 'card-rhystic-study',
+      ),
+    ).toMatchObject({
+      quantity: 4,
+      acceptedLanguages: ['es'],
+      acceptedFinishes: ['foil'],
+    })
   })
 
   it('imports an editable list of marketplace offers', async () => {
@@ -1104,6 +1123,100 @@ describe('App', () => {
       createLocalDemoRepository(window.localStorage).load().listings.at(-1)
         ?.status,
     ).toBe('completed')
+  })
+
+  it('edits wanted cards and offers after publication', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: /Mis listas/ }))
+
+    const wantedSolRing = screen
+      .getByRole('heading', { name: 'Sol Ring' })
+      .closest('article') as HTMLElement
+    fireEvent.click(wantedSolRing.querySelector('summary')!)
+    fireEvent.change(
+      within(wantedSolRing).getByLabelText(
+        'Editar cantidad buscada de Sol Ring',
+      ),
+      { target: { value: '4' } },
+    )
+    fireEvent.click(
+      within(wantedSolRing).getByLabelText('Editar Inglés para Sol Ring'),
+    )
+    fireEvent.click(
+      within(wantedSolRing).getByLabelText('Editar No foil para Sol Ring'),
+    )
+    fireEvent.click(
+      within(wantedSolRing).getByLabelText('Editar Foil para Sol Ring'),
+    )
+    fireEvent.click(
+      within(wantedSolRing).getByRole('button', {
+        name: 'Guardar cambios',
+      }),
+    )
+
+    expect(
+      within(wantedSolRing).getByText('4 buscadas · Español'),
+    ).toBeVisible()
+    expect(screen.getByText('La búsqueda se ha actualizado.')).toBeVisible()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar carta' }))
+    fireEvent.change(screen.getByLabelText('Carta'), {
+      target: { value: 'card-esper-sentinel' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar oferta' }))
+    fireEvent.click(screen.getByRole('button', { name: /Mis listas/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Mis ofertas/ }))
+
+    const ownedListing = screen
+      .getByRole('heading', { name: 'Esper Sentinel' })
+      .closest('article') as HTMLElement
+    fireEvent.click(ownedListing.querySelector('summary')!)
+    fireEvent.change(
+      within(ownedListing).getByLabelText('Editar cantidad de Esper Sentinel'),
+      { target: { value: '3' } },
+    )
+    fireEvent.change(
+      within(ownedListing).getByLabelText('Editar idioma de Esper Sentinel'),
+      { target: { value: 'fr' } },
+    )
+    fireEvent.change(
+      within(ownedListing).getByLabelText('Editar estado de Esper Sentinel'),
+      { target: { value: 'good' } },
+    )
+    fireEvent.change(
+      within(ownedListing).getByLabelText('Editar acabado de Esper Sentinel'),
+      { target: { value: 'foil' } },
+    )
+    fireEvent.change(
+      within(ownedListing).getByLabelText('Editar precio de Esper Sentinel'),
+      { target: { value: '4.75' } },
+    )
+    fireEvent.click(
+      within(ownedListing).getByRole('button', {
+        name: 'Guardar cambios',
+      }),
+    )
+
+    expect(within(ownedListing).getByText('3 · Francés')).toBeVisible()
+    expect(screen.getByText('La oferta se ha actualizado.')).toBeVisible()
+
+    const storedData = createLocalDemoRepository(window.localStorage).load()
+    expect(
+      storedData.wantedCards.find(({ id }) => id === 'wanted-alex-sol-ring'),
+    ).toMatchObject({
+      quantity: 4,
+      acceptedLanguages: ['es'],
+      acceptedFinishes: ['foil'],
+    })
+    expect(storedData.listings.at(-1)).toMatchObject({
+      quantity: 3,
+      language: 'fr',
+      condition: 'good',
+      finish: 'foil',
+      priceEur: 4.75,
+    })
   })
 
   it('creates, renames and filters private card lists', () => {

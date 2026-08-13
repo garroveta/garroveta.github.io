@@ -117,6 +117,57 @@ describe('card mutations', () => {
     })
   })
 
+  it('applies per-card preferences to imported wanted cards', () => {
+    const resolution = {
+      item: {
+        lineNumber: 1,
+        rawLine: '2 Rhystic Study',
+        quantity: 2,
+        name: 'Rhystic Study',
+        section: 'main' as const,
+      },
+      status: 'resolved' as const,
+      card: {
+        scryfallId: 'rhystic-study-scryfall',
+        oracleId: 'rhystic-study-oracle',
+        name: 'Rhystic Study',
+        setCode: 'WOT',
+        setName: 'Wilds of Eldraine: Enchanting Tales',
+        collectorNumber: '25',
+      },
+    }
+    const result = applyResolvedWantedCardImport(
+      demoData,
+      demoData.currentMemberId,
+      [resolution],
+      'update',
+      ['main'],
+      true,
+      undefined,
+      undefined,
+      [
+        {
+          resolution,
+          quantity: 4,
+          acceptedLanguages: ['fr'],
+          acceptedFinishes: ['foil'],
+        },
+      ],
+    )
+
+    expect(
+      result.data.wantedCards.find(
+        ({ cardId, memberId }) =>
+          cardId === 'card-rhystic-study' &&
+          memberId === demoData.currentMemberId,
+      ),
+    ).toMatchObject({
+      quantity: 4,
+      acceptedLanguages: ['fr'],
+      acceptedFinishes: ['foil'],
+    })
+  })
+
   it('pauses absent searches in synchronization mode', () => {
     const resolution = {
       item: {

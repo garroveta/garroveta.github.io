@@ -1,10 +1,100 @@
 import type {
+  CardCondition,
+  CardLanguage,
   DemoDataSet,
   MarketplaceListing,
   WantedCard,
 } from '../domain/types'
 import { synchronizeCardMatches } from './cardMatching'
 import { DEMO_REFERENCE_TIME } from './dashboardSelectors'
+
+export type MarketplaceListingDetails = {
+  quantity: number
+  language: CardLanguage
+  condition: CardCondition
+  finish: MarketplaceListing['finish']
+  priceEur?: number
+}
+
+export type WantedCardDetails = {
+  quantity: number
+  acceptedLanguages: CardLanguage[]
+  acceptedFinishes: MarketplaceListing['finish'][]
+}
+
+export function updateMarketplaceListingDetails(
+  data: DemoDataSet,
+  listingId: string,
+  memberId: string,
+  details: MarketplaceListingDetails,
+): DemoDataSet {
+  const listing = data.listings.find(
+    (candidate) =>
+      candidate.id === listingId && candidate.memberId === memberId,
+  )
+  const quantity = Math.floor(details.quantity)
+  const priceEur =
+    details.priceEur && details.priceEur > 0
+      ? Math.round(details.priceEur * 100) / 100
+      : undefined
+
+  if (!listing || listing.status === 'completed' || quantity < 1) {
+    return data
+  }
+
+  return synchronizeCardMatches({
+    ...data,
+    listings: data.listings.map((candidate) =>
+      candidate.id === listingId
+        ? {
+            ...candidate,
+            quantity,
+            language: details.language,
+            condition: details.condition,
+            finish: details.finish,
+            priceEur,
+          }
+        : candidate,
+    ),
+  })
+}
+
+export function updateWantedCardDetails(
+  data: DemoDataSet,
+  wantedCardId: string,
+  memberId: string,
+  details: WantedCardDetails,
+): DemoDataSet {
+  const wantedCard = data.wantedCards.find(
+    (candidate) =>
+      candidate.id === wantedCardId && candidate.memberId === memberId,
+  )
+  const quantity = Math.floor(details.quantity)
+
+  if (
+    !wantedCard ||
+    wantedCard.status === 'fulfilled' ||
+    quantity < 1 ||
+    details.acceptedLanguages.length === 0 ||
+    details.acceptedFinishes.length === 0
+  ) {
+    return data
+  }
+
+  return synchronizeCardMatches({
+    ...data,
+    wantedCards: data.wantedCards.map((candidate) =>
+      candidate.id === wantedCardId
+        ? {
+            ...candidate,
+            quantity,
+            acceptedLanguages: [...new Set(details.acceptedLanguages)],
+            acceptedFinishes: [...new Set(details.acceptedFinishes)],
+          }
+        : candidate,
+    ),
+  })
+}
 
 export function updateMarketplaceListingStatus(
   data: DemoDataSet,

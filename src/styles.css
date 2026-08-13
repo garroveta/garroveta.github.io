@@ -3504,6 +3504,97 @@ a {
   font-size: 0.63rem;
 }
 
+.card-row-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.card-row-edit-grid input,
+.card-row-edit-grid select {
+  width: 100%;
+  min-width: 0;
+  min-height: 2rem;
+  padding: 0 0.4rem;
+  border: 1px solid #ddd5df;
+  border-radius: 0.48rem;
+  color: #3d3540;
+  background: #fff;
+  font: inherit;
+  font-size: 0.6rem;
+}
+
+.card-row-edit-grid > label:last-child:nth-child(5) {
+  grid-column: 1 / -1;
+}
+
+.card-row-edit-grid--wanted {
+  grid-template-columns: 0.6fr minmax(0, 1.5fr);
+}
+
+.card-row-edit-grid fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.card-row-edit-grid fieldset:last-child {
+  grid-column: 1 / -1;
+}
+
+.card-row-edit-grid legend {
+  margin-bottom: 0.25rem;
+  color: #817783;
+  font-size: 0.55rem;
+  font-weight: 800;
+}
+
+.card-row-edit-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.card-row-edit-checks label {
+  display: inline-flex;
+  min-height: 1.7rem;
+  align-items: center;
+  gap: 0.18rem;
+  padding: 0 0.3rem;
+  border: 1px solid #e1d9e3;
+  border-radius: 0.42rem;
+  color: #665d69;
+  background: #faf8fa;
+  font-size: 0.5rem;
+  font-weight: 750;
+}
+
+.card-row-edit-checks input {
+  width: 0.7rem;
+  height: 0.7rem;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  accent-color: #653278;
+}
+
+.card-row-save {
+  min-height: 2rem;
+  border: 0;
+  border-radius: 0.48rem;
+  color: #fff;
+  background: #653278;
+  font-size: 0.58rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.card-row-save:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .card-row-menu__actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4288,6 +4379,133 @@ a {
   overflow-y: auto;
 }
 
+.wanted-import-preview {
+  display: grid;
+  max-height: 28rem;
+  gap: 0.45rem;
+  padding-right: 0.15rem;
+  overflow-y: auto;
+}
+
+.wanted-import-row {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.65rem;
+  border: 1px solid #e3dce5;
+  border-radius: 0.78rem;
+  background: #fff;
+}
+
+.wanted-import-row__identity {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wanted-import-row__identity > span:first-child {
+  display: grid;
+  width: 1.35rem;
+  height: 1.35rem;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 0.67rem;
+  font-weight: 900;
+}
+
+.wanted-import-row__identity > .is-resolved {
+  color: #276756;
+  background: #dff2eb;
+}
+
+.wanted-import-row__identity > .is-unresolved {
+  color: #9a532f;
+  background: #fae8dc;
+}
+
+.wanted-import-row__identity > span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 0.08rem;
+}
+
+.wanted-import-row__identity strong {
+  overflow: hidden;
+  color: #39323b;
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wanted-import-row__identity small {
+  color: #837985;
+  font-size: 0.58rem;
+}
+
+.wanted-import-row__fields {
+  display: grid;
+  grid-template-columns: 0.55fr 2fr 1fr;
+  align-items: start;
+  gap: 0.45rem;
+}
+
+.wanted-import-row__fields > label,
+.wanted-import-row__fields fieldset {
+  display: grid;
+  min-width: 0;
+  gap: 0.22rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.wanted-import-row__fields > label > span,
+.wanted-import-row__fields legend {
+  color: #817783;
+  font-size: 0.5rem;
+  font-weight: 800;
+}
+
+.wanted-import-row__fields > label > input {
+  width: 100%;
+  min-width: 0;
+  min-height: 2rem;
+  padding: 0 0.35rem;
+  border: 1px solid #ddd5df;
+  border-radius: 0.45rem;
+  color: #3d3540;
+  background: #fff;
+  font: inherit;
+  font-size: 0.58rem;
+}
+
+.wanted-import-row__fields fieldset > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.wanted-import-row__fields fieldset label {
+  display: inline-flex;
+  min-height: 1.75rem;
+  align-items: center;
+  gap: 0.18rem;
+  padding: 0 0.3rem;
+  border: 1px solid #e1d9e3;
+  border-radius: 0.42rem;
+  color: #665d69;
+  background: #faf8fa;
+  font-size: 0.5rem;
+  font-weight: 750;
+}
+
+.wanted-import-row__fields fieldset input {
+  width: 0.7rem;
+  height: 0.7rem;
+  margin: 0;
+  accent-color: #653278;
+}
+
 .offer-import-row {
   display: grid;
   gap: 0.55rem;
@@ -4405,6 +4623,14 @@ a {
   .offer-import-row__fields label:nth-child(4),
   .offer-import-row__fields label:nth-child(5) {
     grid-column: span 1;
+  }
+
+  .wanted-import-row__fields {
+    grid-template-columns: 0.6fr minmax(0, 1.6fr);
+  }
+
+  .wanted-import-row__fields fieldset:last-child {
+    grid-column: 1 / -1;
   }
 }
 

@@ -40,6 +40,13 @@ export type ResolvedWantedImportResult = {
   imported: WantedImportItem[]
 }
 
+export type WantedImportItemInput = {
+  resolution: CardImportResolution
+  quantity: number
+  acceptedLanguages: CardLanguage[]
+  acceptedFinishes: MarketplaceListing['finish'][]
+}
+
 export type MarketplaceImportItemInput = {
   resolution: CardImportResolution
   quantity: number
@@ -52,6 +59,20 @@ export type MarketplaceImportItemInput = {
 export type ResolvedMarketplaceImportResult = {
   data: DemoDataSet
   imported: WantedImportItem[]
+}
+
+type ResolvedWantedImportItemInput = WantedImportItemInput & {
+  resolution: CardImportResolution & {
+    card: NonNullable<CardImportResolution['card']>
+  }
+}
+
+function isResolvedWantedImportItem(
+  input: WantedImportItemInput,
+): input is ResolvedWantedImportItemInput {
+  return (
+    input.resolution.status === 'resolved' && Boolean(input.resolution.card)
+  )
 }
 
 function normalizeCardName(value: string) {
@@ -157,18 +178,25 @@ export function applyResolvedWantedCardImport(
   matchAllPrintings = true,
   createdAt = DEMO_REFERENCE_TIME,
   cardListId?: string,
+  itemInputs?: WantedImportItemInput[],
 ): ResolvedWantedImportResult {
   const member = data.members.find(({ id }) => id === memberId)
   const includedSectionSet = new Set(includedSections)
-  const resolvedItems = resolutions.filter(
-    (
+  const inputs =
+    itemInputs ??
+    resolutions.map((resolution) => ({
       resolution,
-    ): resolution is CardImportResolution & {
-      card: NonNullable<CardImportResolution['card']>
-    } =>
-      resolution.status === 'resolved' &&
-      Boolean(resolution.card) &&
-      includedSectionSet.has(resolution.item.section),
+      quantity: resolution.item.quantity,
+      acceptedLanguages: ['es', 'en'] as CardLanguage[],
+      acceptedFinishes: ['nonfoil'] as MarketplaceListing['finish'][],
+    }))
+  const resolvedItems = inputs.filter(
+    (input): input is ResolvedWantedImportItemInput =>
+      isResolvedWantedImportItem(input) &&
+      input.quantity >= 1 &&
+      input.acceptedLanguages.length > 0 &&
+      input.acceptedFinishes.length > 0 &&
+      includedSectionSet.has(input.resolution.item.section),
   )
 
   if (!member || member.status !== 'approved' || resolvedItems.length === 0) {
@@ -185,10 +213,13 @@ export function applyResolvedWantedCardImport(
       scryfallId: string
       quantity: number
       section: CardListSection
+      acceptedLanguages: CardLanguage[]
+      acceptedFinishes: MarketplaceListing['finish'][]
     }
   >()
 
-  for (const resolution of resolvedItems) {
+  for (const input of resolvedItems) {
+    const { resolution } = input
     const ensuredCard = ensureResolvedCard(
       cards,
       resolution.card,
@@ -207,8 +238,20 @@ export function applyResolvedWantedCardImport(
       cardName: resolution.card.name,
       oracleId: resolution.card.oracleId,
       scryfallId: resolution.card.scryfallId,
-      quantity: (currentGroup?.quantity ?? 0) + resolution.item.quantity,
+      quantity: (currentGroup?.quantity ?? 0) + Math.floor(input.quantity),
       section: currentGroup?.section ?? resolution.item.section,
+      acceptedLanguages: [
+        ...new Set([
+          ...(currentGroup?.acceptedLanguages ?? []),
+          ...input.acceptedLanguages,
+        ]),
+      ],
+      acceptedFinishes: [
+        ...new Set([
+          ...(currentGroup?.acceptedFinishes ?? []),
+          ...input.acceptedFinishes,
+        ]),
+      ],
     })
   }
 
@@ -275,6 +318,8 @@ export function applyResolvedWantedCardImport(
               matchAllPrintings,
               importSection: item.section,
               cardListId,
+              acceptedLanguages: item.acceptedLanguages,
+              acceptedFinishes: item.acceptedFinishes,
               quantity:
                 mode === 'add'
                   ? wantedCard.quantity + item.quantity
@@ -297,8 +342,8 @@ export function applyResolvedWantedCardImport(
       memberId,
       cardId: item.cardId,
       quantity: item.quantity,
-      acceptedLanguages: ['es', 'en'],
-      acceptedFinishes: ['nonfoil'],
+      acceptedLanguages: item.acceptedLanguages,
+      acceptedFinishes: item.acceptedFinishes,
       oracleId: item.oracleId,
       requestedScryfallId: matchAllPrintings ? undefined : item.scryfallId,
       matchAllPrintings,
