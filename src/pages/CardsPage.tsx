@@ -572,6 +572,52 @@ function MemberListingRow({
   )
 }
 
+type MemberReservationItem = {
+  listing: MarketplaceListing
+  card: Card
+  otherMember?: CommunityMember
+  direction: 'reserved_by_me' | 'reserved_from_me'
+}
+
+function ReservationCardRow({
+  item,
+  onPreview,
+}: {
+  item: MemberReservationItem
+  onPreview: () => void
+}) {
+  const imageUrl = getScryfallCardImage(item.card.name, item.card.imageUri)
+  const reservedByCurrentMember = item.direction === 'reserved_by_me'
+
+  return (
+    <article className="reservation-card-row">
+      <button
+        className="my-list-card-preview"
+        type="button"
+        aria-label={`Ampliar ${item.card.name}`}
+        onClick={onPreview}
+      >
+        {imageUrl ? (
+          <img src={imageUrl} alt="" loading="lazy" decoding="async" />
+        ) : (
+          <span>{item.card.setCode}</span>
+        )}
+      </button>
+      <div>
+        <h3>{item.card.name}</h3>
+        <p>
+          {reservedByCurrentMember ? 'De' : 'Reservada por'}{' '}
+          {item.otherMember?.displayName ?? 'otro miembro'} ·{' '}
+          {languageLabels[item.listing.language]}
+        </p>
+      </div>
+      <span className="reservation-direction">
+        {reservedByCurrentMember ? 'Para ti' : 'Tu oferta'}
+      </span>
+    </article>
+  )
+}
+
 function PersonalListManager({
   lists,
   kind,
@@ -1539,7 +1585,9 @@ export function CardsPage({
     'table',
   )
   const [marketGalleryColumns, setMarketGalleryColumns] = useState<2 | 4>(2)
-  const [myListsView, setMyListsView] = useState<'wanted' | 'offers'>('wanted')
+  const [myListsView, setMyListsView] = useState<
+    'wanted' | 'offers' | 'reserved'
+  >('wanted')
   const [myListsQuery, setMyListsQuery] = useState('')
   const [myListsPage, setMyListsPage] = useState(1)
   const [selectedPersonalListId, setSelectedPersonalListId] = useState('')
@@ -1560,6 +1608,50 @@ export function CardsPage({
   )
   const activePersonalLists =
     myListsView === 'wanted' ? wantedPersonalLists : offerPersonalLists
+  const reservations = useMemo<MemberReservationItem[]>(
+    () =>
+      data.listings
+        .filter(
+          ({ memberId, reservedByMemberId, status }) =>
+            status === 'reserved' &&
+            (memberId === currentMember.id ||
+              reservedByMemberId === currentMember.id),
+        )
+        .flatMap((listing) => {
+          const card = data.cards.find(({ id }) => id === listing.cardId)
+          const reservedByCurrentMember =
+            listing.reservedByMemberId === currentMember.id
+          const otherMemberId = reservedByCurrentMember
+            ? listing.memberId
+            : listing.reservedByMemberId
+          const otherMember = data.members.find(
+            ({ id }) => id === otherMemberId,
+          )
+
+          return card
+            ? [
+                {
+                  listing,
+                  card,
+                  otherMember,
+                  direction: reservedByCurrentMember
+                    ? ('reserved_by_me' as const)
+                    : ('reserved_from_me' as const),
+                },
+              ]
+            : []
+        })
+        .sort(
+          (first, second) =>
+            new Date(
+              second.listing.reservedAt ?? second.listing.createdAt,
+            ).getTime() -
+            new Date(
+              first.listing.reservedAt ?? first.listing.createdAt,
+            ).getTime(),
+        ),
+    [currentMember.id, data.cards, data.listings, data.members],
+  )
   const matches = getMemberCardMatches(data, currentMember.id)
   const groupedMatches = groupCardMatches(matches, matchGrouping)
   const selectedMatch = matches.find(
@@ -1611,8 +1703,21 @@ export function CardsPage({
         card.name.toLocaleLowerCase('es').includes(normalizedMyListsQuery) ||
         card.setName.toLocaleLowerCase('es').includes(normalizedMyListsQuery)),
   )
+  const filteredReservations = reservations.filter(
+    ({ card, otherMember }) =>
+      !normalizedMyListsQuery ||
+      card.name.toLocaleLowerCase('es').includes(normalizedMyListsQuery) ||
+      card.setName.toLocaleLowerCase('es').includes(normalizedMyListsQuery) ||
+      otherMember?.displayName
+        .toLocaleLowerCase('es')
+        .includes(normalizedMyListsQuery),
+  )
   const activeMyListItems =
-    myListsView === 'offers' ? filteredMemberListings : filteredWantedCards
+    myListsView === 'offers'
+      ? filteredMemberListings
+      : myListsView === 'reserved'
+        ? filteredReservations
+        : filteredWantedCards
   const myListsPageCount = Math.max(
     1,
     Math.ceil(activeMyListItems.length / MY_LISTS_PAGE_SIZE),
@@ -1624,6 +1729,10 @@ export function CardsPage({
     myListsPageStart + MY_LISTS_PAGE_SIZE,
   )
   const visibleWantedCards = filteredWantedCards.slice(
+    myListsPageStart,
+    myListsPageStart + MY_LISTS_PAGE_SIZE,
+  )
+  const visibleReservations = filteredReservations.slice(
     myListsPageStart,
     myListsPageStart + MY_LISTS_PAGE_SIZE,
   )
@@ -1688,7 +1797,9 @@ export function CardsPage({
         >
           <ListChecks aria-hidden="true" size={17} />
           Mis listas
-          <span>{wantedCards.length + memberListings.length}</span>
+          <span>
+            {wantedCards.length + memberListings.length + reservations.length}
+          </span>
         </button>
       </div>
 
@@ -1986,7 +2097,10 @@ export function CardsPage({
               <span>Tu colección</span>
               <h2 id="my-lists-title">Mis listas</h2>
             </div>
-            <p>{memberListings.length + wantedCards.length} elementos</p>
+            <p>
+              {memberListings.length + wantedCards.length + reservations.length}{' '}
+              elementos
+            </p>
           </div>
 
           <div
@@ -2016,42 +2130,55 @@ export function CardsPage({
             >
               Mis ofertas <span>{memberListings.length}</span>
             </button>
+            <button
+              type="button"
+              aria-pressed={myListsView === 'reserved'}
+              onClick={() => {
+                setMyListsView('reserved')
+                setMyListsPage(1)
+                setSelectedPersonalListId('')
+              }}
+            >
+              Reservadas <span>{reservations.length}</span>
+            </button>
           </div>
 
-          <PersonalListManager
-            lists={activePersonalLists}
-            kind={myListsView}
-            selectedListId={selectedPersonalListId}
-            onSelect={(listId) => {
-              setSelectedPersonalListId(listId)
-              setMyListsPage(1)
-            }}
-            onCreate={(name) => {
-              const result = createPersonalCardList(
-                data,
-                currentMember.id,
-                name,
-                myListsView,
-              )
-              onDataChange(result.data)
-              if (result.list) {
-                setSelectedPersonalListId(result.list.id)
+          {myListsView !== 'reserved' ? (
+            <PersonalListManager
+              lists={activePersonalLists}
+              kind={myListsView}
+              selectedListId={selectedPersonalListId}
+              onSelect={(listId) => {
+                setSelectedPersonalListId(listId)
                 setMyListsPage(1)
-                setActionMessage(`Lista «${result.list.name}» creada.`)
-              }
-            }}
-            onRename={(listId, name) => {
-              onDataChange((currentData) =>
-                renamePersonalCardList(
-                  currentData,
+              }}
+              onCreate={(name) => {
+                const result = createPersonalCardList(
+                  data,
                   currentMember.id,
-                  listId,
                   name,
-                ),
-              )
-              setActionMessage('El nombre de la lista se ha actualizado.')
-            }}
-          />
+                  myListsView,
+                )
+                onDataChange(result.data)
+                if (result.list) {
+                  setSelectedPersonalListId(result.list.id)
+                  setMyListsPage(1)
+                  setActionMessage(`Lista «${result.list.name}» creada.`)
+                }
+              }}
+              onRename={(listId, name) => {
+                onDataChange((currentData) =>
+                  renamePersonalCardList(
+                    currentData,
+                    currentMember.id,
+                    listId,
+                    name,
+                  ),
+                )
+                setActionMessage('El nombre de la lista se ha actualizado.')
+              }}
+            />
+          ) : null}
 
           {myListsView === 'offers' ? (
             <button
@@ -2080,7 +2207,37 @@ export function CardsPage({
             />
           </label>
 
-          {myListsView === 'offers' ? (
+          {myListsView === 'reserved' ? (
+            <>
+              <div className="compact-list-heading">
+                <h2>Cartas reservadas</h2>
+                <span>{filteredReservations.length} pendientes</span>
+              </div>
+              {visibleReservations.length > 0 ? (
+                <div className="reservation-card-list">
+                  {visibleReservations.map((item) => (
+                    <ReservationCardRow
+                      item={item}
+                      key={item.listing.id}
+                      onPreview={() =>
+                        setSelectedCardPreview({
+                          card: item.card,
+                          description:
+                            item.direction === 'reserved_by_me'
+                              ? `Reservada para ti · ${item.otherMember?.displayName ?? 'otro miembro'}`
+                              : `Tu oferta · Reservada por ${item.otherMember?.displayName ?? 'otro miembro'}`,
+                        })
+                      }
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="filtered-empty-state">
+                  No tienes ninguna carta reservada pendiente.
+                </p>
+              )}
+            </>
+          ) : myListsView === 'offers' ? (
             <>
               <div className="compact-list-heading">
                 <h2>Mis ofertas</h2>

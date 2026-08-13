@@ -3175,14 +3175,15 @@ a {
   gap: 0.38rem;
 }
 
-.member-listing-list {
+.member-listing-list,
+.reservation-card-list {
   display: grid;
   gap: 0.38rem;
 }
 
 .my-lists-switch {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.25rem;
   margin-top: 0.6rem;
   padding: 0.25rem;
@@ -3259,7 +3260,8 @@ a {
 }
 
 .wanted-card-row,
-.member-listing-row {
+.member-listing-row,
+.reservation-card-row {
   position: relative;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;
@@ -3269,6 +3271,10 @@ a {
   border: 1px solid #e3ddd8;
   border-radius: 0.68rem;
   background: #fff;
+}
+
+.reservation-card-row {
+  grid-template-columns: auto minmax(0, 1fr) auto;
 }
 
 .my-list-card-preview {
@@ -3305,7 +3311,8 @@ a {
 }
 
 .wanted-card-row > div:nth-of-type(1),
-.member-listing-row > div:nth-of-type(1) {
+.member-listing-row > div:nth-of-type(1),
+.reservation-card-row > div:nth-of-type(1) {
   min-width: 0;
 }
 
@@ -3319,12 +3326,40 @@ a {
   white-space: nowrap;
 }
 
+.reservation-card-row h3 {
+  margin: 0;
+  overflow: hidden;
+  color: #2f2932;
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .wanted-card-row p,
 .member-listing-row p {
   margin-top: 0.08rem;
   overflow: hidden;
   font-size: 0.52rem;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reservation-card-row p {
+  margin: 0.12rem 0 0;
+  overflow: hidden;
+  color: #837a86;
+  font-size: 0.52rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reservation-direction {
+  padding: 0.22rem 0.38rem;
+  border-radius: 999px;
+  color: #674075;
+  background: #efe6f2;
+  font-size: 0.5rem;
+  font-weight: 850;
   white-space: nowrap;
 }
 

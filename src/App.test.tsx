@@ -1122,6 +1122,35 @@ describe('App', () => {
     ).toMatchObject({ status: 'reserved' })
   })
 
+  it('lists cards reserved by the current member', () => {
+    window.location.hash = '#cartas?member=member-marta'
+    render(<App />)
+
+    const reservedCard = screen
+      .getAllByRole('button', { name: 'Reservar' })[0]
+      .closest('article')
+    const cardName = within(reservedCard as HTMLElement).getByRole(
+      'heading',
+    ).textContent
+    fireEvent.click(
+      within(reservedCard as HTMLElement).getByRole('button', {
+        name: 'Reservar',
+      }),
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Volver a las cartas' }))
+    fireEvent.click(screen.getByRole('button', { name: /Mis listas/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Reservadas/ }))
+
+    expect(
+      screen.getByRole('heading', { name: 'Cartas reservadas' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getAllByRole('heading', { name: cardName ?? '' }).length,
+    ).toBeGreaterThan(0)
+    expect(screen.getByText(/De Marta Soler/)).toBeInTheDocument()
+    expect(screen.getByText('Para ti')).toBeInTheDocument()
+  })
+
   it('switches and resets the demonstration role', () => {
     render(<App />)
 
