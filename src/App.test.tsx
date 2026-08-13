@@ -651,6 +651,11 @@ describe('App', () => {
       name: 'Ofertas de cartas disponibles',
     })
     expect(
+      within(marketplaceTable).queryByRole('columnheader', {
+        name: 'Miembro',
+      }),
+    ).not.toBeInTheDocument()
+    expect(
       within(marketplaceTable).getAllByRole('row', { name: /Sol Ring/ }),
     ).toHaveLength(3)
     expect(

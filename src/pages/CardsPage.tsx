@@ -145,7 +145,6 @@ function MarketplaceTable({
         <thead>
           <tr>
             <th scope="col">Carta</th>
-            <th scope="col">Miembro</th>
             <th className="market-table__wide" scope="col">
               Idioma
             </th>
@@ -192,25 +191,20 @@ function MarketplaceTable({
                       {item.card.setName} · #{item.card.collectorNumber}
                       {item.listing.finish === 'foil' ? ' · Foil' : ''}
                     </small>
+                    <button
+                      className="market-table__member"
+                      type="button"
+                      aria-label={`Ver cartas de ${item.member.displayName}`}
+                      onClick={() => onMemberSelect(item.member.id)}
+                    >
+                      {item.member.displayName}
+                    </button>
                     <small className="market-table__mobile-meta">
                       {languageLabels[item.listing.language]} ·{' '}
                       {conditionLabels[item.listing.condition]}
                     </small>
                   </span>
                 </div>
-              </td>
-              <td>
-                <button
-                  className="market-table__member"
-                  type="button"
-                  aria-label={`Ver cartas de ${item.member.displayName}`}
-                  onClick={() => onMemberSelect(item.member.id)}
-                >
-                  <span className="member-initials" aria-hidden="true">
-                    {item.member.initials}
-                  </span>
-                  <span>{item.member.displayName}</span>
-                </button>
               </td>
               <td className="market-table__wide">
                 {languageLabels[item.listing.language]}

@@ -2546,23 +2546,18 @@ a {
 
 .market-table th:nth-child(1),
 .market-table td:nth-child(1) {
-  width: 44%;
+  width: 68%;
 }
 
-.market-table th:nth-child(2),
-.market-table td:nth-child(2) {
-  width: 28%;
+.market-table th:nth-child(4),
+.market-table td:nth-child(4) {
+  width: 12%;
+  text-align: center;
 }
 
 .market-table th:nth-child(5),
 .market-table td:nth-child(5) {
-  width: 10%;
-  text-align: center;
-}
-
-.market-table th:nth-child(6),
-.market-table td:nth-child(6) {
-  width: 18%;
+  width: 20%;
   text-align: right;
 }
 
@@ -2570,8 +2565,7 @@ a {
   display: none;
 }
 
-.market-table__card,
-.market-table__member {
+.market-table__card {
   display: flex;
   min-width: 0;
   align-items: center;
@@ -2579,12 +2573,24 @@ a {
 }
 
 .market-table__member {
-  width: 100%;
+  display: block;
+  max-width: 100%;
+  margin-top: 0.12rem;
   padding: 0;
+  overflow: hidden;
   border: 0;
-  color: inherit;
+  color: #6d3d7d;
   background: transparent;
+  font: inherit;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1.2;
   text-align: left;
+  text-decoration: underline;
+  text-decoration-color: rgb(109 61 125 / 35%);
+  text-overflow: ellipsis;
+  text-underline-offset: 0.12rem;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -2621,10 +2627,9 @@ a {
   outline-offset: 2px;
 }
 
-.market-table__member:hover > span:last-child {
-  color: #6d3d7d;
-  text-decoration: underline;
-  text-underline-offset: 0.15rem;
+.market-table__member:hover {
+  color: #51245f;
+  text-decoration-color: currentcolor;
 }
 
 .market-table__member:focus-visible {
@@ -2633,17 +2638,8 @@ a {
   outline-offset: 2px;
 }
 
-.market-table__card > span:last-child,
-.market-table__member > span:last-child {
+.market-table__card > span:last-child {
   min-width: 0;
-}
-
-.market-table__member .member-initials {
-  width: 1.2rem;
-  height: 1.2rem;
-  flex: 0 0 1.2rem;
-  border-radius: 0.32rem;
-  font-size: 0.39rem;
 }
 
 .market-table__card .card-set-symbol {
@@ -2654,8 +2650,7 @@ a {
   font-size: 0.54rem;
 }
 
-.market-table__card strong,
-.market-table__member > span:last-child {
+.market-table__card strong {
   display: block;
   overflow: hidden;
   font-weight: 800;
@@ -6219,33 +6214,28 @@ a {
 
   .market-table th:nth-child(1),
   .market-table td:nth-child(1) {
-    width: 31%;
+    width: 42%;
   }
 
   .market-table th:nth-child(2),
   .market-table td:nth-child(2) {
-    width: 21%;
+    width: 14%;
   }
 
   .market-table th:nth-child(3),
   .market-table td:nth-child(3) {
-    width: 12%;
+    width: 15%;
   }
 
   .market-table th:nth-child(4),
   .market-table td:nth-child(4) {
-    width: 13%;
+    width: 10%;
+    text-align: center;
   }
 
   .market-table th:nth-child(5),
   .market-table td:nth-child(5) {
-    width: 8%;
-    text-align: center;
-  }
-
-  .market-table th:nth-child(6),
-  .market-table td:nth-child(6) {
-    width: 15%;
+    width: 19%;
     text-align: right;
   }
 
