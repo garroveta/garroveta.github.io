@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  applyResolvedMarketplaceImport,
   applyResolvedWantedCardImport,
   importWantedCards,
   publishMarketplaceListing,
@@ -147,5 +148,58 @@ describe('card mutations', () => {
       result.data.wantedCards.find(({ id }) => id === 'wanted-alex-one-ring')
         ?.status,
     ).toBe('paused')
+  })
+
+  it('imports editable resolved cards as marketplace offers', () => {
+    const resolution = {
+      item: {
+        lineNumber: 1,
+        rawLine: '2 Sol Ring (CMM) 410',
+        quantity: 2,
+        name: 'Sol Ring',
+        setCode: 'CMM',
+        collectorNumber: '410',
+        section: 'main' as const,
+      },
+      status: 'resolved' as const,
+      card: {
+        scryfallId: 'sol-ring-scryfall',
+        oracleId: 'sol-ring-oracle',
+        name: 'Sol Ring',
+        setCode: 'CMM',
+        setName: 'Commander Masters',
+        collectorNumber: '410',
+      },
+    }
+    const result = applyResolvedMarketplaceImport(
+      demoData,
+      demoData.currentMemberId,
+      [
+        {
+          resolution,
+          quantity: 3,
+          language: 'fr',
+          condition: 'good',
+          finish: 'foil',
+          priceEur: 4.75,
+        },
+      ],
+      ['main'],
+      'card-list-alex-offers',
+    )
+
+    expect(result.imported).toEqual([
+      expect.objectContaining({ cardName: 'Sol Ring', quantity: 3 }),
+    ])
+    expect(result.data.listings.at(-1)).toMatchObject({
+      memberId: demoData.currentMemberId,
+      cardListId: 'card-list-alex-offers',
+      quantity: 3,
+      language: 'fr',
+      condition: 'good',
+      finish: 'foil',
+      priceEur: 4.75,
+      status: 'available',
+    })
   })
 })

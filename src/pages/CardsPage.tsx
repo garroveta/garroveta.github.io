@@ -29,7 +29,9 @@ import type { ChangeEvent, FormEvent } from 'react'
 import { useMemo, useState } from 'react'
 
 import {
+  applyResolvedMarketplaceImport,
   applyResolvedWantedCardImport,
+  type MarketplaceImportItemInput,
   publishMarketplaceListing,
   type MarketplaceListingInput,
   type WantedImportMode,
@@ -1246,8 +1248,11 @@ function WantedImportComposer({
   memberId: string
   onClose: () => void
   onDataChange: (updater: DemoDataUpdater) => void
-  onImported: (result: WantedImportResult) => void
+  onImported: (
+    result: WantedImportResult & { destination: 'wanted' | 'offers' },
+  ) => void
 }) {
+  const [destination, setDestination] = useState<'wanted' | 'offers'>('wanted')
   const [rawList, setRawList] = useState('')
   const [fileName, setFileName] = useState('')
   const [resolutions, setResolutions] = useState<CardImportResolution[]>()
@@ -1258,7 +1263,18 @@ function WantedImportComposer({
   const wantedLists = data.cardLists.filter(
     ({ memberId: ownerId, kind }) => ownerId === memberId && kind === 'wanted',
   )
-  const [cardListId, setCardListId] = useState(wantedLists[0]?.id ?? '')
+  const offerLists = data.cardLists.filter(
+    ({ memberId: ownerId, kind }) => ownerId === memberId && kind === 'offers',
+  )
+  const [wantedCardListId, setWantedCardListId] = useState(
+    wantedLists[0]?.id ?? '',
+  )
+  const [offerCardListId, setOfferCardListId] = useState(
+    offerLists[0]?.id ?? '',
+  )
+  const [offerInputs, setOfferInputs] = useState<MarketplaceImportItemInput[]>(
+    [],
+  )
   const [includedSections, setIncludedSections] = useState<CardListSection[]>([
     'main',
     'sideboard',
@@ -1302,8 +1318,19 @@ function WantedImportComposer({
     setErrorMessage('')
 
     try {
-      setResolutions(
-        await resolveCardImportItemsWithCatalog(parsedList.items, data.cards),
+      const resolved = await resolveCardImportItemsWithCatalog(
+        parsedList.items,
+        data.cards,
+      )
+      setResolutions(resolved)
+      setOfferInputs(
+        resolved.map((resolution) => ({
+          resolution,
+          quantity: resolution.item.quantity,
+          language: 'es',
+          condition: 'near_mint',
+          finish: 'nonfoil',
+        })),
       )
     } catch {
       setErrorMessage(
@@ -1319,16 +1346,25 @@ function WantedImportComposer({
       return
     }
 
-    const result = applyResolvedWantedCardImport(
-      data,
-      memberId,
-      resolutions,
-      mode,
-      includedSections,
-      matchAllPrintings,
-      undefined,
-      cardListId || undefined,
-    )
+    const result =
+      destination === 'offers'
+        ? applyResolvedMarketplaceImport(
+            data,
+            memberId,
+            offerInputs,
+            includedSections,
+            offerCardListId || undefined,
+          )
+        : applyResolvedWantedCardImport(
+            data,
+            memberId,
+            resolutions,
+            mode,
+            includedSections,
+            matchAllPrintings,
+            undefined,
+            wantedCardListId || undefined,
+          )
     const unknownLines = resolutions
       .filter(
         ({ status, item }) =>
@@ -1337,7 +1373,7 @@ function WantedImportComposer({
       .map(({ item }) => item.rawLine)
 
     onDataChange(result.data)
-    onImported({ ...result, unknownLines })
+    onImported({ ...result, unknownLines, destination })
   }
 
   const sectionLabels: Record<CardListSection, string> = {
@@ -1351,10 +1387,31 @@ function WantedImportComposer({
   return (
     <form
       className="card-composer card-import-composer"
-      aria-label="Importar lista de búsquedas"
+      aria-label="Importar lista de cartas"
       onSubmit={handleAnalyze}
     >
       <ComposerHeading title="Importar una lista" onClose={onClose} />
+
+      <div
+        className="import-destination-switch"
+        role="group"
+        aria-label="Importar como"
+      >
+        <button
+          type="button"
+          aria-pressed={destination === 'wanted'}
+          onClick={() => setDestination('wanted')}
+        >
+          Buscadas
+        </button>
+        <button
+          type="button"
+          aria-pressed={destination === 'offers'}
+          onClick={() => setDestination('offers')}
+        >
+          Ofertas
+        </button>
+      </div>
 
       {!resolutions ? (
         <>
@@ -1481,104 +1538,280 @@ function WantedImportComposer({
             </fieldset>
           ) : null}
 
-          <div
-            className="import-preview"
-            aria-label="Vista previa de la importación"
-          >
-            {resolutions.map((resolution) => (
-              <div
-                className="import-preview-row"
-                key={`${resolution.item.lineNumber}-${resolution.item.rawLine}`}
-              >
-                <span
-                  className={
-                    resolution.status === 'resolved'
-                      ? 'is-resolved'
-                      : 'is-unresolved'
-                  }
-                  aria-hidden="true"
+          {destination === 'offers' ? (
+            <div
+              className="offer-import-preview"
+              aria-label="Editar ofertas importadas"
+            >
+              {offerInputs.map((input, index) => (
+                <div
+                  className="offer-import-row"
+                  key={`${input.resolution.item.lineNumber}-${input.resolution.item.rawLine}`}
                 >
-                  {resolution.status === 'resolved' ? '✓' : '!'}
-                </span>
-                <strong>{resolution.card?.name ?? resolution.item.name}</strong>
-                <small>
-                  ×{resolution.item.quantity}
-                  {resolution.card
-                    ? ` · ${resolution.card.setCode} #${resolution.card.collectorNumber}`
-                    : ' · no encontrada en Scryfall'}
-                </small>
-              </div>
-            ))}
-          </div>
-
-          <fieldset className="import-options">
-            <legend>Cómo actualizar mi lista</legend>
-            <div className="import-mode-options">
-              <label>
-                <input
-                  checked={mode === 'update'}
-                  name="import-mode"
-                  type="radio"
-                  onChange={() => setMode('update')}
-                />
-                <span>
-                  <strong>Actualizar</strong>
-                  <small>Reemplaza las cantidades importadas.</small>
-                </span>
-              </label>
-              <label>
-                <input
-                  checked={mode === 'add'}
-                  name="import-mode"
-                  type="radio"
-                  onChange={() => setMode('add')}
-                />
-                <span>
-                  <strong>Añadir</strong>
-                  <small>Suma las nuevas cantidades.</small>
-                </span>
-              </label>
-              <label>
-                <input
-                  checked={mode === 'sync'}
-                  name="import-mode"
-                  type="radio"
-                  onChange={() => setMode('sync')}
-                />
-                <span>
-                  <strong>Sincronizar</strong>
-                  <small>Pausa también las búsquedas ausentes.</small>
-                </span>
-              </label>
+                  <div className="offer-import-row__identity">
+                    <span
+                      className={
+                        input.resolution.status === 'resolved'
+                          ? 'is-resolved'
+                          : 'is-unresolved'
+                      }
+                      aria-hidden="true"
+                    >
+                      {input.resolution.status === 'resolved' ? '✓' : '!'}
+                    </span>
+                    <span>
+                      <strong>
+                        {input.resolution.card?.name ??
+                          input.resolution.item.name}
+                      </strong>
+                      <small>
+                        {input.resolution.card
+                          ? `${input.resolution.card.setCode} #${input.resolution.card.collectorNumber}`
+                          : 'No encontrada en Scryfall'}
+                      </small>
+                    </span>
+                  </div>
+                  <div className="offer-import-row__fields">
+                    <label>
+                      <span>Cant.</span>
+                      <input
+                        aria-label={`Cantidad de ${input.resolution.item.name}`}
+                        min={1}
+                        type="number"
+                        value={input.quantity}
+                        onChange={(event) =>
+                          setOfferInputs((current) =>
+                            current.map((candidate, candidateIndex) =>
+                              candidateIndex === index
+                                ? {
+                                    ...candidate,
+                                    quantity: Number(event.target.value),
+                                  }
+                                : candidate,
+                            ),
+                          )
+                        }
+                      />
+                    </label>
+                    <label>
+                      <span>Idioma</span>
+                      <select
+                        aria-label={`Idioma de ${input.resolution.item.name}`}
+                        value={input.language}
+                        onChange={(event) =>
+                          setOfferInputs((current) =>
+                            current.map((candidate, candidateIndex) =>
+                              candidateIndex === index
+                                ? {
+                                    ...candidate,
+                                    language: event.target
+                                      .value as CardLanguage,
+                                  }
+                                : candidate,
+                            ),
+                          )
+                        }
+                      >
+                        {cardLanguages.map((language) => (
+                          <option key={language} value={language}>
+                            {languageLabels[language]}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      <span>Estado</span>
+                      <select
+                        aria-label={`Estado de ${input.resolution.item.name}`}
+                        value={input.condition}
+                        onChange={(event) =>
+                          setOfferInputs((current) =>
+                            current.map((candidate, candidateIndex) =>
+                              candidateIndex === index
+                                ? {
+                                    ...candidate,
+                                    condition: event.target
+                                      .value as CardCondition,
+                                  }
+                                : candidate,
+                            ),
+                          )
+                        }
+                      >
+                        {cardConditions.map((condition) => (
+                          <option key={condition} value={condition}>
+                            {conditionLabels[condition]}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      <span>Acabado</span>
+                      <select
+                        aria-label={`Acabado de ${input.resolution.item.name}`}
+                        value={input.finish}
+                        onChange={(event) =>
+                          setOfferInputs((current) =>
+                            current.map((candidate, candidateIndex) =>
+                              candidateIndex === index
+                                ? {
+                                    ...candidate,
+                                    finish: event.target
+                                      .value as MarketplaceListing['finish'],
+                                  }
+                                : candidate,
+                            ),
+                          )
+                        }
+                      >
+                        <option value="nonfoil">No foil</option>
+                        <option value="foil">Foil</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span>Precio €</span>
+                      <input
+                        aria-label={`Precio de ${input.resolution.item.name}`}
+                        min={0}
+                        step="0.01"
+                        type="number"
+                        value={input.priceEur ?? ''}
+                        onChange={(event) =>
+                          setOfferInputs((current) =>
+                            current.map((candidate, candidateIndex) =>
+                              candidateIndex === index
+                                ? {
+                                    ...candidate,
+                                    priceEur: event.target.value
+                                      ? Number(event.target.value)
+                                      : undefined,
+                                  }
+                                : candidate,
+                            ),
+                          )
+                        }
+                      />
+                    </label>
+                  </div>
+                </div>
+              ))}
             </div>
-          </fieldset>
+          ) : (
+            <div
+              className="import-preview"
+              aria-label="Vista previa de la importación"
+            >
+              {resolutions.map((resolution) => (
+                <div
+                  className="import-preview-row"
+                  key={`${resolution.item.lineNumber}-${resolution.item.rawLine}`}
+                >
+                  <span
+                    className={
+                      resolution.status === 'resolved'
+                        ? 'is-resolved'
+                        : 'is-unresolved'
+                    }
+                    aria-hidden="true"
+                  >
+                    {resolution.status === 'resolved' ? '✓' : '!'}
+                  </span>
+                  <strong>
+                    {resolution.card?.name ?? resolution.item.name}
+                  </strong>
+                  <small>
+                    ×{resolution.item.quantity}
+                    {resolution.card
+                      ? ` · ${resolution.card.setCode} #${resolution.card.collectorNumber}`
+                      : ' · no encontrada en Scryfall'}
+                  </small>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {destination === 'wanted' ? (
+            <fieldset className="import-options">
+              <legend>Cómo actualizar mi lista</legend>
+              <div className="import-mode-options">
+                <label>
+                  <input
+                    checked={mode === 'update'}
+                    name="import-mode"
+                    type="radio"
+                    onChange={() => setMode('update')}
+                  />
+                  <span>
+                    <strong>Actualizar</strong>
+                    <small>Reemplaza las cantidades importadas.</small>
+                  </span>
+                </label>
+                <label>
+                  <input
+                    checked={mode === 'add'}
+                    name="import-mode"
+                    type="radio"
+                    onChange={() => setMode('add')}
+                  />
+                  <span>
+                    <strong>Añadir</strong>
+                    <small>Suma las nuevas cantidades.</small>
+                  </span>
+                </label>
+                <label>
+                  <input
+                    checked={mode === 'sync'}
+                    name="import-mode"
+                    type="radio"
+                    onChange={() => setMode('sync')}
+                  />
+                  <span>
+                    <strong>Sincronizar</strong>
+                    <small>Pausa también las búsquedas ausentes.</small>
+                  </span>
+                </label>
+              </div>
+            </fieldset>
+          ) : null}
 
           <label className="form-field">
             <span>Guardar en mi lista privada</span>
             <select
-              value={cardListId}
-              onChange={(event) => setCardListId(event.target.value)}
+              value={
+                destination === 'wanted' ? wantedCardListId : offerCardListId
+              }
+              onChange={(event) =>
+                destination === 'wanted'
+                  ? setWantedCardListId(event.target.value)
+                  : setOfferCardListId(event.target.value)
+              }
             >
               <option value="">Sin lista</option>
-              {wantedLists.map((list) => (
-                <option key={list.id} value={list.id}>
-                  {list.name}
-                </option>
-              ))}
+              {(destination === 'wanted' ? wantedLists : offerLists).map(
+                (list) => (
+                  <option key={list.id} value={list.id}>
+                    {list.name}
+                  </option>
+                ),
+              )}
             </select>
           </label>
 
-          <label className="import-printing-option">
-            <input
-              checked={matchAllPrintings}
-              type="checkbox"
-              onChange={(event) => setMatchAllPrintings(event.target.checked)}
-            />
-            <span>
-              <strong>Aceptar cualquier edición</strong>
-              <small>Recomendado para encontrar más ofertas compatibles.</small>
-            </span>
-          </label>
+          {destination === 'wanted' ? (
+            <label className="import-printing-option">
+              <input
+                checked={matchAllPrintings}
+                type="checkbox"
+                onChange={(event) => setMatchAllPrintings(event.target.checked)}
+              />
+              <span>
+                <strong>Aceptar cualquier edición</strong>
+                <small>
+                  Recomendado para encontrar más ofertas compatibles.
+                </small>
+              </span>
+            </label>
+          ) : null}
 
           {errorMessage ? (
             <p className="import-error" role="alert">
@@ -1600,7 +1833,9 @@ function WantedImportComposer({
               type="button"
               onClick={handleImport}
             >
-              Importar búsquedas
+              {destination === 'wanted'
+                ? 'Importar búsquedas'
+                : 'Publicar ofertas'}
             </button>
           </div>
         </>
@@ -1912,10 +2147,13 @@ export function CardsPage({
           onDataChange={onDataChange}
           onImported={(result) => {
             setActiveComposer(undefined)
+            const isOfferImport = result.destination === 'offers'
             setActiveView('wanted')
+            setMyListsView(isOfferImport ? 'offers' : 'wanted')
+            setSelectedPersonalListId('')
             setActionMessage(
               result.imported.length > 0
-                ? `${result.imported.length} búsquedas importadas.${
+                ? `${result.imported.length} ${isOfferImport ? 'ofertas publicadas' : 'búsquedas importadas'}.${
                     result.unknownLines.length > 0
                       ? ` No reconocidas: ${result.unknownLines.join(', ')}.`
                       : ''

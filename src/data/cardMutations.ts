@@ -40,6 +40,20 @@ export type ResolvedWantedImportResult = {
   imported: WantedImportItem[]
 }
 
+export type MarketplaceImportItemInput = {
+  resolution: CardImportResolution
+  quantity: number
+  language: CardLanguage
+  condition: CardCondition
+  finish: MarketplaceListing['finish']
+  priceEur?: number
+}
+
+export type ResolvedMarketplaceImportResult = {
+  data: DemoDataSet
+  imported: WantedImportItem[]
+}
+
 function normalizeCardName(value: string) {
   return value
     .normalize('NFD')
@@ -297,6 +311,83 @@ export function applyResolvedWantedCardImport(
 
   return {
     data: synchronizeCardMatches({ ...data, cards, wantedCards }),
+    imported,
+  }
+}
+
+export function applyResolvedMarketplaceImport(
+  data: DemoDataSet,
+  memberId: string,
+  items: MarketplaceImportItemInput[],
+  includedSections: CardListSection[],
+  cardListId?: string,
+  createdAt = DEMO_REFERENCE_TIME,
+): ResolvedMarketplaceImportResult {
+  const member = data.members.find(({ id }) => id === memberId)
+  const cardList = cardListId
+    ? data.cardLists.find(
+        ({ id, memberId: ownerId, kind }) =>
+          id === cardListId && ownerId === memberId && kind === 'offers',
+      )
+    : undefined
+  const includedSectionSet = new Set(includedSections)
+
+  if (!member || member.status !== 'approved' || (cardListId && !cardList)) {
+    return { data, imported: [] }
+  }
+
+  let cards = [...data.cards]
+  const listings = [...data.listings]
+  const imported: WantedImportItem[] = []
+
+  for (const input of items) {
+    const resolvedCard = input.resolution.card
+    const quantity = Math.floor(input.quantity)
+
+    if (
+      input.resolution.status !== 'resolved' ||
+      !resolvedCard ||
+      !includedSectionSet.has(input.resolution.item.section) ||
+      quantity < 1
+    ) {
+      continue
+    }
+
+    const ensuredCard = ensureResolvedCard(cards, resolvedCard, false)
+    cards = ensuredCard.cards
+    const priceEur =
+      input.priceEur && input.priceEur > 0
+        ? Math.round(input.priceEur * 100) / 100
+        : undefined
+    const listingId = nextUniqueId(
+      listings.map(({ id }) => id),
+      `listing-${member.id.replace('member-', '')}-${ensuredCard.cardId.replace('card-', '')}`,
+    )
+
+    listings.push({
+      id: listingId,
+      communityId: data.community.id,
+      memberId,
+      cardId: ensuredCard.cardId,
+      cardListId: cardList?.id,
+      quantity,
+      language: input.language,
+      condition: input.condition,
+      finish: input.finish,
+      offerType: 'sale',
+      priceEur,
+      status: 'available',
+      createdAt,
+    })
+    imported.push({
+      cardId: ensuredCard.cardId,
+      cardName: resolvedCard.name,
+      quantity,
+    })
+  }
+
+  return {
+    data: synchronizeCardMatches({ ...data, cards, listings }),
     imported,
   }
 }

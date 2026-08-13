@@ -829,6 +829,59 @@ describe('App', () => {
     ).toHaveLength(5)
   })
 
+  it('imports an editable list of marketplace offers', async () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: 'Importar lista' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ofertas' }))
+    fireEvent.change(screen.getByLabelText('Lista de cartas'), {
+      target: { value: '2 Sol Ring (CMM) 410\nRhystic Study' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Analizar lista' }))
+
+    const quantityInput = await screen.findByLabelText('Cantidad de Sol Ring')
+    fireEvent.change(quantityInput, { target: { value: '3' } })
+    fireEvent.change(screen.getByLabelText('Idioma de Sol Ring'), {
+      target: { value: 'fr' },
+    })
+    fireEvent.change(screen.getByLabelText('Estado de Sol Ring'), {
+      target: { value: 'good' },
+    })
+    fireEvent.change(screen.getByLabelText('Acabado de Sol Ring'), {
+      target: { value: 'foil' },
+    })
+    fireEvent.change(screen.getByLabelText('Precio de Sol Ring'), {
+      target: { value: '4.75' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar ofertas' }))
+
+    expect(screen.getByText('2 ofertas publicadas.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Mis ofertas/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    const importedSolRing = screen
+      .getAllByRole('heading', { name: 'Sol Ring' })
+      .at(-1)
+      ?.closest('article')
+    expect(importedSolRing).toBeTruthy()
+    expect(
+      within(importedSolRing as HTMLElement).getByText('3 · Francés'),
+    ).toBeInTheDocument()
+    expect(
+      createLocalDemoRepository(window.localStorage)
+        .load()
+        .listings.find(
+          ({ memberId, language, condition, finish }) =>
+            memberId === demoData.currentMemberId &&
+            language === 'fr' &&
+            condition === 'good' &&
+            finish === 'foil',
+        ),
+    ).toMatchObject({ quantity: 3, priceEur: 4.75 })
+  })
+
   it('creates and displays automatic matches after an import', async () => {
     render(<App />)
 
