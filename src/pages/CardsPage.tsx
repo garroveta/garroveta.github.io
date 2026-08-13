@@ -635,6 +635,7 @@ function MatchDetail({
   onBack: () => void
   onComplete: (type: CardDeal['type']) => void
 }) {
+  const [isCardPreviewOpen, setIsCardPreviewOpen] = useState(false)
   const contactIcons = {
     whatsapp: MessageCircle,
     email: Mail,
@@ -658,7 +659,23 @@ function MatchDetail({
         </div>
 
         <div className="match-detail__card">
-          <span aria-hidden="true">{item.card.setCode}</span>
+          <button
+            className="match-detail__card-preview"
+            type="button"
+            aria-label={`Ampliar ${item.card.name}`}
+            onClick={() => setIsCardPreviewOpen(true)}
+          >
+            {getScryfallCardImage(item.card.name, item.card.imageUri) ? (
+              <img
+                src={getScryfallCardImage(item.card.name, item.card.imageUri)}
+                alt=""
+                loading="lazy"
+                decoding="async"
+              />
+            ) : (
+              <span>{item.card.setCode}</span>
+            )}
+          </button>
           <div>
             <p>Estás buscando</p>
             <h1>{item.card.name}</h1>
@@ -762,6 +779,14 @@ function MatchDetail({
           </div>
         )}
       </article>
+
+      {isCardPreviewOpen ? (
+        <CardImagePreview
+          card={item.card}
+          description={`${item.card.setName} · #${item.card.collectorNumber} · Disponible por ${item.seller.displayName}`}
+          onClose={() => setIsCardPreviewOpen(false)}
+        />
+      ) : null}
     </div>
   )
 }

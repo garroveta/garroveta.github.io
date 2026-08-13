@@ -843,6 +843,16 @@ describe('App', () => {
     expect(
       screen.getByText(/solo se muestran porque existe una coincidencia/),
     ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Ampliar Sol Ring' }))
+    const imageDialog = screen.getByRole('dialog')
+    expect(
+      within(imageDialog).getByRole('heading', { name: 'Sol Ring' }),
+    ).toBeInTheDocument()
+    expect(within(imageDialog).getByRole('img')).toHaveAttribute(
+      'src',
+      expect.stringContaining('cards.scryfall.io'),
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar imagen' }))
     expect(
       createLocalDemoRepository(window.localStorage)
         .load()
