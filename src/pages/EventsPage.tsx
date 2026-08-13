@@ -4,25 +4,31 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock3,
+  Edit3,
+  ListChecks,
   MapPin,
   Plus,
   RotateCcw,
+  Trash2,
   UserMinus,
   UsersRound,
   X,
 } from 'lucide-react'
 import type { CSSProperties } from 'react'
 import type { FormEvent } from 'react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import type { DemoRole } from '../app/demoRoles'
 import {
   cancelEventRegistration,
+  deleteCommunityEvent,
   leaveEventWaitlist,
   publishCommunityEvent,
   registerForEvent,
+  registerMemberForEventByManager,
   removeEventParticipant,
   setEventAttendance,
+  updateCommunityEvent,
 } from '../data/eventMutations'
 import {
   filterEventAgenda,
@@ -32,7 +38,12 @@ import {
   type EventListItem,
 } from '../data/eventSelectors'
 import type { DemoDataUpdater } from '../data/demoRepository'
-import type { CommunityMember, DemoDataSet, EventType } from '../domain/types'
+import type {
+  CommunityEvent,
+  CommunityMember,
+  DemoDataSet,
+  EventType,
+} from '../domain/types'
 
 type EventsPageProps = {
   activeRole: DemoRole
@@ -87,6 +98,24 @@ function buildMadridIso(date: string, time: string) {
   return `${date}T${time}:00${madridOffsetForDate(date)}`
 }
 
+function madridDatePart(isoDate: string) {
+  return new Intl.DateTimeFormat('sv-SE', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone: 'Europe/Madrid',
+  }).format(new Date(isoDate))
+}
+
+function madridTimePart(isoDate: string) {
+  return new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+    timeZone: 'Europe/Madrid',
+  }).format(new Date(isoDate))
+}
+
 function nextCalendarDate(date: string) {
   const nextDate = new Date(`${date}T12:00:00Z`)
   nextDate.setUTCDate(nextDate.getUTCDate() + 1)
@@ -95,33 +124,43 @@ function nextCalendarDate(date: string) {
 
 function EventComposer({
   data,
+  eventToEdit,
   publishingMember,
   onClose,
   onDataChange,
   onPublished,
 }: {
   data: DemoDataSet
+  eventToEdit?: CommunityEvent
   publishingMember: CommunityMember
   onClose: () => void
   onDataChange: (updater: DemoDataUpdater) => void
   onPublished: () => void
 }) {
-  const [gameId, setGameId] = useState(data.games[0]?.id ?? '')
-  const [type, setType] = useState<EventType>('tournament')
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [date, setDate] = useState('2026-08-15')
-  const [startsAt, setStartsAt] = useState('17:00')
-  const [endsAt, setEndsAt] = useState('21:00')
-  const [capacity, setCapacity] = useState('24')
-  const [tagIds, setTagIds] = useState<string[]>([])
+  const [gameId, setGameId] = useState(
+    eventToEdit?.gameId ?? data.games[0]?.id ?? '',
+  )
+  const [type, setType] = useState<EventType>(eventToEdit?.type ?? 'tournament')
+  const [title, setTitle] = useState(eventToEdit?.title ?? '')
+  const [description, setDescription] = useState(eventToEdit?.description ?? '')
+  const [date, setDate] = useState(
+    eventToEdit ? madridDatePart(eventToEdit.startsAt) : '2026-08-15',
+  )
+  const [startsAt, setStartsAt] = useState(
+    eventToEdit ? madridTimePart(eventToEdit.startsAt) : '17:00',
+  )
+  const [endsAt, setEndsAt] = useState(
+    eventToEdit ? madridTimePart(eventToEdit.endsAt) : '21:00',
+  )
+  const [capacity, setCapacity] = useState(String(eventToEdit?.capacity ?? 24))
+  const [tagIds, setTagIds] = useState<string[]>(eventToEdit?.tagIds ?? [])
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const endDate = endsAt <= startsAt ? nextCalendarDate(date) : date
 
-    onDataChange((currentData) =>
-      publishCommunityEvent(currentData, {
+    onDataChange((currentData) => {
+      const input = {
         createdByMemberId: publishingMember.id,
         gameId,
         type,
@@ -131,8 +170,15 @@ function EventComposer({
         endsAt: buildMadridIso(endDate, endsAt),
         capacity: Number(capacity),
         tagIds,
-      }),
-    )
+      }
+
+      return eventToEdit
+        ? updateCommunityEvent(currentData, {
+            ...input,
+            eventId: eventToEdit.id,
+          })
+        : publishCommunityEvent(currentData, input)
+    })
     onPublished()
   }
 
@@ -149,7 +195,7 @@ function EventComposer({
       <div className="event-composer__heading">
         <div>
           <span>Herramienta del gerente</span>
-          <h2>Crear un evento</h2>
+          <h2>{eventToEdit ? 'Modificar evento' : 'Crear un evento'}</h2>
         </div>
         <button type="button" onClick={onClose} aria-label="Cerrar formulario">
           <X aria-hidden="true" size={18} />
@@ -242,7 +288,7 @@ function EventComposer({
             type="number"
             value={capacity}
             onChange={(event) => setCapacity(event.target.value)}
-            min="1"
+            min={eventToEdit?.registrationSummary.confirmed ?? 1}
             max="500"
             required
           />
@@ -271,7 +317,7 @@ function EventComposer({
           Cancelar
         </button>
         <button className="primary-button" type="submit">
-          Publicar evento
+          {eventToEdit ? 'Guardar cambios' : 'Publicar evento'}
         </button>
       </div>
     </form>
@@ -409,7 +455,6 @@ function EventDay({
 
 function EventDetail({
   activeRole,
-  data,
   item,
   communityName,
   memberId,
@@ -417,7 +462,6 @@ function EventDetail({
   onDataChange,
 }: {
   activeRole: DemoRole
-  data: DemoDataSet
   item: EventListItem
   communityName: string
   memberId: string
@@ -540,14 +584,6 @@ function EventDetail({
         <p className="action-message" aria-live="polite">
           {actionMessage}
         </p>
-
-        {activeRole === 'gerente' ? (
-          <EventParticipantManager
-            data={data}
-            eventId={item.event.id}
-            onDataChange={onDataChange}
-          />
-        ) : null}
       </article>
     </div>
   )
@@ -556,12 +592,15 @@ function EventDetail({
 function EventParticipantManager({
   data,
   eventId,
+  managerId,
   onDataChange,
 }: {
   data: DemoDataSet
   eventId: string
+  managerId: string
   onDataChange: (updater: DemoDataUpdater) => void
 }) {
+  const [memberIdToAdd, setMemberIdToAdd] = useState('')
   const participants = getEventParticipants(data, eventId)
   const event = data.events.find(({ id }) => id === eventId)
   const registered = participants.filter(
@@ -573,6 +612,34 @@ function EventParticipantManager({
   const totalRegistrations = event
     ? event.registrationSummary.confirmed + event.registrationSummary.waitlisted
     : 0
+  const registeredMemberIds = new Set(
+    participants.map(({ member }) => member.id),
+  )
+  const availableMembers = data.members
+    .filter(
+      ({ id, status }) => status === 'approved' && !registeredMemberIds.has(id),
+    )
+    .sort((first, second) =>
+      first.displayName.localeCompare(second.displayName, 'es'),
+    )
+
+  const addParticipant = (submitEvent: FormEvent<HTMLFormElement>) => {
+    submitEvent.preventDefault()
+
+    if (!memberIdToAdd) {
+      return
+    }
+
+    onDataChange((currentData) =>
+      registerMemberForEventByManager(
+        currentData,
+        eventId,
+        memberIdToAdd,
+        managerId,
+      ),
+    )
+    setMemberIdToAdd('')
+  }
 
   const removeParticipant = (memberId: string) => {
     onDataChange((currentData) =>
@@ -606,6 +673,35 @@ function EventParticipantManager({
         </p>
       ) : null}
 
+      {event?.status !== 'completed' ? (
+        <form className="participant-add" onSubmit={addParticipant}>
+          <label className="form-field">
+            <span>Añadir una inscripción</span>
+            <select
+              value={memberIdToAdd}
+              onChange={(selectEvent) =>
+                setMemberIdToAdd(selectEvent.target.value)
+              }
+            >
+              <option value="">Seleccionar miembro</option>
+              {availableMembers.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.displayName}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            className="secondary-button"
+            type="submit"
+            disabled={!memberIdToAdd}
+          >
+            <Plus aria-hidden="true" size={16} />
+            Añadir
+          </button>
+        </form>
+      ) : null}
+
       <div className="participant-group">
         <div className="participant-group__heading">
           <strong>Plaza confirmada</strong>
@@ -627,7 +723,18 @@ function EventParticipantManager({
                   </div>
                   <div className="participant-row__actions">
                     <button
+                      className="participant-row__icon-action"
                       type="button"
+                      aria-label={
+                        hasAttended
+                          ? 'Anular asistencia'
+                          : 'Registrar asistencia'
+                      }
+                      title={
+                        hasAttended
+                          ? 'Anular asistencia'
+                          : 'Registrar asistencia'
+                      }
                       onClick={() => changeAttendance(member.id, !hasAttended)}
                     >
                       {hasAttended ? (
@@ -635,17 +742,23 @@ function EventParticipantManager({
                       ) : (
                         <CheckCircle2 aria-hidden="true" size={14} />
                       )}
-                      {hasAttended
-                        ? 'Anular asistencia'
-                        : 'Registrar asistencia'}
+                      <span className="participant-row__action-label">
+                        {hasAttended
+                          ? 'Anular asistencia'
+                          : 'Registrar asistencia'}
+                      </span>
                     </button>
                     <button
-                      className="participant-remove"
+                      className="participant-remove participant-row__icon-action"
                       type="button"
+                      aria-label="Liberar plaza"
+                      title="Liberar plaza"
                       onClick={() => removeParticipant(member.id)}
                     >
                       <UserMinus aria-hidden="true" size={14} />
-                      Liberar plaza
+                      <span className="participant-row__action-label">
+                        Liberar plaza
+                      </span>
                     </button>
                   </div>
                 </article>
@@ -675,12 +788,16 @@ function EventParticipantManager({
                 </div>
                 <div className="participant-row__actions">
                   <button
-                    className="participant-remove"
+                    className="participant-remove participant-row__icon-action"
                     type="button"
+                    aria-label="Quitar de la lista"
+                    title="Quitar de la lista"
                     onClick={() => removeParticipant(member.id)}
                   >
                     <UserMinus aria-hidden="true" size={14} />
-                    Quitar de la lista
+                    <span className="participant-row__action-label">
+                      Quitar de la lista
+                    </span>
                   </button>
                 </div>
               </article>
@@ -690,7 +807,114 @@ function EventParticipantManager({
           <p className="participant-empty">No hay nadie en espera.</p>
         )}
       </div>
+
+      <div
+        className="participant-actions-legend"
+        role="note"
+        aria-label="Leyenda de acciones"
+      >
+        <span>
+          <CheckCircle2 aria-hidden="true" size={14} />
+          Registrar asistencia
+        </span>
+        <span>
+          <RotateCcw aria-hidden="true" size={14} />
+          Anular asistencia
+        </span>
+        <span>
+          <UserMinus aria-hidden="true" size={14} />
+          Retirar inscripción
+        </span>
+      </div>
     </section>
+  )
+}
+
+function ManagerEventRow({
+  item,
+  isDeletePending,
+  onDelete,
+  onDeleteCancel,
+  onDeleteRequest,
+  onEdit,
+  onParticipants,
+}: {
+  item: EventListItem
+  isDeletePending: boolean
+  onDelete: (eventId: string) => void
+  onDeleteCancel: () => void
+  onDeleteRequest: (eventId: string) => void
+  onEdit: (eventId: string) => void
+  onParticipants: (eventId: string) => void
+}) {
+  const startsAt = new Date(item.event.startsAt)
+  const registrationCount =
+    item.event.registrationSummary.confirmed +
+    item.event.registrationSummary.waitlisted
+
+  return (
+    <article className="manager-event-item">
+      <div className="manager-event-item__date" aria-hidden="true">
+        <strong>{startsAt.getDate()}</strong>
+        <span>
+          {new Intl.DateTimeFormat('es-ES', {
+            month: 'short',
+            timeZone: 'Europe/Madrid',
+          }).format(startsAt)}
+        </span>
+      </div>
+      <div className="manager-event-item__content">
+        <div>
+          <EventTags item={item} />
+          <h3>{item.event.title}</h3>
+        </div>
+        <p>
+          {timeFormatter.format(startsAt)} ·{' '}
+          {item.event.registrationSummary.confirmed}/{item.event.capacity}{' '}
+          confirmadas
+          {item.event.registrationSummary.waitlisted > 0
+            ? ` · ${item.event.registrationSummary.waitlisted} en espera`
+            : ''}
+        </p>
+      </div>
+      <div className="manager-event-item__actions">
+        <button type="button" onClick={() => onParticipants(item.event.id)}>
+          <ListChecks aria-hidden="true" size={16} />
+          Inscripciones <span>{registrationCount}</span>
+        </button>
+        <button
+          className="manager-event-item__icon-action"
+          type="button"
+          aria-label={`Modificar ${item.event.title}`}
+          title="Modificar"
+          onClick={() => onEdit(item.event.id)}
+        >
+          <Edit3 aria-hidden="true" size={16} />
+          <span className="manager-event-item__action-label">Modificar</span>
+        </button>
+        {isDeletePending ? (
+          <div className="manager-event-item__delete-confirmation">
+            <button type="button" onClick={() => onDelete(item.event.id)}>
+              Confirmar
+            </button>
+            <button type="button" onClick={onDeleteCancel}>
+              Cancelar
+            </button>
+          </div>
+        ) : (
+          <button
+            className="manager-event-item__delete manager-event-item__icon-action"
+            type="button"
+            aria-label={`Eliminar ${item.event.title}`}
+            title="Eliminar"
+            onClick={() => onDeleteRequest(item.event.id)}
+          >
+            <Trash2 aria-hidden="true" size={16} />
+            <span className="manager-event-item__action-label">Eliminar</span>
+          </button>
+        )}
+      </div>
+    </article>
   )
 }
 
@@ -705,7 +929,12 @@ export function EventsPage({
   const [selectedGameId, setSelectedGameId] = useState<string>()
   const [selectedType, setSelectedType] = useState<EventType>()
   const [isComposerOpen, setIsComposerOpen] = useState(false)
+  const [editingEventId, setEditingEventId] = useState<string>()
+  const [managedParticipantEventId, setManagedParticipantEventId] =
+    useState<string>()
+  const [pendingDeleteEventId, setPendingDeleteEventId] = useState<string>()
   const [publicationMessage, setPublicationMessage] = useState('')
+  const participantPanelRef = useRef<HTMLDivElement>(null)
   const completeAgenda = getEventAgenda(data, currentMember.id)
   const agenda = filterEventAgenda(completeAgenda, {
     gameId: selectedGameId,
@@ -716,12 +945,46 @@ export function EventsPage({
   const selectedEvent = selectedEventId
     ? getEventById(data, currentMember.id, selectedEventId)
     : undefined
+  const editingEvent = editingEventId
+    ? data.events.find(({ id }) => id === editingEventId)
+    : undefined
+  const managedParticipantEvent = managedParticipantEventId
+    ? getEventById(data, currentMember.id, managedParticipantEventId)
+    : undefined
+
+  useEffect(() => {
+    if (!managedParticipantEventId || !participantPanelRef.current) {
+      return
+    }
+
+    participantPanelRef.current.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  }, [managedParticipantEventId])
+
+  const closeManagerPanels = () => {
+    setIsComposerOpen(false)
+    setEditingEventId(undefined)
+    setManagedParticipantEventId(undefined)
+    setPendingDeleteEventId(undefined)
+  }
+
+  const deleteEvent = (eventId: string) => {
+    const eventTitle = data.events.find(({ id }) => id === eventId)?.title
+    onDataChange((currentData) =>
+      deleteCommunityEvent(currentData, eventId, publishingMember.id),
+    )
+    closeManagerPanels()
+    setPublicationMessage(
+      eventTitle ? `« ${eventTitle} » se ha eliminado.` : 'Evento eliminado.',
+    )
+  }
 
   if (selectedEvent) {
     return (
       <EventDetail
         activeRole={activeRole}
-        data={data}
         item={selectedEvent}
         communityName={data.community.name}
         memberId={currentMember.id}
@@ -743,159 +1006,231 @@ export function EventsPage({
       </header>
 
       {activeRole === 'gerente' ? (
-        <div className="manager-event-tools">
+        <section
+          className="manager-event-tools"
+          aria-labelledby="manager-events-title"
+        >
+          <div className="manager-event-tools__heading">
+            <div>
+              <span>Herramientas del gerente</span>
+              <h2 id="manager-events-title">Gestión de eventos</h2>
+            </div>
+            {!isComposerOpen && !editingEventId ? (
+              <button
+                className="primary-button"
+                type="button"
+                onClick={() => {
+                  closeManagerPanels()
+                  setPublicationMessage('')
+                  setIsComposerOpen(true)
+                }}
+              >
+                <Plus aria-hidden="true" size={17} />
+                Nuevo evento
+              </button>
+            ) : null}
+          </div>
           {isComposerOpen ? (
             <EventComposer
               data={data}
+              eventToEdit={editingEvent}
               publishingMember={publishingMember}
-              onClose={() => setIsComposerOpen(false)}
+              onClose={closeManagerPanels}
               onDataChange={onDataChange}
               onPublished={() => {
-                setIsComposerOpen(false)
+                closeManagerPanels()
                 setSelectedGameId(undefined)
                 setSelectedType(undefined)
-                setPublicationMessage('El evento ya aparece en la agenda.')
+                setPublicationMessage(
+                  editingEvent
+                    ? 'Los cambios se han guardado.'
+                    : 'El evento ya aparece en la agenda.',
+                )
               }}
             />
           ) : (
-            <button
-              className="primary-button"
-              type="button"
-              onClick={() => {
-                setPublicationMessage('')
-                setIsComposerOpen(true)
-              }}
-            >
-              <Plus aria-hidden="true" size={17} />
-              Nuevo evento
-            </button>
+            <div className="manager-event-list">
+              {completeAgenda.upcoming.map((item) => (
+                <ManagerEventRow
+                  item={item}
+                  isDeletePending={pendingDeleteEventId === item.event.id}
+                  key={item.event.id}
+                  onDelete={deleteEvent}
+                  onDeleteCancel={() => setPendingDeleteEventId(undefined)}
+                  onDeleteRequest={setPendingDeleteEventId}
+                  onEdit={(eventId) => {
+                    closeManagerPanels()
+                    setEditingEventId(eventId)
+                    setIsComposerOpen(true)
+                  }}
+                  onParticipants={(eventId) => {
+                    setManagedParticipantEventId((currentEventId) =>
+                      currentEventId === eventId ? undefined : eventId,
+                    )
+                    setPendingDeleteEventId(undefined)
+                  }}
+                />
+              ))}
+            </div>
           )}
           <p className="action-message" aria-live="polite">
             {publicationMessage}
           </p>
-        </div>
+          {managedParticipantEvent ? (
+            <div
+              className="manager-participant-panel"
+              ref={participantPanelRef}
+            >
+              <button
+                className="manager-participant-panel__close"
+                type="button"
+                onClick={() => setManagedParticipantEventId(undefined)}
+              >
+                <X aria-hidden="true" size={16} />
+                Cerrar
+              </button>
+              <h3>{managedParticipantEvent.event.title}</h3>
+              <EventParticipantManager
+                data={data}
+                eventId={managedParticipantEvent.event.id}
+                managerId={publishingMember.id}
+                onDataChange={onDataChange}
+              />
+            </div>
+          ) : null}
+        </section>
       ) : null}
 
-      <section className="event-filter-panel" aria-labelledby="event-filters">
-        <div className="section-heading">
-          <div>
-            <span>Personaliza la agenda</span>
-            <h2 id="event-filters">Filtrar eventos</h2>
-          </div>
-          {selectedGameId || selectedType ? (
-            <button
-              className="filter-reset"
-              type="button"
-              onClick={() => {
-                setSelectedGameId(undefined)
-                setSelectedType(undefined)
-              }}
-            >
-              Restablecer
-            </button>
-          ) : null}
-        </div>
-
-        <div className="event-filter-group">
-          <strong>Juego</strong>
-          <div className="event-filter-chips" aria-label="Filtrar por juego">
-            <button
-              type="button"
-              aria-pressed={!selectedGameId}
-              onClick={() => setSelectedGameId(undefined)}
-            >
-              Todos
-            </button>
-            {data.games.map((game) => (
-              <button
-                type="button"
-                key={game.id}
-                aria-pressed={selectedGameId === game.id}
-                onClick={() => setSelectedGameId(game.id)}
-              >
-                {game.shortName}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="event-filter-group">
-          <strong>Actividad</strong>
-          <div
-            className="event-filter-chips"
-            aria-label="Filtrar por actividad"
+      {activeRole !== 'gerente' ? (
+        <>
+          <section
+            className="event-filter-panel"
+            aria-labelledby="event-filters"
           >
-            <button
-              type="button"
-              aria-pressed={!selectedType}
-              onClick={() => setSelectedType(undefined)}
-            >
-              Todas
-            </button>
-            {(Object.keys(eventTypeLabels) as EventType[]).map((type) => (
-              <button
-                type="button"
-                key={type}
-                aria-pressed={selectedType === type}
-                onClick={() => setSelectedType(type)}
+            <div className="section-heading">
+              <div>
+                <span>Personaliza la agenda</span>
+                <h2 id="event-filters">Filtrar eventos</h2>
+              </div>
+              {selectedGameId || selectedType ? (
+                <button
+                  className="filter-reset"
+                  type="button"
+                  onClick={() => {
+                    setSelectedGameId(undefined)
+                    setSelectedType(undefined)
+                  }}
+                >
+                  Restablecer
+                </button>
+              ) : null}
+            </div>
+
+            <div className="event-filter-group">
+              <strong>Juego</strong>
+              <div
+                className="event-filter-chips"
+                aria-label="Filtrar por juego"
               >
-                {eventTypeLabels[type]}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
+                <button
+                  type="button"
+                  aria-pressed={!selectedGameId}
+                  onClick={() => setSelectedGameId(undefined)}
+                >
+                  Todos
+                </button>
+                {data.games.map((game) => (
+                  <button
+                    type="button"
+                    key={game.id}
+                    aria-pressed={selectedGameId === game.id}
+                    onClick={() => setSelectedGameId(game.id)}
+                  >
+                    {game.shortName}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-      <section className="agenda-section" aria-labelledby="upcoming-events">
-        <div className="section-heading">
-          <div>
-            <span>Agenda</span>
-            <h2 id="upcoming-events">Próximos eventos</h2>
-          </div>
-          <p>{agenda.upcoming.length} programados</p>
-        </div>
+            <div className="event-filter-group">
+              <strong>Actividad</strong>
+              <div
+                className="event-filter-chips"
+                aria-label="Filtrar por actividad"
+              >
+                <button
+                  type="button"
+                  aria-pressed={!selectedType}
+                  onClick={() => setSelectedType(undefined)}
+                >
+                  Todas
+                </button>
+                {(Object.keys(eventTypeLabels) as EventType[]).map((type) => (
+                  <button
+                    type="button"
+                    key={type}
+                    aria-pressed={selectedType === type}
+                    onClick={() => setSelectedType(type)}
+                  >
+                    {eventTypeLabels[type]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
 
-        {upcomingDays.length > 0 ? (
-          <div className="agenda-list">
-            {upcomingDays.map((group) => (
-              <EventDay
-                group={group}
-                key={group.dateKey}
-                onSelect={setSelectedEventId}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="filtered-empty-state">
-            No hay próximos eventos para estos filtros.
-          </p>
-        )}
-      </section>
+          <section className="agenda-section" aria-labelledby="upcoming-events">
+            <div className="section-heading">
+              <div>
+                <span>Agenda</span>
+                <h2 id="upcoming-events">Próximos eventos</h2>
+              </div>
+              <p>{agenda.upcoming.length} programados</p>
+            </div>
 
-      <section className="agenda-section" aria-labelledby="past-events">
-        <div className="section-heading">
-          <div>
-            <span>Historial</span>
-            <h2 id="past-events">Eventos pasados</h2>
-          </div>
-        </div>
+            {upcomingDays.length > 0 ? (
+              <div className="agenda-list">
+                {upcomingDays.map((group) => (
+                  <EventDay
+                    group={group}
+                    key={group.dateKey}
+                    onSelect={setSelectedEventId}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="filtered-empty-state">
+                No hay próximos eventos para estos filtros.
+              </p>
+            )}
+          </section>
 
-        {pastDays.length > 0 ? (
-          <div className="agenda-list agenda-list--past">
-            {pastDays.map((group) => (
-              <EventDay
-                group={group}
-                key={group.dateKey}
-                onSelect={setSelectedEventId}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="filtered-empty-state">
-            No hay eventos pasados para estos filtros.
-          </p>
-        )}
-      </section>
+          <section className="agenda-section" aria-labelledby="past-events">
+            <div className="section-heading">
+              <div>
+                <span>Historial</span>
+                <h2 id="past-events">Eventos pasados</h2>
+              </div>
+            </div>
+
+            {pastDays.length > 0 ? (
+              <div className="agenda-list agenda-list--past">
+                {pastDays.map((group) => (
+                  <EventDay
+                    group={group}
+                    key={group.dateKey}
+                    onSelect={setSelectedEventId}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="filtered-empty-state">
+                No hay eventos pasados para estos filtros.
+              </p>
+            )}
+          </section>
+        </>
+      ) : null}
     </div>
   )
 }

@@ -2,11 +2,14 @@ import { describe, expect, it } from 'vitest'
 
 import {
   cancelEventRegistration,
+  deleteCommunityEvent,
   leaveEventWaitlist,
   publishCommunityEvent,
   registerForEvent,
+  registerMemberForEventByManager,
   removeEventParticipant,
   setEventAttendance,
+  updateCommunityEvent,
 } from './eventMutations'
 import { demoData } from './demoData'
 
@@ -53,6 +56,78 @@ describe('event registration mutations', () => {
         tagIds: [],
       }),
     ).toBe(demoData)
+  })
+
+  it('lets the manager update an event without going below confirmed places', () => {
+    const updatedData = updateCommunityEvent(demoData, {
+      eventId: 'event-presentation-hobbit',
+      createdByMemberId: 'member-lucia',
+      gameId: 'game-mtg',
+      type: 'launch',
+      title: 'Presentación: The Hobbit actualizada',
+      description: 'Nueva información para la comunidad.',
+      startsAt: '2026-08-08T18:00:00+02:00',
+      endsAt: '2026-08-08T22:00:00+02:00',
+      capacity: 28,
+      tagIds: ['tag-draft'],
+    })
+
+    expect(
+      updatedData.events.find(({ id }) => id === 'event-presentation-hobbit'),
+    ).toMatchObject({
+      title: 'Presentación: The Hobbit actualizada',
+      capacity: 28,
+      startsAt: '2026-08-08T18:00:00+02:00',
+    })
+
+    expect(
+      updateCommunityEvent(demoData, {
+        eventId: 'event-presentation-hobbit',
+        createdByMemberId: 'member-lucia',
+        gameId: 'game-mtg',
+        type: 'launch',
+        title: 'Capacidad incorrecta',
+        description: 'No debe aplicarse.',
+        startsAt: '2026-08-08T18:00:00+02:00',
+        endsAt: '2026-08-08T22:00:00+02:00',
+        capacity: 7,
+        tagIds: [],
+      }),
+    ).toBe(demoData)
+  })
+
+  it('lets the manager delete an event and its linked data', () => {
+    const updatedData = deleteCommunityEvent(
+      demoData,
+      'event-presentation-hobbit',
+      'member-lucia',
+    )
+
+    expect(
+      updatedData.events.some(({ id }) => id === 'event-presentation-hobbit'),
+    ).toBe(false)
+    expect(
+      updatedData.registrations.some(
+        ({ eventId }) => eventId === 'event-presentation-hobbit',
+      ),
+    ).toBe(false)
+  })
+
+  it('lets the manager add an approved member to an event', () => {
+    const updatedData = registerMemberForEventByManager(
+      demoData,
+      'event-presentation-hobbit',
+      'member-marta',
+      'member-lucia',
+    )
+
+    expect(
+      updatedData.registrations.find(
+        ({ eventId, memberId }) =>
+          eventId === 'event-presentation-hobbit' &&
+          memberId === 'member-marta',
+      )?.status,
+    ).toBe('confirmed')
   })
 
   it('confirms a registration when a place is available', () => {

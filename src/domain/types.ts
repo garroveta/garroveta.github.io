@@ -159,6 +159,9 @@ export type Card = {
   setName: string
   setCode: string
   collectorNumber: string
+  scryfallId?: string
+  oracleId?: string
+  imageUri?: string
 }
 
 export type CardLanguage = 'es' | 'en' | 'fr' | 'de' | 'it' | 'pt' | 'jp'
@@ -169,13 +172,18 @@ export type MarketplaceListing = {
   communityId: EntityId
   memberId: EntityId
   cardId: EntityId
+  /** Private organisation for the owner; never exposed in community views. */
+  cardListId?: EntityId
   quantity: number
   language: CardLanguage
   condition: CardCondition
   finish: 'nonfoil' | 'foil'
+  /** @deprecated Legacy demo field kept for locally persisted prototypes. */
   offerType: 'sale' | 'trade' | 'sale_or_trade'
   priceEur?: number
   status: 'available' | 'reserved' | 'completed'
+  reservedByMemberId?: EntityId
+  reservedAt?: ISODateTime
   createdAt: ISODateTime
 }
 
@@ -184,11 +192,27 @@ export type WantedCard = {
   communityId: EntityId
   memberId: EntityId
   cardId: EntityId
+  /** Private organisation for the owner; never exposed in community views. */
+  cardListId?: EntityId
   quantity: number
   acceptedLanguages: CardLanguage[]
   acceptedFinishes: Array<'nonfoil' | 'foil'>
+  oracleId?: string
+  requestedScryfallId?: string
+  matchAllPrintings?: boolean
+  importSection?:
+    'main' | 'sideboard' | 'maybeboard' | 'commander' | 'companion'
   notes?: string
   status: 'active' | 'paused' | 'fulfilled'
+  createdAt: ISODateTime
+}
+
+export type PersonalCardList = {
+  id: EntityId
+  communityId: EntityId
+  memberId: EntityId
+  name: string
+  kind: 'wanted' | 'offers'
   createdAt: ISODateTime
 }
 
@@ -213,7 +237,7 @@ export type CardDeal = {
   listingId: EntityId
   buyerMemberId: EntityId
   sellerMemberId: EntityId
-  type: 'sale' | 'trade'
+  type: 'sale'
   completedAt: ISODateTime
 }
 
@@ -230,6 +254,7 @@ export type DemoDataSet = {
   registrations: EventRegistration[]
   newsPosts: NewsPost[]
   cards: Card[]
+  cardLists: PersonalCardList[]
   listings: MarketplaceListing[]
   wantedCards: WantedCard[]
   cardMatches: CardMatch[]

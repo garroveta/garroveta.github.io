@@ -17,7 +17,7 @@ describe('card selectors', () => {
     expect(listings[0]).toMatchObject({
       card: { name: 'Sol Ring' },
       member: { displayName: 'Diego Sánchez' },
-      listing: { offerType: 'trade' },
+      listing: { offerType: 'sale' },
     })
   })
 

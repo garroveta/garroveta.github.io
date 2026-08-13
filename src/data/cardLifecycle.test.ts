@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   markCardMatchSeen,
+  reserveMarketplaceListing,
   updateMarketplaceListingStatus,
   updateWantedCardStatus,
 } from './cardLifecycle'
@@ -65,6 +66,24 @@ describe('card list lifecycle', () => {
         ({ wantedCardId }) => wantedCardId === 'wanted-alex-sol-ring',
       ),
     ).toBe(true)
+  })
+
+  it('lets a validated member reserve another member card', () => {
+    const updatedData = reserveMarketplaceListing(
+      demoData,
+      'listing-sol-ring',
+      demoData.currentMemberId,
+    )
+
+    expect(
+      updatedData.listings.find(({ id }) => id === 'listing-sol-ring'),
+    ).toMatchObject({
+      status: 'reserved',
+      reservedByMemberId: demoData.currentMemberId,
+    })
+    expect(
+      reserveMarketplaceListing(demoData, 'listing-sol-ring', 'member-diego'),
+    ).toBe(demoData)
   })
 
   it('marks a match as seen only for its buyer', () => {

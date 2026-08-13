@@ -13,6 +13,7 @@ import { NewsPage } from './pages/NewsPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { RankingsPage } from './pages/RankingsPage'
+import { SharedCardsPage } from './pages/SharedCardsPage'
 
 function getCurrentMember(data: DemoDataSet) {
   const member = data.members.find(({ id }) => id === data.currentMemberId)
@@ -39,12 +40,15 @@ function getPublishingMember(data: DemoDataSet, activeRole: DemoRole) {
 }
 
 export function App() {
-  const { activeRoute, navigate } = useHashRoute()
+  const { activeRoute, routeQuery, navigate } = useHashRoute()
   const { activeRole, setActiveRole, resetRole } = useDemoRole()
   const { data, updateData, resetData } = useDemoData()
   const currentMember = getCurrentMember(data)
   const publishingMember = getPublishingMember(data, activeRole)
   const dataSummary = getDemoDataSummary(data)
+  const cardRouteParams = new URLSearchParams(routeQuery)
+  const sharedCardsMemberId =
+    activeRoute === 'cartas' ? cardRouteParams.get('member') : null
 
   const resetDemo = () => {
     resetRole()
@@ -74,6 +78,17 @@ export function App() {
           />
         ) : activeRoute === 'ranking' ? (
           <RankingsPage data={data} />
+        ) : activeRoute === 'cartas' && sharedCardsMemberId ? (
+          <SharedCardsPage
+            data={data}
+            currentMember={currentMember}
+            sellerId={sharedCardsMemberId}
+            initialSetCode={cardRouteParams.get('set') ?? undefined}
+            initialLanguage={cardRouteParams.get('lang') ?? undefined}
+            initialCondition={cardRouteParams.get('condition') ?? undefined}
+            onBack={() => navigate('cartas')}
+            onDataChange={updateData}
+          />
         ) : activeRoute === 'cartas' ? (
           <CardsPage
             data={data}

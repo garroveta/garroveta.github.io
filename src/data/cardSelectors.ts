@@ -45,7 +45,33 @@ export function getMarketplaceListings(
       const card = data.cards.find(({ id }) => id === listing.cardId)
       const member = data.members.find(({ id }) => id === listing.memberId)
 
-      return card && member ? [{ listing, card, member }] : []
+      return card && member
+        ? [{ listing: { ...listing, offerType: 'sale' }, card, member }]
+        : []
+    })
+}
+
+export function getMemberSharedListings(
+  data: DemoDataSet,
+  memberId: string,
+): MarketplaceListingItem[] {
+  return data.listings
+    .filter(
+      ({ memberId: sellerId, status }) =>
+        sellerId === memberId && status !== 'completed',
+    )
+    .sort(
+      (first, second) =>
+        new Date(second.createdAt).getTime() -
+        new Date(first.createdAt).getTime(),
+    )
+    .flatMap((listing) => {
+      const card = data.cards.find(({ id }) => id === listing.cardId)
+      const member = data.members.find(({ id }) => id === listing.memberId)
+
+      return card && member
+        ? [{ listing: { ...listing, offerType: 'sale' }, card, member }]
+        : []
     })
 }
 
@@ -82,7 +108,7 @@ export function getMemberMarketplaceListings(
     )
     .flatMap((listing) => {
       const card = data.cards.find(({ id }) => id === listing.cardId)
-      return card ? [{ listing, card }] : []
+      return card ? [{ listing: { ...listing, offerType: 'sale' }, card }] : []
     })
 }
 
@@ -116,7 +142,15 @@ export function getMemberCardMatches(
       const seller = data.members.find(({ id }) => id === match.sellerMemberId)
 
       return listing && wantedCard && card && seller
-        ? [{ match, listing, wantedCard, card, seller }]
+        ? [
+            {
+              match,
+              listing: { ...listing, offerType: 'sale' },
+              wantedCard,
+              card,
+              seller,
+            },
+          ]
         : []
     })
 }

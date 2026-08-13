@@ -20,6 +20,7 @@ describe('demoData', () => {
     expectUniqueIds(demoData.registrations)
     expectUniqueIds(demoData.newsPosts)
     expectUniqueIds(demoData.cards)
+    expectUniqueIds(demoData.cardLists)
     expectUniqueIds(demoData.listings)
     expectUniqueIds(demoData.wantedCards)
     expectUniqueIds(demoData.cardMatches)
@@ -36,6 +37,7 @@ describe('demoData', () => {
     const tagIds = new Set(demoData.tags.map(({ id }) => id))
     const eventIds = new Set(demoData.events.map(({ id }) => id))
     const cardIds = new Set(demoData.cards.map(({ id }) => id))
+    const cardListIds = new Set(demoData.cardLists.map(({ id }) => id))
     const listingIds = new Set(demoData.listings.map(({ id }) => id))
     const wantedCardIds = new Set(demoData.wantedCards.map(({ id }) => id))
     const matchIds = new Set(demoData.cardMatches.map(({ id }) => id))
@@ -115,12 +117,18 @@ describe('demoData', () => {
       expect(listing.communityId).toBe(demoData.community.id)
       expect(memberIds.has(listing.memberId)).toBe(true)
       expect(cardIds.has(listing.cardId)).toBe(true)
+      if (listing.cardListId) {
+        expect(cardListIds.has(listing.cardListId)).toBe(true)
+      }
     }
 
     for (const wantedCard of demoData.wantedCards) {
       expect(wantedCard.communityId).toBe(demoData.community.id)
       expect(memberIds.has(wantedCard.memberId)).toBe(true)
       expect(cardIds.has(wantedCard.cardId)).toBe(true)
+      if (wantedCard.cardListId) {
+        expect(cardListIds.has(wantedCard.cardListId)).toBe(true)
+      }
     }
 
     for (const deal of cardDeals) {
@@ -172,8 +180,8 @@ describe('demoData', () => {
       new Set(generatedListings.map(({ condition }) => condition)).size,
     ).toBe(4)
     expect(
-      new Set(generatedListings.map(({ offerType }) => offerType)).size,
-    ).toBe(3)
+      new Set(generatedListings.map(({ offerType }) => offerType)),
+    ).toEqual(new Set(['sale']))
     expect(generatedListings.some(({ finish }) => finish === 'foil')).toBe(true)
     expect(
       generatedListings.some(({ priceEur }) => priceEur === undefined),

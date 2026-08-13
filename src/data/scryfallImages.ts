@@ -77,6 +77,6 @@ const scryfallCardImages: Record<string, string> = {
     'https://cards.scryfall.io/large/front/b/5/b5a79f5d-d0df-4799-ac3a-84305e3af0c9.jpg?1783918469',
 }
 
-export function getScryfallCardImage(cardName: string) {
-  return scryfallCardImages[cardName]
+export function getScryfallCardImage(cardName: string, imageUri?: string) {
+  return imageUri ?? scryfallCardImages[cardName]
 }

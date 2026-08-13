@@ -5,7 +5,6 @@ export function completeCardDeal(
   data: DemoDataSet,
   matchId: string,
   buyerMemberId: string,
-  type: CardDeal['type'],
   completedAt = DEMO_REFERENCE_TIME,
 ): DemoDataSet {
   const match = data.cardMatches.find(
@@ -18,18 +17,12 @@ export function completeCardDeal(
   const wantedCard = match
     ? data.wantedCards.find(({ id }) => id === match.wantedCardId)
     : undefined
-  const isAllowedType =
-    listing?.offerType === 'sale_or_trade' ||
-    (listing?.offerType === 'sale' && type === 'sale') ||
-    (listing?.offerType === 'trade' && type === 'trade')
-
   if (
     !match ||
     !listing ||
     !wantedCard ||
     match.status === 'completed' ||
-    data.cardDeals.some((deal) => deal.matchId === matchId) ||
-    !isAllowedType
+    data.cardDeals.some((deal) => deal.matchId === matchId)
   ) {
     return data
   }
@@ -42,7 +35,7 @@ export function completeCardDeal(
     listingId: listing.id,
     buyerMemberId: match.buyerMemberId,
     sellerMemberId: match.sellerMemberId,
-    type,
+    type: 'sale',
     completedAt,
   }
 

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { importWantedCards, publishMarketplaceListing } from './cardMutations'
+import {
+  applyResolvedWantedCardImport,
+  importWantedCards,
+  publishMarketplaceListing,
+} from './cardMutations'
 import { demoData } from './demoData'
 
 describe('card mutations', () => {
@@ -12,7 +16,6 @@ describe('card mutations', () => {
       language: 'es',
       condition: 'near_mint',
       finish: 'nonfoil',
-      offerType: 'trade',
     })
 
     expect(updatedData.listings.at(-1)).toMatchObject({
@@ -20,7 +23,7 @@ describe('card mutations', () => {
       cardId: 'card-esper-sentinel',
       memberId: demoData.currentMemberId,
       quantity: 2,
-      offerType: 'trade',
+      offerType: 'sale',
       status: 'available',
     })
   })
@@ -71,5 +74,78 @@ describe('card mutations', () => {
       result.data.wantedCards.find(({ id }) => id === 'wanted-alex-sol-ring')
         ?.quantity,
     ).toBe(3)
+  })
+
+  it('updates imported quantities after a resolved Scryfall preview', () => {
+    const result = applyResolvedWantedCardImport(
+      demoData,
+      demoData.currentMemberId,
+      [
+        {
+          item: {
+            lineNumber: 1,
+            rawLine: '4 Sol Ring (CMM) 410',
+            quantity: 4,
+            name: 'Sol Ring',
+            setCode: 'CMM',
+            collectorNumber: '410',
+            section: 'main',
+          },
+          status: 'resolved',
+          card: {
+            scryfallId: 'sol-ring-scryfall',
+            oracleId: 'sol-ring-oracle',
+            name: 'Sol Ring',
+            setCode: 'CMM',
+            setName: 'Commander Masters',
+            collectorNumber: '410',
+          },
+        },
+      ],
+      'update',
+      ['main'],
+    )
+
+    expect(
+      result.data.wantedCards.find(({ id }) => id === 'wanted-alex-sol-ring'),
+    ).toMatchObject({
+      quantity: 4,
+      oracleId: 'sol-ring-oracle',
+      matchAllPrintings: true,
+      status: 'active',
+    })
+  })
+
+  it('pauses absent searches in synchronization mode', () => {
+    const resolution = {
+      item: {
+        lineNumber: 1,
+        rawLine: 'Sol Ring',
+        quantity: 1,
+        name: 'Sol Ring',
+        section: 'main' as const,
+      },
+      status: 'resolved' as const,
+      card: {
+        scryfallId: 'sol-ring-scryfall',
+        oracleId: 'sol-ring-oracle',
+        name: 'Sol Ring',
+        setCode: 'CMM',
+        setName: 'Commander Masters',
+        collectorNumber: '410',
+      },
+    }
+    const result = applyResolvedWantedCardImport(
+      demoData,
+      demoData.currentMemberId,
+      [resolution],
+      'sync',
+      ['main'],
+    )
+
+    expect(
+      result.data.wantedCards.find(({ id }) => id === 'wanted-alex-one-ring')
+        ?.status,
+    ).toBe('paused')
   })
 })

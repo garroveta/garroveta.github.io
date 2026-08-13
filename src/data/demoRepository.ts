@@ -2,7 +2,7 @@ import { demoData } from './demoData'
 import type { DemoDataSet } from '../domain/types'
 
 export const DEMO_STORAGE_KEY = 'mtg-community:demo-data'
-export const DEMO_STORAGE_VERSION = 16
+export const DEMO_STORAGE_VERSION = 17
 
 type DemoStorageEnvelope = {
   version: number
@@ -49,6 +49,7 @@ function isDemoDataSet(value: unknown): value is DemoDataSet {
     Array.isArray(value.registrations) &&
     Array.isArray(value.newsPosts) &&
     Array.isArray(value.cards) &&
+    Array.isArray(value.cardLists) &&
     Array.isArray(value.listings) &&
     Array.isArray(value.wantedCards) &&
     Array.isArray(value.cardMatches) &&

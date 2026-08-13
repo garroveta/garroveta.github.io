@@ -4,19 +4,18 @@ import { completeCardDeal } from './cardDeals'
 import { demoData } from './demoData'
 
 describe('completed card deals', () => {
-  it('records a trade and closes its offer, search and match', () => {
+  it('records an operation and closes its offer, search and match', () => {
     const updatedData = completeCardDeal(
       demoData,
       'match-alex-sol-ring',
       demoData.currentMemberId,
-      'trade',
     )
 
     expect(updatedData.cardDeals).toEqual([
       expect.objectContaining({
         id: 'deal-alex-sol-ring',
         matchId: 'match-alex-sol-ring',
-        type: 'trade',
+        type: 'sale',
       }),
     ])
     expect(
@@ -32,22 +31,21 @@ describe('completed card deals', () => {
     ).toBe('completed')
   })
 
-  it('rejects the wrong buyer or an operation not offered', () => {
+  it('rejects the wrong buyer or a duplicate operation', () => {
     expect(
-      completeCardDeal(
-        demoData,
-        'match-alex-sol-ring',
-        'member-diego',
-        'trade',
-      ),
+      completeCardDeal(demoData, 'match-alex-sol-ring', 'member-diego'),
     ).toBe(demoData)
+    const completed = completeCardDeal(
+      demoData,
+      'match-alex-sol-ring',
+      demoData.currentMemberId,
+    )
     expect(
       completeCardDeal(
-        demoData,
+        completed,
         'match-alex-sol-ring',
         demoData.currentMemberId,
-        'sale',
       ),
-    ).toBe(demoData)
+    ).toBe(completed)
   })
 })

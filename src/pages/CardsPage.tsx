@@ -1,15 +1,23 @@
 import {
   ArrowLeft,
+  AlertCircle,
   AtSign,
+  Check,
   CheckCircle2,
   ChevronRight,
+  FileText,
   LayoutGrid,
   Layers3,
   ListChecks,
+  LoaderCircle,
   Mail,
   MessageCircle,
+  MoreHorizontal,
+  Pause,
+  Pencil,
   Plus,
   Search,
+  Share2,
   ShoppingBag,
   Sparkles,
   Table2,
@@ -17,16 +25,24 @@ import {
   UserRound,
   X,
 } from 'lucide-react'
-import type { FormEvent } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import { useMemo, useState } from 'react'
 
 import {
-  importWantedCards,
+  applyResolvedWantedCardImport,
   publishMarketplaceListing,
   type MarketplaceListingInput,
+  type WantedImportMode,
   type WantedImportResult,
 } from '../data/cardMutations'
+import { parseCardList, type CardListSection } from '../data/cardListImport'
 import { completeCardDeal } from '../data/cardDeals'
+import {
+  assignListingToList,
+  assignWantedCardToList,
+  createPersonalCardList,
+  renamePersonalCardList,
+} from '../data/cardLists'
 import {
   markCardMatchSeen,
   updateMarketplaceListingStatus,
@@ -44,6 +60,10 @@ import {
 } from '../data/cardSelectors'
 import type { DemoDataUpdater } from '../data/demoRepository'
 import { getScryfallCardImage } from '../data/scryfallImages'
+import {
+  resolveCardImportItemsWithCatalog,
+  type CardImportResolution,
+} from '../data/scryfallClient'
 import type {
   Card,
   CardCondition,
@@ -52,6 +72,7 @@ import type {
   CommunityMember,
   DemoDataSet,
   MarketplaceListing,
+  PersonalCardList,
 } from '../domain/types'
 
 type CardsPageProps = {
@@ -77,17 +98,8 @@ const conditionLabels: Record<CardCondition, string> = {
   good: 'Good',
 }
 
-const offerTypeLabels: Record<MarketplaceListing['offerType'], string> = {
-  sale: 'Venta',
-  trade: 'Intercambio',
-  sale_or_trade: 'Venta o intercambio',
-}
-
 const cardLanguages = Object.keys(languageLabels) as CardLanguage[]
 const cardConditions = Object.keys(conditionLabels) as CardCondition[]
-const offerTypes = Object.keys(
-  offerTypeLabels,
-) as MarketplaceListing['offerType'][]
 const MARKET_TABLE_PAGE_SIZE = 20
 const MY_LISTS_PAGE_SIZE = 10
 const MARKET_GALLERY_PAGE_SIZES = {
@@ -128,9 +140,6 @@ function MarketplaceTable({
             <th scope="col">Carta</th>
             <th scope="col">Miembro</th>
             <th className="market-table__wide" scope="col">
-              Oferta
-            </th>
-            <th className="market-table__wide" scope="col">
               Idioma
             </th>
             <th className="market-table__wide" scope="col">
@@ -153,9 +162,15 @@ function MarketplaceTable({
                     aria-label={`Ampliar ${item.card.name}`}
                     onClick={() => onPreview(item)}
                   >
-                    {getScryfallCardImage(item.card.name) ? (
+                    {getScryfallCardImage(
+                      item.card.name,
+                      item.card.imageUri,
+                    ) ? (
                       <img
-                        src={getScryfallCardImage(item.card.name)}
+                        src={getScryfallCardImage(
+                          item.card.name,
+                          item.card.imageUri,
+                        )}
                         alt=""
                         loading="lazy"
                         decoding="async"
@@ -171,7 +186,6 @@ function MarketplaceTable({
                       {item.listing.finish === 'foil' ? ' · Foil' : ''}
                     </small>
                     <small className="market-table__mobile-meta">
-                      {offerTypeLabels[item.listing.offerType]} ·{' '}
                       {languageLabels[item.listing.language]} ·{' '}
                       {conditionLabels[item.listing.condition]}
                     </small>
@@ -190,9 +204,6 @@ function MarketplaceTable({
                   </span>
                   <span>{item.member.displayName}</span>
                 </button>
-              </td>
-              <td className="market-table__wide">
-                {offerTypeLabels[item.listing.offerType]}
               </td>
               <td className="market-table__wide">
                 {languageLabels[item.listing.language]}
@@ -245,7 +256,10 @@ function MarketplaceGallery({
       aria-label="Galería de ofertas"
     >
       {items.map((item) => {
-        const imageUrl = getScryfallCardImage(item.card.name)
+        const imageUrl = getScryfallCardImage(
+          item.card.name,
+          item.card.imageUri,
+        )
 
         return (
           <article className="market-gallery-card" key={item.listing.id}>
@@ -275,10 +289,6 @@ function MarketplaceGallery({
                 </p>
               </div>
               <dl>
-                <div>
-                  <dt>Oferta</dt>
-                  <dd>{offerTypeLabels[item.listing.offerType]}</dd>
-                </div>
                 <div>
                   <dt>Idioma</dt>
                   <dd>{languageLabels[item.listing.language]}</dd>
@@ -326,7 +336,7 @@ function CardImagePreview({
   description: string
   onClose: () => void
 }) {
-  const imageUrl = getScryfallCardImage(card.name)
+  const imageUrl = getScryfallCardImage(card.name, card.imageUri)
 
   return (
     <div
@@ -363,14 +373,18 @@ function CardImagePreview({
 
 function WantedCardRow({
   item,
+  lists,
   onPreview,
+  onListChange,
   onStatusChange,
 }: {
   item: WantedCardItem
+  lists: PersonalCardList[]
   onPreview: () => void
+  onListChange: (listId?: string) => void
   onStatusChange: (status: WantedCardItem['wantedCard']['status']) => void
 }) {
-  const imageUrl = getScryfallCardImage(item.card.name)
+  const imageUrl = getScryfallCardImage(item.card.name, item.card.imageUri)
 
   return (
     <article className="wanted-card-row">
@@ -402,45 +416,77 @@ function WantedCardRow({
       >
         {item.wantedCard.status === 'active' ? 'Activa' : 'En pausa'}
       </span>
-      <div className="list-management-actions">
-        <button
-          type="button"
-          aria-label={
-            item.wantedCard.status === 'active'
-              ? 'Pausar búsqueda'
-              : 'Reactivar búsqueda'
-          }
-          onClick={() =>
-            onStatusChange(
-              item.wantedCard.status === 'active' ? 'paused' : 'active',
-            )
-          }
-        >
-          {item.wantedCard.status === 'active' ? 'Pausar' : 'Reactivar'}
-        </button>
-        <button
-          type="button"
-          aria-label="Marcar encontrada"
-          onClick={() => onStatusChange('fulfilled')}
-        >
-          <CheckCircle2 aria-hidden="true" size={14} />
-          Encontrada
-        </button>
-      </div>
+      <details className="card-row-menu">
+        <summary aria-label={`Gestionar ${item.card.name}`}>
+          <MoreHorizontal aria-hidden="true" size={17} />
+        </summary>
+        <div>
+          <label>
+            <span>Lista privada</span>
+            <select
+              aria-label={`Lista de ${item.card.name}`}
+              value={item.wantedCard.cardListId ?? ''}
+              onChange={(event) =>
+                onListChange(event.target.value || undefined)
+              }
+            >
+              <option value="">Sin lista</option>
+              {lists.map((list) => (
+                <option key={list.id} value={list.id}>
+                  {list.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="card-row-menu__actions">
+            <button
+              type="button"
+              aria-label={
+                item.wantedCard.status === 'active'
+                  ? 'Pausar búsqueda'
+                  : 'Reactivar búsqueda'
+              }
+              onClick={() =>
+                onStatusChange(
+                  item.wantedCard.status === 'active' ? 'paused' : 'active',
+                )
+              }
+            >
+              {item.wantedCard.status === 'active' ? (
+                <Pause aria-hidden="true" size={14} />
+              ) : (
+                <Check aria-hidden="true" size={14} />
+              )}
+              {item.wantedCard.status === 'active' ? 'Pausar' : 'Reactivar'}
+            </button>
+            <button
+              type="button"
+              aria-label="Marcar encontrada"
+              onClick={() => onStatusChange('fulfilled')}
+            >
+              <CheckCircle2 aria-hidden="true" size={14} /> Encontrada
+            </button>
+          </div>
+        </div>
+      </details>
     </article>
   )
 }
 
 function MemberListingRow({
   item,
+  lists,
   onPreview,
+  onListChange,
   onStatusChange,
 }: {
   item: MemberMarketplaceListingItem
+  lists: PersonalCardList[]
   onPreview: () => void
+  onListChange: (listId?: string) => void
   onStatusChange: (status: MarketplaceListing['status']) => void
 }) {
-  const imageUrl = getScryfallCardImage(item.card.name)
+  const imageUrl = getScryfallCardImage(item.card.name, item.card.imageUri)
 
   return (
     <article className="member-listing-row">
@@ -459,34 +505,186 @@ function MemberListingRow({
       <div>
         <h3>{item.card.name}</h3>
         <p>
-          {item.listing.quantity} · {offerTypeLabels[item.listing.offerType]} ·{' '}
-          {languageLabels[item.listing.language]}
+          {item.listing.quantity} · {languageLabels[item.listing.language]}
         </p>
       </div>
       <span className={`listing-status listing-status--${item.listing.status}`}>
         {listingStatusLabels[item.listing.status]}
       </span>
-      {item.listing.status !== 'completed' ? (
-        <div className="list-management-actions">
+      <details className="card-row-menu">
+        <summary aria-label={`Gestionar ${item.card.name}`}>
+          <MoreHorizontal aria-hidden="true" size={17} />
+        </summary>
+        <div>
+          <label>
+            <span>Lista privada</span>
+            <select
+              aria-label={`Lista de ${item.card.name}`}
+              value={item.listing.cardListId ?? ''}
+              onChange={(event) =>
+                onListChange(event.target.value || undefined)
+              }
+            >
+              <option value="">Sin lista</option>
+              {lists.map((list) => (
+                <option key={list.id} value={list.id}>
+                  {list.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          {item.listing.status !== 'completed' ? (
+            <div className="card-row-menu__actions">
+              <button
+                type="button"
+                aria-label={
+                  item.listing.status === 'available'
+                    ? 'Marcar reservada'
+                    : 'Reactivar oferta'
+                }
+                onClick={() =>
+                  onStatusChange(
+                    item.listing.status === 'available'
+                      ? 'reserved'
+                      : 'available',
+                  )
+                }
+              >
+                {item.listing.status === 'available' ? (
+                  <Pause aria-hidden="true" size={14} />
+                ) : (
+                  <Check aria-hidden="true" size={14} />
+                )}
+                {item.listing.status === 'available' ? 'Reservar' : 'Reactivar'}
+              </button>
+              <button
+                type="button"
+                aria-label="Cerrar oferta"
+                onClick={() => onStatusChange('completed')}
+              >
+                <CheckCircle2 aria-hidden="true" size={14} /> Cerrar
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </details>
+    </article>
+  )
+}
+
+function PersonalListManager({
+  lists,
+  kind,
+  selectedListId,
+  onCreate,
+  onRename,
+  onSelect,
+}: {
+  lists: PersonalCardList[]
+  kind: PersonalCardList['kind']
+  selectedListId: string
+  onCreate: (name: string) => void
+  onRename: (listId: string, name: string) => void
+  onSelect: (listId: string) => void
+}) {
+  const [isCreating, setIsCreating] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [editingListId, setEditingListId] = useState('')
+  const [editingName, setEditingName] = useState('')
+
+  return (
+    <div className="personal-list-manager">
+      <div className="personal-list-tabs" aria-label="Mis listas privadas">
+        <button
+          type="button"
+          aria-pressed={!selectedListId}
+          onClick={() => onSelect('')}
+        >
+          Todas
+        </button>
+        {lists.map((list) => (
+          <span key={list.id}>
+            <button
+              type="button"
+              aria-pressed={selectedListId === list.id}
+              onClick={() => onSelect(list.id)}
+            >
+              {list.name}
+            </button>
+            <button
+              type="button"
+              aria-label={`Renombrar ${list.name}`}
+              onClick={() => {
+                setEditingListId(list.id)
+                setEditingName(list.name)
+              }}
+            >
+              <Pencil aria-hidden="true" size={12} />
+            </button>
+          </span>
+        ))}
+        <button
+          className="personal-list-tabs__add"
+          type="button"
+          onClick={() => setIsCreating(true)}
+        >
+          <Plus aria-hidden="true" size={13} /> Nueva
+        </button>
+      </div>
+
+      {isCreating || editingListId ? (
+        <form
+          className="personal-list-editor"
+          aria-label={editingListId ? 'Renombrar lista' : 'Crear lista'}
+          onSubmit={(event) => {
+            event.preventDefault()
+            if (editingListId) {
+              onRename(editingListId, editingName)
+              setEditingListId('')
+              setEditingName('')
+            } else {
+              onCreate(newName)
+              setNewName('')
+              setIsCreating(false)
+            }
+          }}
+        >
+          <label>
+            <span className="visually-hidden">Nombre de la lista</span>
+            <input
+              autoFocus
+              required
+              maxLength={40}
+              placeholder={
+                kind === 'wanted' ? 'Ej. Pauper' : 'Ej. Carpeta de venta'
+              }
+              value={editingListId ? editingName : newName}
+              onChange={(event) =>
+                editingListId
+                  ? setEditingName(event.target.value)
+                  : setNewName(event.target.value)
+              }
+            />
+          </label>
+          <button type="submit">Guardar</button>
           <button
             type="button"
-            onClick={() =>
-              onStatusChange(
-                item.listing.status === 'available' ? 'reserved' : 'available',
-              )
-            }
+            aria-label="Cancelar edición de lista"
+            onClick={() => {
+              setIsCreating(false)
+              setEditingListId('')
+            }}
           >
-            {item.listing.status === 'available'
-              ? 'Marcar reservada'
-              : 'Reactivar oferta'}
+            <X aria-hidden="true" size={14} />
           </button>
-          <button type="button" onClick={() => onStatusChange('completed')}>
-            <CheckCircle2 aria-hidden="true" size={14} />
-            Cerrar oferta
-          </button>
-        </div>
+        </form>
       ) : null}
-    </article>
+
+      <p className="personal-list-privacy">
+        Tus listas son privadas. Los demás miembros solo ven las cartas, no el
+        nombre de la lista.
+      </p>
+    </div>
   )
 }
 
@@ -538,7 +736,10 @@ function MatchGroupCard({
             onClick={() => onPreview(firstItem)}
           >
             <img
-              src={getScryfallCardImage(firstItem.card.name)}
+              src={getScryfallCardImage(
+                firstItem.card.name,
+                firstItem.card.imageUri,
+              )}
               alt=""
               loading="lazy"
               decoding="async"
@@ -576,7 +777,10 @@ function MatchGroupCard({
           const primaryLabel = isCardGroup
             ? item.seller.displayName
             : item.card.name
-          const imageUrl = getScryfallCardImage(item.card.name)
+          const imageUrl = getScryfallCardImage(
+            item.card.name,
+            item.card.imageUri,
+          )
 
           return (
             <button
@@ -607,7 +811,6 @@ function MatchGroupCard({
                 <strong>{primaryLabel}</strong>
                 <small>
                   {matchStatusLabels[item.match.status]} ·{' '}
-                  {offerTypeLabels[item.listing.offerType]} ·{' '}
                   {languageLabels[item.listing.language]} ·{' '}
                   {conditionLabels[item.listing.condition]}
                 </small>
@@ -633,7 +836,7 @@ function MatchDetail({
   item: MemberCardMatchItem
   deal?: CardDeal
   onBack: () => void
-  onComplete: (type: CardDeal['type']) => void
+  onComplete: () => void
 }) {
   const [isCardPreviewOpen, setIsCardPreviewOpen] = useState(false)
   const contactIcons = {
@@ -688,10 +891,6 @@ function MatchDetail({
         <p className="card-match__reason">{item.match.reason}</p>
 
         <dl className="market-card__facts">
-          <div>
-            <dt>Operación</dt>
-            <dd>{offerTypeLabels[item.listing.offerType]}</dd>
-          </div>
           <div>
             <dt>Idioma</dt>
             <dd>{languageLabels[item.listing.language]}</dd>
@@ -748,34 +947,18 @@ function MatchDetail({
             <CheckCircle2 aria-hidden="true" size={22} />
             <div>
               <strong>Operación registrada</strong>
-              <p>
-                {deal.type === 'trade'
-                  ? 'Intercambio realizado'
-                  : 'Venta realizada'}{' '}
-                con {item.seller.displayName}.
-              </p>
+              <p>Operación realizada con {item.seller.displayName}.</p>
             </div>
           </section>
         ) : (
           <div className="deal-actions">
-            {item.listing.offerType !== 'sale' ? (
-              <button
-                className="primary-button"
-                type="button"
-                onClick={() => onComplete('trade')}
-              >
-                Marcar intercambio realizado
-              </button>
-            ) : null}
-            {item.listing.offerType !== 'trade' ? (
-              <button
-                className="primary-button"
-                type="button"
-                onClick={() => onComplete('sale')}
-              >
-                Marcar venta realizada
-              </button>
-            ) : null}
+            <button
+              className="primary-button"
+              type="button"
+              onClick={onComplete}
+            >
+              Marcar operación realizada
+            </button>
           </div>
         )}
       </article>
@@ -829,20 +1012,22 @@ function ListingComposer({
   const [language, setLanguage] = useState<CardLanguage>('es')
   const [condition, setCondition] = useState<CardCondition>('near_mint')
   const [finish, setFinish] = useState<MarketplaceListing['finish']>('nonfoil')
-  const [offerType, setOfferType] =
-    useState<MarketplaceListing['offerType']>('trade')
   const [priceEur, setPriceEur] = useState('')
+  const offerLists = data.cardLists.filter(
+    ({ memberId: ownerId, kind }) => ownerId === memberId && kind === 'offers',
+  )
+  const [cardListId, setCardListId] = useState(offerLists[0]?.id ?? '')
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const input: MarketplaceListingInput = {
       memberId,
       cardId,
+      cardListId: cardListId || undefined,
       quantity,
       language,
       condition,
       finish,
-      offerType,
       priceEur: priceEur ? Number(priceEur) : undefined,
     }
     onDataChange((currentData) => publishMarketplaceListing(currentData, input))
@@ -872,6 +1057,20 @@ function ListingComposer({
       </label>
 
       <div className="card-form-grid">
+        <label className="form-field">
+          <span>Lista privada</span>
+          <select
+            value={cardListId}
+            onChange={(event) => setCardListId(event.target.value)}
+          >
+            <option value="">Sin lista</option>
+            {offerLists.map((list) => (
+              <option key={list.id} value={list.id}>
+                {list.name}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="form-field">
           <span>Cantidad</span>
           <input
@@ -925,23 +1124,6 @@ function ListingComposer({
           </select>
         </label>
         <label className="form-field">
-          <span>Operación</span>
-          <select
-            value={offerType}
-            onChange={(event) =>
-              setOfferType(
-                event.target.value as MarketplaceListing['offerType'],
-              )
-            }
-          >
-            {offerTypes.map((type) => (
-              <option key={type} value={type}>
-                {offerTypeLabels[type]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="form-field">
           <span>Precio opcional (€)</span>
           <input
             min={0}
@@ -979,46 +1161,362 @@ function WantedImportComposer({
   onImported: (result: WantedImportResult) => void
 }) {
   const [rawList, setRawList] = useState('')
+  const [fileName, setFileName] = useState('')
+  const [resolutions, setResolutions] = useState<CardImportResolution[]>()
+  const [isResolving, setIsResolving] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [mode, setMode] = useState<WantedImportMode>('update')
+  const [matchAllPrintings, setMatchAllPrintings] = useState(true)
+  const wantedLists = data.cardLists.filter(
+    ({ memberId: ownerId, kind }) => ownerId === memberId && kind === 'wanted',
+  )
+  const [cardListId, setCardListId] = useState(wantedLists[0]?.id ?? '')
+  const [includedSections, setIncludedSections] = useState<CardListSection[]>([
+    'main',
+    'sideboard',
+    'commander',
+    'companion',
+  ])
+  const parsedList = useMemo(() => parseCardList(rawList), [rawList])
+  const sectionCounts = useMemo(() => {
+    const counts = new Map<CardListSection, number>()
+    parsedList.items.forEach((item) =>
+      counts.set(item.section, (counts.get(item.section) ?? 0) + item.quantity),
+    )
+    return counts
+  }, [parsedList.items])
+  const resolvedCount =
+    resolutions?.filter(({ status }) => status === 'resolved').length ?? 0
+  const unresolvedCount = (resolutions?.length ?? 0) - resolvedCount
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+
+    if (!file) {
+      return
+    }
+
+    setRawList(await file.text())
+    setFileName(file.name)
+    setResolutions(undefined)
+    setErrorMessage('')
+  }
+
+  const handleAnalyze = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const result = importWantedCards(data, memberId, rawList)
+
+    if (parsedList.items.length === 0) {
+      setErrorMessage('No se ha encontrado ninguna línea de carta válida.')
+      return
+    }
+
+    setIsResolving(true)
+    setErrorMessage('')
+
+    try {
+      setResolutions(
+        await resolveCardImportItemsWithCatalog(parsedList.items, data.cards),
+      )
+    } catch {
+      setErrorMessage(
+        'No se ha podido consultar Scryfall. Comprueba la conexión e inténtalo de nuevo.',
+      )
+    } finally {
+      setIsResolving(false)
+    }
+  }
+
+  const handleImport = () => {
+    if (!resolutions) {
+      return
+    }
+
+    const result = applyResolvedWantedCardImport(
+      data,
+      memberId,
+      resolutions,
+      mode,
+      includedSections,
+      matchAllPrintings,
+      undefined,
+      cardListId || undefined,
+    )
+    const unknownLines = resolutions
+      .filter(
+        ({ status, item }) =>
+          status === 'unresolved' && includedSections.includes(item.section),
+      )
+      .map(({ item }) => item.rawLine)
+
     onDataChange(result.data)
-    onImported(result)
+    onImported({ ...result, unknownLines })
+  }
+
+  const sectionLabels: Record<CardListSection, string> = {
+    main: 'Lista principal',
+    sideboard: 'Sideboard',
+    maybeboard: 'Maybeboard',
+    commander: 'Commander',
+    companion: 'Companion',
   }
 
   return (
     <form
-      className="card-composer"
+      className="card-composer card-import-composer"
       aria-label="Importar lista de búsquedas"
-      onSubmit={handleSubmit}
+      onSubmit={handleAnalyze}
     >
       <ComposerHeading title="Importar una lista" onClose={onClose} />
 
-      <label className="form-field">
-        <span>Una carta por línea</span>
-        <textarea
-          required
-          rows={7}
-          placeholder={'2x Sol Ring\nRhystic Study\nEsper Sentinel x3'}
-          value={rawList}
-          onChange={(event) => setRawList(event.target.value)}
-        />
-      </label>
+      {!resolutions ? (
+        <>
+          <label className="card-import-file">
+            <FileText aria-hidden="true" size={22} />
+            <span>
+              <strong>{fileName || 'Seleccionar un archivo'}</strong>
+              <small>TXT de Moxfield o ManaBox, CSV de ManaBox</small>
+            </span>
+            <input
+              accept=".txt,.csv,text/plain,text/csv"
+              type="file"
+              onChange={handleFileChange}
+            />
+          </label>
 
-      <p className="import-help">
-        El prototipo reconoce nombres exactos del catálogo de demostración. Las
-        búsquedas importadas aceptan español o inglés y acabado no foil.
-      </p>
+          <div className="import-separator">
+            <span>o pegar el contenido</span>
+          </div>
 
-      <div className="composer-actions">
-        <button className="secondary-button" type="button" onClick={onClose}>
-          Cancelar
-        </button>
-        <button className="primary-button" type="submit">
-          Importar búsquedas
-        </button>
-      </div>
+          <label className="form-field">
+            <span>Lista de cartas</span>
+            <textarea
+              required
+              rows={9}
+              placeholder={
+                "4 Adventurer's Inn (FIN) 271\n2 Bushwhack (FDN) 215\n\nSIDEBOARD:\n2 Vines of Vastwood"
+              }
+              value={rawList}
+              onChange={(event) => {
+                setRawList(event.target.value)
+                setFileName('')
+                setErrorMessage('')
+              }}
+            />
+          </label>
+
+          <p className="import-help">
+            Se aceptan listas simples y mazos. La cantidad, la edición y el
+            número de colección son opcionales.
+          </p>
+
+          {parsedList.items.length > 0 ? (
+            <p className="import-detection" role="status">
+              <CheckCircle2 aria-hidden="true" size={16} />
+              {parsedList.items.length} líneas detectadas ·{' '}
+              {parsedList.items.reduce((sum, item) => sum + item.quantity, 0)}{' '}
+              cartas
+              {parsedList.source === 'manabox_csv' ? ' · CSV ManaBox' : ''}
+            </p>
+          ) : null}
+
+          {errorMessage ? (
+            <p className="import-error" role="alert">
+              <AlertCircle aria-hidden="true" size={17} /> {errorMessage}
+            </p>
+          ) : null}
+
+          <div className="composer-actions">
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={onClose}
+            >
+              Cancelar
+            </button>
+            <button
+              className="primary-button"
+              disabled={isResolving || parsedList.items.length === 0}
+              type="submit"
+            >
+              {isResolving ? (
+                <>
+                  <LoaderCircle className="spin" aria-hidden="true" size={17} />{' '}
+                  Comprobando…
+                </>
+              ) : (
+                'Analizar lista'
+              )}
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="import-summary" aria-live="polite">
+            <div>
+              <strong>{resolvedCount}</strong>
+              <span>reconocidas</span>
+            </div>
+            <div className={unresolvedCount ? 'has-warning' : ''}>
+              <strong>{unresolvedCount}</strong>
+              <span>por revisar</span>
+            </div>
+            <div>
+              <strong>
+                {parsedList.items.reduce((sum, item) => sum + item.quantity, 0)}
+              </strong>
+              <span>cartas</span>
+            </div>
+          </div>
+
+          {sectionCounts.size > 1 ? (
+            <fieldset className="import-options">
+              <legend>Secciones a importar</legend>
+              <div className="import-section-options">
+                {[...sectionCounts].map(([section, count]) => (
+                  <label key={section}>
+                    <input
+                      checked={includedSections.includes(section)}
+                      type="checkbox"
+                      onChange={(event) =>
+                        setIncludedSections((current) =>
+                          event.target.checked
+                            ? [...current, section]
+                            : current.filter((value) => value !== section),
+                        )
+                      }
+                    />
+                    <span>{sectionLabels[section]}</span>
+                    <small>{count}</small>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          ) : null}
+
+          <div
+            className="import-preview"
+            aria-label="Vista previa de la importación"
+          >
+            {resolutions.map((resolution) => (
+              <div
+                className="import-preview-row"
+                key={`${resolution.item.lineNumber}-${resolution.item.rawLine}`}
+              >
+                <span
+                  className={
+                    resolution.status === 'resolved'
+                      ? 'is-resolved'
+                      : 'is-unresolved'
+                  }
+                  aria-hidden="true"
+                >
+                  {resolution.status === 'resolved' ? '✓' : '!'}
+                </span>
+                <strong>{resolution.card?.name ?? resolution.item.name}</strong>
+                <small>
+                  ×{resolution.item.quantity}
+                  {resolution.card
+                    ? ` · ${resolution.card.setCode} #${resolution.card.collectorNumber}`
+                    : ' · no encontrada en Scryfall'}
+                </small>
+              </div>
+            ))}
+          </div>
+
+          <fieldset className="import-options">
+            <legend>Cómo actualizar mi lista</legend>
+            <div className="import-mode-options">
+              <label>
+                <input
+                  checked={mode === 'update'}
+                  name="import-mode"
+                  type="radio"
+                  onChange={() => setMode('update')}
+                />
+                <span>
+                  <strong>Actualizar</strong>
+                  <small>Reemplaza las cantidades importadas.</small>
+                </span>
+              </label>
+              <label>
+                <input
+                  checked={mode === 'add'}
+                  name="import-mode"
+                  type="radio"
+                  onChange={() => setMode('add')}
+                />
+                <span>
+                  <strong>Añadir</strong>
+                  <small>Suma las nuevas cantidades.</small>
+                </span>
+              </label>
+              <label>
+                <input
+                  checked={mode === 'sync'}
+                  name="import-mode"
+                  type="radio"
+                  onChange={() => setMode('sync')}
+                />
+                <span>
+                  <strong>Sincronizar</strong>
+                  <small>Pausa también las búsquedas ausentes.</small>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+
+          <label className="form-field">
+            <span>Guardar en mi lista privada</span>
+            <select
+              value={cardListId}
+              onChange={(event) => setCardListId(event.target.value)}
+            >
+              <option value="">Sin lista</option>
+              {wantedLists.map((list) => (
+                <option key={list.id} value={list.id}>
+                  {list.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="import-printing-option">
+            <input
+              checked={matchAllPrintings}
+              type="checkbox"
+              onChange={(event) => setMatchAllPrintings(event.target.checked)}
+            />
+            <span>
+              <strong>Aceptar cualquier edición</strong>
+              <small>Recomendado para encontrar más ofertas compatibles.</small>
+            </span>
+          </label>
+
+          {errorMessage ? (
+            <p className="import-error" role="alert">
+              {errorMessage}
+            </p>
+          ) : null}
+
+          <div className="composer-actions">
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => setResolutions(undefined)}
+            >
+              Volver
+            </button>
+            <button
+              className="primary-button"
+              disabled={resolvedCount === 0 || includedSections.length === 0}
+              type="button"
+              onClick={handleImport}
+            >
+              Importar búsquedas
+            </button>
+          </div>
+        </>
+      )}
     </form>
   )
 }
@@ -1041,11 +1539,10 @@ export function CardsPage({
     'table',
   )
   const [marketGalleryColumns, setMarketGalleryColumns] = useState<2 | 4>(2)
-  const [selectedMarketplaceMemberId, setSelectedMarketplaceMemberId] =
-    useState('')
   const [myListsView, setMyListsView] = useState<'wanted' | 'offers'>('wanted')
   const [myListsQuery, setMyListsQuery] = useState('')
   const [myListsPage, setMyListsPage] = useState(1)
+  const [selectedPersonalListId, setSelectedPersonalListId] = useState('')
   const [selectedCardPreview, setSelectedCardPreview] = useState<{
     card: Card
     description: string
@@ -1055,6 +1552,14 @@ export function CardsPage({
   const listings = getMarketplaceListings(data)
   const wantedCards = getMemberWantedCards(data, currentMember.id)
   const memberListings = getMemberMarketplaceListings(data, currentMember.id)
+  const wantedPersonalLists = data.cardLists.filter(
+    ({ memberId, kind }) => memberId === currentMember.id && kind === 'wanted',
+  )
+  const offerPersonalLists = data.cardLists.filter(
+    ({ memberId, kind }) => memberId === currentMember.id && kind === 'offers',
+  )
+  const activePersonalLists =
+    myListsView === 'wanted' ? wantedPersonalLists : offerPersonalLists
   const matches = getMemberCardMatches(data, currentMember.id)
   const groupedMatches = groupCardMatches(matches, matchGrouping)
   const selectedMatch = matches.find(
@@ -1064,23 +1569,16 @@ export function CardsPage({
     ? data.cardDeals.find(({ matchId }) => matchId === selectedMatchId)
     : undefined
   const normalizedQuery = query.trim().toLocaleLowerCase('es')
-  const selectedMarketplaceMember = data.members.find(
-    ({ id }) => id === selectedMarketplaceMemberId,
-  )
   const filteredListings = useMemo(
     () =>
       listings.filter(
         ({ card, member }) =>
-          (!selectedMarketplaceMemberId ||
-            member.id === selectedMarketplaceMemberId) &&
-          (!normalizedQuery ||
-            card.name.toLocaleLowerCase('es').includes(normalizedQuery) ||
-            card.setName.toLocaleLowerCase('es').includes(normalizedQuery) ||
-            member.displayName
-              .toLocaleLowerCase('es')
-              .includes(normalizedQuery)),
+          !normalizedQuery ||
+          card.name.toLocaleLowerCase('es').includes(normalizedQuery) ||
+          card.setName.toLocaleLowerCase('es').includes(normalizedQuery) ||
+          member.displayName.toLocaleLowerCase('es').includes(normalizedQuery),
       ),
-    [listings, normalizedQuery, selectedMarketplaceMemberId],
+    [listings, normalizedQuery],
   )
   const marketPageSize =
     marketDisplay === 'table'
@@ -1098,16 +1596,20 @@ export function CardsPage({
   )
   const normalizedMyListsQuery = myListsQuery.trim().toLocaleLowerCase('es')
   const filteredMemberListings = memberListings.filter(
-    ({ card }) =>
-      !normalizedMyListsQuery ||
-      card.name.toLocaleLowerCase('es').includes(normalizedMyListsQuery) ||
-      card.setName.toLocaleLowerCase('es').includes(normalizedMyListsQuery),
+    ({ card, listing }) =>
+      (!selectedPersonalListId ||
+        listing.cardListId === selectedPersonalListId) &&
+      (!normalizedMyListsQuery ||
+        card.name.toLocaleLowerCase('es').includes(normalizedMyListsQuery) ||
+        card.setName.toLocaleLowerCase('es').includes(normalizedMyListsQuery)),
   )
   const filteredWantedCards = wantedCards.filter(
-    ({ card }) =>
-      !normalizedMyListsQuery ||
-      card.name.toLocaleLowerCase('es').includes(normalizedMyListsQuery) ||
-      card.setName.toLocaleLowerCase('es').includes(normalizedMyListsQuery),
+    ({ card, wantedCard }) =>
+      (!selectedPersonalListId ||
+        wantedCard.cardListId === selectedPersonalListId) &&
+      (!normalizedMyListsQuery ||
+        card.name.toLocaleLowerCase('es').includes(normalizedMyListsQuery) ||
+        card.setName.toLocaleLowerCase('es').includes(normalizedMyListsQuery)),
   )
   const activeMyListItems =
     myListsView === 'offers' ? filteredMemberListings : filteredWantedCards
@@ -1132,13 +1634,12 @@ export function CardsPage({
         deal={selectedDeal}
         item={selectedMatch}
         onBack={() => setSelectedMatchId(undefined)}
-        onComplete={(type) =>
+        onComplete={() =>
           onDataChange((currentData) =>
             completeCardDeal(
               currentData,
               selectedMatch.match.id,
               currentMember.id,
-              type,
             ),
           )
         }
@@ -1399,31 +1900,12 @@ export function CardsPage({
             </div>
           ) : null}
 
-          {selectedMarketplaceMember ? (
-            <div className="market-member-filter" role="status">
-              <span>
-                Cartas disponibles de{' '}
-                <strong>{selectedMarketplaceMember.displayName}</strong>
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedMarketplaceMemberId('')
-                  setMarketPage(1)
-                }}
-              >
-                Ver todos
-              </button>
-            </div>
-          ) : null}
-
           {visibleListings.length > 0 ? (
             marketDisplay === 'table' ? (
               <MarketplaceTable
                 items={visibleListings}
                 onMemberSelect={(memberId) => {
-                  setSelectedMarketplaceMemberId(memberId)
-                  setMarketPage(1)
+                  window.location.hash = `cartas?member=${memberId}`
                 }}
                 onPreview={(item) =>
                   setSelectedCardPreview({
@@ -1437,8 +1919,7 @@ export function CardsPage({
                 items={visibleListings}
                 columns={marketGalleryColumns}
                 onMemberSelect={(memberId) => {
-                  setSelectedMarketplaceMemberId(memberId)
-                  setMarketPage(1)
+                  window.location.hash = `cartas?member=${memberId}`
                 }}
                 onPreview={(item) =>
                   setSelectedCardPreview({
@@ -1519,6 +2000,7 @@ export function CardsPage({
               onClick={() => {
                 setMyListsView('wanted')
                 setMyListsPage(1)
+                setSelectedPersonalListId('')
               }}
             >
               Buscadas <span>{wantedCards.length}</span>
@@ -1529,11 +2011,60 @@ export function CardsPage({
               onClick={() => {
                 setMyListsView('offers')
                 setMyListsPage(1)
+                setSelectedPersonalListId('')
               }}
             >
               Mis ofertas <span>{memberListings.length}</span>
             </button>
           </div>
+
+          <PersonalListManager
+            lists={activePersonalLists}
+            kind={myListsView}
+            selectedListId={selectedPersonalListId}
+            onSelect={(listId) => {
+              setSelectedPersonalListId(listId)
+              setMyListsPage(1)
+            }}
+            onCreate={(name) => {
+              const result = createPersonalCardList(
+                data,
+                currentMember.id,
+                name,
+                myListsView,
+              )
+              onDataChange(result.data)
+              if (result.list) {
+                setSelectedPersonalListId(result.list.id)
+                setMyListsPage(1)
+                setActionMessage(`Lista «${result.list.name}» creada.`)
+              }
+            }}
+            onRename={(listId, name) => {
+              onDataChange((currentData) =>
+                renamePersonalCardList(
+                  currentData,
+                  currentMember.id,
+                  listId,
+                  name,
+                ),
+              )
+              setActionMessage('El nombre de la lista se ha actualizado.')
+            }}
+          />
+
+          {myListsView === 'offers' ? (
+            <button
+              className="share-my-cards-button"
+              type="button"
+              onClick={() => {
+                window.location.hash = `cartas?member=${currentMember.id}`
+              }}
+            >
+              <Share2 aria-hidden="true" size={16} />
+              Ver y compartir mi página de cartas
+            </button>
+          ) : null}
 
           <label className="card-search my-lists-search">
             <Search aria-hidden="true" size={17} />
@@ -1560,6 +2091,7 @@ export function CardsPage({
                   {visibleMemberListings.map((item) => (
                     <MemberListingRow
                       item={item}
+                      lists={offerPersonalLists}
                       key={item.listing.id}
                       onPreview={() =>
                         setSelectedCardPreview({
@@ -1567,6 +2099,17 @@ export function CardsPage({
                           description: `${item.card.setName} · Tu oferta`,
                         })
                       }
+                      onListChange={(listId) => {
+                        onDataChange((currentData) =>
+                          assignListingToList(
+                            currentData,
+                            currentMember.id,
+                            item.listing.id,
+                            listId,
+                          ),
+                        )
+                        setActionMessage('La oferta se ha movido de lista.')
+                      }}
                       onStatusChange={(status) => {
                         onDataChange((currentData) =>
                           updateMarketplaceListingStatus(
@@ -1604,6 +2147,7 @@ export function CardsPage({
                   {visibleWantedCards.map((item) => (
                     <WantedCardRow
                       item={item}
+                      lists={wantedPersonalLists}
                       key={item.wantedCard.id}
                       onPreview={() =>
                         setSelectedCardPreview({
@@ -1611,6 +2155,17 @@ export function CardsPage({
                           description: `${item.card.setName} · En tu lista de búsqueda`,
                         })
                       }
+                      onListChange={(listId) => {
+                        onDataChange((currentData) =>
+                          assignWantedCardToList(
+                            currentData,
+                            currentMember.id,
+                            item.wantedCard.id,
+                            listId,
+                          ),
+                        )
+                        setActionMessage('La búsqueda se ha movido de lista.')
+                      }}
                       onStatusChange={(status) => {
                         onDataChange((currentData) =>
                           updateWantedCardStatus(
@@ -1686,8 +2241,8 @@ export function CardsPage({
 
           <p className="cards-privacy-note">
             <UserRound aria-hidden="true" size={15} />
-            Solo los miembros validados de CRC Delorean pueden consultar estas
-            listas.
+            La comunidad ve las cartas publicadas o buscadas, pero tus nombres
+            de listas y tu organización permanecen privados.
           </p>
         </section>
       )}

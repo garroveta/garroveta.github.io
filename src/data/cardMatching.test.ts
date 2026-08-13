@@ -59,7 +59,6 @@ describe('card matching', () => {
       demoData,
       'match-alex-sol-ring',
       demoData.currentMemberId,
-      'trade',
     )
 
     expect(

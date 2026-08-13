@@ -356,7 +356,7 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
   const [formatId, setFormatId] = useState('')
   const [eventKindId, setEventKindId] = useState('')
   const [months, setMonths] = useState<RankingFilters['months']>(6)
-  const [limit, setLimit] = useState<10 | 20>(10)
+  const [limit, setLimit] = useState<10 | 'all'>(10)
   const games = data.games.filter(
     ({ category }) => category !== 'role_playing_game',
   )
@@ -406,7 +406,7 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
             {selectedGame?.shortName} ·{' '}
             {selectedFormat?.shortName ?? 'Todos los formatos'} ·{' '}
             {selectedEventKind?.shortName ?? 'Todos los eventos'} · {months}{' '}
-            meses · Top {limit}
+            meses · {limit === 'all' ? 'Todos' : `Top ${limit}`}
           </span>
           <span className="ranking-filter-summary__action">
             Modificar
@@ -482,18 +482,22 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
               <span>Clasificación</span>
               <div
                 className="ranking-segmented"
-                aria-label="Tamaño del ranking"
+                aria-label="Número de jugadores mostrados"
               >
-                {([10, 20] as const).map((size) => (
-                  <button
-                    key={size}
-                    type="button"
-                    aria-pressed={limit === size}
-                    onClick={() => setLimit(size)}
-                  >
-                    Top {size}
-                  </button>
-                ))}
+                <button
+                  type="button"
+                  aria-pressed={limit === 10}
+                  onClick={() => setLimit(10)}
+                >
+                  Top 10
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={limit === 'all'}
+                  onClick={() => setLimit('all')}
+                >
+                  Todos
+                </button>
               </div>
             </div>
           </div>
@@ -582,30 +586,34 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
                 </tr>
               </thead>
               <tbody>
-                {ranking.slice(0, limit).map((player) => (
-                  <tr key={player.member.id}>
-                    <td>
-                      <span
-                        className={`ranking-position ranking-position--${player.rank}`}
-                      >
-                        {player.rank}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="ranking-player-name">
-                        {player.member.displayName}
-                      </span>
-                    </td>
-                    <td>{player.eventsPlayed}</td>
-                    <td>{player.eventWins}</td>
-                    <td>{player.podiums}</td>
-                    <td>
-                      <strong aria-label={`${player.points} puntos comunidad`}>
-                        {player.points}
-                      </strong>
-                    </td>
-                  </tr>
-                ))}
+                {ranking
+                  .slice(0, limit === 'all' ? undefined : limit)
+                  .map((player) => (
+                    <tr key={player.member.id}>
+                      <td>
+                        <span
+                          className={`ranking-position ranking-position--${player.rank}`}
+                        >
+                          {player.rank}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="ranking-player-name">
+                          {player.member.displayName}
+                        </span>
+                      </td>
+                      <td>{player.eventsPlayed}</td>
+                      <td>{player.eventWins}</td>
+                      <td>{player.podiums}</td>
+                      <td>
+                        <strong
+                          aria-label={`${player.points} puntos comunidad`}
+                        >
+                          {player.points}
+                        </strong>
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>
@@ -627,6 +635,17 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
               <abbr title="Puntos comunidad">Pts</abbr> puntos comunidad
             </span>
           </div>
+          {ranking.length > 10 ? (
+            <div className="cumulative-ranking-actions">
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => setLimit(limit === 'all' ? 10 : 'all')}
+              >
+                {limit === 'all' ? 'Mostrar Top 10' : 'Mostrar todos'}
+              </button>
+            </div>
+          ) : null}
         </>
       ) : (
         <div className="ranking-empty-state">

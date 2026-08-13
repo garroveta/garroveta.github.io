@@ -213,6 +213,7 @@ const marketplaceSellerIds = [
   'member-pau',
   'member-aina',
   'member-joan',
+  'member-alex',
 ] as const
 
 const marketplaceLanguages: CardLanguage[] = [
@@ -230,12 +231,6 @@ const marketplaceConditions: CardCondition[] = [
   'excellent',
   'good',
 ]
-const marketplaceOfferTypes: MarketplaceListing['offerType'][] = [
-  'sale',
-  'trade',
-  'sale_or_trade',
-]
-
 const generatedMarketplaceCards: Card[] = Array.from(
   { length: 150 },
   (_, index) => {
@@ -254,10 +249,8 @@ const generatedMarketplaceCards: Card[] = Array.from(
 
 const generatedMarketplaceListings: MarketplaceListing[] =
   generatedMarketplaceCards.map((card, index) => {
-    const offerType =
-      marketplaceOfferTypes[index % marketplaceOfferTypes.length]
     const priceEur =
-      offerType === 'trade'
+      index % 3 === 0
         ? undefined
         : Math.round((1.5 + ((index * 137) % 14500) / 100) * 100) / 100
 
@@ -266,11 +259,16 @@ const generatedMarketplaceListings: MarketplaceListing[] =
       communityId,
       memberId: marketplaceSellerIds[index % marketplaceSellerIds.length],
       cardId: card.id,
+      cardListId:
+        marketplaceSellerIds[index % marketplaceSellerIds.length] ===
+        'member-alex'
+          ? 'card-list-alex-offers'
+          : undefined,
       quantity: 1 + (index % 4),
       language: marketplaceLanguages[index % marketplaceLanguages.length],
       condition: marketplaceConditions[index % marketplaceConditions.length],
       finish: index % 7 === 0 ? 'foil' : 'nonfoil',
-      offerType,
+      offerType: 'sale',
       priceEur,
       status: 'available',
       createdAt: new Date(
@@ -1644,6 +1642,32 @@ export const demoData = {
     },
     ...generatedMarketplaceCards,
   ],
+  cardLists: [
+    {
+      id: 'card-list-alex-wanted-general',
+      communityId,
+      memberId: 'member-alex',
+      name: 'Buscadas generales',
+      kind: 'wanted',
+      createdAt: '2026-07-20T18:00:00+02:00',
+    },
+    {
+      id: 'card-list-alex-wanted-pauper',
+      communityId,
+      memberId: 'member-alex',
+      name: 'Pauper',
+      kind: 'wanted',
+      createdAt: '2026-07-21T18:00:00+02:00',
+    },
+    {
+      id: 'card-list-alex-offers',
+      communityId,
+      memberId: 'member-alex',
+      name: 'Cartas disponibles',
+      kind: 'offers',
+      createdAt: '2026-07-22T18:00:00+02:00',
+    },
+  ],
   listings: [
     {
       id: 'listing-sol-ring',
@@ -1654,7 +1678,7 @@ export const demoData = {
       language: 'es',
       condition: 'near_mint',
       finish: 'nonfoil',
-      offerType: 'trade',
+      offerType: 'sale',
       status: 'available',
       createdAt: '2026-07-28T20:10:00+02:00',
     },
@@ -1667,7 +1691,7 @@ export const demoData = {
       language: 'en',
       condition: 'excellent',
       finish: 'nonfoil',
-      offerType: 'sale_or_trade',
+      offerType: 'sale',
       priceEur: 2.5,
       status: 'available',
       createdAt: '2026-07-28T19:05:00+02:00',
@@ -1681,7 +1705,7 @@ export const demoData = {
       language: 'es',
       condition: 'near_mint',
       finish: 'nonfoil',
-      offerType: 'trade',
+      offerType: 'sale',
       status: 'available',
       createdAt: '2026-07-28T18:20:00+02:00',
     },
@@ -1694,7 +1718,7 @@ export const demoData = {
       language: 'en',
       condition: 'near_mint',
       finish: 'nonfoil',
-      offerType: 'sale_or_trade',
+      offerType: 'sale',
       priceEur: 31,
       status: 'available',
       createdAt: '2026-07-28T17:40:00+02:00',
@@ -1722,7 +1746,7 @@ export const demoData = {
       language: 'en',
       condition: 'good',
       finish: 'nonfoil',
-      offerType: 'sale_or_trade',
+      offerType: 'sale',
       priceEur: 44,
       status: 'available',
       createdAt: '2026-07-27T21:30:00+02:00',
@@ -1736,7 +1760,7 @@ export const demoData = {
       language: 'en',
       condition: 'near_mint',
       finish: 'nonfoil',
-      offerType: 'sale_or_trade',
+      offerType: 'sale',
       priceEur: 58,
       status: 'available',
       createdAt: '2026-07-27T18:25:00+02:00',
@@ -1750,7 +1774,7 @@ export const demoData = {
       language: 'en',
       condition: 'excellent',
       finish: 'nonfoil',
-      offerType: 'trade',
+      offerType: 'sale',
       status: 'available',
       createdAt: '2026-07-26T15:50:00+02:00',
     },
@@ -1776,6 +1800,7 @@ export const demoData = {
       communityId,
       memberId: 'member-alex',
       cardId: 'card-sol-ring',
+      cardListId: 'card-list-alex-wanted-general',
       quantity: 1,
       acceptedLanguages: ['es', 'en'],
       acceptedFinishes: ['nonfoil'],
@@ -1787,6 +1812,7 @@ export const demoData = {
       communityId,
       memberId: 'member-alex',
       cardId: 'card-the-one-ring',
+      cardListId: 'card-list-alex-wanted-general',
       quantity: 1,
       acceptedLanguages: ['es', 'en'],
       acceptedFinishes: ['nonfoil'],
@@ -1799,6 +1825,7 @@ export const demoData = {
       communityId,
       memberId: 'member-alex',
       cardId: 'card-cyclonic-rift',
+      cardListId: 'card-list-alex-wanted-pauper',
       quantity: 1,
       acceptedLanguages: ['en', 'es'],
       acceptedFinishes: ['nonfoil'],
@@ -1872,7 +1899,7 @@ export const demoData = {
       buyerMemberId: 'member-alex',
       sellerMemberId: 'member-sergio',
       score: 100,
-      reason: 'Carta, idioma y acabado compatibles para intercambio.',
+      reason: 'Carta, idioma y acabado compatibles.',
       status: 'contacted',
       createdAt: '2026-07-28T18:20:05+02:00',
     },
@@ -1932,7 +1959,7 @@ export const demoData = {
       buyerMemberId: 'member-diego',
       sellerMemberId: 'member-irene',
       score: 100,
-      reason: 'Coincidencia exacta para venta o intercambio.',
+      reason: 'Coincidencia exacta con tu búsqueda.',
       status: 'contacted',
       createdAt: '2026-07-27T18:25:05+02:00',
     },

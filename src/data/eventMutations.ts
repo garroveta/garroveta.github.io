@@ -13,6 +13,10 @@ export type CommunityEventInput = {
   tagIds: string[]
 }
 
+export type CommunityEventUpdateInput = CommunityEventInput & {
+  eventId: string
+}
+
 function slugify(value: string) {
   return value
     .normalize('NFD')
@@ -93,6 +97,99 @@ export function publishCommunityEvent(
   }
 }
 
+export function updateCommunityEvent(
+  data: DemoDataSet,
+  input: CommunityEventUpdateInput,
+): DemoDataSet {
+  const manager = data.members.find(
+    ({ id, role }) => id === input.createdByMemberId && role === 'manager',
+  )
+  const event = data.events.find(({ id }) => id === input.eventId)
+  const game = data.games.find(({ id }) => id === input.gameId)
+  const title = input.title.trim()
+  const description = input.description.trim()
+  const startsAt = new Date(input.startsAt)
+  const endsAt = new Date(input.endsAt)
+  const capacity = Math.floor(input.capacity)
+
+  if (
+    !manager ||
+    !event ||
+    !game ||
+    !title ||
+    !description ||
+    Number.isNaN(startsAt.getTime()) ||
+    Number.isNaN(endsAt.getTime()) ||
+    endsAt <= startsAt ||
+    capacity < event.registrationSummary.confirmed
+  ) {
+    return data
+  }
+
+  const validTagIds = new Set(data.tags.map(({ id }) => id))
+  const tagIds = [...new Set(input.tagIds)].filter((tagId) =>
+    validTagIds.has(tagId),
+  )
+  const gameChanged = event.gameId !== game.id
+
+  return {
+    ...data,
+    events: data.events.map((candidate) =>
+      candidate.id === event.id
+        ? {
+            ...candidate,
+            gameId: game.id,
+            formatId: gameChanged ? undefined : candidate.formatId,
+            competitionEventKindId: gameChanged
+              ? undefined
+              : candidate.competitionEventKindId,
+            countsForCommunityRanking: gameChanged
+              ? false
+              : candidate.countsForCommunityRanking,
+            type: input.type,
+            title,
+            description,
+            startsAt: input.startsAt,
+            endsAt: input.endsAt,
+            capacity,
+            status:
+              candidate.status === 'completed'
+                ? ('completed' as const)
+                : candidate.registrationSummary.confirmed >= capacity
+                  ? ('full' as const)
+                  : ('scheduled' as const),
+            tagIds,
+          }
+        : candidate,
+    ),
+  }
+}
+
+export function deleteCommunityEvent(
+  data: DemoDataSet,
+  eventId: string,
+  managerId: string,
+): DemoDataSet {
+  const manager = data.members.find(
+    ({ id, role }) => id === managerId && role === 'manager',
+  )
+
+  if (!manager || !data.events.some(({ id }) => id === eventId)) {
+    return data
+  }
+
+  return {
+    ...data,
+    events: data.events.filter(({ id }) => id !== eventId),
+    registrations: data.registrations.filter(
+      ({ eventId: registrationEventId }) => registrationEventId !== eventId,
+    ),
+    eventStandings: data.eventStandings.filter(
+      ({ eventId: standingEventId }) => standingEventId !== eventId,
+    ),
+  }
+}
+
 function registrationId(memberId: string, eventId: string) {
   return `registration-${memberId}-${eventId}`
 }
@@ -167,6 +264,27 @@ export function registerForEvent(
     ),
     registrations,
   }
+}
+
+export function registerMemberForEventByManager(
+  data: DemoDataSet,
+  eventId: string,
+  memberId: string,
+  managerId: string,
+  registeredAt = DEMO_REFERENCE_TIME,
+): DemoDataSet {
+  const manager = data.members.find(
+    ({ id, role }) => id === managerId && role === 'manager',
+  )
+  const member = data.members.find(
+    ({ id, status }) => id === memberId && status === 'approved',
+  )
+
+  if (!manager || !member) {
+    return data
+  }
+
+  return registerForEvent(data, eventId, memberId, registeredAt)
 }
 
 export function cancelEventRegistration(

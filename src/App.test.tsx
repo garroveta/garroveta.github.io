@@ -1,5 +1,11 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { App } from './App'
 import { demoData } from './data/demoData'
@@ -9,6 +15,10 @@ describe('App', () => {
   beforeEach(() => {
     window.history.replaceState(null, '', '/')
     window.localStorage.clear()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   it('presents the mobile application navigation', () => {
@@ -194,11 +204,12 @@ describe('App', () => {
       }),
     ).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Top 20' }))
-    expect(screen.getByRole('button', { name: 'Top 20' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    )
+    expect(within(rankingTable).getAllByRole('row')).toHaveLength(11)
+    fireEvent.click(screen.getByRole('button', { name: 'Mostrar todos' }))
+    expect(within(rankingTable).getAllByRole('row')).toHaveLength(16)
+    expect(
+      screen.getByRole('button', { name: 'Mostrar Top 10' }),
+    ).toBeInTheDocument()
   })
 
   it('opens an event detail and returns to the agenda', () => {
@@ -512,7 +523,7 @@ describe('App', () => {
       screen.getByText('El evento ya aparece en la agenda.'),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { name: 'Liga One Piece' }),
+      screen.getAllByRole('heading', { name: 'Liga One Piece' })[0],
     ).toBeInTheDocument()
     expect(
       createLocalDemoRepository(window.localStorage).load().events.at(-1),
@@ -536,7 +547,7 @@ describe('App', () => {
       .closest('article')
     fireEvent.click(
       within(commanderCard as HTMLElement).getByRole('button', {
-        name: 'Ver detalles',
+        name: /Inscripciones/,
       }),
     )
 
@@ -565,13 +576,66 @@ describe('App', () => {
       }),
     )
 
-    expect(screen.queryByText('Álex Romero')).not.toBeInTheDocument()
+    expect(alexParticipant).not.toBeInTheDocument()
     expect(
       createLocalDemoRepository(window.localStorage)
         .load()
         .registrations.find(({ id }) => id === 'registration-alex-commander')
         ?.status,
     ).toBe('cancelled')
+  })
+
+  it('lets a manager edit, manage registrations and delete events', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
+    fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
+
+    const eventRow = screen
+      .getByRole('heading', { name: 'Presentación: The Hobbit' })
+      .closest('article')
+    fireEvent.click(
+      within(eventRow as HTMLElement).getByRole('button', {
+        name: /Inscripciones/,
+      }),
+    )
+    fireEvent.change(screen.getByLabelText('Añadir una inscripción'), {
+      target: { value: 'member-marta' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Añadir' }))
+    expect(screen.getByText('Marta Soler')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }))
+    fireEvent.click(
+      within(eventRow as HTMLElement).getByRole('button', {
+        name: 'Modificar Presentación: The Hobbit',
+      }),
+    )
+    fireEvent.change(screen.getByLabelText('Título'), {
+      target: { value: 'Presentación: The Hobbit · tarde' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect(screen.getByText('Los cambios se han guardado.')).toBeInTheDocument()
+
+    const updatedRow = screen
+      .getByRole('heading', { name: 'Presentación: The Hobbit · tarde' })
+      .closest('article')
+    fireEvent.click(
+      within(updatedRow as HTMLElement).getByRole('button', {
+        name: 'Eliminar Presentación: The Hobbit · tarde',
+      }),
+    )
+    fireEvent.click(
+      within(updatedRow as HTMLElement).getByRole('button', {
+        name: 'Confirmar',
+      }),
+    )
+    expect(
+      screen.queryByRole('heading', {
+        name: 'Presentación: The Hobbit · tarde',
+      }),
+    ).not.toBeInTheDocument()
   })
 
   it('browses marketplace offers and the member wanted list', () => {
@@ -603,18 +667,18 @@ describe('App', () => {
         name: 'Ver cartas de Marta Soler',
       })[0],
     )
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Cartas disponibles de Marta Soler',
-    )
+    fireEvent(window, new HashChangeEvent('hashchange'))
     expect(
-      screen.queryByRole('button', { name: 'Ver cartas de Diego Sánchez' }),
-    ).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Ver todos' }))
+      screen.getByRole('heading', { name: 'Marta Soler' }),
+    ).toBeInTheDocument()
     expect(
-      screen.getAllByRole('button', {
-        name: 'Ver cartas de Diego Sánchez',
-      }),
-    ).not.toHaveLength(0)
+      screen.getByText(/cartas publicadas en Garroveta/),
+    ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Volver a las cartas' }))
+    fireEvent.click(screen.getByRole('button', { name: /Ofertas/ }))
+    expect(
+      screen.getByRole('heading', { name: 'Cartas disponibles' }),
+    ).toBeInTheDocument()
 
     fireEvent.change(
       screen.getByRole('searchbox', {
@@ -721,17 +785,29 @@ describe('App', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('imports a wanted-card list and reports unknown names', () => {
+  it('imports a wanted-card list and reports unknown names', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ data: [], not_found: [{}] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ),
+    )
     render(<App />)
 
     fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
     fireEvent.click(screen.getByRole('button', { name: 'Importar lista' }))
-    fireEvent.change(screen.getByLabelText('Una carta por línea'), {
+    fireEvent.change(screen.getByLabelText('Lista de cartas'), {
       target: {
         value: '2x Rhystic Study\nEsper Sentinel\nCarta desconocida',
       },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Importar búsquedas' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Analizar lista' }))
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Importar búsquedas' }),
+    )
 
     expect(
       screen.getByText(
@@ -753,7 +829,7 @@ describe('App', () => {
     ).toHaveLength(5)
   })
 
-  it('creates and displays automatic matches after an import', () => {
+  it('creates and displays automatic matches after an import', async () => {
     render(<App />)
 
     fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
@@ -805,13 +881,18 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Por carta' }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Importar lista' }))
-    fireEvent.change(screen.getByLabelText('Una carta por línea'), {
+    fireEvent.change(screen.getByLabelText('Lista de cartas'), {
       target: { value: 'Rhystic Study' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Importar búsquedas' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Analizar lista' }))
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Importar búsquedas' }),
+    )
     fireEvent.click(screen.getByRole('button', { name: /Coincidencias/ }))
 
-    expect(screen.getByText('7 ofertas compatibles')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.getByText('7 ofertas compatibles')).toBeInTheDocument(),
+    )
     const newMatch = screen
       .getByRole('heading', { name: 'Rhystic Study' })
       .closest('article')
@@ -867,7 +948,7 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
-  it('records a completed trade from its match detail', () => {
+  it('records a completed operation from its match detail', () => {
     render(<App />)
 
     fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
@@ -881,20 +962,20 @@ describe('App', () => {
     )
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'Marcar intercambio realizado',
+        name: 'Marcar operación realizada',
       }),
     )
 
     expect(screen.getByText('Operación registrada')).toBeInTheDocument()
     expect(
-      screen.getByText('Intercambio realizado con Diego Sánchez.'),
+      screen.getByText('Operación realizada con Diego Sánchez.'),
     ).toBeInTheDocument()
 
     const storedData = createLocalDemoRepository(window.localStorage).load()
     expect(storedData.cardDeals).toEqual([
       expect.objectContaining({
         matchId: 'match-alex-sol-ring',
-        type: 'trade',
+        type: 'sale',
       }),
     ])
     expect(
@@ -954,6 +1035,91 @@ describe('App', () => {
       createLocalDemoRepository(window.localStorage).load().listings.at(-1)
         ?.status,
     ).toBe('completed')
+  })
+
+  it('creates, renames and filters private card lists', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: /Mis listas/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Nueva' }))
+    fireEvent.change(screen.getByLabelText('Nombre de la lista'), {
+      target: { value: 'Modern 2026' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    expect(screen.getByRole('button', { name: 'Modern 2026' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(screen.getByText('Lista «Modern 2026» creada.')).toBeInTheDocument()
+    expect(
+      createLocalDemoRepository(window.localStorage)
+        .load()
+        .cardLists.some(({ name }) => name === 'Modern 2026'),
+    ).toBe(true)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Renombrar Modern 2026' }),
+    )
+    fireEvent.change(screen.getByLabelText('Nombre de la lista'), {
+      target: { value: 'Modern competitivo' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+    expect(
+      screen.getByRole('button', { name: 'Modern competitivo' }),
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pauper' }))
+    expect(
+      screen.getByRole('heading', { name: 'Cyclonic Rift' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Sol Ring' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('opens a shareable member catalogue with filters and reservations', () => {
+    window.location.hash =
+      '#cartas?member=member-marta&set=2X2&lang=es&condition=mint'
+    render(<App />)
+
+    expect(
+      screen.getByRole('heading', { name: 'Marta Soler' }),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText('Edición')).toHaveValue('2X2')
+    expect(screen.getByLabelText('Idioma de la página compartida')).toHaveValue(
+      'es',
+    )
+    expect(screen.getByLabelText('Estado de la página compartida')).toHaveValue(
+      'mint',
+    )
+
+    fireEvent.change(screen.getByLabelText('Edición'), {
+      target: { value: '' },
+    })
+    fireEvent.change(screen.getByLabelText('Idioma de la página compartida'), {
+      target: { value: '' },
+    })
+    fireEvent.change(screen.getByLabelText('Estado de la página compartida'), {
+      target: { value: '' },
+    })
+
+    const reserveButton = screen.getAllByRole('button', { name: 'Reservar' })[0]
+    const reservedCard = reserveButton.closest('article')
+    fireEvent.click(reserveButton)
+
+    expect(
+      within(reservedCard as HTMLElement).getByText('Reservada para ti'),
+    ).toBeInTheDocument()
+    expect(
+      createLocalDemoRepository(window.localStorage)
+        .load()
+        .listings.find(
+          ({ reservedByMemberId }) =>
+            reservedByMemberId === demoData.currentMemberId,
+        ),
+    ).toMatchObject({ status: 'reserved' })
   })
 
   it('switches and resets the demonstration role', () => {
