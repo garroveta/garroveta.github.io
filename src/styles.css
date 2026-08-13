@@ -3277,6 +3277,35 @@ a {
   grid-template-columns: auto minmax(0, 1fr) auto;
 }
 
+.reservation-card-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.28rem;
+}
+
+.reservation-card-row__actions button {
+  display: inline-flex;
+  width: 1.7rem;
+  height: 1.7rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #dfd7e1;
+  border-radius: 0.48rem;
+  color: #8a4f4b;
+  background: #fff;
+  cursor: pointer;
+}
+
+.reservation-card-row__actions button:focus-visible {
+  outline: 3px solid rgb(124 86 137 / 35%);
+  outline-offset: 2px;
+}
+
+.reservation-card-row__actions button:not(:focus-visible) {
+  font-size: 0;
+}
+
 .my-list-card-preview {
   display: grid;
   width: 1.7rem;

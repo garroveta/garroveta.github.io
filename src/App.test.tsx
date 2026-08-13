@@ -1149,6 +1149,35 @@ describe('App', () => {
     ).toBeGreaterThan(0)
     expect(screen.getByText(/De Marta Soler/)).toBeInTheDocument()
     expect(screen.getByText('Para ti')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar reserva' }))
+    expect(
+      screen.getByText('No tienes ninguna carta reservada pendiente.'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('La reserva se ha cancelado.')).toBeInTheDocument()
+  })
+
+  it('filters wanted cards without a private list', () => {
+    const repository = createLocalDemoRepository(window.localStorage)
+    const modifiedData = structuredClone(demoData)
+    modifiedData.wantedCards[0].cardListId = undefined
+    repository.save(modifiedData)
+
+    render(<App />)
+    fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: /Mis listas/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Sin lista' }))
+
+    expect(screen.getByRole('button', { name: 'Sin lista' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(
+      screen.getByRole('heading', { name: 'Sol Ring' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'The One Ring' }),
+    ).not.toBeInTheDocument()
   })
 
   it('switches and resets the demonstration role', () => {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  cancelMarketplaceReservation,
   markCardMatchSeen,
   reserveMarketplaceListing,
   updateMarketplaceListingStatus,
@@ -84,6 +85,34 @@ describe('card list lifecycle', () => {
     expect(
       reserveMarketplaceListing(demoData, 'listing-sol-ring', 'member-diego'),
     ).toBe(demoData)
+  })
+
+  it('lets the buyer or seller cancel a reservation', () => {
+    const reservedData = reserveMarketplaceListing(
+      demoData,
+      'listing-sol-ring',
+      demoData.currentMemberId,
+    )
+    const cancelledData = cancelMarketplaceReservation(
+      reservedData,
+      'listing-sol-ring',
+      demoData.currentMemberId,
+    )
+
+    expect(
+      cancelledData.listings.find(({ id }) => id === 'listing-sol-ring'),
+    ).toMatchObject({ status: 'available' })
+    expect(
+      cancelledData.listings.find(({ id }) => id === 'listing-sol-ring')
+        ?.reservedByMemberId,
+    ).toBeUndefined()
+    expect(
+      cancelMarketplaceReservation(
+        reservedData,
+        'listing-sol-ring',
+        'member-sergio',
+      ),
+    ).toBe(reservedData)
   })
 
   it('marks a match as seen only for its buyer', () => {

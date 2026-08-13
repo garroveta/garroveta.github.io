@@ -72,6 +72,36 @@ export function reserveMarketplaceListing(
   })
 }
 
+export function cancelMarketplaceReservation(
+  data: DemoDataSet,
+  listingId: string,
+  memberId: string,
+): DemoDataSet {
+  const listing = data.listings.find(({ id }) => id === listingId)
+
+  if (
+    !listing ||
+    listing.status !== 'reserved' ||
+    (listing.memberId !== memberId && listing.reservedByMemberId !== memberId)
+  ) {
+    return data
+  }
+
+  return synchronizeCardMatches({
+    ...data,
+    listings: data.listings.map((candidate) =>
+      candidate.id === listingId
+        ? {
+            ...candidate,
+            status: 'available' as const,
+            reservedByMemberId: undefined,
+            reservedAt: undefined,
+          }
+        : candidate,
+    ),
+  })
+}
+
 export function updateWantedCardStatus(
   data: DemoDataSet,
   wantedCardId: string,

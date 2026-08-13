@@ -44,6 +44,7 @@ import {
   renamePersonalCardList,
 } from '../data/cardLists'
 import {
+  cancelMarketplaceReservation,
   markCardMatchSeen,
   updateMarketplaceListingStatus,
   updateWantedCardStatus,
@@ -581,9 +582,11 @@ type MemberReservationItem = {
 
 function ReservationCardRow({
   item,
+  onCancel,
   onPreview,
 }: {
   item: MemberReservationItem
+  onCancel: () => void
   onPreview: () => void
 }) {
   const imageUrl = getScryfallCardImage(item.card.name, item.card.imageUri)
@@ -611,9 +614,15 @@ function ReservationCardRow({
           {languageLabels[item.listing.language]}
         </p>
       </div>
-      <span className="reservation-direction">
-        {reservedByCurrentMember ? 'Para ti' : 'Tu oferta'}
-      </span>
+      <div className="reservation-card-row__actions">
+        <span className="reservation-direction">
+          {reservedByCurrentMember ? 'Para ti' : 'Tu oferta'}
+        </span>
+        <button type="button" onClick={onCancel}>
+          <X aria-hidden="true" size={13} />
+          {reservedByCurrentMember ? 'Cancelar reserva' : 'Liberar carta'}
+        </button>
+      </div>
     </article>
   )
 }
@@ -647,6 +656,13 @@ function PersonalListManager({
           onClick={() => onSelect('')}
         >
           Todas
+        </button>
+        <button
+          type="button"
+          aria-pressed={selectedListId === 'unassigned'}
+          onClick={() => onSelect('unassigned')}
+        >
+          Sin lista
         </button>
         {lists.map((list) => (
           <span key={list.id}>
@@ -1690,7 +1706,9 @@ export function CardsPage({
   const filteredMemberListings = memberListings.filter(
     ({ card, listing }) =>
       (!selectedPersonalListId ||
-        listing.cardListId === selectedPersonalListId) &&
+        (selectedPersonalListId === 'unassigned'
+          ? !listing.cardListId
+          : listing.cardListId === selectedPersonalListId)) &&
       (!normalizedMyListsQuery ||
         card.name.toLocaleLowerCase('es').includes(normalizedMyListsQuery) ||
         card.setName.toLocaleLowerCase('es').includes(normalizedMyListsQuery)),
@@ -1698,7 +1716,9 @@ export function CardsPage({
   const filteredWantedCards = wantedCards.filter(
     ({ card, wantedCard }) =>
       (!selectedPersonalListId ||
-        wantedCard.cardListId === selectedPersonalListId) &&
+        (selectedPersonalListId === 'unassigned'
+          ? !wantedCard.cardListId
+          : wantedCard.cardListId === selectedPersonalListId)) &&
       (!normalizedMyListsQuery ||
         card.name.toLocaleLowerCase('es').includes(normalizedMyListsQuery) ||
         card.setName.toLocaleLowerCase('es').includes(normalizedMyListsQuery)),
@@ -2219,6 +2239,20 @@ export function CardsPage({
                     <ReservationCardRow
                       item={item}
                       key={item.listing.id}
+                      onCancel={() => {
+                        onDataChange((currentData) =>
+                          cancelMarketplaceReservation(
+                            currentData,
+                            item.listing.id,
+                            currentMember.id,
+                          ),
+                        )
+                        setActionMessage(
+                          item.direction === 'reserved_by_me'
+                            ? 'La reserva se ha cancelado.'
+                            : 'La carta vuelve a estar disponible.',
+                        )
+                      }}
                       onPreview={() =>
                         setSelectedCardPreview({
                           card: item.card,
