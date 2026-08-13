@@ -1110,7 +1110,9 @@ describe('App', () => {
     fireEvent.click(reserveButton)
 
     expect(
-      within(reservedCard as HTMLElement).getByText('Reservada para ti'),
+      within(reservedCard as HTMLElement).getByRole('button', {
+        name: 'Cancelar reserva',
+      }),
     ).toBeInTheDocument()
     expect(
       createLocalDemoRepository(window.localStorage)
@@ -1120,6 +1122,25 @@ describe('App', () => {
             reservedByMemberId === demoData.currentMemberId,
         ),
     ).toMatchObject({ status: 'reserved' })
+
+    fireEvent.click(
+      within(reservedCard as HTMLElement).getByRole('button', {
+        name: 'Cancelar reserva',
+      }),
+    )
+    expect(
+      within(reservedCard as HTMLElement).getByRole('button', {
+        name: 'Reservar',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      createLocalDemoRepository(window.localStorage)
+        .load()
+        .listings.find(({ id }) => id === 'listing-sol-ring-marta'),
+    ).toMatchObject({ status: 'available' })
+    expect(
+      screen.getByText(/La reserva de .+ se ha cancelado/),
+    ).toBeInTheDocument()
   })
 
   it('lists cards reserved by the current member', () => {

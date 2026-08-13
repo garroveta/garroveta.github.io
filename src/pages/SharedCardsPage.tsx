@@ -5,10 +5,14 @@ import {
   Search,
   Share2,
   SlidersHorizontal,
+  X,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
-import { reserveMarketplaceListing } from '../data/cardLifecycle'
+import {
+  cancelMarketplaceReservation,
+  reserveMarketplaceListing,
+} from '../data/cardLifecycle'
 import { getMemberSharedListings } from '../data/cardSelectors'
 import type { DemoDataUpdater } from '../data/demoRepository'
 import { getScryfallCardImage } from '../data/scryfallImages'
@@ -261,10 +265,27 @@ export function SharedCardsPage({
                 >
                   Reservar
                 </button>
+              ) : reservedByCurrentMember ? (
+                <button
+                  className="shared-card-cancel"
+                  type="button"
+                  onClick={() => {
+                    onDataChange((currentData) =>
+                      cancelMarketplaceReservation(
+                        currentData,
+                        listing.id,
+                        currentMember.id,
+                      ),
+                    )
+                    setMessage(`La reserva de ${card.name} se ha cancelado.`)
+                  }}
+                >
+                  <X aria-hidden="true" size={14} /> Cancelar reserva
+                </button>
               ) : (
                 <span className="shared-card-reserved">
                   <CheckCircle2 aria-hidden="true" size={14} />
-                  {reservedByCurrentMember ? 'Reservada para ti' : 'Reservada'}
+                  Reservada
                 </span>
               )}
             </article>
