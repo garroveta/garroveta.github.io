@@ -924,6 +924,22 @@ describe('App', () => {
     expect(
       screen.getByText(/solo se muestran porque existe una coincidencia/),
     ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Reservar carta' }))
+    expect(
+      screen.getByRole('button', { name: 'Cancelar reserva' }),
+    ).toBeInTheDocument()
+    expect(
+      createLocalDemoRepository(window.localStorage)
+        .load()
+        .listings.find(({ id }) => id === 'listing-sol-ring'),
+    ).toMatchObject({
+      status: 'reserved',
+      reservedByMemberId: demoData.currentMemberId,
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar reserva' }))
+    expect(
+      screen.getByRole('button', { name: 'Reservar carta' }),
+    ).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Ampliar Sol Ring' }))
     const imageDialog = screen.getByRole('dialog')
     expect(

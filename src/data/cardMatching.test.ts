@@ -67,4 +67,19 @@ describe('card matching', () => {
       )?.status,
     ).toBe('completed')
   })
+
+  it('keeps a match visible while its listing is reserved by its buyer', () => {
+    const modifiedData = structuredClone(demoData)
+    modifiedData.listings.find(({ id }) => id === 'listing-sol-ring')!.status =
+      'reserved'
+    modifiedData.listings.find(
+      ({ id }) => id === 'listing-sol-ring',
+    )!.reservedByMemberId = demoData.currentMemberId
+
+    expect(
+      synchronizeCardMatches(modifiedData).cardMatches.find(
+        ({ id }) => id === 'match-alex-sol-ring',
+      ),
+    ).toBeDefined()
+  })
 })

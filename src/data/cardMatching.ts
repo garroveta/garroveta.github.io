@@ -79,7 +79,8 @@ export function synchronizeCardMatches(
       const listingPrinting = cardsById.get(listing.cardId)
 
       if (
-        listing.status !== 'available' ||
+        (listing.status !== 'available' &&
+          listing.reservedByMemberId !== wantedCard.memberId) ||
         listing.memberId === wantedCard.memberId ||
         !cardsMatch(wantedCard, wantedPrinting, listingPrinting) ||
         !wantedCard.acceptedLanguages.includes(listing.language) ||

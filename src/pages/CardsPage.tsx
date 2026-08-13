@@ -46,6 +46,7 @@ import {
 import {
   cancelMarketplaceReservation,
   markCardMatchSeen,
+  reserveMarketplaceListing,
   updateMarketplaceListingStatus,
   updateWantedCardStatus,
 } from '../data/cardLifecycle'
@@ -893,12 +894,16 @@ function MatchDetail({
   item,
   deal,
   onBack,
+  onCancelReservation,
   onComplete,
+  onReserve,
 }: {
   item: MemberCardMatchItem
   deal?: CardDeal
   onBack: () => void
+  onCancelReservation: () => void
   onComplete: () => void
+  onReserve: () => void
 }) {
   const [isCardPreviewOpen, setIsCardPreviewOpen] = useState(false)
   const contactIcons = {
@@ -1014,6 +1019,27 @@ function MatchDetail({
           </section>
         ) : (
           <div className="deal-actions">
+            {item.listing.status === 'available' ? (
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={onReserve}
+              >
+                Reservar carta
+              </button>
+            ) : item.listing.reservedByMemberId === item.match.buyerMemberId ? (
+              <button
+                className="secondary-button reservation-cancel-button"
+                type="button"
+                onClick={onCancelReservation}
+              >
+                Cancelar reserva
+              </button>
+            ) : (
+              <p className="match-reservation-unavailable">
+                Esta carta está reservada por otro miembro.
+              </p>
+            )}
             <button
               className="primary-button"
               type="button"
@@ -1763,11 +1789,29 @@ export function CardsPage({
         deal={selectedDeal}
         item={selectedMatch}
         onBack={() => setSelectedMatchId(undefined)}
+        onCancelReservation={() =>
+          onDataChange((currentData) =>
+            cancelMarketplaceReservation(
+              currentData,
+              selectedMatch.listing.id,
+              currentMember.id,
+            ),
+          )
+        }
         onComplete={() =>
           onDataChange((currentData) =>
             completeCardDeal(
               currentData,
               selectedMatch.match.id,
+              currentMember.id,
+            ),
+          )
+        }
+        onReserve={() =>
+          onDataChange((currentData) =>
+            reserveMarketplaceListing(
+              currentData,
+              selectedMatch.listing.id,
               currentMember.id,
             ),
           )

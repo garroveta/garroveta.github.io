@@ -4713,6 +4713,26 @@ a {
   width: 100%;
 }
 
+.deal-actions .secondary-button {
+  width: 100%;
+}
+
+.deal-actions .reservation-cancel-button {
+  color: #884b47;
+  border-color: #e1c8c5;
+  background: #fff7f6;
+}
+
+.match-reservation-unavailable {
+  margin: 0;
+  padding: 0.7rem;
+  border-radius: 0.65rem;
+  color: #765c22;
+  background: #f7efd7;
+  font-size: 0.66rem;
+  text-align: center;
+}
+
 .completed-deal {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
