@@ -201,8 +201,7 @@ function MarketplaceTable({
                       aria-label={`Ver cartas de ${item.member.displayName}`}
                       onClick={() => onMemberSelect(item.member.id)}
                     >
-                      Ver <span>{item.member.displayName}</span>
-                      <span aria-hidden="true">→</span>
+                      {item.member.displayName}
                     </button>
                   </span>
                 </div>

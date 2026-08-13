@@ -2546,7 +2546,7 @@ a {
 
 .market-table th:nth-child(1),
 .market-table td:nth-child(1) {
-  width: 68%;
+  width: 71%;
 }
 
 .market-table th:nth-child(4),
@@ -2557,7 +2557,7 @@ a {
 
 .market-table th:nth-child(5),
 .market-table td:nth-child(5) {
-  width: 20%;
+  width: 17%;
   text-align: right;
 }
 
@@ -2573,24 +2573,25 @@ a {
 }
 
 .market-table__member {
-  display: inline-flex;
+  display: block;
   width: fit-content;
   max-width: 100%;
-  align-items: center;
-  gap: 0.18rem;
-  margin-top: 0.22rem;
-  padding: 0.15rem 0.32rem;
+  margin-left: auto;
+  margin-top: 0.12rem;
+  padding: 0;
   overflow: hidden;
-  border: 1px solid #eadfec;
-  border-radius: 999px;
+  border: 0;
   color: #6d3d7d;
-  background: #faf6fb;
+  background: transparent;
   font: inherit;
-  font-size: 0.55rem;
+  font-size: 0.62rem;
   font-weight: 800;
   line-height: 1.2;
-  text-align: left;
+  text-align: right;
+  text-decoration: underline;
+  text-decoration-color: rgb(109 61 125 / 35%);
   text-overflow: ellipsis;
+  text-underline-offset: 0.12rem;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -2630,8 +2631,7 @@ a {
 
 .market-table__member:hover {
   color: #51245f;
-  border-color: #d7c4dc;
-  background: #f4eaf6;
+  text-decoration-color: currentcolor;
 }
 
 .market-table__member:focus-visible {
