@@ -11,16 +11,13 @@ import { CardImagePreview } from '../components/CardImagePreview'
 import { MarketplaceCatalog } from '../components/MarketplaceCatalog'
 import { MarketplaceReservationSheet } from '../components/MarketplaceReservationSheet'
 import {
-  cancelMarketplaceReservation,
-  reserveMarketplaceListing,
-} from '../data/cardLifecycle'
-import {
   cardConditionLabels as conditionLabels,
   cardLanguageLabels as languageLabels,
 } from '../data/cardPresentation'
 import { getMemberSharedListings } from '../data/cardSelectors'
 import type { DemoDataUpdater } from '../data/demoRepository'
 import type { Card, CommunityMember, DemoDataSet } from '../domain/types'
+import { useMarketplaceReservation } from '../hooks/useMarketplaceReservation'
 
 type SharedCardsPageProps = {
   data: DemoDataSet
@@ -50,11 +47,17 @@ export function SharedCardsPage({
   const [language, setLanguage] = useState(initialLanguage)
   const [condition, setCondition] = useState(initialCondition)
   const [message, setMessage] = useState('')
-  const [selectedListingId, setSelectedListingId] = useState<string>()
   const [selectedCardPreview, setSelectedCardPreview] = useState<{
     card: Card
     description: string
   }>()
+  const reservation = useMarketplaceReservation({
+    cancellationMessageStyle: 'named',
+    currentMember,
+    data,
+    onDataChange,
+    onMessage: setMessage,
+  })
   const setOptions = useMemo(
     () =>
       [
@@ -65,9 +68,6 @@ export function SharedCardsPage({
     [sharedListings],
   )
   const normalizedQuery = query.trim().toLocaleLowerCase('es')
-  const selectedListing = sharedListings.find(
-    ({ listing }) => listing.id === selectedListingId,
-  )
   const filteredListings = sharedListings.filter(
     ({ card, listing }) =>
       (!normalizedQuery ||
@@ -216,7 +216,7 @@ export function SharedCardsPage({
         galleryAriaLabel={`Galería de cartas de ${seller.displayName}`}
         items={filteredListings}
         ownerMode="status"
-        onOpen={(item) => setSelectedListingId(item.listing.id)}
+        onOpen={reservation.openReservation}
         onPreview={(item) =>
           setSelectedCardPreview({
             card: item.card,
@@ -227,43 +227,14 @@ export function SharedCardsPage({
         viewAriaLabel="Vista de las cartas del miembro"
       />
 
-      {selectedListing ? (
+      {reservation.selectedItem ? (
         <MarketplaceReservationSheet
-          key={selectedListing.listing.id}
-          item={selectedListing}
+          key={reservation.selectedItem.listing.id}
+          item={reservation.selectedItem}
           currentMember={currentMember}
-          onClose={() => setSelectedListingId(undefined)}
-          onReserve={(quantity) => {
-            onDataChange((currentData) =>
-              reserveMarketplaceListing(
-                currentData,
-                selectedListing.listing.id,
-                currentMember.id,
-                undefined,
-                quantity,
-              ),
-            )
-            setMessage(
-              `${quantity} ${quantity > 1 ? 'cartas reservadas' : 'carta reservada'} a tu nombre.`,
-            )
-          }}
-          onCancelReservation={(quantity) => {
-            const remainingQuantity =
-              (selectedListing.listing.reservedQuantity ?? 1) - quantity
-            onDataChange((currentData) =>
-              cancelMarketplaceReservation(
-                currentData,
-                selectedListing.listing.id,
-                currentMember.id,
-                quantity,
-              ),
-            )
-            setMessage(
-              remainingQuantity > 0
-                ? `Queda ${remainingQuantity} ${remainingQuantity > 1 ? 'cartas reservadas' : 'carta reservada'} de ${selectedListing.card.name}.`
-                : `La reserva de ${selectedListing.card.name} se ha cancelado.`,
-            )
-          }}
+          onClose={reservation.closeReservation}
+          onReserve={reservation.reserveSelected}
+          onCancelReservation={reservation.cancelSelected}
         />
       ) : null}
       {selectedCardPreview ? (

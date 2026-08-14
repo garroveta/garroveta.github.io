@@ -66,7 +66,6 @@ import {
   getMemberWantedCards,
   type MemberCardMatchItem,
   type MemberMarketplaceListingItem,
-  type MarketplaceListingItem,
   type WantedCardItem,
 } from '../data/cardSelectors'
 import type { DemoDataUpdater } from '../data/demoRepository'
@@ -85,6 +84,7 @@ import type {
   MarketplaceListing,
   PersonalCardList,
 } from '../domain/types'
+import { useMarketplaceReservation } from '../hooks/useMarketplaceReservation'
 
 type CardsPageProps = {
   data: DemoDataSet
@@ -1892,27 +1892,16 @@ export function CardsPage({
     card: Card
     description: string
   }>()
-  const [selectedMarketplaceListingId, setSelectedMarketplaceListingId] =
-    useState<string>()
   const [actionMessage, setActionMessage] = useState('')
   const [query, setQuery] = useState('')
   const [hideOwnListings, setHideOwnListings] = useState(true)
   const listings = getMarketplaceListings(data)
-  const selectedMarketplaceItem = useMemo<
-    MarketplaceListingItem | undefined
-  >(() => {
-    const listing = data.listings.find(
-      ({ id }) => id === selectedMarketplaceListingId,
-    )
-    const card = listing
-      ? data.cards.find(({ id }) => id === listing.cardId)
-      : undefined
-    const member = listing
-      ? data.members.find(({ id }) => id === listing.memberId)
-      : undefined
-
-    return listing && card && member ? { listing, card, member } : undefined
-  }, [data.cards, data.listings, data.members, selectedMarketplaceListingId])
+  const reservation = useMarketplaceReservation({
+    currentMember,
+    data,
+    onDataChange,
+    onMessage: setActionMessage,
+  })
   const wantedCards = getMemberWantedCards(data, currentMember.id)
   const memberListings = getMemberMarketplaceListings(data, currentMember.id)
   const wantedPersonalLists = data.cardLists.filter(
@@ -2297,7 +2286,7 @@ export function CardsPage({
             emptyMessage="No hay ofertas que coincidan con esta búsqueda."
             galleryAriaLabel="Galería de ofertas"
             items={filteredListings}
-            onOpen={(item) => setSelectedMarketplaceListingId(item.listing.id)}
+            onOpen={reservation.openReservation}
             onMemberSelect={(memberId) => {
               window.location.hash = `cartas?member=${memberId}`
             }}
@@ -2440,9 +2429,7 @@ export function CardsPage({
                     <ReservationCardRow
                       item={item}
                       key={item.listing.id}
-                      onCancel={() =>
-                        setSelectedMarketplaceListingId(item.listing.id)
-                      }
+                      onCancel={() => reservation.openReservation(item)}
                       onPreview={() =>
                         setSelectedCardPreview({
                           card: item.card,
@@ -2486,7 +2473,7 @@ export function CardsPage({
                         setActionMessage('La oferta se ha actualizado.')
                       }}
                       onManageReservation={() =>
-                        setSelectedMarketplaceListingId(item.listing.id)
+                        reservation.openReservation(item)
                       }
                       onPreview={() =>
                         setSelectedCardPreview({
@@ -2650,57 +2637,24 @@ export function CardsPage({
           </p>
         </section>
       )}
-      {selectedMarketplaceItem ? (
+      {reservation.selectedItem ? (
         <MarketplaceReservationSheet
-          key={selectedMarketplaceItem.listing.id}
-          item={selectedMarketplaceItem}
+          key={reservation.selectedItem.listing.id}
+          item={reservation.selectedItem}
           currentMember={currentMember}
-          onClose={() => setSelectedMarketplaceListingId(undefined)}
+          onClose={reservation.closeReservation}
           onMemberSelect={(memberId) => {
-            setSelectedMarketplaceListingId(undefined)
+            reservation.closeReservation()
             window.location.hash = `cartas?member=${memberId}`
           }}
           onPreview={() =>
             setSelectedCardPreview({
-              card: selectedMarketplaceItem.card,
-              description: `${selectedMarketplaceItem.card.setName} · Disponible por ${selectedMarketplaceItem.member.displayName}`,
+              card: reservation.selectedItem!.card,
+              description: `${reservation.selectedItem!.card.setName} · Disponible por ${reservation.selectedItem!.member.displayName}`,
             })
           }
-          onReserve={(quantity) => {
-            onDataChange((currentData) =>
-              reserveMarketplaceListing(
-                currentData,
-                selectedMarketplaceItem.listing.id,
-                currentMember.id,
-                undefined,
-                quantity,
-              ),
-            )
-            setActionMessage(
-              `${quantity} ${quantity > 1 ? 'cartas reservadas' : 'carta reservada'} a tu nombre.`,
-            )
-          }}
-          onCancelReservation={(quantity) => {
-            const remainingQuantity =
-              (selectedMarketplaceItem.listing.reservedQuantity ?? 1) - quantity
-            const isOwnedOffer =
-              selectedMarketplaceItem.listing.memberId === currentMember.id
-            onDataChange((currentData) =>
-              cancelMarketplaceReservation(
-                currentData,
-                selectedMarketplaceItem.listing.id,
-                currentMember.id,
-                quantity,
-              ),
-            )
-            setActionMessage(
-              remainingQuantity > 0
-                ? `Queda ${remainingQuantity} ${remainingQuantity > 1 ? 'cartas reservadas' : 'carta reservada'}.`
-                : isOwnedOffer
-                  ? 'La carta vuelve a estar disponible.'
-                  : 'La reserva se ha cancelado.',
-            )
-          }}
+          onReserve={reservation.reserveSelected}
+          onCancelReservation={reservation.cancelSelected}
         />
       ) : null}
       {selectedCardPreview ? (
