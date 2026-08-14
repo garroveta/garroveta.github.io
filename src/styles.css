@@ -4014,7 +4014,6 @@ a {
 
   .market-table td:nth-child(4),
   .market-table td:nth-child(5) {
-    border-left: 1px solid #f1edf2;
     vertical-align: top;
   }
 
