@@ -3128,6 +3128,7 @@ a {
 }
 
 .market-gallery-card {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0.5rem;
@@ -3140,6 +3141,10 @@ a {
   transition:
     border-color 140ms ease,
     box-shadow 140ms ease;
+}
+
+.market-gallery-card__quantity {
+  display: none;
 }
 
 .market-gallery-card:hover {
@@ -3322,6 +3327,26 @@ a {
 
 .market-gallery--4 .market-gallery-card__image {
   border-radius: 0.32rem;
+}
+
+.market-gallery--4 .market-gallery-card__quantity {
+  position: absolute;
+  z-index: 1;
+  top: 0.38rem;
+  right: 0.38rem;
+  display: inline-flex;
+  min-width: 1.15rem;
+  min-height: 1.15rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.2rem;
+  border: 1px solid rgb(255 255 255 / 72%);
+  border-radius: 999px;
+  color: #fff;
+  background: rgb(56 37 65 / 88%);
+  box-shadow: 0 0.2rem 0.55rem rgb(26 18 30 / 24%);
+  font-size: 0.46rem;
+  font-weight: 850;
 }
 
 .market-gallery--4 .market-gallery-card__content {

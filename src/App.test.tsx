@@ -837,6 +837,14 @@ describe('App', () => {
     )
     expect(screen.getByText('1–12 de 159')).toBeInTheDocument()
 
+    const martaGalleryCard = screen
+      .getByRole('button', {
+        name: 'Reservar Sol Ring de Marta Soler',
+      })
+      .closest('article')!
+    expect(within(martaGalleryCard).getByText('Cantidad')).toBeInTheDocument()
+    expect(within(martaGalleryCard).getByText('2')).toBeInTheDocument()
+
     fireEvent.click(
       screen.getByRole('button', {
         name: 'Reservar Sol Ring de Marta Soler',
@@ -848,6 +856,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: '4 por fila' }))
     expect(screen.getAllByRole('img')).toHaveLength(20)
     expect(screen.getByText('1–20 de 159')).toBeInTheDocument()
+    expect(screen.getAllByLabelText('Cantidad 2').length).toBeGreaterThan(0)
 
     fireEvent.click(
       screen.getAllByRole('button', { name: 'Ampliar Sol Ring' })[0],

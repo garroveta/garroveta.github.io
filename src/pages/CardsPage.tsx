@@ -503,6 +503,12 @@ function MarketplaceGallery({
                 <span>{item.card.setCode}</span>
               )}
             </button>
+            <span
+              className="market-gallery-card__quantity"
+              aria-label={`Cantidad ${item.listing.quantity}`}
+            >
+              ×{item.listing.quantity}
+            </span>
             <div className="market-gallery-card__content">
               <div>
                 <h3>{item.card.name}</h3>
@@ -519,6 +525,10 @@ function MarketplaceGallery({
                 <div>
                   <dt>Estado</dt>
                   <dd>{conditionLabels[item.listing.condition]}</dd>
+                </div>
+                <div>
+                  <dt>Cantidad</dt>
+                  <dd>{item.listing.quantity}</dd>
                 </div>
                 <div>
                   <dt>Precio</dt>
