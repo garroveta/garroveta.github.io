@@ -4,7 +4,6 @@ import {
   AtSign,
   Check,
   CheckCircle2,
-  ChevronRight,
   FileText,
   Layers3,
   ListChecks,
@@ -26,8 +25,12 @@ import type { ChangeEvent, FormEvent } from 'react'
 import { useMemo, useState } from 'react'
 
 import { CardImagePreview } from '../components/CardImagePreview'
-import { MarketplaceCatalog } from '../components/MarketplaceCatalog'
 import { MarketplaceReservationSheet } from '../components/MarketplaceReservationSheet'
+import { MarketplaceSection } from '../components/cards/MarketplaceSection'
+import {
+  MatchesSection,
+  type MatchGrouping,
+} from '../components/cards/MatchesSection'
 import {
   applyResolvedMarketplaceImport,
   applyResolvedWantedCardImport,
@@ -40,6 +43,7 @@ import {
 } from '../data/cardMutations'
 import { parseCardList, type CardListSection } from '../data/cardListImport'
 import { completeCardDeal } from '../data/cardDeals'
+import { matchStatusLabels } from '../data/cardMatchPresentation'
 import {
   cardConditionLabels as conditionLabels,
   cardLanguageLabels as languageLabels,
@@ -96,13 +100,6 @@ type CardsPageProps = {
 const cardLanguages = Object.keys(languageLabels) as CardLanguage[]
 const cardConditions = Object.keys(conditionLabels) as CardCondition[]
 const MY_LISTS_PAGE_SIZE = 10
-
-const matchStatusLabels = {
-  new: 'Nueva',
-  seen: 'Vista',
-  contacted: 'Contactado',
-  completed: 'Completada',
-}
 
 const listingStatusLabels: Record<MarketplaceListing['status'], string> = {
   available: 'Publicada',
@@ -668,145 +665,6 @@ function PersonalListManager({
         nombre de la lista.
       </p>
     </div>
-  )
-}
-
-type MatchGrouping = 'card' | 'member'
-
-function groupCardMatches(
-  matches: MemberCardMatchItem[],
-  grouping: MatchGrouping,
-) {
-  const groups = new Map<string, MemberCardMatchItem[]>()
-
-  for (const item of matches) {
-    const key = grouping === 'card' ? item.card.id : item.seller.id
-    const group = groups.get(key) ?? []
-    group.push(item)
-    groups.set(key, group)
-  }
-
-  return [...groups.values()]
-}
-
-function MatchGroupCard({
-  items,
-  grouping,
-  onPreview,
-  onSelect,
-}: {
-  items: MemberCardMatchItem[]
-  grouping: MatchGrouping
-  onPreview: (item: MemberCardMatchItem) => void
-  onSelect: (matchId: string) => void
-}) {
-  const firstItem = items[0]
-
-  if (!firstItem) {
-    return null
-  }
-
-  const isCardGroup = grouping === 'card'
-
-  return (
-    <article className="match-group-card">
-      <header className="match-group-card__header">
-        {isCardGroup ? (
-          <button
-            className="match-card-preview"
-            type="button"
-            aria-label={`Ampliar ${firstItem.card.name}`}
-            onClick={() => onPreview(firstItem)}
-          >
-            <img
-              src={getScryfallCardImage(
-                firstItem.card.name,
-                firstItem.card.imageUri,
-              )}
-              alt=""
-              loading="lazy"
-              decoding="async"
-            />
-          </button>
-        ) : (
-          <span className="member-initials" aria-hidden="true">
-            {firstItem.seller.initials}
-          </span>
-        )}
-        <div>
-          <h3>
-            {isCardGroup ? firstItem.card.name : firstItem.seller.displayName}
-          </h3>
-          <p>
-            {isCardGroup
-              ? `${firstItem.card.setName} · #${firstItem.card.collectorNumber}`
-              : `${items.length} ${items.length === 1 ? 'carta buscada disponible' : 'cartas buscadas disponibles'}`}
-          </p>
-        </div>
-        <strong className="match-group-card__count">
-          {items.length}{' '}
-          {isCardGroup
-            ? items.length === 1
-              ? 'miembro'
-              : 'miembros'
-            : items.length === 1
-              ? 'carta'
-              : 'cartas'}
-        </strong>
-      </header>
-
-      <div className="match-group-card__list">
-        {items.map((item) => {
-          const primaryLabel = isCardGroup
-            ? item.seller.displayName
-            : item.card.name
-          const imageUrl = getScryfallCardImage(
-            item.card.name,
-            item.card.imageUri,
-          )
-
-          return (
-            <button
-              className="compact-match-row"
-              type="button"
-              key={item.match.id}
-              aria-label={`Ver coincidencia de ${item.card.name} con ${item.seller.displayName}`}
-              onClick={() => onSelect(item.match.id)}
-            >
-              {isCardGroup ? (
-                <span className="member-initials" aria-hidden="true">
-                  {item.seller.initials}
-                </span>
-              ) : imageUrl ? (
-                <img
-                  className="compact-match-row__card-image"
-                  src={imageUrl}
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                />
-              ) : (
-                <span className="card-set-symbol" aria-hidden="true">
-                  {item.card.setCode}
-                </span>
-              )}
-              <span className="compact-match-row__identity">
-                <strong>{primaryLabel}</strong>
-                <small>
-                  {matchStatusLabels[item.match.status]} ·{' '}
-                  {languageLabels[item.listing.language]} ·{' '}
-                  {conditionLabels[item.listing.condition]}
-                </small>
-              </span>
-              <span className="compact-match-row__score">
-                {item.match.score}%
-              </span>
-              <ChevronRight aria-hidden="true" size={16} />
-            </button>
-          )
-        })}
-      </div>
-    </article>
   )
 }
 
@@ -1957,7 +1815,6 @@ export function CardsPage({
     [currentMember.id, data.cards, data.listings, data.members],
   )
   const matches = getMemberCardMatches(data, currentMember.id)
-  const groupedMatches = groupCardMatches(matches, matchGrouping)
   const selectedMatch = matches.find(
     ({ match }) => match.id === selectedMatchId,
   )
@@ -2189,117 +2046,42 @@ export function CardsPage({
       </p>
 
       {activeView === 'matches' ? (
-        <section className="cards-section" aria-labelledby="matches-title">
-          <div className="section-heading">
-            <div>
-              <span>Cruce automático</span>
-              <h2 id="matches-title">Tus coincidencias</h2>
-            </div>
-            <p>{matches.length} ofertas compatibles</p>
-          </div>
-
-          <div className="match-grouping-control">
-            <span>Organizar</span>
-            <div role="group" aria-label="Organizar coincidencias">
-              <button
-                type="button"
-                aria-pressed={matchGrouping === 'card'}
-                onClick={() => setMatchGrouping('card')}
-              >
-                Por carta
-              </button>
-              <button
-                type="button"
-                aria-pressed={matchGrouping === 'member'}
-                onClick={() => setMatchGrouping('member')}
-              >
-                Por miembro
-              </button>
-            </div>
-          </div>
-
-          <div className="match-group-grid">
-            {matches.length > 0 ? (
-              groupedMatches.map((items) => (
-                <MatchGroupCard
-                  items={items}
-                  grouping={matchGrouping}
-                  key={
-                    matchGrouping === 'card'
-                      ? items[0]?.card.id
-                      : items[0]?.seller.id
-                  }
-                  onPreview={(item) =>
-                    setSelectedCardPreview({
-                      card: item.card,
-                      description: `${item.card.setName} · Disponible por ${item.seller.displayName}`,
-                    })
-                  }
-                  onSelect={(matchId) => {
-                    setSelectedMatchId(matchId)
-                    onDataChange((currentData) =>
-                      markCardMatchSeen(currentData, matchId, currentMember.id),
-                    )
-                  }}
-                />
-              ))
-            ) : (
-              <p className="filtered-empty-state">
-                Aún no hay ofertas compatibles con tus búsquedas.
-              </p>
-            )}
-          </div>
-        </section>
+        <MatchesSection
+          grouping={matchGrouping}
+          matches={matches}
+          onGroupingChange={setMatchGrouping}
+          onPreview={(item) =>
+            setSelectedCardPreview({
+              card: item.card,
+              description: `${item.card.setName} · Disponible por ${item.seller.displayName}`,
+            })
+          }
+          onSelect={(matchId) => {
+            setSelectedMatchId(matchId)
+            onDataChange((currentData) =>
+              markCardMatchSeen(currentData, matchId, currentMember.id),
+            )
+          }}
+        />
       ) : activeView === 'market' ? (
-        <section className="cards-section" aria-labelledby="market-title">
-          <div className="section-heading">
-            <div>
-              <span>Comunidad</span>
-              <h2 id="market-title">Cartas disponibles</h2>
-            </div>
-            <p>{filteredListings.length} resultados</p>
-          </div>
-
-          <label className="card-search">
-            <Search aria-hidden="true" size={17} />
-            <span className="visually-hidden">Buscar una carta o miembro</span>
-            <input
-              type="search"
-              placeholder="Buscar carta, edición o miembro"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </label>
-
-          <label className="market-own-listings-filter">
-            <input
-              checked={hideOwnListings}
-              type="checkbox"
-              onChange={(event) => setHideOwnListings(event.target.checked)}
-            />
-            Ocultar mis cartas
-          </label>
-
-          <MarketplaceCatalog
-            ariaLabel="Ofertas de cartas disponibles"
-            currentMemberId={currentMember.id}
-            emptyMessage="No hay ofertas que coincidan con esta búsqueda."
-            galleryAriaLabel="Galería de ofertas"
-            items={filteredListings}
-            onOpen={reservation.openReservation}
-            onMemberSelect={(memberId) => {
-              window.location.hash = `cartas?member=${memberId}`
-            }}
-            onPreview={(item) =>
-              setSelectedCardPreview({
-                card: item.card,
-                description: `${item.card.setName} · Disponible por ${item.member.displayName}`,
-              })
-            }
-            paginationAriaLabel="Páginas de ofertas"
-            viewAriaLabel="Vista de ofertas"
-          />
-        </section>
+        <MarketplaceSection
+          currentMemberId={currentMember.id}
+          hideOwnListings={hideOwnListings}
+          items={filteredListings}
+          query={query}
+          onHideOwnListingsChange={setHideOwnListings}
+          onMemberSelect={(memberId) => {
+            window.location.hash = `cartas?member=${memberId}`
+          }}
+          onOpen={reservation.openReservation}
+          onPreview={(item) =>
+            setSelectedCardPreview({
+              card: item.card,
+              description: `${item.card.setName} · Disponible por ${item.member.displayName}`,
+            })
+          }
+          onQueryChange={setQuery}
+        />
       ) : (
         <section className="cards-section" aria-labelledby="my-lists-title">
           <div className="section-heading">
