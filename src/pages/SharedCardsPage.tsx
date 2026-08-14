@@ -1,17 +1,14 @@
 import {
   ArrowLeft,
   Copy,
-  LayoutGrid,
   Search,
   Share2,
   SlidersHorizontal,
-  Table2,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { CardImagePreview } from '../components/CardImagePreview'
-import { MarketplaceListingGallery } from '../components/MarketplaceListingGallery'
-import { MarketplaceListingTable } from '../components/MarketplaceListingTable'
+import { MarketplaceCatalog } from '../components/MarketplaceCatalog'
 import { MarketplaceReservationSheet } from '../components/MarketplaceReservationSheet'
 import {
   cancelMarketplaceReservation,
@@ -52,8 +49,6 @@ export function SharedCardsPage({
   const [setCode, setSetCode] = useState(initialSetCode)
   const [language, setLanguage] = useState(initialLanguage)
   const [condition, setCondition] = useState(initialCondition)
-  const [display, setDisplay] = useState<'table' | 'gallery'>('table')
-  const [galleryColumns, setGalleryColumns] = useState<2 | 4>(2)
   const [message, setMessage] = useState('')
   const [selectedListingId, setSelectedListingId] = useState<string>()
   const [selectedCardPreview, setSelectedCardPreview] = useState<{
@@ -214,89 +209,23 @@ export function SharedCardsPage({
         <span>{filteredListings.length} resultados</span>
       </div>
 
-      <div
-        className="market-display-switch"
-        role="group"
-        aria-label="Vista de las cartas del miembro"
-      >
-        <button
-          type="button"
-          aria-pressed={display === 'table'}
-          onClick={() => setDisplay('table')}
-        >
-          <Table2 aria-hidden="true" size={16} />
-          Tabla
-        </button>
-        <button
-          type="button"
-          aria-pressed={display === 'gallery'}
-          onClick={() => setDisplay('gallery')}
-        >
-          <LayoutGrid aria-hidden="true" size={16} />
-          Imágenes
-        </button>
-      </div>
-
-      {display === 'gallery' ? (
-        <div
-          className="market-gallery-density"
-          role="group"
-          aria-label="Cartas por línea"
-        >
-          <span>Densidad</span>
-          <button
-            type="button"
-            aria-pressed={galleryColumns === 2}
-            onClick={() => setGalleryColumns(2)}
-          >
-            2 por fila
-          </button>
-          <button
-            type="button"
-            aria-pressed={galleryColumns === 4}
-            onClick={() => setGalleryColumns(4)}
-          >
-            4 por fila
-          </button>
-        </div>
-      ) : null}
-
-      {filteredListings.length > 0 ? (
-        display === 'table' ? (
-          <MarketplaceListingTable
-            ariaLabel={`Cartas disponibles de ${seller.displayName}`}
-            items={filteredListings}
-            onOpen={(item) => setSelectedListingId(item.listing.id)}
-            onPreview={(item) =>
-              setSelectedCardPreview({
-                card: item.card,
-                description: `${item.card.setName} · Disponible por ${seller.displayName}`,
-              })
-            }
-          />
-        ) : (
-          <MarketplaceListingGallery
-            ariaLabel={`Galería de cartas de ${seller.displayName}`}
-            columns={galleryColumns}
-            currentMemberId={currentMember.id}
-            items={filteredListings}
-            ownerMode="status"
-            onOpen={(item) => setSelectedListingId(item.listing.id)}
-            onPreview={(item) =>
-              setSelectedCardPreview({
-                card: item.card,
-                description: `${item.card.setName} · Disponible por ${seller.displayName}`,
-              })
-            }
-          />
-        )
-      ) : null}
-
-      {filteredListings.length === 0 ? (
-        <p className="filtered-empty-state">
-          Ninguna carta coincide con estos filtros.
-        </p>
-      ) : null}
+      <MarketplaceCatalog
+        ariaLabel={`Cartas disponibles de ${seller.displayName}`}
+        currentMemberId={currentMember.id}
+        emptyMessage="Ninguna carta coincide con estos filtros."
+        galleryAriaLabel={`Galería de cartas de ${seller.displayName}`}
+        items={filteredListings}
+        ownerMode="status"
+        onOpen={(item) => setSelectedListingId(item.listing.id)}
+        onPreview={(item) =>
+          setSelectedCardPreview({
+            card: item.card,
+            description: `${item.card.setName} · Disponible por ${seller.displayName}`,
+          })
+        }
+        paginationAriaLabel={`Páginas de cartas de ${seller.displayName}`}
+        viewAriaLabel="Vista de las cartas del miembro"
+      />
 
       {selectedListing ? (
         <MarketplaceReservationSheet

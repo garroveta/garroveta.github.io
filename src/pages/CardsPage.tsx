@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   ChevronRight,
   FileText,
-  LayoutGrid,
   Layers3,
   ListChecks,
   LoaderCircle,
@@ -19,7 +18,6 @@ import {
   Share2,
   ShoppingBag,
   Sparkles,
-  Table2,
   Upload,
   UserRound,
   X,
@@ -28,9 +26,8 @@ import type { ChangeEvent, FormEvent } from 'react'
 import { useMemo, useState } from 'react'
 
 import { CardImagePreview } from '../components/CardImagePreview'
-import { MarketplaceListingGallery } from '../components/MarketplaceListingGallery'
+import { MarketplaceCatalog } from '../components/MarketplaceCatalog'
 import { MarketplaceReservationSheet } from '../components/MarketplaceReservationSheet'
-import { MarketplaceListingTable } from '../components/MarketplaceListingTable'
 import {
   applyResolvedMarketplaceImport,
   applyResolvedWantedCardImport,
@@ -98,12 +95,7 @@ type CardsPageProps = {
 
 const cardLanguages = Object.keys(languageLabels) as CardLanguage[]
 const cardConditions = Object.keys(conditionLabels) as CardCondition[]
-const MARKET_TABLE_PAGE_SIZE = 20
 const MY_LISTS_PAGE_SIZE = 10
-const MARKET_GALLERY_PAGE_SIZES = {
-  2: 12,
-  4: 20,
-} as const
 
 const matchStatusLabels = {
   new: 'Nueva',
@@ -1890,11 +1882,6 @@ export function CardsPage({
   >()
   const [selectedMatchId, setSelectedMatchId] = useState<string>()
   const [matchGrouping, setMatchGrouping] = useState<MatchGrouping>('card')
-  const [marketPage, setMarketPage] = useState(1)
-  const [marketDisplay, setMarketDisplay] = useState<'table' | 'gallery'>(
-    'table',
-  )
-  const [marketGalleryColumns, setMarketGalleryColumns] = useState<2 | 4>(2)
   const [myListsView, setMyListsView] = useState<
     'wanted' | 'offers' | 'reserved'
   >('wanted')
@@ -2002,20 +1989,6 @@ export function CardsPage({
               .includes(normalizedQuery)),
       ),
     [currentMember.id, hideOwnListings, listings, normalizedQuery],
-  )
-  const marketPageSize =
-    marketDisplay === 'table'
-      ? MARKET_TABLE_PAGE_SIZE
-      : MARKET_GALLERY_PAGE_SIZES[marketGalleryColumns]
-  const marketPageCount = Math.max(
-    1,
-    Math.ceil(filteredListings.length / marketPageSize),
-  )
-  const activeMarketPage = Math.min(marketPage, marketPageCount)
-  const marketPageStart = (activeMarketPage - 1) * marketPageSize
-  const visibleListings = filteredListings.slice(
-    marketPageStart,
-    marketPageStart + marketPageSize,
   )
   const normalizedMyListsQuery = myListsQuery.trim().toLocaleLowerCase('es')
   const filteredMemberListings = memberListings.filter(
@@ -2305,10 +2278,7 @@ export function CardsPage({
               type="search"
               placeholder="Buscar carta, edición o miembro"
               value={query}
-              onChange={(event) => {
-                setQuery(event.target.value)
-                setMarketPage(1)
-              }}
+              onChange={(event) => setQuery(event.target.value)}
             />
           </label>
 
@@ -2316,160 +2286,30 @@ export function CardsPage({
             <input
               checked={hideOwnListings}
               type="checkbox"
-              onChange={(event) => {
-                setHideOwnListings(event.target.checked)
-                setMarketPage(1)
-              }}
+              onChange={(event) => setHideOwnListings(event.target.checked)}
             />
             Ocultar mis cartas
           </label>
 
-          <div
-            className="market-display-switch"
-            role="group"
-            aria-label="Vista de ofertas"
-          >
-            <button
-              type="button"
-              aria-pressed={marketDisplay === 'table'}
-              onClick={() => {
-                setMarketDisplay('table')
-                setMarketPage(1)
-              }}
-            >
-              <Table2 aria-hidden="true" size={16} />
-              Tabla
-            </button>
-            <button
-              type="button"
-              aria-pressed={marketDisplay === 'gallery'}
-              onClick={() => {
-                setMarketDisplay('gallery')
-                setMarketPage(1)
-              }}
-            >
-              <LayoutGrid aria-hidden="true" size={16} />
-              Imágenes
-            </button>
-          </div>
-
-          {marketDisplay === 'gallery' ? (
-            <div
-              className="market-gallery-density"
-              role="group"
-              aria-label="Cartas por línea"
-            >
-              <span>Densidad</span>
-              <button
-                type="button"
-                aria-pressed={marketGalleryColumns === 2}
-                onClick={() => {
-                  setMarketGalleryColumns(2)
-                  setMarketPage(1)
-                }}
-              >
-                2 por fila
-              </button>
-              <button
-                type="button"
-                aria-pressed={marketGalleryColumns === 4}
-                onClick={() => {
-                  setMarketGalleryColumns(4)
-                  setMarketPage(1)
-                }}
-              >
-                4 por fila
-              </button>
-            </div>
-          ) : null}
-
-          {visibleListings.length > 0 ? (
-            marketDisplay === 'table' ? (
-              <MarketplaceListingTable
-                ariaLabel="Ofertas de cartas disponibles"
-                items={visibleListings}
-                onOpen={(item) =>
-                  setSelectedMarketplaceListingId(item.listing.id)
-                }
-                onMemberSelect={(memberId) => {
-                  window.location.hash = `cartas?member=${memberId}`
-                }}
-                onPreview={(item) =>
-                  setSelectedCardPreview({
-                    card: item.card,
-                    description: `${item.card.setName} · Disponible por ${item.member.displayName}`,
-                  })
-                }
-              />
-            ) : (
-              <MarketplaceListingGallery
-                ariaLabel="Galería de ofertas"
-                items={visibleListings}
-                columns={marketGalleryColumns}
-                currentMemberId={currentMember.id}
-                onOpen={(item) =>
-                  setSelectedMarketplaceListingId(item.listing.id)
-                }
-                onMemberSelect={(memberId) => {
-                  window.location.hash = `cartas?member=${memberId}`
-                }}
-                onPreview={(item) =>
-                  setSelectedCardPreview({
-                    card: item.card,
-                    description: `${item.card.setName} · Disponible por ${item.member.displayName}`,
-                  })
-                }
-              />
-            )
-          ) : (
-            <p className="filtered-empty-state">
-              No hay ofertas que coincidan con esta búsqueda.
-            </p>
-          )}
-
-          {visibleListings.length > 0 ? (
-            <p className="scryfall-credit">
-              Imágenes de cartas proporcionadas por{' '}
-              <a href="https://scryfall.com" target="_blank" rel="noreferrer">
-                Scryfall
-              </a>
-              .
-            </p>
-          ) : null}
-
-          {filteredListings.length > 0 ? (
-            <nav className="market-pagination" aria-label="Páginas de ofertas">
-              <p>
-                {marketPageStart + 1}–
-                {Math.min(
-                  marketPageStart + marketPageSize,
-                  filteredListings.length,
-                )}{' '}
-                de {filteredListings.length}
-              </p>
-              {marketPageCount > 1 ? (
-                <div>
-                  <button
-                    type="button"
-                    disabled={activeMarketPage === 1}
-                    onClick={() => setMarketPage(activeMarketPage - 1)}
-                  >
-                    Anterior
-                  </button>
-                  <span>
-                    {activeMarketPage}/{marketPageCount}
-                  </span>
-                  <button
-                    type="button"
-                    disabled={activeMarketPage === marketPageCount}
-                    onClick={() => setMarketPage(activeMarketPage + 1)}
-                  >
-                    Siguiente
-                  </button>
-                </div>
-              ) : null}
-            </nav>
-          ) : null}
+          <MarketplaceCatalog
+            ariaLabel="Ofertas de cartas disponibles"
+            currentMemberId={currentMember.id}
+            emptyMessage="No hay ofertas que coincidan con esta búsqueda."
+            galleryAriaLabel="Galería de ofertas"
+            items={filteredListings}
+            onOpen={(item) => setSelectedMarketplaceListingId(item.listing.id)}
+            onMemberSelect={(memberId) => {
+              window.location.hash = `cartas?member=${memberId}`
+            }}
+            onPreview={(item) =>
+              setSelectedCardPreview({
+                card: item.card,
+                description: `${item.card.setName} · Disponible por ${item.member.displayName}`,
+              })
+            }
+            paginationAriaLabel="Páginas de ofertas"
+            viewAriaLabel="Vista de ofertas"
+          />
         </section>
       ) : (
         <section className="cards-section" aria-labelledby="my-lists-title">

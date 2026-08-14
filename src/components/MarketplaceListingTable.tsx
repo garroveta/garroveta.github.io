@@ -1,5 +1,3 @@
-import type { ReactNode } from 'react'
-
 import type { MarketplaceListingItem } from '../data/cardSelectors'
 import {
   cardConditionLabels,
@@ -14,7 +12,6 @@ type MarketplaceListingTableProps = {
   onMemberSelect?: (memberId: string) => void
   onOpen?: (item: MarketplaceListingItem) => void
   onPreview?: (item: MarketplaceListingItem) => void
-  renderAction?: (item: MarketplaceListingItem) => ReactNode
 }
 
 export function MarketplaceListingTable({
@@ -23,16 +20,10 @@ export function MarketplaceListingTable({
   onMemberSelect,
   onOpen,
   onPreview,
-  renderAction,
 }: MarketplaceListingTableProps) {
-  const hasActions = Boolean(renderAction)
-
   return (
     <div className="market-table-wrap">
-      <table
-        className={`market-table${hasActions ? ' market-table--actions' : ''}`}
-        aria-label={ariaLabel}
-      >
+      <table className="market-table" aria-label={ariaLabel}>
         <thead>
           <tr>
             <th scope="col">Carta</th>
@@ -46,11 +37,6 @@ export function MarketplaceListingTable({
               <abbr title="Cantidad">Cant.</abbr>
             </th>
             <th scope="col">Precio</th>
-            {hasActions ? (
-              <th className="market-table__action" scope="col">
-                <span className="visually-hidden">Acción</span>
-              </th>
-            ) : null}
           </tr>
         </thead>
         <tbody>
@@ -177,9 +163,6 @@ export function MarketplaceListingTable({
                     </>
                   )}
                 </td>
-                {renderAction ? (
-                  <td className="market-table__action">{renderAction(item)}</td>
-                ) : null}
               </tr>
             )
           })}
