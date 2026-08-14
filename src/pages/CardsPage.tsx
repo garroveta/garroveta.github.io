@@ -1160,6 +1160,7 @@ function MatchGroupCard({
 function MatchDetail({
   item,
   deal,
+  currentMember,
   onBack,
   onCancelReservation,
   onComplete,
@@ -1167,12 +1168,14 @@ function MatchDetail({
 }: {
   item: MemberCardMatchItem
   deal?: CardDeal
+  currentMember: CommunityMember
   onBack: () => void
-  onCancelReservation: () => void
+  onCancelReservation: (quantity: number) => void
   onComplete: () => void
-  onReserve: () => void
+  onReserve: (quantity: number) => void
 }) {
   const [isCardPreviewOpen, setIsCardPreviewOpen] = useState(false)
+  const [isReservationSheetOpen, setIsReservationSheetOpen] = useState(false)
   const contactIcons = {
     whatsapp: MessageCircle,
     email: Mail,
@@ -1290,7 +1293,7 @@ function MatchDetail({
               <button
                 className="secondary-button"
                 type="button"
-                onClick={onReserve}
+                onClick={() => setIsReservationSheetOpen(true)}
               >
                 Reservar carta
               </button>
@@ -1298,7 +1301,7 @@ function MatchDetail({
               <button
                 className="secondary-button reservation-cancel-button"
                 type="button"
-                onClick={onCancelReservation}
+                onClick={() => setIsReservationSheetOpen(true)}
               >
                 Cancelar reserva
               </button>
@@ -1323,6 +1326,20 @@ function MatchDetail({
           card={item.card}
           description={`${item.card.setName} · #${item.card.collectorNumber} · Disponible por ${item.seller.displayName}`}
           onClose={() => setIsCardPreviewOpen(false)}
+        />
+      ) : null}
+
+      {isReservationSheetOpen ? (
+        <MarketplaceReservationSheet
+          item={{
+            listing: item.listing,
+            card: item.card,
+            member: item.seller,
+          }}
+          currentMember={currentMember}
+          onClose={() => setIsReservationSheetOpen(false)}
+          onReserve={onReserve}
+          onCancelReservation={onCancelReservation}
         />
       ) : null}
     </div>
@@ -2414,13 +2431,15 @@ export function CardsPage({
       <MatchDetail
         deal={selectedDeal}
         item={selectedMatch}
+        currentMember={currentMember}
         onBack={() => setSelectedMatchId(undefined)}
-        onCancelReservation={() =>
+        onCancelReservation={(quantity) =>
           onDataChange((currentData) =>
             cancelMarketplaceReservation(
               currentData,
               selectedMatch.listing.id,
               currentMember.id,
+              quantity,
             ),
           )
         }
@@ -2433,12 +2452,14 @@ export function CardsPage({
             ),
           )
         }
-        onReserve={() =>
+        onReserve={(quantity) =>
           onDataChange((currentData) =>
             reserveMarketplaceListing(
               currentData,
               selectedMatch.listing.id,
               currentMember.id,
+              undefined,
+              quantity,
             ),
           )
         }
@@ -2919,20 +2940,9 @@ export function CardsPage({
                     <ReservationCardRow
                       item={item}
                       key={item.listing.id}
-                      onCancel={() => {
-                        onDataChange((currentData) =>
-                          cancelMarketplaceReservation(
-                            currentData,
-                            item.listing.id,
-                            currentMember.id,
-                          ),
-                        )
-                        setActionMessage(
-                          item.direction === 'reserved_by_me'
-                            ? 'La reserva se ha cancelado.'
-                            : 'La carta vuelve a estar disponible.',
-                        )
-                      }}
+                      onCancel={() =>
+                        setSelectedMarketplaceListingId(item.listing.id)
+                      }
                       onPreview={() =>
                         setSelectedCardPreview({
                           card: item.card,
@@ -3169,15 +3179,26 @@ export function CardsPage({
               `${quantity} ${quantity > 1 ? 'cartas reservadas' : 'carta reservada'} a tu nombre.`,
             )
           }}
-          onCancelReservation={() => {
+          onCancelReservation={(quantity) => {
+            const remainingQuantity =
+              (selectedMarketplaceItem.listing.reservedQuantity ?? 1) - quantity
+            const isOwnedOffer =
+              selectedMarketplaceItem.listing.memberId === currentMember.id
             onDataChange((currentData) =>
               cancelMarketplaceReservation(
                 currentData,
                 selectedMarketplaceItem.listing.id,
                 currentMember.id,
+                quantity,
               ),
             )
-            setActionMessage('La reserva se ha cancelado.')
+            setActionMessage(
+              remainingQuantity > 0
+                ? `Queda ${remainingQuantity} ${remainingQuantity > 1 ? 'cartas reservadas' : 'carta reservada'}.`
+                : isOwnedOffer
+                  ? 'La carta vuelve a estar disponible.'
+                  : 'La reserva se ha cancelado.',
+            )
           }}
         />
       ) : null}

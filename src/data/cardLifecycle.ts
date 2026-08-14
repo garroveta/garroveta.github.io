@@ -173,16 +173,24 @@ export function cancelMarketplaceReservation(
   data: DemoDataSet,
   listingId: string,
   memberId: string,
+  cancelledQuantity?: number,
 ): DemoDataSet {
   const listing = data.listings.find(({ id }) => id === listingId)
+  const reservedQuantity = listing?.reservedQuantity ?? 1
+  const normalizedQuantity = Math.floor(cancelledQuantity ?? reservedQuantity)
 
   if (
     !listing ||
     listing.status !== 'reserved' ||
-    (listing.memberId !== memberId && listing.reservedByMemberId !== memberId)
+    (listing.memberId !== memberId &&
+      listing.reservedByMemberId !== memberId) ||
+    normalizedQuantity < 1 ||
+    normalizedQuantity > reservedQuantity
   ) {
     return data
   }
+
+  const remainingQuantity = reservedQuantity - normalizedQuantity
 
   return synchronizeCardMatches({
     ...data,
@@ -190,10 +198,16 @@ export function cancelMarketplaceReservation(
       candidate.id === listingId
         ? {
             ...candidate,
-            status: 'available' as const,
-            reservedByMemberId: undefined,
-            reservedQuantity: undefined,
-            reservedAt: undefined,
+            status:
+              remainingQuantity > 0
+                ? ('reserved' as const)
+                : ('available' as const),
+            reservedByMemberId:
+              remainingQuantity > 0 ? candidate.reservedByMemberId : undefined,
+            reservedQuantity:
+              remainingQuantity > 0 ? remainingQuantity : undefined,
+            reservedAt:
+              remainingQuantity > 0 ? candidate.reservedAt : undefined,
           }
         : candidate,
     ),

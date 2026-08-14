@@ -29,7 +29,7 @@ const conditionLabels: Record<CardCondition, string> = {
 type MarketplaceReservationSheetProps = {
   item: MarketplaceListingItem
   currentMember: CommunityMember
-  onCancelReservation: () => void
+  onCancelReservation: (quantity: number) => void
   onClose: () => void
   onMemberSelect?: (memberId: string) => void
   onPreview?: () => void
@@ -46,13 +46,17 @@ export function MarketplaceReservationSheet({
   onReserve,
 }: MarketplaceReservationSheetProps) {
   const [quantity, setQuantity] = useState(item.listing.reservedQuantity ?? 1)
+  const [cancelQuantity, setCancelQuantity] = useState(1)
   const imageUrl = getScryfallCardImage(item.card.name, item.card.imageUri)
   const isOwner = item.listing.memberId === currentMember.id
+  const reservedQuantity = item.listing.reservedQuantity ?? 1
   const isReservedByCurrentMember =
     item.listing.status === 'reserved' &&
     item.listing.reservedByMemberId === currentMember.id
   const isReservedByAnotherMember =
     item.listing.status === 'reserved' && !isReservedByCurrentMember
+  const canCancelReservation =
+    item.listing.status === 'reserved' && (isReservedByCurrentMember || isOwner)
 
   const image = imageUrl ? (
     <img src={imageUrl} alt="" />
@@ -100,7 +104,9 @@ export function MarketplaceReservationSheet({
             <span className="page-eyebrow">
               {isReservedByCurrentMember
                 ? 'Reserva activa'
-                : 'Oferta disponible'}
+                : isOwner && item.listing.status === 'reserved'
+                  ? 'Oferta reservada'
+                  : 'Oferta disponible'}
             </span>
             <h2 id="market-reservation-title">{item.card.name}</h2>
             <p>
@@ -173,19 +179,49 @@ export function MarketplaceReservationSheet({
                 Reservar {quantity > 1 ? `${quantity} cartas` : 'carta'}
               </button>
             </div>
-          ) : isReservedByCurrentMember ? (
+          ) : canCancelReservation ? (
             <div className="market-reservation-sheet__reserved">
               <p>
                 <CheckCircle2 aria-hidden="true" size={17} />
-                {item.listing.reservedQuantity ?? 1}{' '}
-                {(item.listing.reservedQuantity ?? 1) > 1
-                  ? 'cartas reservadas para ti'
-                  : 'carta reservada para ti'}
+                {reservedQuantity}{' '}
+                {isOwner
+                  ? reservedQuantity > 1
+                    ? 'cartas reservadas en esta oferta'
+                    : 'carta reservada en esta oferta'
+                  : reservedQuantity > 1
+                    ? 'cartas reservadas para ti'
+                    : 'carta reservada para ti'}
               </p>
-              <button type="button" onClick={onCancelReservation}>
-                <X aria-hidden="true" size={16} />
-                Cancelar reserva
-              </button>
+              <div className="market-reservation-sheet__reservation market-reservation-sheet__cancellation">
+                <label>
+                  <span>Cantidad a {isOwner ? 'liberar' : 'cancelar'}</span>
+                  <select
+                    aria-label={`Cantidad a ${isOwner ? 'liberar' : 'cancelar'}`}
+                    disabled={reservedQuantity === 1}
+                    value={cancelQuantity}
+                    onChange={(event) =>
+                      setCancelQuantity(Number(event.target.value))
+                    }
+                  >
+                    {Array.from(
+                      { length: reservedQuantity },
+                      (_, index) => index + 1,
+                    ).map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => onCancelReservation(cancelQuantity)}
+                >
+                  <X aria-hidden="true" size={16} />
+                  {isOwner ? 'Liberar' : 'Cancelar'}{' '}
+                  {cancelQuantity > 1 ? `${cancelQuantity} cartas` : '1 carta'}
+                </button>
+              </div>
             </div>
           ) : (
             <p

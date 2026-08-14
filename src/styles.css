@@ -2964,13 +2964,17 @@ a {
 
 .market-reservation-sheet__reserved {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
   gap: 0.6rem;
   margin: 0;
   padding: 0.55rem;
   border-radius: 0.72rem;
   background: #f2f7f4;
+}
+
+.market-reservation-sheet__cancellation {
+  width: 100%;
 }
 
 .market-reservation-sheet__reserved p {

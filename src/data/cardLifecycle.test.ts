@@ -144,6 +144,40 @@ describe('card list lifecycle', () => {
     ).toBe(reservedData)
   })
 
+  it('partially cancels a multi-card reservation', () => {
+    const reservedData = reserveMarketplaceListing(
+      demoData,
+      'listing-sol-ring-marta',
+      demoData.currentMemberId,
+      undefined,
+      2,
+    )
+    const partiallyCancelledData = cancelMarketplaceReservation(
+      reservedData,
+      'listing-sol-ring-marta',
+      demoData.currentMemberId,
+      1,
+    )
+
+    expect(
+      partiallyCancelledData.listings.find(
+        ({ id }) => id === 'listing-sol-ring-marta',
+      ),
+    ).toMatchObject({
+      status: 'reserved',
+      reservedByMemberId: demoData.currentMemberId,
+      reservedQuantity: 1,
+    })
+    expect(
+      cancelMarketplaceReservation(
+        reservedData,
+        'listing-sol-ring-marta',
+        demoData.currentMemberId,
+        3,
+      ),
+    ).toBe(reservedData)
+  })
+
   it('updates the editable details of owned wanted cards and offers', () => {
     const wantedData = updateWantedCardDetails(
       demoData,

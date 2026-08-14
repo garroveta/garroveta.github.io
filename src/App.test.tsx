@@ -8,6 +8,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { App } from './App'
+import { reserveMarketplaceListing } from './data/cardLifecycle'
 import { demoData } from './data/demoData'
 import { createLocalDemoRepository } from './data/demoRepository'
 
@@ -761,8 +762,23 @@ describe('App', () => {
       reservedQuantity: 2,
     })
 
+    expect(
+      within(offerDialog).getByLabelText('Cantidad a cancelar'),
+    ).toHaveValue('1')
     fireEvent.click(
-      within(offerDialog).getByRole('button', { name: 'Cancelar reserva' }),
+      within(offerDialog).getByRole('button', { name: 'Cancelar 1 carta' }),
+    )
+    expect(
+      within(offerDialog).getByText('1 carta reservada para ti'),
+    ).toBeInTheDocument()
+    expect(
+      createLocalDemoRepository(window.localStorage)
+        .load()
+        .listings.find(({ id }) => id === 'listing-sol-ring-marta'),
+    ).toMatchObject({ status: 'reserved', reservedQuantity: 1 })
+
+    fireEvent.click(
+      within(offerDialog).getByRole('button', { name: 'Cancelar 1 carta' }),
     )
     expect(
       within(offerDialog).getByRole('button', { name: 'Reservar 2 cartas' }),
@@ -1100,6 +1116,19 @@ describe('App', () => {
       screen.getByText(/solo se muestran porque existe una coincidencia/),
     ).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Reservar carta' }))
+    const matchReservationDialog = screen.getByRole('dialog', {
+      name: 'Sol Ring',
+    })
+    fireEvent.click(
+      within(matchReservationDialog).getByRole('button', {
+        name: 'Reservar carta',
+      }),
+    )
+    fireEvent.click(
+      within(matchReservationDialog).getByRole('button', {
+        name: 'Cerrar oferta',
+      }),
+    )
     expect(
       screen.getByRole('button', { name: 'Cancelar reserva' }),
     ).toBeInTheDocument()
@@ -1112,6 +1141,22 @@ describe('App', () => {
       reservedByMemberId: demoData.currentMemberId,
     })
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar reserva' }))
+    const matchCancellationDialog = screen.getByRole('dialog', {
+      name: 'Sol Ring',
+    })
+    expect(
+      within(matchCancellationDialog).getByLabelText('Cantidad a cancelar'),
+    ).toBeDisabled()
+    fireEvent.click(
+      within(matchCancellationDialog).getByRole('button', {
+        name: 'Cancelar 1 carta',
+      }),
+    )
+    fireEvent.click(
+      within(matchCancellationDialog).getByRole('button', {
+        name: 'Cerrar oferta',
+      }),
+    )
     expect(
       screen.getByRole('button', { name: 'Reservar carta' }),
     ).toBeInTheDocument()
@@ -1435,9 +1480,13 @@ describe('App', () => {
         ),
     ).toMatchObject({ status: 'reserved', reservedQuantity: 2 })
 
+    fireEvent.change(
+      within(memberOfferDialog).getByLabelText('Cantidad a cancelar'),
+      { target: { value: '2' } },
+    )
     fireEvent.click(
       within(memberOfferDialog).getByRole('button', {
-        name: 'Cancelar reserva',
+        name: 'Cancelar 2 cartas',
       }),
     )
     fireEvent.click(
@@ -1498,10 +1547,73 @@ describe('App', () => {
     expect(screen.getByText('Para ti')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar reserva' }))
+    const cancellationDialog = screen.getByRole('dialog', {
+      name: cardName ?? '',
+    })
+    expect(
+      within(cancellationDialog).getByLabelText('Cantidad a cancelar'),
+    ).toBeDisabled()
+    fireEvent.click(
+      within(cancellationDialog).getByRole('button', {
+        name: 'Cancelar 1 carta',
+      }),
+    )
+    fireEvent.click(
+      within(cancellationDialog).getByRole('button', {
+        name: 'Cerrar oferta',
+      }),
+    )
     expect(
       screen.getByText('No tienes ninguna carta reservada pendiente.'),
     ).toBeInTheDocument()
     expect(screen.getByText('La reserva se ha cancelado.')).toBeInTheDocument()
+  })
+
+  it('lets the seller partially release a reserved quantity', () => {
+    const repository = createLocalDemoRepository(window.localStorage)
+    repository.save(
+      reserveMarketplaceListing(
+        structuredClone(demoData),
+        'listing-marketplace-demo-14',
+        'member-marta',
+        undefined,
+        2,
+      ),
+    )
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: /Mis listas/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Reservadas/ }))
+
+    const releaseButton = screen.getByRole('button', {
+      name: 'Liberar carta',
+    })
+    expect(
+      within(releaseButton.closest('article') as HTMLElement).getByText(
+        'Tu oferta',
+      ),
+    ).toBeInTheDocument()
+    fireEvent.click(releaseButton)
+
+    const releaseDialog = screen.getByRole('dialog')
+    expect(
+      within(releaseDialog).getByLabelText('Cantidad a liberar'),
+    ).toHaveValue('1')
+    expect(
+      within(releaseDialog).getByLabelText('Cantidad a liberar'),
+    ).not.toBeDisabled()
+    fireEvent.click(
+      within(releaseDialog).getByRole('button', {
+        name: 'Liberar 1 carta',
+      }),
+    )
+
+    expect(
+      createLocalDemoRepository(window.localStorage)
+        .load()
+        .listings.find(({ id }) => id === 'listing-marketplace-demo-14'),
+    ).toMatchObject({ status: 'reserved', reservedQuantity: 1 })
   })
 
   it('filters wanted cards without a private list', () => {

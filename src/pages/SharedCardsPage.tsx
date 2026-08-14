@@ -283,16 +283,7 @@ export function SharedCardsPage({
                   <button
                     className="shared-card-cancel"
                     type="button"
-                    onClick={() => {
-                      onDataChange((currentData) =>
-                        cancelMarketplaceReservation(
-                          currentData,
-                          listing.id,
-                          currentMember.id,
-                        ),
-                      )
-                      setMessage(`La reserva de ${card.name} se ha cancelado.`)
-                    }}
+                    onClick={() => setSelectedListingId(listing.id)}
                   >
                     <X aria-hidden="true" size={14} /> Cancelar reserva
                   </button>
@@ -334,16 +325,21 @@ export function SharedCardsPage({
               `${quantity} ${quantity > 1 ? 'cartas reservadas' : 'carta reservada'} a tu nombre.`,
             )
           }}
-          onCancelReservation={() => {
+          onCancelReservation={(quantity) => {
+            const remainingQuantity =
+              (selectedListing.listing.reservedQuantity ?? 1) - quantity
             onDataChange((currentData) =>
               cancelMarketplaceReservation(
                 currentData,
                 selectedListing.listing.id,
                 currentMember.id,
+                quantity,
               ),
             )
             setMessage(
-              `La reserva de ${selectedListing.card.name} se ha cancelado.`,
+              remainingQuantity > 0
+                ? `Queda ${remainingQuantity} ${remainingQuantity > 1 ? 'cartas reservadas' : 'carta reservada'} de ${selectedListing.card.name}.`
+                : `La reserva de ${selectedListing.card.name} se ha cancelado.`,
             )
           }}
         />
