@@ -4,6 +4,7 @@ import {
   Copy,
   Search,
   Share2,
+  ShoppingBag,
   SlidersHorizontal,
   X,
 } from 'lucide-react'
@@ -274,18 +275,23 @@ export function SharedCardsPage({
                   </span>
                 ) : listing.status === 'available' ? (
                   <button
+                    aria-label="Reservar"
+                    className="shared-card-reserve"
+                    title="Reservar"
                     type="button"
                     onClick={() => setSelectedListingId(listing.id)}
                   >
-                    Reservar
+                    <ShoppingBag aria-hidden="true" size={14} />
                   </button>
                 ) : reservedByCurrentMember ? (
                   <button
+                    aria-label="Cancelar reserva"
                     className="shared-card-cancel"
+                    title="Cancelar reserva"
                     type="button"
                     onClick={() => setSelectedListingId(listing.id)}
                   >
-                    <X aria-hidden="true" size={14} /> Cancelar reserva
+                    <X aria-hidden="true" size={14} />
                   </button>
                 ) : (
                   <span className="shared-card-reserved">

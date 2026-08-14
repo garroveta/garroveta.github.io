@@ -1477,6 +1477,7 @@ describe('App', () => {
     })
 
     const reserveButton = screen.getAllByRole('button', { name: 'Reservar' })[0]
+    expect(reserveButton.querySelector('svg')).toBeInTheDocument()
     const reservedCard = reserveButton.closest('article')
     expect(
       within(reservedCard as HTMLElement).getByText('Cantidad'),
@@ -1574,6 +1575,11 @@ describe('App', () => {
     fireEvent.click(
       within(memberOfferDialog).getByRole('button', { name: 'Cerrar oferta' }),
     )
+    expect(
+      screen
+        .getByRole('button', { name: 'Cancelar reserva' })
+        .querySelector('svg'),
+    ).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Volver a las cartas' }))
     fireEvent.click(screen.getByRole('button', { name: /Mis listas/ }))
     fireEvent.click(screen.getByRole('button', { name: /Reservadas/ }))
