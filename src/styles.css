@@ -2705,7 +2705,7 @@ a {
 
 .market-reservation-sheet {
   position: fixed;
-  z-index: 28;
+  z-index: 40;
   inset: 0;
   display: grid;
   align-items: end;
@@ -2860,12 +2860,23 @@ a {
   white-space: nowrap;
 }
 
+.market-reservation-sheet__footer {
+  position: sticky;
+  z-index: 2;
+  bottom: calc(-1.2rem - env(safe-area-inset-bottom));
+  margin: 1rem -1rem calc(-1.2rem - env(safe-area-inset-bottom));
+  padding: 0.72rem 1rem calc(0.8rem + env(safe-area-inset-bottom));
+  border-top: 1px solid #ebe5ec;
+  background: rgb(255 255 255 / 98%);
+  box-shadow: 0 -0.5rem 1.2rem rgb(53 41 58 / 7%);
+}
+
 .market-reservation-sheet__reservation {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: end;
   gap: 0.5rem;
-  margin-top: 0.85rem;
+  margin: 0;
 }
 
 .market-reservation-sheet__reservation > label {
@@ -2910,7 +2921,7 @@ a {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.6rem;
-  margin-top: 0.85rem;
+  margin: 0;
   padding: 0.55rem;
   border-radius: 0.72rem;
   background: #f2f7f4;
@@ -2936,7 +2947,12 @@ a {
 }
 
 .market-reservation-sheet__notice {
-  margin: 0.85rem 0 0;
+  display: flex;
+  min-height: 2.55rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin: 0;
   padding: 0.7rem;
   border-radius: 0.65rem;
   color: #746a77;
@@ -2944,6 +2960,28 @@ a {
   font-size: 0.65rem;
   font-weight: 750;
   text-align: center;
+}
+
+.market-reservation-sheet__notice > span {
+  display: grid;
+  gap: 0.08rem;
+  text-align: left;
+}
+
+.market-reservation-sheet__notice strong,
+.market-reservation-sheet__notice small {
+  display: block;
+}
+
+.market-reservation-sheet__notice small {
+  color: #8a808c;
+  font-size: 0.55rem;
+  font-weight: 650;
+}
+
+.market-reservation-sheet__notice--owner {
+  color: #653278;
+  background: #f5eef7;
 }
 
 .market-reservation-sheet button:focus-visible,
@@ -3238,7 +3276,7 @@ a {
 
 .card-image-preview {
   position: fixed;
-  z-index: 30;
+  z-index: 50;
   inset: 0;
   display: grid;
   padding: 1rem 1rem 5.5rem;
@@ -6532,6 +6570,14 @@ a {
 
   .market-reservation-sheet__handle {
     display: none;
+  }
+
+  .market-reservation-sheet__footer {
+    position: static;
+    margin: 1rem 0 0;
+    padding: 0;
+    border-top: 0;
+    box-shadow: none;
   }
 
   .market-gallery-card {

@@ -369,59 +369,73 @@ function MarketplaceReservationSheet({
           </div>
         </dl>
 
-        {item.listing.status === 'available' && !isOwner ? (
-          <div className="market-reservation-sheet__reservation">
-            {item.listing.quantity > 1 ? (
-              <label>
-                <span>Cantidad a reservar</span>
-                <select
-                  aria-label="Cantidad a reservar"
-                  value={quantity}
-                  onChange={(event) => setQuantity(Number(event.target.value))}
-                >
-                  {Array.from(
-                    { length: item.listing.quantity },
-                    (_, index) => index + 1,
-                  ).map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
-            <button
-              className="market-reservation-sheet__primary"
-              type="button"
-              onClick={() => onReserve(quantity)}
+        <footer className="market-reservation-sheet__footer">
+          {item.listing.status === 'available' && !isOwner ? (
+            <div className="market-reservation-sheet__reservation">
+              {item.listing.quantity > 1 ? (
+                <label>
+                  <span>Cantidad a reservar</span>
+                  <select
+                    aria-label="Cantidad a reservar"
+                    value={quantity}
+                    onChange={(event) =>
+                      setQuantity(Number(event.target.value))
+                    }
+                  >
+                    {Array.from(
+                      { length: item.listing.quantity },
+                      (_, index) => index + 1,
+                    ).map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+              <button
+                className="market-reservation-sheet__primary"
+                type="button"
+                onClick={() => onReserve(quantity)}
+              >
+                <ShoppingBag aria-hidden="true" size={17} />
+                Reservar {quantity > 1 ? `${quantity} cartas` : 'carta'}
+              </button>
+            </div>
+          ) : isReservedByCurrentMember ? (
+            <div className="market-reservation-sheet__reserved">
+              <p>
+                <CheckCircle2 aria-hidden="true" size={17} />
+                {item.listing.reservedQuantity ?? 1}{' '}
+                {(item.listing.reservedQuantity ?? 1) > 1
+                  ? 'cartas reservadas para ti'
+                  : 'carta reservada para ti'}
+              </p>
+              <button type="button" onClick={onCancelReservation}>
+                <X aria-hidden="true" size={16} />
+                Cancelar reserva
+              </button>
+            </div>
+          ) : (
+            <p
+              className={`market-reservation-sheet__notice${isOwner ? ' market-reservation-sheet__notice--owner' : ''}`}
             >
               <ShoppingBag aria-hidden="true" size={17} />
-              Reservar {quantity > 1 ? `${quantity} cartas` : 'carta'}
-            </button>
-          </div>
-        ) : isReservedByCurrentMember ? (
-          <div className="market-reservation-sheet__reserved">
-            <p>
-              <CheckCircle2 aria-hidden="true" size={17} />
-              {item.listing.reservedQuantity ?? 1}{' '}
-              {(item.listing.reservedQuantity ?? 1) > 1
-                ? 'cartas reservadas para ti'
-                : 'carta reservada para ti'}
+              <span>
+                <strong>
+                  {isOwner ? 'Tu oferta' : 'Oferta no disponible'}
+                </strong>
+                <small>
+                  {isOwner
+                    ? 'No puedes reservar tu propia carta.'
+                    : isReservedByAnotherMember
+                      ? 'Esta carta ya está reservada.'
+                      : 'Esta carta ya no está disponible.'}
+                </small>
+              </span>
             </p>
-            <button type="button" onClick={onCancelReservation}>
-              <X aria-hidden="true" size={16} />
-              Cancelar reserva
-            </button>
-          </div>
-        ) : (
-          <p className="market-reservation-sheet__notice">
-            {isOwner
-              ? 'Esta es una de tus ofertas.'
-              : isReservedByAnotherMember
-                ? 'Esta oferta ya está reservada.'
-                : 'Esta oferta ya no está disponible.'}
-          </p>
-        )}
+          )}
+        </footer>
       </section>
     </div>
   )
