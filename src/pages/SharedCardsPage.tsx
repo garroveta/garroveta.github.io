@@ -10,7 +10,6 @@ import {
 import { useMemo, useState } from 'react'
 
 import { CardImagePreview } from '../components/CardImagePreview'
-import { MarketplaceListingAction } from '../components/MarketplaceListingAction'
 import { MarketplaceListingGallery } from '../components/MarketplaceListingGallery'
 import { MarketplaceListingTable } from '../components/MarketplaceListingTable'
 import { MarketplaceReservationSheet } from '../components/MarketplaceReservationSheet'
@@ -267,20 +266,13 @@ export function SharedCardsPage({
           <MarketplaceListingTable
             ariaLabel={`Cartas disponibles de ${seller.displayName}`}
             items={filteredListings}
+            onOpen={(item) => setSelectedListingId(item.listing.id)}
             onPreview={(item) =>
               setSelectedCardPreview({
                 card: item.card,
                 description: `${item.card.setName} · Disponible por ${seller.displayName}`,
               })
             }
-            renderAction={(item) => (
-              <MarketplaceListingAction
-                currentMemberId={currentMember.id}
-                item={item}
-                ownerMode="status"
-                onOpen={() => setSelectedListingId(item.listing.id)}
-              />
-            )}
           />
         ) : (
           <MarketplaceListingGallery

@@ -3357,7 +3357,11 @@ a {
 
 .market-gallery-card__actions--single {
   grid-template-columns: minmax(0, 1fr);
-  justify-items: end;
+}
+
+.market-gallery-card__actions--single .market-listing-action {
+  width: 100%;
+  min-height: 1.75rem;
 }
 
 .market-gallery-card .market-listing-action {
@@ -3496,6 +3500,20 @@ a {
 .market-gallery--4 .market-listing-action span,
 .market-gallery--4 .market-listing-action__status span {
   display: none;
+}
+
+.market-gallery--4
+  .market-gallery-card__actions--single
+  .market-listing-action {
+  width: 100%;
+  min-height: 1.5rem;
+}
+
+.market-gallery--4
+  .market-gallery-card__actions--single
+  .market-listing-action
+  span {
+  display: inline;
 }
 
 .market-gallery--4 .market-gallery-card__member strong {
