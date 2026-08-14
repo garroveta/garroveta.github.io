@@ -232,62 +232,81 @@ export function SharedCardsPage({
               ) : (
                 <span className="card-set-symbol">{card.setCode}</span>
               )}
-              <div>
+              <div className="shared-card-row__body">
                 <h3>{card.name}</h3>
                 <p>
-                  {card.setCode} #{card.collectorNumber} ·{' '}
-                  {languageLabels[listing.language]} ·{' '}
-                  {conditionLabels[listing.condition]}
+                  {card.setName} · {card.setCode} #{card.collectorNumber}
                 </p>
+                <dl className="shared-card-row__facts">
+                  <div>
+                    <dt>Cantidad</dt>
+                    <dd>{listing.quantity}</dd>
+                  </div>
+                  <div>
+                    <dt>Precio</dt>
+                    <dd>
+                      {listing.priceEur
+                        ? `${listing.priceEur.toFixed(2)} €`
+                        : 'A convenir'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Idioma</dt>
+                    <dd>{languageLabels[listing.language]}</dd>
+                  </div>
+                  <div>
+                    <dt>Estado</dt>
+                    <dd>{conditionLabels[listing.condition]}</dd>
+                  </div>
+                </dl>
               </div>
-              <strong>
-                {listing.priceEur ? `${listing.priceEur.toFixed(2)} €` : '—'}
-              </strong>
-              {isOwner ? (
-                <span
-                  className={`listing-status listing-status--${listing.status}`}
-                >
-                  {listing.status === 'reserved' ? 'Reservada' : 'Disponible'}
-                </span>
-              ) : listing.status === 'available' ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onDataChange((currentData) =>
-                      reserveMarketplaceListing(
-                        currentData,
-                        listing.id,
-                        currentMember.id,
-                      ),
-                    )
-                    setMessage(`${card.name} se ha reservado a tu nombre.`)
-                  }}
-                >
-                  Reservar
-                </button>
-              ) : reservedByCurrentMember ? (
-                <button
-                  className="shared-card-cancel"
-                  type="button"
-                  onClick={() => {
-                    onDataChange((currentData) =>
-                      cancelMarketplaceReservation(
-                        currentData,
-                        listing.id,
-                        currentMember.id,
-                      ),
-                    )
-                    setMessage(`La reserva de ${card.name} se ha cancelado.`)
-                  }}
-                >
-                  <X aria-hidden="true" size={14} /> Cancelar reserva
-                </button>
-              ) : (
-                <span className="shared-card-reserved">
-                  <CheckCircle2 aria-hidden="true" size={14} />
-                  Reservada
-                </span>
-              )}
+              <div className="shared-card-row__actions">
+                {isOwner ? (
+                  <span
+                    className={`listing-status listing-status--${listing.status}`}
+                  >
+                    {listing.status === 'reserved' ? 'Reservada' : 'Disponible'}
+                  </span>
+                ) : listing.status === 'available' ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onDataChange((currentData) =>
+                        reserveMarketplaceListing(
+                          currentData,
+                          listing.id,
+                          currentMember.id,
+                        ),
+                      )
+                      setMessage(`${card.name} se ha reservado a tu nombre.`)
+                    }}
+                  >
+                    Reservar
+                  </button>
+                ) : reservedByCurrentMember ? (
+                  <button
+                    className="shared-card-cancel"
+                    type="button"
+                    onClick={() => {
+                      onDataChange((currentData) =>
+                        cancelMarketplaceReservation(
+                          currentData,
+                          listing.id,
+                          currentMember.id,
+                        ),
+                      )
+                      setMessage(`La reserva de ${card.name} se ha cancelado.`)
+                    }}
+                  >
+                    <X aria-hidden="true" size={14} /> Cancelar reserva
+                  </button>
+                ) : (
+                  <span className="shared-card-reserved">
+                    <CheckCircle2 aria-hidden="true" size={14} />
+                    Reservada
+                  </span>
+                )}
+              </div>
             </article>
           )
         })}

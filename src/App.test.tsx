@@ -1358,6 +1358,21 @@ describe('App', () => {
 
     const reserveButton = screen.getAllByRole('button', { name: 'Reservar' })[0]
     const reservedCard = reserveButton.closest('article')
+    expect(
+      within(reservedCard as HTMLElement).getByText('Cantidad'),
+    ).toBeInTheDocument()
+    expect(
+      within(reservedCard as HTMLElement).getByText('2'),
+    ).toBeInTheDocument()
+    expect(
+      within(reservedCard as HTMLElement).getByText('2.50 €'),
+    ).toBeInTheDocument()
+    expect(
+      within(reservedCard as HTMLElement).getByText('Inglés'),
+    ).toBeInTheDocument()
+    expect(
+      within(reservedCard as HTMLElement).getByText('Excellent'),
+    ).toBeInTheDocument()
     fireEvent.click(reserveButton)
 
     expect(
