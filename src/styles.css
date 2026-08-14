@@ -6259,6 +6259,12 @@ a {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .market-table__member {
+    justify-self: start;
+    margin-left: 0;
+    text-align: left;
+  }
+
   .market-table__wide {
     display: table-cell;
   }
