@@ -662,14 +662,42 @@ describe('App', () => {
     expect(
       within(marketplaceTable).getAllByText('Diego Sánchez'),
     ).not.toHaveLength(0)
-    expect(screen.getByText('1–20 de 159')).toBeInTheDocument()
+    const hideOwnListings = screen.getByRole('checkbox', {
+      name: 'Ocultar mis cartas',
+    })
+    expect(hideOwnListings).toBeChecked()
+    expect(screen.getByText('1–20 de 149')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }))
-    expect(screen.getByText('21–40 de 159')).toBeInTheDocument()
+    expect(screen.getByText('21–40 de 149')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Anterior' }))
-    expect(screen.getByText('1–20 de 159')).toBeInTheDocument()
+    expect(screen.getByText('1–20 de 149')).toBeInTheDocument()
+
+    fireEvent.change(
+      screen.getByRole('searchbox', {
+        name: 'Buscar una carta o miembro',
+      }),
+      { target: { value: 'Álex Romero' } },
+    )
+    expect(screen.getByText('0 resultados')).toBeInTheDocument()
+    fireEvent.click(hideOwnListings)
+    expect(hideOwnListings).not.toBeChecked()
+    expect(screen.getByText('10 resultados')).toBeInTheDocument()
+    expect(
+      screen.getAllByRole('button', { name: /Ver cartas de Álex Romero/ }),
+    ).not.toHaveLength(0)
+    fireEvent.change(
+      screen.getByRole('searchbox', {
+        name: 'Buscar una carta o miembro',
+      }),
+      { target: { value: '' } },
+    )
 
     fireEvent.click(
-      within(marketplaceTable).getAllByRole('button', {
+      within(
+        screen.getByRole('table', {
+          name: 'Ofertas de cartas disponibles',
+        }),
+      ).getAllByRole('button', {
         name: 'Ver cartas de Marta Soler',
       })[0],
     )
@@ -828,6 +856,12 @@ describe('App', () => {
     expect(
       screen.getByText('Tu carta ya aparece en las ofertas.'),
     ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('row', { name: /Esper Sentinel/ }),
+    ).not.toBeInTheDocument()
+    fireEvent.click(
+      screen.getByRole('checkbox', { name: 'Ocultar mis cartas' }),
+    )
     const publishedListing = screen.getByRole('row', {
       name: /Esper Sentinel/,
     })
@@ -855,7 +889,7 @@ describe('App', () => {
     expect(screen.getAllByRole('img')[0].getAttribute('src')).toContain(
       'https://cards.scryfall.io/large/',
     )
-    expect(screen.getByText('1–12 de 159')).toBeInTheDocument()
+    expect(screen.getByText('1–12 de 149')).toBeInTheDocument()
 
     const martaGalleryCard = screen
       .getByRole('button', {
@@ -875,7 +909,7 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '4 por fila' }))
     expect(screen.getAllByRole('img')).toHaveLength(20)
-    expect(screen.getByText('1–20 de 159')).toBeInTheDocument()
+    expect(screen.getByText('1–20 de 149')).toBeInTheDocument()
     expect(screen.getAllByLabelText('Cantidad 2').length).toBeGreaterThan(0)
 
     fireEvent.click(
@@ -893,7 +927,7 @@ describe('App', () => {
     expect(
       screen.getByRole('table', { name: 'Ofertas de cartas disponibles' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('1–20 de 159')).toBeInTheDocument()
+    expect(screen.getByText('1–20 de 149')).toBeInTheDocument()
 
     const firstTableRow = screen.getAllByRole('row')[1]
     fireEvent.click(

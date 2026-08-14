@@ -2230,6 +2230,7 @@ export function CardsPage({
     useState<string>()
   const [actionMessage, setActionMessage] = useState('')
   const [query, setQuery] = useState('')
+  const [hideOwnListings, setHideOwnListings] = useState(true)
   const listings = getMarketplaceListings(data)
   const selectedMarketplaceItem = useMemo<
     MarketplaceListingItem | undefined
@@ -2313,12 +2314,15 @@ export function CardsPage({
     () =>
       listings.filter(
         ({ card, member }) =>
-          !normalizedQuery ||
-          card.name.toLocaleLowerCase('es').includes(normalizedQuery) ||
-          card.setName.toLocaleLowerCase('es').includes(normalizedQuery) ||
-          member.displayName.toLocaleLowerCase('es').includes(normalizedQuery),
+          (!hideOwnListings || member.id !== currentMember.id) &&
+          (!normalizedQuery ||
+            card.name.toLocaleLowerCase('es').includes(normalizedQuery) ||
+            card.setName.toLocaleLowerCase('es').includes(normalizedQuery) ||
+            member.displayName
+              .toLocaleLowerCase('es')
+              .includes(normalizedQuery)),
       ),
-    [listings, normalizedQuery],
+    [currentMember.id, hideOwnListings, listings, normalizedQuery],
   )
   const marketPageSize =
     marketDisplay === 'table'
@@ -2627,6 +2631,18 @@ export function CardsPage({
                 setMarketPage(1)
               }}
             />
+          </label>
+
+          <label className="market-own-listings-filter">
+            <input
+              checked={hideOwnListings}
+              type="checkbox"
+              onChange={(event) => {
+                setHideOwnListings(event.target.checked)
+                setMarketPage(1)
+              }}
+            />
+            Ocultar mis cartas
           </label>
 
           <div
