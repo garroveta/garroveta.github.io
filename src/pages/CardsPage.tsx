@@ -27,6 +27,8 @@ import {
 import type { ChangeEvent, FormEvent } from 'react'
 import { useMemo, useState } from 'react'
 
+import { CardImagePreview } from '../components/CardImagePreview'
+import { MarketplaceListingGallery } from '../components/MarketplaceListingGallery'
 import { MarketplaceReservationSheet } from '../components/MarketplaceReservationSheet'
 import { MarketplaceListingTable } from '../components/MarketplaceListingTable'
 import {
@@ -114,189 +116,6 @@ const listingStatusLabels: Record<MarketplaceListing['status'], string> = {
   available: 'Publicada',
   reserved: 'Con reserva',
   completed: 'Retirada',
-}
-
-function MarketplaceGallery({
-  items,
-  columns,
-  currentMemberId,
-  onOpen,
-  onMemberSelect,
-  onPreview,
-}: {
-  items: MarketplaceListingItem[]
-  columns: 2 | 4
-  currentMemberId: string
-  onOpen: (item: MarketplaceListingItem) => void
-  onMemberSelect: (memberId: string) => void
-  onPreview: (item: MarketplaceListingItem) => void
-}) {
-  return (
-    <div
-      className={`market-gallery market-gallery--${columns}`}
-      aria-label="Galería de ofertas"
-    >
-      {items.map((item) => {
-        const imageUrl = getScryfallCardImage(
-          item.card.name,
-          item.card.imageUri,
-        )
-
-        return (
-          <article
-            className="market-gallery-card"
-            key={item.listing.id}
-            tabIndex={0}
-            aria-label={`Abrir oferta de ${item.card.name} de ${item.member.displayName}`}
-            onClick={(event) => {
-              if ((event.target as HTMLElement).closest('button')) {
-                return
-              }
-              onOpen(item)
-            }}
-            onKeyDown={(event) => {
-              if (
-                event.target === event.currentTarget &&
-                (event.key === 'Enter' || event.key === ' ')
-              ) {
-                event.preventDefault()
-                onOpen(item)
-              }
-            }}
-          >
-            <button
-              className="market-gallery-card__image"
-              type="button"
-              aria-label={`Ampliar ${item.card.name}`}
-              onClick={() => onPreview(item)}
-            >
-              {imageUrl ? (
-                <img
-                  src={imageUrl}
-                  alt={`${item.card.name}, imagen de Scryfall`}
-                  loading="lazy"
-                  decoding="async"
-                />
-              ) : (
-                <span>{item.card.setCode}</span>
-              )}
-            </button>
-            <span
-              className="market-gallery-card__quantity"
-              aria-label={`Cantidad ${item.listing.quantity}`}
-            >
-              ×{item.listing.quantity}
-            </span>
-            <div className="market-gallery-card__content">
-              <div>
-                <h3>{item.card.name}</h3>
-                <p>
-                  {item.card.setName} · #{item.card.collectorNumber}
-                  {item.listing.finish === 'foil' ? ' · Foil' : ''}
-                </p>
-              </div>
-              <dl>
-                <div>
-                  <dt>Idioma</dt>
-                  <dd>{languageLabels[item.listing.language]}</dd>
-                </div>
-                <div>
-                  <dt>Estado</dt>
-                  <dd>{conditionLabels[item.listing.condition]}</dd>
-                </div>
-                <div>
-                  <dt>Cantidad</dt>
-                  <dd>{item.listing.quantity}</dd>
-                </div>
-                <div>
-                  <dt>Precio</dt>
-                  <dd>
-                    {item.listing.priceEur
-                      ? `${item.listing.priceEur.toFixed(2)} €`
-                      : 'A convenir'}
-                  </dd>
-                </div>
-              </dl>
-              <div className="market-gallery-card__actions">
-                <button
-                  className="market-gallery-card__member"
-                  type="button"
-                  onClick={() => onMemberSelect(item.member.id)}
-                >
-                  <span className="member-initials" aria-hidden="true">
-                    {item.member.initials}
-                  </span>
-                  <span>
-                    <small>Disponible por</small>
-                    <strong>{item.member.displayName}</strong>
-                  </span>
-                </button>
-                <button
-                  className="market-gallery-card__open"
-                  type="button"
-                  aria-label={`${item.member.id === currentMemberId ? 'Ver oferta de' : 'Reservar'} ${item.card.name} de ${item.member.displayName}`}
-                  onClick={() => onOpen(item)}
-                >
-                  {item.member.id === currentMemberId ? (
-                    <ChevronRight aria-hidden="true" size={13} />
-                  ) : (
-                    <ShoppingBag aria-hidden="true" size={12} />
-                  )}
-                  <span>
-                    {item.member.id === currentMemberId ? 'Ver' : 'Reservar'}
-                  </span>
-                </button>
-              </div>
-            </div>
-          </article>
-        )
-      })}
-    </div>
-  )
-}
-
-function CardImagePreview({
-  card,
-  description,
-  onClose,
-}: {
-  card: Card
-  description: string
-  onClose: () => void
-}) {
-  const imageUrl = getScryfallCardImage(card.name, card.imageUri)
-
-  return (
-    <div
-      className="card-image-preview"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="card-image-preview-title"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) {
-          onClose()
-        }
-      }}
-    >
-      <div className="card-image-preview__panel">
-        <button
-          className="card-image-preview__close"
-          type="button"
-          aria-label="Cerrar imagen"
-          onClick={onClose}
-        >
-          <X aria-hidden="true" size={20} />
-        </button>
-        {imageUrl ? (
-          <img src={imageUrl} alt={`${card.name}, imagen ampliada`} />
-        ) : null}
-        <div>
-          <h2 id="card-image-preview-title">{card.name}</h2>
-          <p>{description}</p>
-        </div>
-      </div>
-    </div>
-  )
 }
 
 function WantedCardRow({
@@ -2583,7 +2402,8 @@ export function CardsPage({
                 }
               />
             ) : (
-              <MarketplaceGallery
+              <MarketplaceListingGallery
+                ariaLabel="Galería de ofertas"
                 items={visibleListings}
                 columns={marketGalleryColumns}
                 currentMemberId={currentMember.id}

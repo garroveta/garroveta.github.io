@@ -2754,7 +2754,7 @@ a {
   cursor: pointer;
 }
 
-.market-table__action > .shared-card-cancel {
+.market-table__action > .market-listing-action--cancel {
   color: #884b47;
   border: 1px solid #e1c8c5;
   background: #fff7f6;
@@ -2764,6 +2764,11 @@ a {
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.market-table__action .market-listing-action > span,
+.market-table__action .market-listing-action__status > span {
+  display: none;
 }
 
 .market-table__row-action {
@@ -3350,7 +3355,12 @@ a {
   margin-top: auto;
 }
 
-.market-gallery-card__open {
+.market-gallery-card__actions--single {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: end;
+}
+
+.market-gallery-card .market-listing-action {
   display: inline-flex;
   min-width: 2.2rem;
   align-items: center;
@@ -3367,9 +3377,25 @@ a {
   cursor: pointer;
 }
 
-.market-gallery-card__open:focus-visible {
+.market-gallery-card .market-listing-action--cancel {
+  color: #884b47;
+  border: 1px solid #e1c8c5;
+  background: #fff7f6;
+}
+
+.market-gallery-card .market-listing-action:focus-visible {
   outline: 3px solid rgb(101 50 120 / 30%);
   outline-offset: 2px;
+}
+
+.market-listing-action__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.18rem;
+  color: #64706a;
+  font-size: 0.48rem;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .market-gallery-card__member .member-initials {
@@ -3460,14 +3486,15 @@ a {
   gap: 0.1rem;
 }
 
-.market-gallery--4 .market-gallery-card__open {
+.market-gallery--4 .market-listing-action {
   min-width: 1.3rem;
   min-height: 1.3rem;
   padding: 0;
   border-radius: 0.38rem;
 }
 
-.market-gallery--4 .market-gallery-card__open span {
+.market-gallery--4 .market-listing-action span,
+.market-gallery--4 .market-listing-action__status span {
   display: none;
 }
 
@@ -4438,16 +4465,6 @@ a {
 .shared-cards-heading span {
   color: #8b818d;
   font-size: 0.6rem;
-}
-
-.shared-card-reserved {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  color: #64706a;
-  font-size: 0.54rem;
-  font-weight: 800;
-  white-space: nowrap;
 }
 
 @media (max-width: 520px) {

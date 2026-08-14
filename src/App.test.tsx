@@ -1476,7 +1476,20 @@ describe('App', () => {
       target: { value: '' },
     })
 
-    const reserveButton = screen.getAllByRole('button', { name: 'Reservar' })[0]
+    fireEvent.click(screen.getByRole('button', { name: 'Imágenes' }))
+    expect(
+      screen.getByLabelText('Galería de cartas de Marta Soler'),
+    ).toBeInTheDocument()
+    expect(
+      screen
+        .getAllByRole('button', { name: /^Reservar .+ de Marta Soler$/ })[0]
+        .querySelector('svg'),
+    ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Tabla' }))
+
+    const reserveButton = screen.getAllByRole('button', {
+      name: /^Reservar .+ de Marta Soler$/,
+    })[0]
     expect(reserveButton.querySelector('svg')).toBeInTheDocument()
     const reservedCard = reserveButton.closest('tr')
     expect(
@@ -1536,7 +1549,7 @@ describe('App', () => {
     )
     expect(
       within(reservedCard as HTMLElement).getByRole('button', {
-        name: 'Reservar',
+        name: /^Reservar .+ de Marta Soler$/,
       }),
     ).toBeInTheDocument()
     expect(
@@ -1554,12 +1567,12 @@ describe('App', () => {
     render(<App />)
 
     const reservedCard = screen
-      .getAllByRole('button', { name: 'Reservar' })[0]
+      .getAllByRole('button', { name: /^Reservar .+ de Marta Soler$/ })[0]
       .closest('tr')
     const cardName = reservedCard?.querySelector('strong')?.textContent
     fireEvent.click(
       within(reservedCard as HTMLElement).getByRole('button', {
-        name: 'Reservar',
+        name: /^Reservar .+ de Marta Soler$/,
       }),
     )
     const memberOfferDialog = screen.getByRole('dialog', {
@@ -1575,7 +1588,7 @@ describe('App', () => {
     )
     expect(
       screen
-        .getByRole('button', { name: 'Cancelar reserva' })
+        .getByRole('button', { name: /^Cancelar reserva de / })
         .querySelector('svg'),
     ).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Volver a las cartas' }))

@@ -1,15 +1,17 @@
 import {
   ArrowLeft,
-  CheckCircle2,
   Copy,
+  LayoutGrid,
   Search,
   Share2,
-  ShoppingBag,
   SlidersHorizontal,
-  X,
+  Table2,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
+import { CardImagePreview } from '../components/CardImagePreview'
+import { MarketplaceListingAction } from '../components/MarketplaceListingAction'
+import { MarketplaceListingGallery } from '../components/MarketplaceListingGallery'
 import { MarketplaceListingTable } from '../components/MarketplaceListingTable'
 import { MarketplaceReservationSheet } from '../components/MarketplaceReservationSheet'
 import {
@@ -22,7 +24,7 @@ import {
 } from '../data/cardPresentation'
 import { getMemberSharedListings } from '../data/cardSelectors'
 import type { DemoDataUpdater } from '../data/demoRepository'
-import type { CommunityMember, DemoDataSet } from '../domain/types'
+import type { Card, CommunityMember, DemoDataSet } from '../domain/types'
 
 type SharedCardsPageProps = {
   data: DemoDataSet
@@ -51,8 +53,14 @@ export function SharedCardsPage({
   const [setCode, setSetCode] = useState(initialSetCode)
   const [language, setLanguage] = useState(initialLanguage)
   const [condition, setCondition] = useState(initialCondition)
+  const [display, setDisplay] = useState<'table' | 'gallery'>('table')
+  const [galleryColumns, setGalleryColumns] = useState<2 | 4>(2)
   const [message, setMessage] = useState('')
   const [selectedListingId, setSelectedListingId] = useState<string>()
+  const [selectedCardPreview, setSelectedCardPreview] = useState<{
+    card: Card
+    description: string
+  }>()
   const setOptions = useMemo(
     () =>
       [
@@ -207,49 +215,89 @@ export function SharedCardsPage({
         <span>{filteredListings.length} resultados</span>
       </div>
 
-      {filteredListings.length > 0 ? (
-        <MarketplaceListingTable
-          ariaLabel={`Cartas disponibles de ${seller.displayName}`}
-          items={filteredListings}
-          renderAction={(item) => {
-            const { listing } = item
-            const reservedByCurrentMember =
-              listing.reservedByMemberId === currentMember.id
+      <div
+        className="market-display-switch"
+        role="group"
+        aria-label="Vista de las cartas del miembro"
+      >
+        <button
+          type="button"
+          aria-pressed={display === 'table'}
+          onClick={() => setDisplay('table')}
+        >
+          <Table2 aria-hidden="true" size={16} />
+          Tabla
+        </button>
+        <button
+          type="button"
+          aria-pressed={display === 'gallery'}
+          onClick={() => setDisplay('gallery')}
+        >
+          <LayoutGrid aria-hidden="true" size={16} />
+          Imágenes
+        </button>
+      </div>
 
-            return isOwner ? (
-              <span
-                className={`listing-status listing-status--${listing.status}`}
-              >
-                {listing.status === 'reserved' ? 'Reservada' : 'Disponible'}
-              </span>
-            ) : listing.status === 'available' ? (
-              <button
-                aria-label="Reservar"
-                className="shared-card-reserve"
-                title="Reservar"
-                type="button"
-                onClick={() => setSelectedListingId(listing.id)}
-              >
-                <ShoppingBag aria-hidden="true" size={14} />
-              </button>
-            ) : reservedByCurrentMember ? (
-              <button
-                aria-label="Cancelar reserva"
-                className="shared-card-cancel"
-                title="Cancelar reserva"
-                type="button"
-                onClick={() => setSelectedListingId(listing.id)}
-              >
-                <X aria-hidden="true" size={14} />
-              </button>
-            ) : (
-              <span className="shared-card-reserved">
-                <CheckCircle2 aria-hidden="true" size={14} />
-                Reservada
-              </span>
-            )
-          }}
-        />
+      {display === 'gallery' ? (
+        <div
+          className="market-gallery-density"
+          role="group"
+          aria-label="Cartas por línea"
+        >
+          <span>Densidad</span>
+          <button
+            type="button"
+            aria-pressed={galleryColumns === 2}
+            onClick={() => setGalleryColumns(2)}
+          >
+            2 por fila
+          </button>
+          <button
+            type="button"
+            aria-pressed={galleryColumns === 4}
+            onClick={() => setGalleryColumns(4)}
+          >
+            4 por fila
+          </button>
+        </div>
+      ) : null}
+
+      {filteredListings.length > 0 ? (
+        display === 'table' ? (
+          <MarketplaceListingTable
+            ariaLabel={`Cartas disponibles de ${seller.displayName}`}
+            items={filteredListings}
+            onPreview={(item) =>
+              setSelectedCardPreview({
+                card: item.card,
+                description: `${item.card.setName} · Disponible por ${seller.displayName}`,
+              })
+            }
+            renderAction={(item) => (
+              <MarketplaceListingAction
+                currentMemberId={currentMember.id}
+                item={item}
+                ownerMode="status"
+                onOpen={() => setSelectedListingId(item.listing.id)}
+              />
+            )}
+          />
+        ) : (
+          <MarketplaceListingGallery
+            ariaLabel={`Galería de cartas de ${seller.displayName}`}
+            columns={galleryColumns}
+            currentMemberId={currentMember.id}
+            items={filteredListings}
+            ownerMode="status"
+            onOpen={(item) => setSelectedListingId(item.listing.id)}
+            onPreview={(item) =>
+              setSelectedCardPreview({
+                card: item.card,
+                description: `${item.card.setName} · Disponible por ${seller.displayName}`,
+              })
+            }
+          />
+        )
       ) : null}
 
       {filteredListings.length === 0 ? (
@@ -295,6 +343,13 @@ export function SharedCardsPage({
                 : `La reserva de ${selectedListing.card.name} se ha cancelado.`,
             )
           }}
+        />
+      ) : null}
+      {selectedCardPreview ? (
+        <CardImagePreview
+          card={selectedCardPreview.card}
+          description={selectedCardPreview.description}
+          onClose={() => setSelectedCardPreview(undefined)}
         />
       ) : null}
     </div>
