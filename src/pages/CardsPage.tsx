@@ -444,11 +444,15 @@ function MarketplaceReservationSheet({
 function MarketplaceGallery({
   items,
   columns,
+  currentMemberId,
+  onOpen,
   onMemberSelect,
   onPreview,
 }: {
   items: MarketplaceListingItem[]
   columns: 2 | 4
+  currentMemberId: string
+  onOpen: (item: MarketplaceListingItem) => void
   onMemberSelect: (memberId: string) => void
   onPreview: (item: MarketplaceListingItem) => void
 }) {
@@ -464,7 +468,27 @@ function MarketplaceGallery({
         )
 
         return (
-          <article className="market-gallery-card" key={item.listing.id}>
+          <article
+            className="market-gallery-card"
+            key={item.listing.id}
+            tabIndex={0}
+            aria-label={`Abrir oferta de ${item.card.name} de ${item.member.displayName}`}
+            onClick={(event) => {
+              if ((event.target as HTMLElement).closest('button')) {
+                return
+              }
+              onOpen(item)
+            }}
+            onKeyDown={(event) => {
+              if (
+                event.target === event.currentTarget &&
+                (event.key === 'Enter' || event.key === ' ')
+              ) {
+                event.preventDefault()
+                onOpen(item)
+              }
+            }}
+          >
             <button
               className="market-gallery-card__image"
               type="button"
@@ -508,19 +532,36 @@ function MarketplaceGallery({
                   </dd>
                 </div>
               </dl>
-              <button
-                className="market-gallery-card__member"
-                type="button"
-                onClick={() => onMemberSelect(item.member.id)}
-              >
-                <span className="member-initials" aria-hidden="true">
-                  {item.member.initials}
-                </span>
-                <span>
-                  <small>Disponible por</small>
-                  <strong>{item.member.displayName}</strong>
-                </span>
-              </button>
+              <div className="market-gallery-card__actions">
+                <button
+                  className="market-gallery-card__member"
+                  type="button"
+                  onClick={() => onMemberSelect(item.member.id)}
+                >
+                  <span className="member-initials" aria-hidden="true">
+                    {item.member.initials}
+                  </span>
+                  <span>
+                    <small>Disponible por</small>
+                    <strong>{item.member.displayName}</strong>
+                  </span>
+                </button>
+                <button
+                  className="market-gallery-card__open"
+                  type="button"
+                  aria-label={`${item.member.id === currentMemberId ? 'Ver oferta de' : 'Reservar'} ${item.card.name} de ${item.member.displayName}`}
+                  onClick={() => onOpen(item)}
+                >
+                  {item.member.id === currentMemberId ? (
+                    <ChevronRight aria-hidden="true" size={13} />
+                  ) : (
+                    <ShoppingBag aria-hidden="true" size={12} />
+                  )}
+                  <span>
+                    {item.member.id === currentMemberId ? 'Ver' : 'Reservar'}
+                  </span>
+                </button>
+              </div>
             </div>
           </article>
         )
@@ -2850,6 +2891,10 @@ export function CardsPage({
               <MarketplaceGallery
                 items={visibleListings}
                 columns={marketGalleryColumns}
+                currentMemberId={currentMember.id}
+                onOpen={(item) =>
+                  setSelectedMarketplaceListingId(item.listing.id)
+                }
                 onMemberSelect={(memberId) => {
                   window.location.hash = `cartas?member=${memberId}`
                 }}

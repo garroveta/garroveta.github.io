@@ -816,6 +816,14 @@ describe('App', () => {
     )
     expect(screen.getByText('1–12 de 159')).toBeInTheDocument()
 
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Reservar Sol Ring de Marta Soler',
+      }),
+    )
+    expect(screen.getByRole('dialog', { name: 'Sol Ring' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar oferta' }))
+
     fireEvent.click(screen.getByRole('button', { name: '4 por fila' }))
     expect(screen.getAllByRole('img')).toHaveLength(20)
     expect(screen.getByText('1–20 de 159')).toBeInTheDocument()
