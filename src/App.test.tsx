@@ -707,14 +707,14 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Cartas buscadas' }),
     ).toBeInTheDocument()
+    expect(screen.getAllByRole('heading', { name: 'Sol Ring' })).toHaveLength(3)
     expect(
-      screen.getByRole('heading', { name: 'Sol Ring' }),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('heading', { name: 'The One Ring' }),
-    ).toBeInTheDocument()
+      screen.getAllByRole('heading', { name: 'The One Ring' }),
+    ).toHaveLength(2)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ampliar Sol Ring' }))
+    fireEvent.click(
+      screen.getAllByRole('button', { name: 'Ampliar Sol Ring' })[0],
+    )
     expect(screen.getByRole('dialog')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar imagen' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
@@ -928,9 +928,13 @@ describe('App', () => {
       'Cantidad buscada de Rhystic Study',
     )
     fireEvent.change(rhysticQuantity, { target: { value: '4' } })
-    fireEvent.click(screen.getByLabelText('Inglés para Rhystic Study'))
-    fireEvent.click(screen.getByLabelText('No foil para Rhystic Study'))
-    fireEvent.click(screen.getByLabelText('Foil para Rhystic Study'))
+    fireEvent.change(
+      await screen.findByLabelText('Idioma para Rhystic Study'),
+      { target: { value: 'en' } },
+    )
+    fireEvent.change(screen.getByLabelText('Acabado para Rhystic Study'), {
+      target: { value: 'foil' },
+    })
     fireEvent.click(
       await screen.findByRole('button', { name: 'Importar búsquedas' }),
     )
@@ -953,7 +957,7 @@ describe('App', () => {
       storedWantedCards.filter(
         ({ memberId }) => memberId === demoData.currentMemberId,
       ),
-    ).toHaveLength(5)
+    ).toHaveLength(9)
     expect(
       storedWantedCards.find(
         ({ memberId, cardId }) =>
@@ -962,7 +966,7 @@ describe('App', () => {
       ),
     ).toMatchObject({
       quantity: 4,
-      acceptedLanguages: ['es'],
+      acceptedLanguages: ['en'],
       acceptedFinishes: ['foil'],
     })
   })
@@ -1076,6 +1080,10 @@ describe('App', () => {
       target: { value: 'Rhystic Study' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Analizar lista' }))
+    fireEvent.change(
+      await screen.findByLabelText('Idioma para Rhystic Study'),
+      { target: { value: 'en' } },
+    )
     fireEvent.click(
       await screen.findByRole('button', { name: 'Importar búsquedas' }),
     )
@@ -1227,7 +1235,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: /Mis listas/ }))
 
     const wantedSolRing = screen
-      .getByRole('heading', { name: 'Sol Ring' })
+      .getAllByRole('heading', { name: 'Sol Ring' })[0]
       .closest('article')
     fireEvent.click(
       within(wantedSolRing as HTMLElement).getByRole('button', {
@@ -1280,7 +1288,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: /Mis listas/ }))
 
     const wantedSolRing = screen
-      .getByRole('heading', { name: 'Sol Ring' })
+      .getAllByRole('heading', { name: 'Sol Ring' })[0]
       .closest('article') as HTMLElement
     fireEvent.click(wantedSolRing.querySelector('summary')!)
     fireEvent.change(
@@ -1289,14 +1297,13 @@ describe('App', () => {
       ),
       { target: { value: '4' } },
     )
-    fireEvent.click(
-      within(wantedSolRing).getByLabelText('Editar Inglés para Sol Ring'),
+    fireEvent.change(
+      within(wantedSolRing).getByLabelText('Editar idioma de Sol Ring'),
+      { target: { value: 'fr' } },
     )
-    fireEvent.click(
-      within(wantedSolRing).getByLabelText('Editar No foil para Sol Ring'),
-    )
-    fireEvent.click(
-      within(wantedSolRing).getByLabelText('Editar Foil para Sol Ring'),
+    fireEvent.change(
+      within(wantedSolRing).getByLabelText('Editar acabado de Sol Ring'),
+      { target: { value: 'foil' } },
     )
     fireEvent.click(
       within(wantedSolRing).getByRole('button', {
@@ -1305,7 +1312,7 @@ describe('App', () => {
     )
 
     expect(
-      within(wantedSolRing).getByText('4 buscadas · Español'),
+      within(wantedSolRing).getByText('4 buscadas · Francés · Foil'),
     ).toBeVisible()
     expect(screen.getByText('La búsqueda se ha actualizado.')).toBeVisible()
 
@@ -1355,7 +1362,7 @@ describe('App', () => {
       storedData.wantedCards.find(({ id }) => id === 'wanted-alex-sol-ring'),
     ).toMatchObject({
       quantity: 4,
-      acceptedLanguages: ['es'],
+      acceptedLanguages: ['fr'],
       acceptedFinishes: ['foil'],
     })
     expect(storedData.listings.at(-1)).toMatchObject({
@@ -1402,8 +1409,8 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Pauper' }))
     expect(
-      screen.getByRole('heading', { name: 'Cyclonic Rift' }),
-    ).toBeInTheDocument()
+      screen.getAllByRole('heading', { name: 'Cyclonic Rift' }),
+    ).toHaveLength(2)
     expect(
       screen.queryByRole('heading', { name: 'Sol Ring' }),
     ).not.toBeInTheDocument()

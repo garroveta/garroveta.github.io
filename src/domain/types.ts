@@ -197,8 +197,10 @@ export type WantedCard = {
   /** Private organisation for the owner; never exposed in community views. */
   cardListId?: EntityId
   quantity: number
-  acceptedLanguages: CardLanguage[]
-  acceptedFinishes: Array<'nonfoil' | 'foil'>
+  /** One line represents one precise language variant. */
+  acceptedLanguages: [CardLanguage]
+  /** One line represents one precise finish variant. */
+  acceptedFinishes: ['nonfoil' | 'foil']
   oracleId?: string
   requestedScryfallId?: string
   matchAllPrintings?: boolean

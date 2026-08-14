@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { importWantedCards } from './cardMutations'
+import { applyResolvedWantedCardImport } from './cardMutations'
 import { synchronizeCardMatches } from './cardMatching'
 import { completeCardDeal } from './cardDeals'
 import { demoData } from './demoData'
@@ -13,10 +13,59 @@ describe('card matching', () => {
   })
 
   it('creates a new match after importing a compatible search', () => {
-    const importedData = importWantedCards(
+    const importedData = applyResolvedWantedCardImport(
       demoData,
       demoData.currentMemberId,
-      'Rhystic Study',
+      [
+        {
+          item: {
+            lineNumber: 1,
+            rawLine: 'Rhystic Study',
+            quantity: 1,
+            name: 'Rhystic Study',
+            section: 'main',
+          },
+          status: 'resolved',
+          card: {
+            scryfallId: 'rhystic-study-scryfall',
+            oracleId: 'rhystic-study-oracle',
+            name: 'Rhystic Study',
+            setCode: 'WOT',
+            setName: 'Wilds of Eldraine: Enchanting Tales',
+            collectorNumber: '25',
+          },
+        },
+      ],
+      'update',
+      ['main'],
+      true,
+      undefined,
+      undefined,
+      [
+        {
+          resolution: {
+            item: {
+              lineNumber: 1,
+              rawLine: 'Rhystic Study',
+              quantity: 1,
+              name: 'Rhystic Study',
+              section: 'main',
+            },
+            status: 'resolved',
+            card: {
+              scryfallId: 'rhystic-study-scryfall',
+              oracleId: 'rhystic-study-oracle',
+              name: 'Rhystic Study',
+              setCode: 'WOT',
+              setName: 'Wilds of Eldraine: Enchanting Tales',
+              collectorNumber: '25',
+            },
+          },
+          quantity: 1,
+          acceptedLanguages: ['en'],
+          acceptedFinishes: ['nonfoil'],
+        },
+      ],
     ).data
     const synchronizedData = synchronizeCardMatches(importedData)
     const newMatch = synchronizedData.cardMatches.find(

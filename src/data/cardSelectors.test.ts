@@ -26,7 +26,15 @@ describe('card selectors', () => {
       getMemberWantedCards(demoData, demoData.currentMemberId).map(
         ({ card }) => card.name,
       ),
-    ).toEqual(['Sol Ring', 'The One Ring', 'Cyclonic Rift'])
+    ).toEqual([
+      'Sol Ring',
+      'Sol Ring',
+      'Sol Ring',
+      'The One Ring',
+      'The One Ring',
+      'Cyclonic Rift',
+      'Cyclonic Rift',
+    ])
   })
 
   it('returns every listing owned by a member regardless of status', () => {

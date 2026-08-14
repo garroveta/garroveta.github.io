@@ -459,8 +459,8 @@ function WantedCardRow({
   lists: PersonalCardList[]
   onDetailsChange: (details: {
     quantity: number
-    acceptedLanguages: CardLanguage[]
-    acceptedFinishes: MarketplaceListing['finish'][]
+    acceptedLanguages: [CardLanguage]
+    acceptedFinishes: [MarketplaceListing['finish']]
   }) => void
   onPreview: () => void
   onListChange: (listId?: string) => void
@@ -468,11 +468,11 @@ function WantedCardRow({
 }) {
   const imageUrl = getScryfallCardImage(item.card.name, item.card.imageUri)
   const [draftQuantity, setDraftQuantity] = useState(item.wantedCard.quantity)
-  const [draftLanguages, setDraftLanguages] = useState(
-    item.wantedCard.acceptedLanguages,
+  const [draftLanguage, setDraftLanguage] = useState(
+    item.wantedCard.acceptedLanguages[0],
   )
-  const [draftFinishes, setDraftFinishes] = useState(
-    item.wantedCard.acceptedFinishes,
+  const [draftFinish, setDraftFinish] = useState(
+    item.wantedCard.acceptedFinishes[0],
   )
 
   return (
@@ -494,9 +494,8 @@ function WantedCardRow({
         <p>
           {item.wantedCard.quantity} buscada
           {item.wantedCard.quantity > 1 ? 's' : ''} ·{' '}
-          {item.wantedCard.acceptedLanguages
-            .map((language) => languageLabels[language])
-            .join(', ')}
+          {languageLabels[item.wantedCard.acceptedLanguages[0]]} ·{' '}
+          {item.wantedCard.acceptedFinishes[0] === 'foil' ? 'Foil' : 'No foil'}
         </p>
         {item.wantedCard.notes ? <small>{item.wantedCard.notes}</small> : null}
       </div>
@@ -540,64 +539,47 @@ function WantedCardRow({
                 }
               />
             </label>
-            <fieldset>
-              <legend>Idiomas</legend>
-              <div className="card-row-edit-checks">
+            <label>
+              <span>Idioma</span>
+              <select
+                aria-label={`Editar idioma de ${item.card.name}`}
+                value={draftLanguage}
+                onChange={(event) =>
+                  setDraftLanguage(event.target.value as CardLanguage)
+                }
+              >
                 {cardLanguages.map((language) => (
-                  <label key={language}>
-                    <input
-                      aria-label={`Editar ${languageLabels[language]} para ${item.card.name}`}
-                      checked={draftLanguages.includes(language)}
-                      type="checkbox"
-                      onChange={(event) =>
-                        setDraftLanguages((current) =>
-                          event.target.checked
-                            ? [...current, language]
-                            : current.filter((value) => value !== language),
-                        )
-                      }
-                    />
-                    {language.toUpperCase()}
-                  </label>
+                  <option key={language} value={language}>
+                    {languageLabels[language]}
+                  </option>
                 ))}
-              </div>
-            </fieldset>
-            <fieldset>
-              <legend>Acabado</legend>
-              <div className="card-row-edit-checks">
-                {(['nonfoil', 'foil'] as const).map((finish) => (
-                  <label key={finish}>
-                    <input
-                      aria-label={`Editar ${finish === 'foil' ? 'Foil' : 'No foil'} para ${item.card.name}`}
-                      checked={draftFinishes.includes(finish)}
-                      type="checkbox"
-                      onChange={(event) =>
-                        setDraftFinishes((current) =>
-                          event.target.checked
-                            ? [...current, finish]
-                            : current.filter((value) => value !== finish),
-                        )
-                      }
-                    />
-                    {finish === 'foil' ? 'Foil' : 'No foil'}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
+              </select>
+            </label>
+            <label>
+              <span>Acabado</span>
+              <select
+                aria-label={`Editar acabado de ${item.card.name}`}
+                value={draftFinish}
+                onChange={(event) =>
+                  setDraftFinish(
+                    event.target.value as MarketplaceListing['finish'],
+                  )
+                }
+              >
+                <option value="nonfoil">No foil</option>
+                <option value="foil">Foil</option>
+              </select>
+            </label>
           </div>
           <button
             className="card-row-save"
             type="button"
-            disabled={
-              draftQuantity < 1 ||
-              draftLanguages.length === 0 ||
-              draftFinishes.length === 0
-            }
+            disabled={draftQuantity < 1}
             onClick={() =>
               onDetailsChange({
                 quantity: draftQuantity,
-                acceptedLanguages: draftLanguages,
-                acceptedFinishes: draftFinishes,
+                acceptedLanguages: [draftLanguage],
+                acceptedFinishes: [draftFinish],
               })
             }
           >
@@ -1619,7 +1601,7 @@ function WantedImportComposer({
         resolved.map((resolution) => ({
           resolution,
           quantity: resolution.item.quantity,
-          acceptedLanguages: ['es', 'en'],
+          acceptedLanguages: ['es'],
           acceptedFinishes: ['nonfoil'],
         })),
       )
@@ -2043,77 +2025,58 @@ function WantedImportComposer({
                         }
                       />
                     </label>
-                    <fieldset>
-                      <legend>Idiomas</legend>
-                      <div>
+                    <label>
+                      <span>Idioma</span>
+                      <select
+                        aria-label={`Idioma para ${input.resolution.item.name}`}
+                        value={input.acceptedLanguages[0]}
+                        onChange={(event) =>
+                          setWantedInputs((current) =>
+                            current.map((candidate, candidateIndex) =>
+                              candidateIndex === index
+                                ? {
+                                    ...candidate,
+                                    acceptedLanguages: [
+                                      event.target.value as CardLanguage,
+                                    ],
+                                  }
+                                : candidate,
+                            ),
+                          )
+                        }
+                      >
                         {cardLanguages.map((language) => (
-                          <label key={language}>
-                            <input
-                              aria-label={`${languageLabels[language]} para ${input.resolution.item.name}`}
-                              checked={input.acceptedLanguages.includes(
-                                language,
-                              )}
-                              type="checkbox"
-                              onChange={(event) =>
-                                setWantedInputs((current) =>
-                                  current.map((candidate, candidateIndex) =>
-                                    candidateIndex === index
-                                      ? {
-                                          ...candidate,
-                                          acceptedLanguages: event.target
-                                            .checked
-                                            ? [
-                                                ...candidate.acceptedLanguages,
-                                                language,
-                                              ]
-                                            : candidate.acceptedLanguages.filter(
-                                                (value) => value !== language,
-                                              ),
-                                        }
-                                      : candidate,
-                                  ),
-                                )
-                              }
-                            />
-                            {language.toUpperCase()}
-                          </label>
+                          <option key={language} value={language}>
+                            {languageLabels[language]}
+                          </option>
                         ))}
-                      </div>
-                    </fieldset>
-                    <fieldset>
-                      <legend>Acabado</legend>
-                      <div>
-                        {(['nonfoil', 'foil'] as const).map((finish) => (
-                          <label key={finish}>
-                            <input
-                              aria-label={`${finish === 'foil' ? 'Foil' : 'No foil'} para ${input.resolution.item.name}`}
-                              checked={input.acceptedFinishes.includes(finish)}
-                              type="checkbox"
-                              onChange={(event) =>
-                                setWantedInputs((current) =>
-                                  current.map((candidate, candidateIndex) =>
-                                    candidateIndex === index
-                                      ? {
-                                          ...candidate,
-                                          acceptedFinishes: event.target.checked
-                                            ? [
-                                                ...candidate.acceptedFinishes,
-                                                finish,
-                                              ]
-                                            : candidate.acceptedFinishes.filter(
-                                                (value) => value !== finish,
-                                              ),
-                                        }
-                                      : candidate,
-                                  ),
-                                )
-                              }
-                            />
-                            {finish === 'foil' ? 'Foil' : 'No foil'}
-                          </label>
-                        ))}
-                      </div>
-                    </fieldset>
+                      </select>
+                    </label>
+                    <label>
+                      <span>Acabado</span>
+                      <select
+                        aria-label={`Acabado para ${input.resolution.item.name}`}
+                        value={input.acceptedFinishes[0]}
+                        onChange={(event) =>
+                          setWantedInputs((current) =>
+                            current.map((candidate, candidateIndex) =>
+                              candidateIndex === index
+                                ? {
+                                    ...candidate,
+                                    acceptedFinishes: [
+                                      event.target
+                                        .value as MarketplaceListing['finish'],
+                                    ],
+                                  }
+                                : candidate,
+                            ),
+                          )
+                        }
+                      >
+                        <option value="nonfoil">No foil</option>
+                        <option value="foil">Foil</option>
+                      </select>
+                    </label>
                   </div>
                 </div>
               ))}

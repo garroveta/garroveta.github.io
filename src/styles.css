@@ -3965,7 +3965,7 @@ a {
 }
 
 .card-row-edit-grid--wanted {
-  grid-template-columns: 0.6fr minmax(0, 1.5fr);
+  grid-template-columns: 0.55fr minmax(0, 1fr) minmax(0, 1fr);
 }
 
 .card-row-edit-grid fieldset {
@@ -4990,7 +4990,8 @@ a {
   font-weight: 800;
 }
 
-.wanted-import-row__fields > label > input {
+.wanted-import-row__fields > label > input,
+.wanted-import-row__fields > label > select {
   width: 100%;
   min-width: 0;
   min-height: 2rem;

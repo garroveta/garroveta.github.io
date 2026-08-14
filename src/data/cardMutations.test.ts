@@ -58,10 +58,7 @@ describe('card mutations', () => {
       result.data.cardMatches.find(
         ({ wantedCardId }) => wantedCardId === 'wanted-alex-rhystic-study',
       ),
-    ).toMatchObject({
-      listingId: 'listing-rhystic-study',
-      status: 'new',
-    })
+    ).toBeUndefined()
   })
 
   it('adds imported quantities to an existing active search', () => {
@@ -166,6 +163,69 @@ describe('card mutations', () => {
       acceptedLanguages: ['fr'],
       acceptedFinishes: ['foil'],
     })
+  })
+
+  it('keeps separate wanted rows for each language and finish', () => {
+    const resolution = {
+      item: {
+        lineNumber: 1,
+        rawLine: 'Sol Ring',
+        quantity: 1,
+        name: 'Sol Ring',
+        section: 'main' as const,
+      },
+      status: 'resolved' as const,
+      card: {
+        scryfallId: 'sol-ring-scryfall',
+        oracleId: 'sol-ring-oracle',
+        name: 'Sol Ring',
+        setCode: 'CMM',
+        setName: 'Commander Masters',
+        collectorNumber: '410',
+      },
+    }
+    const result = applyResolvedWantedCardImport(
+      demoData,
+      demoData.currentMemberId,
+      [resolution, resolution],
+      'add',
+      ['main'],
+      true,
+      undefined,
+      undefined,
+      [
+        {
+          resolution,
+          quantity: 2,
+          acceptedLanguages: ['fr'],
+          acceptedFinishes: ['nonfoil'],
+        },
+        {
+          resolution,
+          quantity: 3,
+          acceptedLanguages: ['fr'],
+          acceptedFinishes: ['foil'],
+        },
+      ],
+    )
+
+    const frenchVariants = result.data.wantedCards.filter(
+      ({ cardId, memberId, acceptedLanguages }) =>
+        cardId === 'card-sol-ring' &&
+        memberId === demoData.currentMemberId &&
+        acceptedLanguages[0] === 'fr',
+    )
+
+    expect(frenchVariants).toHaveLength(2)
+    expect(frenchVariants).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          quantity: 2,
+          acceptedFinishes: ['nonfoil'],
+        }),
+        expect.objectContaining({ quantity: 3, acceptedFinishes: ['foil'] }),
+      ]),
+    )
   })
 
   it('pauses absent searches in synchronization mode', () => {

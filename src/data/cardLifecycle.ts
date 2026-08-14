@@ -18,8 +18,8 @@ export type MarketplaceListingDetails = {
 
 export type WantedCardDetails = {
   quantity: number
-  acceptedLanguages: CardLanguage[]
-  acceptedFinishes: MarketplaceListing['finish'][]
+  acceptedLanguages: [CardLanguage]
+  acceptedFinishes: [MarketplaceListing['finish']]
 }
 
 export function updateMarketplaceListingDetails(
@@ -75,8 +75,8 @@ export function updateWantedCardDetails(
     !wantedCard ||
     wantedCard.status === 'fulfilled' ||
     quantity < 1 ||
-    details.acceptedLanguages.length === 0 ||
-    details.acceptedFinishes.length === 0
+    details.acceptedLanguages.length !== 1 ||
+    details.acceptedFinishes.length !== 1
   ) {
     return data
   }
@@ -88,8 +88,8 @@ export function updateWantedCardDetails(
         ? {
             ...candidate,
             quantity,
-            acceptedLanguages: [...new Set(details.acceptedLanguages)],
-            acceptedFinishes: [...new Set(details.acceptedFinishes)],
+            acceptedLanguages: details.acceptedLanguages,
+            acceptedFinishes: details.acceptedFinishes,
           }
         : candidate,
     ),

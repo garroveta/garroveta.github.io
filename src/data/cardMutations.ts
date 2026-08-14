@@ -43,8 +43,8 @@ export type ResolvedWantedImportResult = {
 export type WantedImportItemInput = {
   resolution: CardImportResolution
   quantity: number
-  acceptedLanguages: CardLanguage[]
-  acceptedFinishes: MarketplaceListing['finish'][]
+  acceptedLanguages: [CardLanguage]
+  acceptedFinishes: [MarketplaceListing['finish']]
 }
 
 export type MarketplaceImportItemInput = {
@@ -81,6 +81,14 @@ function normalizeCardName(value: string) {
     .replace(/[\u0300-\u036f]/g, '')
     .trim()
     .toLocaleLowerCase('en')
+}
+
+function wantedVariantKey(
+  cardKey: string,
+  language: CardLanguage,
+  finish: MarketplaceListing['finish'],
+) {
+  return `${cardKey}|${language}|${finish}`
 }
 
 function nextUniqueId(dataIds: string[], baseId: string) {
@@ -187,15 +195,15 @@ export function applyResolvedWantedCardImport(
     resolutions.map((resolution) => ({
       resolution,
       quantity: resolution.item.quantity,
-      acceptedLanguages: ['es', 'en'] as CardLanguage[],
-      acceptedFinishes: ['nonfoil'] as MarketplaceListing['finish'][],
+      acceptedLanguages: ['es'] as [CardLanguage],
+      acceptedFinishes: ['nonfoil'] as [MarketplaceListing['finish']],
     }))
   const resolvedItems = inputs.filter(
     (input): input is ResolvedWantedImportItemInput =>
       isResolvedWantedImportItem(input) &&
       input.quantity >= 1 &&
-      input.acceptedLanguages.length > 0 &&
-      input.acceptedFinishes.length > 0 &&
+      input.acceptedLanguages.length === 1 &&
+      input.acceptedFinishes.length === 1 &&
       includedSectionSet.has(input.resolution.item.section),
   )
 
@@ -213,8 +221,8 @@ export function applyResolvedWantedCardImport(
       scryfallId: string
       quantity: number
       section: CardListSection
-      acceptedLanguages: CardLanguage[]
-      acceptedFinishes: MarketplaceListing['finish'][]
+      acceptedLanguages: [CardLanguage]
+      acceptedFinishes: [MarketplaceListing['finish']]
     }
   >()
 
@@ -226,11 +234,16 @@ export function applyResolvedWantedCardImport(
       matchAllPrintings,
     )
     cards = ensuredCard.cards
-    const key =
+    const cardKey =
       (matchAllPrintings && resolution.card.oracleId) ||
       (matchAllPrintings
         ? normalizeCardName(resolution.card.name)
         : resolution.card.scryfallId)
+    const key = wantedVariantKey(
+      cardKey,
+      input.acceptedLanguages[0],
+      input.acceptedFinishes[0],
+    )
     const currentGroup = importGroups.get(key)
 
     importGroups.set(key, {
@@ -240,18 +253,8 @@ export function applyResolvedWantedCardImport(
       scryfallId: resolution.card.scryfallId,
       quantity: (currentGroup?.quantity ?? 0) + Math.floor(input.quantity),
       section: currentGroup?.section ?? resolution.item.section,
-      acceptedLanguages: [
-        ...new Set([
-          ...(currentGroup?.acceptedLanguages ?? []),
-          ...input.acceptedLanguages,
-        ]),
-      ],
-      acceptedFinishes: [
-        ...new Set([
-          ...(currentGroup?.acceptedFinishes ?? []),
-          ...input.acceptedFinishes,
-        ]),
-      ],
+      acceptedLanguages: input.acceptedLanguages,
+      acceptedFinishes: input.acceptedFinishes,
     })
   }
 
@@ -270,7 +273,7 @@ export function applyResolvedWantedCardImport(
     }
 
     const card = cards.find(({ id }) => id === wantedCard.cardId)
-    const key =
+    const cardKey =
       (matchAllPrintings && (wantedCard.oracleId ?? card?.oracleId)) ||
       (matchAllPrintings
         ? normalizeCardName(card?.name ?? '')
@@ -278,6 +281,11 @@ export function applyResolvedWantedCardImport(
           card?.scryfallId ??
           card?.id ??
           ''))
+    const key = wantedVariantKey(
+      cardKey,
+      wantedCard.acceptedLanguages[0],
+      wantedCard.acceptedFinishes[0],
+    )
 
     return importedKeys.has(key)
       ? wantedCard
@@ -294,7 +302,7 @@ export function applyResolvedWantedCardImport(
       }
 
       const card = cards.find(({ id }) => id === wantedCard.cardId)
-      const wantedKey =
+      const wantedCardKey =
         (matchAllPrintings && (wantedCard.oracleId ?? card?.oracleId)) ||
         (matchAllPrintings
           ? normalizeCardName(card?.name ?? '')
@@ -302,6 +310,11 @@ export function applyResolvedWantedCardImport(
             card?.scryfallId ??
             card?.id ??
             ''))
+      const wantedKey = wantedVariantKey(
+        wantedCardKey,
+        wantedCard.acceptedLanguages[0],
+        wantedCard.acceptedFinishes[0],
+      )
       return wantedKey === key
     })
 
@@ -570,6 +583,8 @@ export function importWantedCards(
       (wantedCard) =>
         wantedCard.memberId === memberId &&
         wantedCard.cardId === item.cardId &&
+        wantedCard.acceptedLanguages[0] === 'es' &&
+        wantedCard.acceptedFinishes[0] === 'nonfoil' &&
         wantedCard.status !== 'fulfilled',
     )
 
@@ -597,7 +612,7 @@ export function importWantedCards(
       memberId,
       cardId: item.cardId,
       quantity: item.quantity,
-      acceptedLanguages: ['es', 'en'],
+      acceptedLanguages: ['es'],
       acceptedFinishes: ['nonfoil'],
       status: 'active',
       createdAt,
