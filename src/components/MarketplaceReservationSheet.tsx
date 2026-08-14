@@ -2,29 +2,12 @@ import { CheckCircle2, ChevronRight, ShoppingBag, X } from 'lucide-react'
 import { useState } from 'react'
 
 import type { MarketplaceListingItem } from '../data/cardSelectors'
+import {
+  cardConditionLabels as conditionLabels,
+  cardLanguageLabels as languageLabels,
+} from '../data/cardPresentation'
 import { getScryfallCardImage } from '../data/scryfallImages'
-import type {
-  CardCondition,
-  CardLanguage,
-  CommunityMember,
-} from '../domain/types'
-
-const languageLabels: Record<CardLanguage, string> = {
-  es: 'Español',
-  en: 'Inglés',
-  fr: 'Francés',
-  de: 'Alemán',
-  it: 'Italiano',
-  pt: 'Portugués',
-  jp: 'Japonés',
-}
-
-const conditionLabels: Record<CardCondition, string> = {
-  mint: 'Mint',
-  near_mint: 'Near Mint',
-  excellent: 'Excellent',
-  good: 'Good',
-}
+import type { CommunityMember } from '../domain/types'
 
 type MarketplaceReservationSheetProps = {
   item: MarketplaceListingItem

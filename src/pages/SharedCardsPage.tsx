@@ -10,20 +10,19 @@ import {
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
+import { MarketplaceListingRow } from '../components/MarketplaceListingRow'
 import { MarketplaceReservationSheet } from '../components/MarketplaceReservationSheet'
 import {
   cancelMarketplaceReservation,
   reserveMarketplaceListing,
 } from '../data/cardLifecycle'
+import {
+  cardConditionLabels as conditionLabels,
+  cardLanguageLabels as languageLabels,
+} from '../data/cardPresentation'
 import { getMemberSharedListings } from '../data/cardSelectors'
 import type { DemoDataUpdater } from '../data/demoRepository'
-import { getScryfallCardImage } from '../data/scryfallImages'
-import type {
-  CardCondition,
-  CardLanguage,
-  CommunityMember,
-  DemoDataSet,
-} from '../domain/types'
+import type { CommunityMember, DemoDataSet } from '../domain/types'
 
 type SharedCardsPageProps = {
   data: DemoDataSet
@@ -34,23 +33,6 @@ type SharedCardsPageProps = {
   initialCondition?: string
   onBack: () => void
   onDataChange: (updater: DemoDataUpdater) => void
-}
-
-const languageLabels: Record<CardLanguage, string> = {
-  es: 'Español',
-  en: 'Inglés',
-  fr: 'Francés',
-  de: 'Alemán',
-  it: 'Italiano',
-  pt: 'Portugués',
-  jp: 'Japonés',
-}
-
-const conditionLabels: Record<CardCondition, string> = {
-  mint: 'Mint',
-  near_mint: 'Near Mint',
-  excellent: 'Excellent',
-  good: 'Good',
 }
 
 export function SharedCardsPage({
@@ -226,48 +208,18 @@ export function SharedCardsPage({
       </div>
 
       <div className="shared-card-list">
-        {filteredListings.map(({ card, listing }) => {
+        {filteredListings.map((item) => {
+          const { listing } = item
           const reservedByCurrentMember =
             listing.reservedByMemberId === currentMember.id
-          const imageUrl = getScryfallCardImage(card.name, card.imageUri)
 
           return (
-            <article className="shared-card-row" key={listing.id}>
-              {imageUrl ? (
-                <img src={imageUrl} alt="" loading="lazy" />
-              ) : (
-                <span className="card-set-symbol">{card.setCode}</span>
-              )}
-              <div className="shared-card-row__body">
-                <h3>{card.name}</h3>
-                <p>
-                  {card.setName} · {card.setCode} #{card.collectorNumber}
-                </p>
-                <dl className="shared-card-row__facts">
-                  <div>
-                    <dt>Cantidad</dt>
-                    <dd>{listing.quantity}</dd>
-                  </div>
-                  <div>
-                    <dt>Precio</dt>
-                    <dd>
-                      {listing.priceEur
-                        ? `${listing.priceEur.toFixed(2)} €`
-                        : 'A convenir'}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Idioma</dt>
-                    <dd>{languageLabels[listing.language]}</dd>
-                  </div>
-                  <div>
-                    <dt>Estado</dt>
-                    <dd>{conditionLabels[listing.condition]}</dd>
-                  </div>
-                </dl>
-              </div>
-              <div className="shared-card-row__actions">
-                {isOwner ? (
+            <MarketplaceListingRow
+              item={item}
+              key={listing.id}
+              variant="member-list"
+              action={
+                isOwner ? (
                   <span
                     className={`listing-status listing-status--${listing.status}`}
                   >
@@ -298,9 +250,9 @@ export function SharedCardsPage({
                     <CheckCircle2 aria-hidden="true" size={14} />
                     Reservada
                   </span>
-                )}
-              </div>
-            </article>
+                )
+              }
+            />
           )
         })}
       </div>

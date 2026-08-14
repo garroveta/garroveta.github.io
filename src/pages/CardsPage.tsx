@@ -28,6 +28,7 @@ import type { ChangeEvent, FormEvent } from 'react'
 import { useMemo, useState } from 'react'
 
 import { MarketplaceReservationSheet } from '../components/MarketplaceReservationSheet'
+import { MarketplaceListingRow } from '../components/MarketplaceListingRow'
 import {
   applyResolvedMarketplaceImport,
   applyResolvedWantedCardImport,
@@ -40,6 +41,10 @@ import {
 } from '../data/cardMutations'
 import { parseCardList, type CardListSection } from '../data/cardListImport'
 import { completeCardDeal } from '../data/cardDeals'
+import {
+  cardConditionLabels as conditionLabels,
+  cardLanguageLabels as languageLabels,
+} from '../data/cardPresentation'
 import {
   assignListingToList,
   assignWantedCardToList,
@@ -87,23 +92,6 @@ type CardsPageProps = {
   currentMember: CommunityMember
   initialView?: 'matches' | 'market' | 'wanted'
   onDataChange: (updater: DemoDataUpdater) => void
-}
-
-const languageLabels: Record<CardLanguage, string> = {
-  es: 'Español',
-  en: 'Inglés',
-  fr: 'Francés',
-  de: 'Alemán',
-  it: 'Italiano',
-  pt: 'Portugués',
-  jp: 'Japonés',
-}
-
-const conditionLabels: Record<CardCondition, string> = {
-  mint: 'Mint',
-  near_mint: 'Near Mint',
-  excellent: 'Excellent',
-  good: 'Good',
 }
 
 const cardLanguages = Object.keys(languageLabels) as CardLanguage[]
@@ -162,100 +150,14 @@ function MarketplaceTable({
         </thead>
         <tbody>
           {items.map((item) => (
-            <tr
-              className="market-table__row-action"
+            <MarketplaceListingRow
+              item={item}
               key={item.listing.id}
-              tabIndex={0}
-              aria-label={`Abrir oferta de ${item.card.name} de ${item.member.displayName}`}
-              onClick={(event) => {
-                if ((event.target as HTMLElement).closest('button')) {
-                  return
-                }
-                onOpen(item)
-              }}
-              onKeyDown={(event) => {
-                if (
-                  event.target === event.currentTarget &&
-                  (event.key === 'Enter' || event.key === ' ')
-                ) {
-                  event.preventDefault()
-                  onOpen(item)
-                }
-              }}
-            >
-              <td>
-                <div className="market-table__card">
-                  <button
-                    className="market-table__card-preview"
-                    type="button"
-                    aria-label={`Ampliar ${item.card.name}`}
-                    onClick={() => onPreview(item)}
-                  >
-                    {getScryfallCardImage(
-                      item.card.name,
-                      item.card.imageUri,
-                    ) ? (
-                      <img
-                        src={getScryfallCardImage(
-                          item.card.name,
-                          item.card.imageUri,
-                        )}
-                        alt=""
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    ) : (
-                      <span>{item.card.setCode}</span>
-                    )}
-                  </button>
-                  <span>
-                    <strong>{item.card.name}</strong>
-                    <small>
-                      {item.card.setName} · #{item.card.collectorNumber}
-                      {item.listing.finish === 'foil' ? ' · Foil' : ''}
-                    </small>
-                    <small className="market-table__mobile-meta">
-                      {languageLabels[item.listing.language]} ·{' '}
-                      {conditionLabels[item.listing.condition]}
-                    </small>
-                    <button
-                      className="market-table__member"
-                      type="button"
-                      aria-label={`Ver cartas de ${item.member.displayName}`}
-                      onClick={() => onMemberSelect(item.member.id)}
-                    >
-                      {item.member.displayName}
-                    </button>
-                  </span>
-                </div>
-              </td>
-              <td className="market-table__wide">
-                {languageLabels[item.listing.language]}
-              </td>
-              <td className="market-table__wide">
-                {conditionLabels[item.listing.condition]}
-              </td>
-              <td className="market-table__quantity">
-                {item.listing.quantity}
-              </td>
-              <td className="market-table__price">
-                {item.listing.priceEur ? (
-                  `${item.listing.priceEur.toFixed(2)} €`
-                ) : (
-                  <>
-                    <span
-                      className="market-table__price-mobile"
-                      aria-label="A convenir"
-                    >
-                      —
-                    </span>
-                    <span className="market-table__price-desktop">
-                      A convenir
-                    </span>
-                  </>
-                )}
-              </td>
-            </tr>
+              variant="community-table"
+              onMemberSelect={onMemberSelect}
+              onOpen={onOpen}
+              onPreview={onPreview}
+            />
           ))}
         </tbody>
       </table>
