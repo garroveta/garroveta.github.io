@@ -38,7 +38,12 @@ export function updateMarketplaceListingDetails(
       ? Math.round(details.priceEur * 100) / 100
       : undefined
 
-  if (!listing || listing.status === 'completed' || quantity < 1) {
+  if (
+    !listing ||
+    listing.status === 'completed' ||
+    quantity < 1 ||
+    quantity < (listing.reservedQuantity ?? 0)
+  ) {
     return data
   }
 

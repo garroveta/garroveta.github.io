@@ -220,6 +220,30 @@ describe('card list lifecycle', () => {
     })
   })
 
+  it('does not reduce an offer below its reserved quantity', () => {
+    const reservedData = reserveMarketplaceListing(
+      demoData,
+      'listing-sol-ring-marta',
+      demoData.currentMemberId,
+      undefined,
+      2,
+    )
+    const unchangedData = updateMarketplaceListingDetails(
+      reservedData,
+      'listing-sol-ring-marta',
+      'member-marta',
+      {
+        quantity: 1,
+        language: 'en',
+        condition: 'excellent',
+        finish: 'nonfoil',
+        priceEur: 2.5,
+      },
+    )
+
+    expect(unchangedData).toBe(reservedData)
+  })
+
   it('marks a match as seen only for its buyer', () => {
     expect(
       markCardMatchSeen(demoData, 'match-alex-sol-ring', 'member-diego'),

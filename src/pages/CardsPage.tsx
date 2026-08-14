@@ -13,7 +13,6 @@ import {
   Mail,
   MessageCircle,
   MoreHorizontal,
-  Pause,
   Pencil,
   Plus,
   Search,
@@ -124,9 +123,9 @@ const matchStatusLabels = {
 }
 
 const listingStatusLabels: Record<MarketplaceListing['status'], string> = {
-  available: 'Disponible',
-  reserved: 'Reservada',
-  completed: 'Cerrada',
+  available: 'Publicada',
+  reserved: 'Con reserva',
+  completed: 'Retirada',
 }
 
 function MarketplaceTable({
@@ -502,7 +501,7 @@ function WantedCardRow({
       <span
         className={`wanted-status wanted-status--${item.wantedCard.status}`}
       >
-        {item.wantedCard.status === 'active' ? 'Activa' : 'En pausa'}
+        {item.wantedCard.status === 'active' ? 'Publicada' : 'Retirada'}
       </span>
       <details className="card-row-menu">
         <summary aria-label={`Gestionar ${item.card.name}`}>
@@ -585,13 +584,13 @@ function WantedCardRow({
           >
             Guardar cambios
           </button>
-          <div className="card-row-menu__actions">
+          <div className="card-row-menu__actions card-row-menu__actions--listing">
             <button
               type="button"
               aria-label={
                 item.wantedCard.status === 'active'
-                  ? 'Pausar búsqueda'
-                  : 'Reactivar búsqueda'
+                  ? `Retirar búsqueda de ${item.card.name}`
+                  : `Volver a publicar búsqueda de ${item.card.name}`
               }
               onClick={() =>
                 onStatusChange(
@@ -600,18 +599,13 @@ function WantedCardRow({
               }
             >
               {item.wantedCard.status === 'active' ? (
-                <Pause aria-hidden="true" size={14} />
+                <X aria-hidden="true" size={14} />
               ) : (
                 <Check aria-hidden="true" size={14} />
               )}
-              {item.wantedCard.status === 'active' ? 'Pausar' : 'Reactivar'}
-            </button>
-            <button
-              type="button"
-              aria-label="Marcar encontrada"
-              onClick={() => onStatusChange('fulfilled')}
-            >
-              <CheckCircle2 aria-hidden="true" size={14} /> Encontrada
+              {item.wantedCard.status === 'active'
+                ? 'Retirar búsqueda'
+                : 'Volver a publicar'}
             </button>
           </div>
         </div>
@@ -624,6 +618,7 @@ function MemberListingRow({
   item,
   lists,
   onDetailsChange,
+  onManageReservation,
   onPreview,
   onListChange,
   onStatusChange,
@@ -637,11 +632,18 @@ function MemberListingRow({
     finish: MarketplaceListing['finish']
     priceEur?: number
   }) => void
+  onManageReservation: () => void
   onPreview: () => void
   onListChange: (listId?: string) => void
   onStatusChange: (status: MarketplaceListing['status']) => void
 }) {
   const imageUrl = getScryfallCardImage(item.card.name, item.card.imageUri)
+  const reservedQuantity = item.listing.reservedQuantity ?? 0
+  const availableQuantity = Math.max(
+    0,
+    item.listing.quantity - reservedQuantity,
+  )
+  const minimumQuantity = Math.max(1, reservedQuantity)
   const [draftQuantity, setDraftQuantity] = useState(item.listing.quantity)
   const [draftLanguage, setDraftLanguage] = useState(item.listing.language)
   const [draftCondition, setDraftCondition] = useState(item.listing.condition)
@@ -667,7 +669,10 @@ function MemberListingRow({
       <div>
         <h3>{item.card.name}</h3>
         <p>
-          {item.listing.quantity} · {languageLabels[item.listing.language]}
+          {item.listing.status === 'reserved'
+            ? `${availableQuantity} disponibles · ${reservedQuantity} reservadas`
+            : `${item.listing.quantity} ${item.listing.quantity > 1 ? 'unidades' : 'unidad'}`}{' '}
+          · {languageLabels[item.listing.language]}
         </p>
       </div>
       <span className={`listing-status listing-status--${item.listing.status}`}>
@@ -700,7 +705,7 @@ function MemberListingRow({
               <span>Cantidad</span>
               <input
                 aria-label={`Editar cantidad de ${item.card.name}`}
-                min={1}
+                min={minimumQuantity}
                 type="number"
                 value={draftQuantity}
                 onChange={(event) =>
@@ -770,7 +775,7 @@ function MemberListingRow({
           <button
             className="card-row-save"
             type="button"
-            disabled={draftQuantity < 1}
+            disabled={draftQuantity < minimumQuantity}
             onClick={() =>
               onDetailsChange({
                 quantity: draftQuantity,
@@ -783,39 +788,41 @@ function MemberListingRow({
           >
             Guardar cambios
           </button>
-          {item.listing.status !== 'completed' ? (
-            <div className="card-row-menu__actions">
+          {reservedQuantity > 0 ? (
+            <p className="card-row-reservation-note">
+              {reservedQuantity}{' '}
+              {reservedQuantity > 1 ? 'cartas reservadas' : 'carta reservada'}.
+              La cantidad total no puede ser inferior a esta reserva.
+            </p>
+          ) : null}
+          <div className="card-row-menu__actions card-row-menu__actions--listing">
+            {item.listing.status === 'reserved' ? (
               <button
                 type="button"
-                aria-label={
-                  item.listing.status === 'available'
-                    ? 'Marcar reservada'
-                    : 'Reactivar oferta'
-                }
-                onClick={() =>
-                  onStatusChange(
-                    item.listing.status === 'available'
-                      ? 'reserved'
-                      : 'available',
-                  )
-                }
+                aria-label={`Gestionar reserva de ${item.card.name}`}
+                onClick={onManageReservation}
               >
-                {item.listing.status === 'available' ? (
-                  <Pause aria-hidden="true" size={14} />
-                ) : (
-                  <Check aria-hidden="true" size={14} />
-                )}
-                {item.listing.status === 'available' ? 'Reservar' : 'Reactivar'}
+                <ListChecks aria-hidden="true" size={14} />
+                Gestionar reserva
               </button>
+            ) : item.listing.status === 'completed' ? (
               <button
                 type="button"
-                aria-label="Cerrar oferta"
+                aria-label={`Volver a publicar ${item.card.name}`}
+                onClick={() => onStatusChange('available')}
+              >
+                <Check aria-hidden="true" size={14} /> Volver a publicar
+              </button>
+            ) : (
+              <button
+                type="button"
+                aria-label={`Retirar oferta de ${item.card.name}`}
                 onClick={() => onStatusChange('completed')}
               >
-                <CheckCircle2 aria-hidden="true" size={14} /> Cerrar
+                <X aria-hidden="true" size={14} /> Retirar oferta
               </button>
-            </div>
-          ) : null}
+            )}
+          </div>
         </div>
       </details>
     </article>
@@ -2964,6 +2971,9 @@ export function CardsPage({
                         )
                         setActionMessage('La oferta se ha actualizado.')
                       }}
+                      onManageReservation={() =>
+                        setSelectedMarketplaceListingId(item.listing.id)
+                      }
                       onPreview={() =>
                         setSelectedCardPreview({
                           card: item.card,
@@ -2991,11 +3001,9 @@ export function CardsPage({
                           ),
                         )
                         setActionMessage(
-                          status === 'reserved'
-                            ? 'La oferta está reservada.'
-                            : status === 'available'
-                              ? 'La oferta vuelve a estar disponible.'
-                              : 'La oferta se ha cerrado.',
+                          status === 'available'
+                            ? 'La oferta se ha vuelto a publicar.'
+                            : 'La oferta se ha retirado.',
                         )
                       }}
                     />
@@ -3059,9 +3067,9 @@ export function CardsPage({
                         )
                         setActionMessage(
                           status === 'paused'
-                            ? 'La búsqueda está en pausa.'
+                            ? 'La búsqueda se ha retirado.'
                             : status === 'active'
-                              ? 'La búsqueda vuelve a estar activa.'
+                              ? 'La búsqueda se ha vuelto a publicar.'
                               : 'La carta se ha marcado como encontrada.',
                         )
                       }}

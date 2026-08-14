@@ -4081,6 +4081,24 @@ a {
   color: #4f6c5d;
 }
 
+.card-row-menu__actions--listing {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.card-row-menu__actions--listing button:last-child {
+  color: #613676;
+}
+
+.card-row-reservation-note {
+  margin: 0;
+  padding: 0.45rem 0.5rem;
+  border-radius: 0.48rem;
+  color: #745f25;
+  background: #f8f1d9;
+  font-size: 0.52rem;
+  line-height: 1.35;
+}
+
 .card-row-menu summary:focus-visible,
 .card-row-menu button:focus-visible {
   outline: 3px solid rgb(124 86 137 / 35%);

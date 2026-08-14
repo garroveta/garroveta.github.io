@@ -1043,7 +1043,7 @@ describe('App', () => {
       ?.closest('article')
     expect(importedSolRing).toBeTruthy()
     expect(
-      within(importedSolRing as HTMLElement).getByText('3 · Francés'),
+      within(importedSolRing as HTMLElement).getByText('3 unidades · Francés'),
     ).toBeInTheDocument()
     expect(
       createLocalDemoRepository(window.localStorage)
@@ -1273,13 +1273,13 @@ describe('App', () => {
       .closest('article')
     fireEvent.click(
       within(wantedSolRing as HTMLElement).getByRole('button', {
-        name: 'Pausar búsqueda',
+        name: 'Retirar búsqueda de Sol Ring',
       }),
     )
     expect(
-      within(wantedSolRing as HTMLElement).getByText('En pausa'),
+      within(wantedSolRing as HTMLElement).getByText('Retirada'),
     ).toBeInTheDocument()
-    expect(screen.getByText('La búsqueda está en pausa.')).toBeInTheDocument()
+    expect(screen.getByText('La búsqueda se ha retirado.')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Publicar carta' }))
     fireEvent.change(screen.getByLabelText('Carta'), {
@@ -1294,25 +1294,25 @@ describe('App', () => {
       .closest('article')
     fireEvent.click(
       within(ownedListing as HTMLElement).getByRole('button', {
-        name: 'Marcar reservada',
+        name: 'Retirar oferta de Esper Sentinel',
       }),
     )
     expect(
-      within(ownedListing as HTMLElement).getByText('Reservada'),
-    ).toBeInTheDocument()
-
-    fireEvent.click(
-      within(ownedListing as HTMLElement).getByRole('button', {
-        name: 'Cerrar oferta',
-      }),
-    )
-    expect(
-      within(ownedListing as HTMLElement).getByText('Cerrada'),
+      within(ownedListing as HTMLElement).getByText('Retirada'),
     ).toBeInTheDocument()
     expect(
       createLocalDemoRepository(window.localStorage).load().listings.at(-1)
         ?.status,
     ).toBe('completed')
+
+    fireEvent.click(
+      within(ownedListing as HTMLElement).getByRole('button', {
+        name: 'Volver a publicar Esper Sentinel',
+      }),
+    )
+    expect(
+      within(ownedListing as HTMLElement).getByText('Publicada'),
+    ).toBeInTheDocument()
   })
 
   it('edits wanted cards and offers after publication', () => {
@@ -1388,7 +1388,7 @@ describe('App', () => {
       }),
     )
 
-    expect(within(ownedListing).getByText('3 · Francés')).toBeVisible()
+    expect(within(ownedListing).getByText('3 unidades · Francés')).toBeVisible()
     expect(screen.getByText('La oferta se ha actualizado.')).toBeVisible()
 
     const storedData = createLocalDemoRepository(window.localStorage).load()
