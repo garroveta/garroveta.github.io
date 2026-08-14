@@ -25,12 +25,14 @@ export function useHashRoute() {
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
 
-  const navigate = useCallback((route: AppRoute) => {
+  const navigate = useCallback((route: AppRoute, query = '') => {
     setActiveRoute(route)
-    setRouteQuery('')
+    setRouteQuery(query)
 
-    if (window.location.hash !== `#${route}`) {
-      window.location.hash = route
+    const nextHash = `#${route}${query ? `?${query}` : ''}`
+
+    if (window.location.hash !== nextHash) {
+      window.location.hash = nextHash
     }
   }, [])
 

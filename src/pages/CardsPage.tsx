@@ -85,6 +85,7 @@ import type {
 type CardsPageProps = {
   data: DemoDataSet
   currentMember: CommunityMember
+  initialView?: 'matches' | 'market' | 'wanted'
   onDataChange: (updater: DemoDataUpdater) => void
 }
 
@@ -2394,10 +2395,11 @@ function WantedImportComposer({
 export function CardsPage({
   data,
   currentMember,
+  initialView = 'matches',
   onDataChange,
 }: CardsPageProps) {
   const [activeView, setActiveView] = useState<'matches' | 'market' | 'wanted'>(
-    'matches',
+    initialView,
   )
   const [activeComposer, setActiveComposer] = useState<
     'listing' | 'import' | undefined

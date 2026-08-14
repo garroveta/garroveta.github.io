@@ -680,10 +680,14 @@ describe('App', () => {
       screen.getByText(/cartas publicadas en Garroveta/),
     ).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Volver a las cartas' }))
-    fireEvent.click(screen.getByRole('button', { name: /Ofertas/ }))
     expect(
       screen.getByRole('heading', { name: 'Cartas disponibles' }),
     ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Ofertas/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(window.location.hash).toBe('#cartas?view=market')
 
     fireEvent.change(
       screen.getByRole('searchbox', {

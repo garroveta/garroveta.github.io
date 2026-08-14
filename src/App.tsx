@@ -86,13 +86,16 @@ export function App() {
             initialSetCode={cardRouteParams.get('set') ?? undefined}
             initialLanguage={cardRouteParams.get('lang') ?? undefined}
             initialCondition={cardRouteParams.get('condition') ?? undefined}
-            onBack={() => navigate('cartas')}
+            onBack={() => navigate('cartas', 'view=market')}
             onDataChange={updateData}
           />
         ) : activeRoute === 'cartas' ? (
           <CardsPage
             data={data}
             currentMember={currentMember}
+            initialView={
+              cardRouteParams.get('view') === 'market' ? 'market' : undefined
+            }
             onDataChange={updateData}
           />
         ) : activeRoute === 'noticias' ? (
