@@ -183,6 +183,8 @@ export type MarketplaceListing = {
   priceEur?: number
   status: 'available' | 'reserved' | 'completed'
   reservedByMemberId?: EntityId
+  /** Quantity held by the reserving member in this prototype reservation. */
+  reservedQuantity?: number
   reservedAt?: ISODateTime
   createdAt: ISODateTime
 }

@@ -120,6 +120,8 @@ export function updateMarketplaceListingStatus(
             status,
             reservedByMemberId:
               status === 'reserved' ? candidate.reservedByMemberId : undefined,
+            reservedQuantity:
+              status === 'reserved' ? candidate.reservedQuantity : undefined,
             reservedAt:
               status === 'reserved' ? candidate.reservedAt : undefined,
           }
@@ -133,16 +135,20 @@ export function reserveMarketplaceListing(
   listingId: string,
   memberId: string,
   reservedAt = DEMO_REFERENCE_TIME,
+  reservedQuantity = 1,
 ): DemoDataSet {
   const member = data.members.find(({ id }) => id === memberId)
   const listing = data.listings.find(({ id }) => id === listingId)
+  const normalizedQuantity = Math.floor(reservedQuantity)
 
   if (
     !member ||
     member.status !== 'approved' ||
     !listing ||
     listing.status !== 'available' ||
-    listing.memberId === memberId
+    listing.memberId === memberId ||
+    normalizedQuantity < 1 ||
+    normalizedQuantity > listing.quantity
   ) {
     return data
   }
@@ -155,6 +161,7 @@ export function reserveMarketplaceListing(
             ...candidate,
             status: 'reserved' as const,
             reservedByMemberId: memberId,
+            reservedQuantity: normalizedQuantity,
             reservedAt,
           }
         : candidate,
@@ -185,6 +192,7 @@ export function cancelMarketplaceReservation(
             ...candidate,
             status: 'available' as const,
             reservedByMemberId: undefined,
+            reservedQuantity: undefined,
             reservedAt: undefined,
           }
         : candidate,

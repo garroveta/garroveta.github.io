@@ -129,10 +129,12 @@ const listingStatusLabels: Record<MarketplaceListing['status'], string> = {
 
 function MarketplaceTable({
   items,
+  onOpen,
   onMemberSelect,
   onPreview,
 }: {
   items: MarketplaceListingItem[]
+  onOpen: (item: MarketplaceListingItem) => void
   onMemberSelect: (memberId: string) => void
   onPreview: (item: MarketplaceListingItem) => void
 }) {
@@ -159,7 +161,27 @@ function MarketplaceTable({
         </thead>
         <tbody>
           {items.map((item) => (
-            <tr key={item.listing.id}>
+            <tr
+              className="market-table__row-action"
+              key={item.listing.id}
+              tabIndex={0}
+              aria-label={`Abrir oferta de ${item.card.name} de ${item.member.displayName}`}
+              onClick={(event) => {
+                if ((event.target as HTMLElement).closest('button')) {
+                  return
+                }
+                onOpen(item)
+              }}
+              onKeyDown={(event) => {
+                if (
+                  event.target === event.currentTarget &&
+                  (event.key === 'Enter' || event.key === ' ')
+                ) {
+                  event.preventDefault()
+                  onOpen(item)
+                }
+              }}
+            >
               <td>
                 <div className="market-table__card">
                   <button
@@ -236,6 +258,171 @@ function MarketplaceTable({
           ))}
         </tbody>
       </table>
+    </div>
+  )
+}
+
+function MarketplaceReservationSheet({
+  item,
+  currentMember,
+  onCancelReservation,
+  onClose,
+  onMemberSelect,
+  onPreview,
+  onReserve,
+}: {
+  item: MarketplaceListingItem
+  currentMember: CommunityMember
+  onCancelReservation: () => void
+  onClose: () => void
+  onMemberSelect: (memberId: string) => void
+  onPreview: () => void
+  onReserve: (quantity: number) => void
+}) {
+  const [quantity, setQuantity] = useState(item.listing.reservedQuantity ?? 1)
+  const imageUrl = getScryfallCardImage(item.card.name, item.card.imageUri)
+  const isOwner = item.listing.memberId === currentMember.id
+  const isReservedByCurrentMember =
+    item.listing.status === 'reserved' &&
+    item.listing.reservedByMemberId === currentMember.id
+  const isReservedByAnotherMember =
+    item.listing.status === 'reserved' && !isReservedByCurrentMember
+
+  return (
+    <div
+      className="market-reservation-sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="market-reservation-title"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose()
+        }
+      }}
+    >
+      <section className="market-reservation-sheet__panel">
+        <span className="market-reservation-sheet__handle" aria-hidden="true" />
+        <button
+          className="market-reservation-sheet__close"
+          type="button"
+          aria-label="Cerrar oferta"
+          onClick={onClose}
+        >
+          <X aria-hidden="true" size={18} />
+        </button>
+
+        <div className="market-reservation-sheet__identity">
+          <button
+            className="market-reservation-sheet__image"
+            type="button"
+            aria-label={`Ampliar ${item.card.name}`}
+            onClick={onPreview}
+          >
+            {imageUrl ? (
+              <img src={imageUrl} alt="" />
+            ) : (
+              <span>{item.card.setCode}</span>
+            )}
+          </button>
+          <div>
+            <span className="page-eyebrow">
+              {isReservedByCurrentMember
+                ? 'Reserva activa'
+                : 'Oferta disponible'}
+            </span>
+            <h2 id="market-reservation-title">{item.card.name}</h2>
+            <p>
+              {item.card.setName} · #{item.card.collectorNumber}
+              {item.listing.finish === 'foil' ? ' · Foil' : ''}
+            </p>
+            <button
+              className="market-reservation-sheet__member"
+              type="button"
+              onClick={() => onMemberSelect(item.member.id)}
+            >
+              Ver las cartas de {item.member.displayName}
+              <ChevronRight aria-hidden="true" size={14} />
+            </button>
+          </div>
+        </div>
+
+        <dl className="market-reservation-sheet__facts">
+          <div>
+            <dt>Idioma</dt>
+            <dd>{languageLabels[item.listing.language]}</dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd>{conditionLabels[item.listing.condition]}</dd>
+          </div>
+          <div>
+            <dt>Disponibles</dt>
+            <dd>{item.listing.quantity}</dd>
+          </div>
+          <div>
+            <dt>Precio unitario</dt>
+            <dd>
+              {item.listing.priceEur
+                ? `${item.listing.priceEur.toFixed(2)} €`
+                : 'A convenir'}
+            </dd>
+          </div>
+        </dl>
+
+        {item.listing.status === 'available' && !isOwner ? (
+          <div className="market-reservation-sheet__reservation">
+            {item.listing.quantity > 1 ? (
+              <label>
+                <span>Cantidad a reservar</span>
+                <select
+                  aria-label="Cantidad a reservar"
+                  value={quantity}
+                  onChange={(event) => setQuantity(Number(event.target.value))}
+                >
+                  {Array.from(
+                    { length: item.listing.quantity },
+                    (_, index) => index + 1,
+                  ).map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+            <button
+              className="market-reservation-sheet__primary"
+              type="button"
+              onClick={() => onReserve(quantity)}
+            >
+              <ShoppingBag aria-hidden="true" size={17} />
+              Reservar {quantity > 1 ? `${quantity} cartas` : 'carta'}
+            </button>
+          </div>
+        ) : isReservedByCurrentMember ? (
+          <div className="market-reservation-sheet__reserved">
+            <p>
+              <CheckCircle2 aria-hidden="true" size={17} />
+              {item.listing.reservedQuantity ?? 1}{' '}
+              {(item.listing.reservedQuantity ?? 1) > 1
+                ? 'cartas reservadas para ti'
+                : 'carta reservada para ti'}
+            </p>
+            <button type="button" onClick={onCancelReservation}>
+              <X aria-hidden="true" size={16} />
+              Cancelar reserva
+            </button>
+          </div>
+        ) : (
+          <p className="market-reservation-sheet__notice">
+            {isOwner
+              ? 'Esta es una de tus ofertas.'
+              : isReservedByAnotherMember
+                ? 'Esta oferta ya está reservada.'
+                : 'Esta oferta ya no está disponible.'}
+          </p>
+        )}
+      </section>
     </div>
   )
 }
@@ -803,6 +990,7 @@ function ReservationCardRow({
         <p>
           {reservedByCurrentMember ? 'De' : 'Reservada por'}{' '}
           {item.otherMember?.displayName ?? 'otro miembro'} ·{' '}
+          {item.listing.reservedQuantity ?? item.listing.quantity} ud. ·{' '}
           {languageLabels[item.listing.language]}
         </p>
       </div>
@@ -2169,9 +2357,26 @@ export function CardsPage({
     card: Card
     description: string
   }>()
+  const [selectedMarketplaceListingId, setSelectedMarketplaceListingId] =
+    useState<string>()
   const [actionMessage, setActionMessage] = useState('')
   const [query, setQuery] = useState('')
   const listings = getMarketplaceListings(data)
+  const selectedMarketplaceItem = useMemo<
+    MarketplaceListingItem | undefined
+  >(() => {
+    const listing = data.listings.find(
+      ({ id }) => id === selectedMarketplaceListingId,
+    )
+    const card = listing
+      ? data.cards.find(({ id }) => id === listing.cardId)
+      : undefined
+    const member = listing
+      ? data.members.find(({ id }) => id === listing.memberId)
+      : undefined
+
+    return listing && card && member ? { listing, card, member } : undefined
+  }, [data.cards, data.listings, data.members, selectedMarketplaceListingId])
   const wantedCards = getMemberWantedCards(data, currentMember.id)
   const memberListings = getMemberMarketplaceListings(data, currentMember.id)
   const wantedPersonalLists = data.cardLists.filter(
@@ -2614,6 +2819,9 @@ export function CardsPage({
             marketDisplay === 'table' ? (
               <MarketplaceTable
                 items={visibleListings}
+                onOpen={(item) =>
+                  setSelectedMarketplaceListingId(item.listing.id)
+                }
                 onMemberSelect={(memberId) => {
                   window.location.hash = `cartas?member=${memberId}`
                 }}
@@ -3038,6 +3246,48 @@ export function CardsPage({
           </p>
         </section>
       )}
+      {selectedMarketplaceItem ? (
+        <MarketplaceReservationSheet
+          key={selectedMarketplaceItem.listing.id}
+          item={selectedMarketplaceItem}
+          currentMember={currentMember}
+          onClose={() => setSelectedMarketplaceListingId(undefined)}
+          onMemberSelect={(memberId) => {
+            setSelectedMarketplaceListingId(undefined)
+            window.location.hash = `cartas?member=${memberId}`
+          }}
+          onPreview={() =>
+            setSelectedCardPreview({
+              card: selectedMarketplaceItem.card,
+              description: `${selectedMarketplaceItem.card.setName} · Disponible por ${selectedMarketplaceItem.member.displayName}`,
+            })
+          }
+          onReserve={(quantity) => {
+            onDataChange((currentData) =>
+              reserveMarketplaceListing(
+                currentData,
+                selectedMarketplaceItem.listing.id,
+                currentMember.id,
+                undefined,
+                quantity,
+              ),
+            )
+            setActionMessage(
+              `${quantity} ${quantity > 1 ? 'cartas reservadas' : 'carta reservada'} a tu nombre.`,
+            )
+          }}
+          onCancelReservation={() => {
+            onDataChange((currentData) =>
+              cancelMarketplaceReservation(
+                currentData,
+                selectedMarketplaceItem.listing.id,
+                currentMember.id,
+              ),
+            )
+            setActionMessage('La reserva se ha cancelado.')
+          }}
+        />
+      ) : null}
       {selectedCardPreview ? (
         <CardImagePreview
           card={selectedCardPreview.card}

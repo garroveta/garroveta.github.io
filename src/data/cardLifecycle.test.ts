@@ -89,6 +89,33 @@ describe('card list lifecycle', () => {
     ).toBe(demoData)
   })
 
+  it('stores a valid reserved quantity and rejects an excessive one', () => {
+    const updatedData = reserveMarketplaceListing(
+      demoData,
+      'listing-sol-ring-marta',
+      demoData.currentMemberId,
+      undefined,
+      2,
+    )
+
+    expect(
+      updatedData.listings.find(({ id }) => id === 'listing-sol-ring-marta'),
+    ).toMatchObject({
+      status: 'reserved',
+      reservedByMemberId: demoData.currentMemberId,
+      reservedQuantity: 2,
+    })
+    expect(
+      reserveMarketplaceListing(
+        demoData,
+        'listing-sol-ring-marta',
+        demoData.currentMemberId,
+        undefined,
+        3,
+      ),
+    ).toBe(demoData)
+  })
+
   it('lets the buyer or seller cancel a reservation', () => {
     const reservedData = reserveMarketplaceListing(
       demoData,

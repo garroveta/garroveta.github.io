@@ -715,6 +715,62 @@ describe('App', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
+  it('reserves a marketplace quantity from the compact offer sheet', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: /Ofertas/ }))
+
+    const marketplaceTable = screen.getByRole('table', {
+      name: 'Ofertas de cartas disponibles',
+    })
+    fireEvent.click(
+      within(marketplaceTable).getByRole('row', {
+        name: 'Abrir oferta de Sol Ring de Marta Soler',
+      }),
+    )
+
+    const offerDialog = screen.getByRole('dialog', { name: 'Sol Ring' })
+    expect(
+      within(offerDialog).getByText('Ver las cartas de Marta Soler'),
+    ).toBeInTheDocument()
+    fireEvent.change(
+      within(offerDialog).getByLabelText('Cantidad a reservar'),
+      { target: { value: '2' } },
+    )
+    fireEvent.click(
+      within(offerDialog).getByRole('button', {
+        name: 'Reservar 2 cartas',
+      }),
+    )
+
+    expect(
+      within(offerDialog).getByText('2 cartas reservadas para ti'),
+    ).toBeInTheDocument()
+    expect(
+      createLocalDemoRepository(window.localStorage)
+        .load()
+        .listings.find(({ id }) => id === 'listing-sol-ring-marta'),
+    ).toMatchObject({
+      status: 'reserved',
+      reservedByMemberId: demoData.currentMemberId,
+      reservedQuantity: 2,
+    })
+
+    fireEvent.click(
+      within(offerDialog).getByRole('button', { name: 'Cancelar reserva' }),
+    )
+    expect(
+      within(offerDialog).getByRole('button', { name: 'Reservar 2 cartas' }),
+    ).toBeInTheDocument()
+    expect(
+      createLocalDemoRepository(window.localStorage)
+        .load()
+        .listings.find(({ id }) => id === 'listing-sol-ring-marta')
+        ?.reservedQuantity,
+    ).toBeUndefined()
+  })
+
   it('publishes a card offer in the local marketplace', () => {
     render(<App />)
 

@@ -2687,6 +2687,271 @@ a {
   display: none;
 }
 
+.market-table__row-action {
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+
+.market-table__row-action:hover {
+  background: #fbf8fc;
+}
+
+.market-table__row-action:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 3px solid rgb(101 50 120 / 35%);
+  outline-offset: -3px;
+}
+
+.market-reservation-sheet {
+  position: fixed;
+  z-index: 28;
+  inset: 0;
+  display: grid;
+  align-items: end;
+  overflow-y: auto;
+  background: rgb(32 24 35 / 62%);
+}
+
+.market-reservation-sheet__panel {
+  position: relative;
+  width: 100%;
+  max-height: min(44rem, calc(100dvh - 2rem));
+  padding: 1.2rem 1rem calc(1.2rem + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  border: 1px solid #e3dce5;
+  border-radius: 1.25rem 1.25rem 0 0;
+  background: #fff;
+  box-shadow: 0 -1rem 3.5rem rgb(30 22 33 / 28%);
+}
+
+.market-reservation-sheet__handle {
+  position: absolute;
+  top: 0.5rem;
+  left: 50%;
+  width: 2.8rem;
+  height: 0.22rem;
+  border-radius: 999px;
+  background: #d8d0da;
+  transform: translateX(-50%);
+}
+
+.market-reservation-sheet__close {
+  position: absolute;
+  z-index: 1;
+  top: 0.85rem;
+  right: 0.85rem;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  color: #665d69;
+  background: #f3eff4;
+  cursor: pointer;
+}
+
+.market-reservation-sheet__identity {
+  display: grid;
+  grid-template-columns: 4rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.85rem;
+  padding-right: 2.2rem;
+}
+
+.market-reservation-sheet__image {
+  display: grid;
+  width: 4rem;
+  height: 5.58rem;
+  padding: 0;
+  overflow: hidden;
+  place-items: center;
+  border: 0;
+  border-radius: 0.5rem;
+  color: #fff;
+  background: #302137;
+  box-shadow: 0 0.4rem 1rem rgb(48 33 55 / 22%);
+  cursor: zoom-in;
+}
+
+.market-reservation-sheet__image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.market-reservation-sheet__image > span {
+  font-size: 0.8rem;
+  font-weight: 850;
+}
+
+.market-reservation-sheet__identity .page-eyebrow {
+  font-size: 0.56rem;
+}
+
+.market-reservation-sheet__identity h2 {
+  margin: 0.12rem 0 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.45rem;
+  font-weight: 500;
+  line-height: 1.05;
+}
+
+.market-reservation-sheet__identity p {
+  margin: 0.25rem 0 0;
+  overflow: hidden;
+  color: #837986;
+  font-size: 0.66rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.market-reservation-sheet__member {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.18rem;
+  margin-top: 0.42rem;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  color: #653278;
+  background: transparent;
+  font: inherit;
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.market-reservation-sheet__facts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin: 1rem 0 0;
+}
+
+.market-reservation-sheet__facts > div {
+  min-width: 0;
+  padding: 0.55rem;
+  border-radius: 0.62rem;
+  background: #f5f2f5;
+}
+
+.market-reservation-sheet__facts dt {
+  color: #8d828f;
+  font-size: 0.5rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.market-reservation-sheet__facts dd {
+  margin: 0.18rem 0 0;
+  overflow: hidden;
+  color: #3d3540;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.market-reservation-sheet__reservation {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: end;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+.market-reservation-sheet__reservation > label {
+  display: grid;
+  gap: 0.28rem;
+  color: #746a77;
+  font-size: 0.55rem;
+  font-weight: 800;
+}
+
+.market-reservation-sheet__reservation select {
+  min-width: 4.4rem;
+  min-height: 2.55rem;
+  padding: 0 0.55rem;
+  border: 1px solid #ddd5df;
+  border-radius: 0.62rem;
+  color: #403744;
+  background: #fff;
+  font: inherit;
+  font-size: 0.72rem;
+}
+
+.market-reservation-sheet__primary,
+.market-reservation-sheet__reserved button {
+  display: inline-flex;
+  min-height: 2.55rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border: 0;
+  border-radius: 0.62rem;
+  color: #fff;
+  background: #653278;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.market-reservation-sheet__reserved {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.85rem;
+  padding: 0.55rem;
+  border-radius: 0.72rem;
+  background: #f2f7f4;
+}
+
+.market-reservation-sheet__reserved p {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  color: #436653;
+  font-size: 0.64rem;
+  font-weight: 800;
+}
+
+.market-reservation-sheet__reserved button {
+  min-height: 2.15rem;
+  padding: 0 0.65rem;
+  border: 1px solid #dfc7c5;
+  color: #884b47;
+  background: #fff7f6;
+  font-size: 0.58rem;
+}
+
+.market-reservation-sheet__notice {
+  margin: 0.85rem 0 0;
+  padding: 0.7rem;
+  border-radius: 0.65rem;
+  color: #746a77;
+  background: #f5f2f5;
+  font-size: 0.65rem;
+  font-weight: 750;
+  text-align: center;
+}
+
+.market-reservation-sheet button:focus-visible,
+.market-reservation-sheet select:focus-visible {
+  outline: 3px solid rgb(101 50 120 / 30%);
+  outline-offset: 2px;
+}
+
 .market-pagination {
   display: flex;
   min-height: 2.6rem;
@@ -6255,6 +6520,20 @@ a {
 }
 
 @media (min-width: 48rem) {
+  .market-reservation-sheet {
+    padding: 1.5rem;
+    place-items: center;
+  }
+
+  .market-reservation-sheet__panel {
+    width: min(100%, 34rem);
+    border-radius: 1.15rem;
+  }
+
+  .market-reservation-sheet__handle {
+    display: none;
+  }
+
   .market-gallery-card {
     grid-template-columns: minmax(0, 1fr);
   }
