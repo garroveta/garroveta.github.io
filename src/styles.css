@@ -2937,6 +2937,14 @@ a {
   font-size: 0.72rem;
 }
 
+.market-reservation-sheet__reservation select:disabled {
+  color: #5e5661;
+  border-color: #e1dbe2;
+  background: #f4f1f4;
+  opacity: 1;
+  cursor: not-allowed;
+}
+
 .market-reservation-sheet__primary,
 .market-reservation-sheet__reserved button {
   display: inline-flex;

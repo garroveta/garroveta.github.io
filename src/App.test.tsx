@@ -769,6 +769,27 @@ describe('App', () => {
         .listings.find(({ id }) => id === 'listing-sol-ring-marta')
         ?.reservedQuantity,
     ).toBeUndefined()
+
+    fireEvent.click(
+      within(offerDialog).getByRole('button', { name: 'Cerrar oferta' }),
+    )
+    fireEvent.click(
+      within(marketplaceTable).getByRole('row', {
+        name: 'Abrir oferta de Sol Ring de Diego Sánchez',
+      }),
+    )
+    const singleCardDialog = screen.getByRole('dialog', { name: 'Sol Ring' })
+    expect(
+      within(singleCardDialog).getByLabelText('Cantidad a reservar'),
+    ).toBeDisabled()
+    expect(
+      within(singleCardDialog).getByLabelText('Cantidad a reservar'),
+    ).toHaveValue('1')
+    expect(
+      within(singleCardDialog).getByRole('button', {
+        name: 'Reservar carta',
+      }),
+    ).toBeInTheDocument()
   })
 
   it('publishes a card offer in the local marketplace', () => {

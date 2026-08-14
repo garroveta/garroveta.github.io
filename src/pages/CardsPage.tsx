@@ -372,27 +372,24 @@ function MarketplaceReservationSheet({
         <footer className="market-reservation-sheet__footer">
           {item.listing.status === 'available' && !isOwner ? (
             <div className="market-reservation-sheet__reservation">
-              {item.listing.quantity > 1 ? (
-                <label>
-                  <span>Cantidad a reservar</span>
-                  <select
-                    aria-label="Cantidad a reservar"
-                    value={quantity}
-                    onChange={(event) =>
-                      setQuantity(Number(event.target.value))
-                    }
-                  >
-                    {Array.from(
-                      { length: item.listing.quantity },
-                      (_, index) => index + 1,
-                    ).map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : null}
+              <label>
+                <span>Cantidad a reservar</span>
+                <select
+                  aria-label="Cantidad a reservar"
+                  disabled={item.listing.quantity === 1}
+                  value={quantity}
+                  onChange={(event) => setQuantity(Number(event.target.value))}
+                >
+                  {Array.from(
+                    { length: item.listing.quantity },
+                    (_, index) => index + 1,
+                  ).map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <button
                 className="market-reservation-sheet__primary"
                 type="button"
