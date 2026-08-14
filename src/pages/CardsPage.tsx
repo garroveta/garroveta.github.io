@@ -28,7 +28,7 @@ import type { ChangeEvent, FormEvent } from 'react'
 import { useMemo, useState } from 'react'
 
 import { MarketplaceReservationSheet } from '../components/MarketplaceReservationSheet'
-import { MarketplaceListingRow } from '../components/MarketplaceListingRow'
+import { MarketplaceListingTable } from '../components/MarketplaceListingTable'
 import {
   applyResolvedMarketplaceImport,
   applyResolvedWantedCardImport,
@@ -114,55 +114,6 @@ const listingStatusLabels: Record<MarketplaceListing['status'], string> = {
   available: 'Publicada',
   reserved: 'Con reserva',
   completed: 'Retirada',
-}
-
-function MarketplaceTable({
-  items,
-  onOpen,
-  onMemberSelect,
-  onPreview,
-}: {
-  items: MarketplaceListingItem[]
-  onOpen: (item: MarketplaceListingItem) => void
-  onMemberSelect: (memberId: string) => void
-  onPreview: (item: MarketplaceListingItem) => void
-}) {
-  return (
-    <div className="market-table-wrap">
-      <table
-        className="market-table"
-        aria-label="Ofertas de cartas disponibles"
-      >
-        <thead>
-          <tr>
-            <th scope="col">Carta</th>
-            <th className="market-table__wide" scope="col">
-              Idioma
-            </th>
-            <th className="market-table__wide" scope="col">
-              Estado
-            </th>
-            <th scope="col">
-              <abbr title="Cantidad">Cant.</abbr>
-            </th>
-            <th scope="col">Precio</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item) => (
-            <MarketplaceListingRow
-              item={item}
-              key={item.listing.id}
-              variant="community-table"
-              onMemberSelect={onMemberSelect}
-              onOpen={onOpen}
-              onPreview={onPreview}
-            />
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
 }
 
 function MarketplaceGallery({
@@ -2615,7 +2566,8 @@ export function CardsPage({
 
           {visibleListings.length > 0 ? (
             marketDisplay === 'table' ? (
-              <MarketplaceTable
+              <MarketplaceListingTable
+                ariaLabel="Ofertas de cartas disponibles"
                 items={visibleListings}
                 onOpen={(item) =>
                   setSelectedMarketplaceListingId(item.listing.id)

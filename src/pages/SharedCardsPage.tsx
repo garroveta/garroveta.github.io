@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
-import { MarketplaceListingRow } from '../components/MarketplaceListingRow'
+import { MarketplaceListingTable } from '../components/MarketplaceListingTable'
 import { MarketplaceReservationSheet } from '../components/MarketplaceReservationSheet'
 import {
   cancelMarketplaceReservation,
@@ -207,55 +207,50 @@ export function SharedCardsPage({
         <span>{filteredListings.length} resultados</span>
       </div>
 
-      <div className="shared-card-list">
-        {filteredListings.map((item) => {
-          const { listing } = item
-          const reservedByCurrentMember =
-            listing.reservedByMemberId === currentMember.id
+      {filteredListings.length > 0 ? (
+        <MarketplaceListingTable
+          ariaLabel={`Cartas disponibles de ${seller.displayName}`}
+          items={filteredListings}
+          renderAction={(item) => {
+            const { listing } = item
+            const reservedByCurrentMember =
+              listing.reservedByMemberId === currentMember.id
 
-          return (
-            <MarketplaceListingRow
-              item={item}
-              key={listing.id}
-              variant="member-list"
-              action={
-                isOwner ? (
-                  <span
-                    className={`listing-status listing-status--${listing.status}`}
-                  >
-                    {listing.status === 'reserved' ? 'Reservada' : 'Disponible'}
-                  </span>
-                ) : listing.status === 'available' ? (
-                  <button
-                    aria-label="Reservar"
-                    className="shared-card-reserve"
-                    title="Reservar"
-                    type="button"
-                    onClick={() => setSelectedListingId(listing.id)}
-                  >
-                    <ShoppingBag aria-hidden="true" size={14} />
-                  </button>
-                ) : reservedByCurrentMember ? (
-                  <button
-                    aria-label="Cancelar reserva"
-                    className="shared-card-cancel"
-                    title="Cancelar reserva"
-                    type="button"
-                    onClick={() => setSelectedListingId(listing.id)}
-                  >
-                    <X aria-hidden="true" size={14} />
-                  </button>
-                ) : (
-                  <span className="shared-card-reserved">
-                    <CheckCircle2 aria-hidden="true" size={14} />
-                    Reservada
-                  </span>
-                )
-              }
-            />
-          )
-        })}
-      </div>
+            return isOwner ? (
+              <span
+                className={`listing-status listing-status--${listing.status}`}
+              >
+                {listing.status === 'reserved' ? 'Reservada' : 'Disponible'}
+              </span>
+            ) : listing.status === 'available' ? (
+              <button
+                aria-label="Reservar"
+                className="shared-card-reserve"
+                title="Reservar"
+                type="button"
+                onClick={() => setSelectedListingId(listing.id)}
+              >
+                <ShoppingBag aria-hidden="true" size={14} />
+              </button>
+            ) : reservedByCurrentMember ? (
+              <button
+                aria-label="Cancelar reserva"
+                className="shared-card-cancel"
+                title="Cancelar reserva"
+                type="button"
+                onClick={() => setSelectedListingId(listing.id)}
+              >
+                <X aria-hidden="true" size={14} />
+              </button>
+            ) : (
+              <span className="shared-card-reserved">
+                <CheckCircle2 aria-hidden="true" size={14} />
+                Reservada
+              </span>
+            )
+          }}
+        />
+      ) : null}
 
       {filteredListings.length === 0 ? (
         <p className="filtered-empty-state">
