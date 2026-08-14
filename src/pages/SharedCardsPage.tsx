@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
+import { MarketplaceReservationSheet } from '../components/MarketplaceReservationSheet'
 import {
   cancelMarketplaceReservation,
   reserveMarketplaceListing,
@@ -68,6 +69,7 @@ export function SharedCardsPage({
   const [language, setLanguage] = useState(initialLanguage)
   const [condition, setCondition] = useState(initialCondition)
   const [message, setMessage] = useState('')
+  const [selectedListingId, setSelectedListingId] = useState<string>()
   const setOptions = useMemo(
     () =>
       [
@@ -78,6 +80,9 @@ export function SharedCardsPage({
     [sharedListings],
   )
   const normalizedQuery = query.trim().toLocaleLowerCase('es')
+  const selectedListing = sharedListings.find(
+    ({ listing }) => listing.id === selectedListingId,
+  )
   const filteredListings = sharedListings.filter(
     ({ card, listing }) =>
       (!normalizedQuery ||
@@ -270,16 +275,7 @@ export function SharedCardsPage({
                 ) : listing.status === 'available' ? (
                   <button
                     type="button"
-                    onClick={() => {
-                      onDataChange((currentData) =>
-                        reserveMarketplaceListing(
-                          currentData,
-                          listing.id,
-                          currentMember.id,
-                        ),
-                      )
-                      setMessage(`${card.name} se ha reservado a tu nombre.`)
-                    }}
+                    onClick={() => setSelectedListingId(listing.id)}
                   >
                     Reservar
                   </button>
@@ -316,6 +312,41 @@ export function SharedCardsPage({
         <p className="filtered-empty-state">
           Ninguna carta coincide con estos filtros.
         </p>
+      ) : null}
+
+      {selectedListing ? (
+        <MarketplaceReservationSheet
+          key={selectedListing.listing.id}
+          item={selectedListing}
+          currentMember={currentMember}
+          onClose={() => setSelectedListingId(undefined)}
+          onReserve={(quantity) => {
+            onDataChange((currentData) =>
+              reserveMarketplaceListing(
+                currentData,
+                selectedListing.listing.id,
+                currentMember.id,
+                undefined,
+                quantity,
+              ),
+            )
+            setMessage(
+              `${quantity} ${quantity > 1 ? 'cartas reservadas' : 'carta reservada'} a tu nombre.`,
+            )
+          }}
+          onCancelReservation={() => {
+            onDataChange((currentData) =>
+              cancelMarketplaceReservation(
+                currentData,
+                selectedListing.listing.id,
+                currentMember.id,
+              ),
+            )
+            setMessage(
+              `La reserva de ${selectedListing.card.name} se ha cancelado.`,
+            )
+          }}
+        />
       ) : null}
     </div>
   )

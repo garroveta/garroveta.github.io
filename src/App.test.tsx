@@ -1409,10 +1409,22 @@ describe('App', () => {
     ).toBeInTheDocument()
     fireEvent.click(reserveButton)
 
+    const memberOfferDialog = screen.getByRole('dialog', { name: 'Sol Ring' })
     expect(
-      within(reservedCard as HTMLElement).getByRole('button', {
-        name: 'Cancelar reserva',
+      within(memberOfferDialog).getByText('Disponibles'),
+    ).toBeInTheDocument()
+    fireEvent.change(
+      within(memberOfferDialog).getByLabelText('Cantidad a reservar'),
+      { target: { value: '2' } },
+    )
+    fireEvent.click(
+      within(memberOfferDialog).getByRole('button', {
+        name: 'Reservar 2 cartas',
       }),
+    )
+
+    expect(
+      within(memberOfferDialog).getByText('2 cartas reservadas para ti'),
     ).toBeInTheDocument()
     expect(
       createLocalDemoRepository(window.localStorage)
@@ -1421,12 +1433,15 @@ describe('App', () => {
           ({ reservedByMemberId }) =>
             reservedByMemberId === demoData.currentMemberId,
         ),
-    ).toMatchObject({ status: 'reserved' })
+    ).toMatchObject({ status: 'reserved', reservedQuantity: 2 })
 
     fireEvent.click(
-      within(reservedCard as HTMLElement).getByRole('button', {
+      within(memberOfferDialog).getByRole('button', {
         name: 'Cancelar reserva',
       }),
+    )
+    fireEvent.click(
+      within(memberOfferDialog).getByRole('button', { name: 'Cerrar oferta' }),
     )
     expect(
       within(reservedCard as HTMLElement).getByRole('button', {
@@ -1457,6 +1472,17 @@ describe('App', () => {
       within(reservedCard as HTMLElement).getByRole('button', {
         name: 'Reservar',
       }),
+    )
+    const memberOfferDialog = screen.getByRole('dialog', {
+      name: cardName ?? '',
+    })
+    fireEvent.click(
+      within(memberOfferDialog).getByRole('button', {
+        name: 'Reservar carta',
+      }),
+    )
+    fireEvent.click(
+      within(memberOfferDialog).getByRole('button', { name: 'Cerrar oferta' }),
     )
     fireEvent.click(screen.getByRole('button', { name: 'Volver a las cartas' }))
     fireEvent.click(screen.getByRole('button', { name: /Mis listas/ }))
