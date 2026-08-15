@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  addWantedCard,
   applyResolvedMarketplaceImport,
   applyResolvedWantedCardImport,
   importWantedCards,
@@ -9,6 +10,28 @@ import {
 import { demoData } from './demoData'
 
 describe('card mutations', () => {
+  it('adds a precise wanted-card variant to a private wanted list', () => {
+    const updatedData = addWantedCard(demoData, {
+      memberId: demoData.currentMemberId,
+      cardId: 'card-esper-sentinel',
+      cardListId: 'card-list-alex-wanted-pauper',
+      quantity: 2,
+      acceptedLanguage: 'fr',
+      acceptedFinish: 'foil',
+    })
+
+    expect(updatedData.wantedCards.at(-1)).toMatchObject({
+      cardId: 'card-esper-sentinel',
+      memberId: demoData.currentMemberId,
+      cardListId: 'card-list-alex-wanted-pauper',
+      quantity: 2,
+      acceptedLanguages: ['fr'],
+      acceptedFinishes: ['foil'],
+      matchAllPrintings: false,
+      status: 'active',
+    })
+  })
+
   it('publishes a marketplace listing for an approved member', () => {
     const updatedData = publishMarketplaceListing(demoData, {
       memberId: demoData.currentMemberId,

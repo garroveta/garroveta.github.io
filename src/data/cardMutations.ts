@@ -21,6 +21,15 @@ export type MarketplaceListingInput = {
   priceEur?: number
 }
 
+export type WantedCardInput = {
+  memberId: string
+  cardId: string
+  cardListId?: string
+  quantity: number
+  acceptedLanguage: CardLanguage
+  acceptedFinish: MarketplaceListing['finish']
+}
+
 export type WantedImportItem = {
   cardId: string
   cardName: string
@@ -532,6 +541,81 @@ export function publishMarketplaceListing(
       },
     ],
   })
+}
+
+/** Adds one precise wanted-card variant, keeping private list organisation local to its owner. */
+export function addWantedCard(
+  data: DemoDataSet,
+  input: WantedCardInput,
+  createdAt = DEMO_REFERENCE_TIME,
+): DemoDataSet {
+  const member = data.members.find(({ id }) => id === input.memberId)
+  const card = data.cards.find(({ id }) => id === input.cardId)
+  const cardList = input.cardListId
+    ? data.cardLists.find(
+        ({ id, memberId, kind }) =>
+          id === input.cardListId &&
+          memberId === input.memberId &&
+          kind === 'wanted',
+      )
+    : undefined
+  const quantity = Math.floor(input.quantity)
+
+  if (
+    !member ||
+    member.status !== 'approved' ||
+    !card ||
+    quantity < 1 ||
+    (input.cardListId && !cardList)
+  ) {
+    return data
+  }
+
+  const existingWantedCard = data.wantedCards.find(
+    (wantedCard) =>
+      wantedCard.memberId === member.id &&
+      wantedCard.cardId === card.id &&
+      wantedCard.cardListId === cardList?.id &&
+      wantedCard.acceptedLanguages[0] === input.acceptedLanguage &&
+      wantedCard.acceptedFinishes[0] === input.acceptedFinish &&
+      wantedCard.status !== 'fulfilled',
+  )
+
+  const wantedCards = existingWantedCard
+    ? data.wantedCards.map((wantedCard) =>
+        wantedCard.id === existingWantedCard.id
+          ? {
+              ...wantedCard,
+              quantity: wantedCard.quantity + quantity,
+              status: 'active' as const,
+            }
+          : wantedCard,
+      )
+    : [
+        ...data.wantedCards,
+        {
+          id: nextUniqueId(
+            data.wantedCards.map(({ id }) => id),
+            `wanted-${member.id.replace('member-', '')}-${card.id.replace('card-', '')}`,
+          ),
+          communityId: data.community.id,
+          memberId: member.id,
+          cardId: card.id,
+          cardListId: cardList?.id,
+          quantity,
+          acceptedLanguages: [input.acceptedLanguage] as [CardLanguage],
+          acceptedFinishes: [input.acceptedFinish] as [
+            MarketplaceListing['finish'],
+          ],
+          oracleId: card.oracleId,
+          requestedScryfallId: card.scryfallId,
+          matchAllPrintings: false,
+          status: 'active' as const,
+          createdAt,
+        },
+      ]
+
+  return synchronizeCardMatches({ ...data, wantedCards })
 }
 
 export function importWantedCards(

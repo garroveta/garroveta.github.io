@@ -34,9 +34,9 @@ import {
 import {
   applyResolvedMarketplaceImport,
   applyResolvedWantedCardImport,
+  addWantedCard,
   type MarketplaceImportItemInput,
   publishMarketplaceListing,
-  type MarketplaceListingInput,
   type WantedImportMode,
   type WantedImportItemInput,
   type WantedImportResult,
@@ -877,7 +877,7 @@ function ComposerHeading({
   )
 }
 
-function ListingComposer({
+function CardComposer({
   data,
   memberId,
   onClose,
@@ -890,7 +890,9 @@ function ListingComposer({
   onDataChange: (updater: DemoDataUpdater) => void
   onPublished: () => void
 }) {
-  const [cardId, setCardId] = useState(data.cards[0]?.id ?? '')
+  const [destination, setDestination] = useState<'offer' | 'wanted'>('offer')
+  const [cardId, setCardId] = useState('')
+  const [cardQuery, setCardQuery] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [language, setLanguage] = useState<CardLanguage>('es')
   const [condition, setCondition] = useState<CardCondition>('near_mint')
@@ -900,44 +902,127 @@ function ListingComposer({
     ({ memberId: ownerId, kind }) => ownerId === memberId && kind === 'offers',
   )
   const [cardListId, setCardListId] = useState(offerLists[0]?.id ?? '')
+  const wantedLists = data.cardLists.filter(
+    ({ memberId: ownerId, kind }) => ownerId === memberId && kind === 'wanted',
+  )
+  const selectedCard = data.cards.find(({ id }) => id === cardId)
+  const normalizedCardQuery = cardQuery.trim().toLocaleLowerCase('es')
+  const suggestedCards = data.cards
+    .filter(
+      (card) =>
+        normalizedCardQuery &&
+        (card.name.toLocaleLowerCase('es').includes(normalizedCardQuery) ||
+          card.setName.toLocaleLowerCase('es').includes(normalizedCardQuery) ||
+          card.setCode.toLocaleLowerCase('es').includes(normalizedCardQuery) ||
+          card.collectorNumber.includes(cardQuery.trim())),
+    )
+    .slice(0, 6)
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const input: MarketplaceListingInput = {
-      memberId,
-      cardId,
-      cardListId: cardListId || undefined,
-      quantity,
-      language,
-      condition,
-      finish,
-      priceEur: priceEur ? Number(priceEur) : undefined,
+    if (!cardId) {
+      return
     }
-    onDataChange((currentData) => publishMarketplaceListing(currentData, input))
+    onDataChange((currentData) =>
+      destination === 'offer'
+        ? publishMarketplaceListing(currentData, {
+            memberId,
+            cardId,
+            cardListId: cardListId || undefined,
+            quantity,
+            language,
+            condition,
+            finish,
+            priceEur: priceEur ? Number(priceEur) : undefined,
+          })
+        : addWantedCard(currentData, {
+            memberId,
+            cardId,
+            cardListId: cardListId || undefined,
+            quantity,
+            acceptedLanguage: language,
+            acceptedFinish: finish,
+          }),
+    )
     onPublished()
   }
 
   return (
     <form
       className="card-composer"
-      aria-label="Publicar una carta"
+      aria-label="Añadir una carta"
       onSubmit={handleSubmit}
     >
-      <ComposerHeading title="Publicar una carta" onClose={onClose} />
+      <ComposerHeading title="Añadir una carta" onClose={onClose} />
+
+      <div
+        className="import-destination-switch"
+        role="group"
+        aria-label="Tipo de carta"
+      >
+        <button
+          type="button"
+          aria-pressed={destination === 'wanted'}
+          onClick={() => {
+            setDestination('wanted')
+            setCardListId(wantedLists[0]?.id ?? '')
+          }}
+        >
+          Busco esta carta
+        </button>
+        <button
+          type="button"
+          aria-pressed={destination === 'offer'}
+          onClick={() => {
+            setDestination('offer')
+            setCardListId(offerLists[0]?.id ?? '')
+          }}
+        >
+          Ofrezco esta carta
+        </button>
+      </div>
 
       <label className="form-field">
-        <span>Carta</span>
-        <select
-          value={cardId}
-          onChange={(event) => setCardId(event.target.value)}
-        >
-          {data.cards.map((card) => (
-            <option key={card.id} value={card.id}>
-              {card.name} · {card.setCode}
-            </option>
-          ))}
-        </select>
+        <span>Buscar una carta</span>
+        <input
+          type="search"
+          placeholder="Nombre, edición o número"
+          value={cardQuery}
+          onChange={(event) => setCardQuery(event.target.value)}
+        />
       </label>
+
+      <div
+        className="card-search-suggestions"
+        aria-label="Resultados de búsqueda"
+      >
+        {suggestedCards.map((card) => (
+          <button
+            key={card.id}
+            className={card.id === cardId ? 'is-selected' : undefined}
+            type="button"
+            onClick={() => {
+              setCardId(card.id)
+              setCardQuery('')
+            }}
+          >
+            <strong>{card.name}</strong>
+            <span>
+              {card.setName} · {card.setCode} #{card.collectorNumber}
+            </span>
+          </button>
+        ))}
+        {normalizedCardQuery && suggestedCards.length === 0 ? (
+          <p>No se ha encontrado ninguna carta en el catálogo.</p>
+        ) : null}
+      </div>
+
+      {selectedCard ? (
+        <p className="card-composer__selection">
+          Seleccionada: <strong>{selectedCard.name}</strong> ·{' '}
+          {selectedCard.setCode} #{selectedCard.collectorNumber}
+        </p>
+      ) : null}
 
       <div className="card-form-grid">
         <label className="form-field">
@@ -947,11 +1032,13 @@ function ListingComposer({
             onChange={(event) => setCardListId(event.target.value)}
           >
             <option value="">Sin lista</option>
-            {offerLists.map((list) => (
-              <option key={list.id} value={list.id}>
-                {list.name}
-              </option>
-            ))}
+            {(destination === 'offer' ? offerLists : wantedLists).map(
+              (list) => (
+                <option key={list.id} value={list.id}>
+                  {list.name}
+                </option>
+              ),
+            )}
           </select>
         </label>
         <label className="form-field">
@@ -979,33 +1066,37 @@ function ListingComposer({
             ))}
           </select>
         </label>
-        <label className="form-field">
-          <span>Estado</span>
-          <select
-            value={condition}
-            onChange={(event) =>
-              setCondition(event.target.value as CardCondition)
-            }
-          >
-            {cardConditions.map((cardCondition) => (
-              <option key={cardCondition} value={cardCondition}>
-                {conditionLabels[cardCondition]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="form-field">
-          <span>Acabado</span>
-          <select
-            value={finish}
-            onChange={(event) =>
-              setFinish(event.target.value as MarketplaceListing['finish'])
-            }
-          >
-            <option value="nonfoil">No foil</option>
-            <option value="foil">Foil</option>
-          </select>
-        </label>
+        {destination === 'offer' ? (
+          <label className="form-field">
+            <span>Estado</span>
+            <select
+              value={condition}
+              onChange={(event) =>
+                setCondition(event.target.value as CardCondition)
+              }
+            >
+              {cardConditions.map((cardCondition) => (
+                <option key={cardCondition} value={cardCondition}>
+                  {conditionLabels[cardCondition]}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        {destination === 'offer' ? (
+          <label className="form-field">
+            <span>Acabado</span>
+            <select
+              value={finish}
+              onChange={(event) =>
+                setFinish(event.target.value as MarketplaceListing['finish'])
+              }
+            >
+              <option value="nonfoil">No foil</option>
+              <option value="foil">Foil</option>
+            </select>
+          </label>
+        ) : null}
         <label className="form-field">
           <span>Precio opcional (€)</span>
           <input
@@ -1022,8 +1113,10 @@ function ListingComposer({
         <button className="secondary-button" type="button" onClick={onClose}>
           Cancelar
         </button>
-        <button className="primary-button" type="submit">
-          Publicar oferta
+        <button className="primary-button" disabled={!cardId} type="submit">
+          {destination === 'offer'
+            ? 'Publicar oferta'
+            : 'Añadir a mis búsquedas'}
         </button>
       </div>
     </form>
@@ -1937,14 +2030,10 @@ export function CardsPage({
       <header className="page-heading">
         <span className="page-eyebrow">
           <Layers3 aria-hidden="true" size={14} />
-          Mercado MTG de la comunidad
+          Mercado de cartas MTG
         </span>
         <h1>Cartas</h1>
-        <p>
-          Por ahora, esta sección está dedicada exclusivamente a cartas de
-          Magic: The Gathering. Encuentra ofertas y búsquedas sin rebuscar entre
-          fotos y mensajes antiguos.
-        </p>
+        <p>Busca, publica y reserva cartas de la comunidad.</p>
       </header>
 
       <div className="card-view-tabs" aria-label="Secciones de cartas">
@@ -1989,7 +2078,7 @@ export function CardsPage({
           }}
         >
           <Plus aria-hidden="true" size={16} />
-          Publicar carta
+          Añadir carta
         </button>
         <button
           className="secondary-button"
@@ -2005,7 +2094,7 @@ export function CardsPage({
       </div>
 
       {activeComposer === 'listing' ? (
-        <ListingComposer
+        <CardComposer
           data={data}
           memberId={currentMember.id}
           onClose={() => setActiveComposer(undefined)}
@@ -2013,7 +2102,7 @@ export function CardsPage({
           onPublished={() => {
             setActiveComposer(undefined)
             setActiveView('market')
-            setActionMessage('Tu carta ya aparece en las ofertas.')
+            setActionMessage('La carta se ha añadido a tus listas.')
           }}
         />
       ) : activeComposer === 'import' ? (

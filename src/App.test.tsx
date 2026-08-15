@@ -844,17 +844,18 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
-    fireEvent.click(screen.getByRole('button', { name: 'Publicar carta' }))
-    fireEvent.change(screen.getByLabelText('Carta'), {
-      target: { value: 'card-esper-sentinel' },
+    fireEvent.click(screen.getByRole('button', { name: 'Añadir carta' }))
+    fireEvent.change(screen.getByLabelText('Buscar una carta'), {
+      target: { value: 'Esper Sentinel' },
     })
+    fireEvent.click(screen.getByRole('button', { name: /Esper Sentinel/ }))
     fireEvent.change(screen.getByLabelText('Cantidad'), {
       target: { value: '2' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Publicar oferta' }))
 
     expect(
-      screen.getByText('Tu carta ya aparece en las ofertas.'),
+      screen.getByText('La carta se ha añadido a tus listas.'),
     ).toBeInTheDocument()
     expect(
       screen.queryByRole('row', { name: /Esper Sentinel/ }),
@@ -1281,10 +1282,11 @@ describe('App', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('La búsqueda se ha retirado.')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Publicar carta' }))
-    fireEvent.change(screen.getByLabelText('Carta'), {
-      target: { value: 'card-esper-sentinel' },
+    fireEvent.click(screen.getByRole('button', { name: 'Añadir carta' }))
+    fireEvent.change(screen.getByLabelText('Buscar una carta'), {
+      target: { value: 'Esper Sentinel' },
     })
+    fireEvent.click(screen.getByRole('button', { name: /Esper Sentinel/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Publicar oferta' }))
     fireEvent.click(screen.getByRole('button', { name: /Mis listas/ }))
     fireEvent.click(screen.getByRole('button', { name: /Mis ofertas/ }))
@@ -1350,10 +1352,11 @@ describe('App', () => {
     ).toBeVisible()
     expect(screen.getByText('La búsqueda se ha actualizado.')).toBeVisible()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Publicar carta' }))
-    fireEvent.change(screen.getByLabelText('Carta'), {
-      target: { value: 'card-esper-sentinel' },
+    fireEvent.click(screen.getByRole('button', { name: 'Añadir carta' }))
+    fireEvent.change(screen.getByLabelText('Buscar una carta'), {
+      target: { value: 'Esper Sentinel' },
     })
+    fireEvent.click(screen.getByRole('button', { name: /Esper Sentinel/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Publicar oferta' }))
     fireEvent.click(screen.getByRole('button', { name: /Mis listas/ }))
     fireEvent.click(screen.getByRole('button', { name: /Mis ofertas/ }))

@@ -4577,6 +4577,52 @@ a {
   gap: 0.8rem;
 }
 
+.card-search-suggestions {
+  display: grid;
+  gap: 0.35rem;
+  max-height: 14rem;
+  overflow-y: auto;
+}
+
+.card-search-suggestions button {
+  display: grid;
+  gap: 0.12rem;
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid #e4dce7;
+  border-radius: 0.7rem;
+  color: #332d35;
+  background: #fdfbfe;
+  text-align: left;
+  cursor: pointer;
+}
+
+.card-search-suggestions button.is-selected {
+  border-color: #67347a;
+  background: #f4edf7;
+  box-shadow: inset 0 0 0 1px #67347a;
+}
+
+.card-search-suggestions strong {
+  font-size: 0.77rem;
+}
+
+.card-search-suggestions span,
+.card-search-suggestions p,
+.card-composer__selection {
+  margin: 0;
+  color: #817783;
+  font-size: 0.67rem;
+  line-height: 1.4;
+}
+
+.card-composer__selection {
+  padding: 0.6rem 0.7rem;
+  border-radius: 0.7rem;
+  color: #5a4a60;
+  background: #f4f0f5;
+}
+
 .import-help {
   margin: -0.25rem 0 0;
   color: #827985;
