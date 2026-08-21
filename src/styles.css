@@ -1321,6 +1321,327 @@ a {
   background: #fff;
 }
 
+.manager-import-panel {
+  scroll-margin-top: 0.75rem;
+  margin-top: 0.8rem;
+}
+
+.manager-event-actions-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.8rem;
+  margin-top: 0.65rem;
+  color: #786f7b;
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+
+.manager-event-actions-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.eventlink-import {
+  position: relative;
+  display: grid;
+  gap: 0.9rem;
+  padding: 0.9rem;
+  border: 1px solid #ddd3e0;
+  border-radius: 1rem;
+  background: #fff;
+}
+
+.eventlink-import__heading {
+  padding-right: 5rem;
+}
+
+.eventlink-import__heading > span,
+.eventlink-import__section-heading > div > span {
+  color: #826b89;
+  font-size: 0.64rem;
+  font-weight: 850;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.eventlink-import__heading h3 {
+  margin: 0.2rem 0 0;
+  color: #302933;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.eventlink-import__heading p {
+  margin: 0.35rem 0 0;
+  color: #756c78;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.eventlink-dropzone {
+  display: grid;
+  min-height: 7.2rem;
+  place-items: center;
+  align-content: center;
+  gap: 0.3rem;
+  padding: 0.9rem;
+  border: 1px dashed #a98cb4;
+  border-radius: 0.85rem;
+  color: #633477;
+  background: #faf7fb;
+  text-align: center;
+  cursor: pointer;
+}
+
+.eventlink-dropzone strong {
+  font-size: 0.76rem;
+}
+
+.eventlink-dropzone span {
+  color: #8a808d;
+  font-size: 0.62rem;
+}
+
+.eventlink-dropzone input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.eventlink-dropzone:focus-within {
+  outline: 3px solid rgb(99 52 119 / 18%);
+  outline-offset: 2px;
+}
+
+.eventlink-import__messages {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.65rem;
+  border-radius: 0.7rem;
+  color: #795b28;
+  background: #fff6df;
+  font-size: 0.68rem;
+}
+
+.eventlink-import__messages--error {
+  color: #874543;
+  background: #fff0ef;
+}
+
+.eventlink-import__messages svg {
+  flex: 0 0 auto;
+}
+
+.eventlink-import__messages p {
+  margin: 0;
+}
+
+.eventlink-import__messages p + p {
+  margin-top: 0.25rem;
+}
+
+.eventlink-import__summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.eventlink-import__summary > div {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.6rem;
+  border-radius: 0.65rem;
+  background: #f5f1f6;
+}
+
+.eventlink-import__summary span {
+  color: #837987;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.eventlink-import__summary strong {
+  overflow: hidden;
+  color: #352e38;
+  font-size: 0.76rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eventlink-import__section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.7rem;
+  margin-bottom: 0.5rem;
+}
+
+.eventlink-import__section-heading h4 {
+  margin: 0.15rem 0 0;
+  color: #312a34;
+  font-size: 0.9rem;
+}
+
+.eventlink-import__section-heading > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #6a3b7d;
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.eventlink-player-list {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.eventlink-player-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.55rem;
+  padding: 0.55rem;
+  border: 1px solid #e8e1e9;
+  border-radius: 0.7rem;
+}
+
+.eventlink-player-row__rank {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 0.55rem;
+  color: #603373;
+  background: #f0eaf2;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.eventlink-player-row__identity {
+  min-width: 0;
+}
+
+.eventlink-player-row__identity > strong,
+.eventlink-player-row__identity > span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eventlink-player-row__identity > strong {
+  color: #332c36;
+  font-size: 0.72rem;
+}
+
+.eventlink-player-row__identity > span,
+.eventlink-player-row__identity details {
+  margin-top: 0.12rem;
+  color: #827985;
+  font-size: 0.61rem;
+}
+
+.eventlink-player-row__identity summary {
+  color: #68387a;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.eventlink-player-row__identity details span {
+  display: block;
+  margin-top: 0.2rem;
+}
+
+.eventlink-player-row__member {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 0.25rem;
+}
+
+.eventlink-player-row__member > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #756c78;
+  font-size: 0.58rem;
+  font-weight: 800;
+}
+
+.eventlink-player-row__member select {
+  width: 100%;
+  min-height: 2.35rem;
+  padding: 0 0.65rem;
+  border: 1px solid #ddd3e0;
+  border-radius: 0.6rem;
+  color: #3a323d;
+  background: #fff;
+  font: inherit;
+  font-size: 0.68rem;
+}
+
+.eventlink-ranking-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.7rem;
+  border-radius: 0.7rem;
+  background: #f5f1f6;
+  cursor: pointer;
+}
+
+.eventlink-ranking-option input {
+  margin-top: 0.15rem;
+  accent-color: #633477;
+}
+
+.eventlink-ranking-option span {
+  color: #756d78;
+  font-size: 0.64rem;
+  line-height: 1.4;
+}
+
+.eventlink-ranking-option strong {
+  display: block;
+  color: #372f3a;
+  font-size: 0.7rem;
+}
+
+.eventlink-import__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.eventlink-import__actions > button {
+  display: inline-flex;
+  min-height: 2.45rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0 0.8rem;
+  border: 1px solid #d9cedd;
+  border-radius: 0.65rem;
+  color: #633477;
+  background: #fff;
+  font-size: 0.68rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.eventlink-import__actions > .primary-button {
+  border-color: #633477;
+  color: #fff;
+  background: #633477;
+}
+
 .manager-participant-panel > h3 {
   max-width: calc(100% - 5rem);
   margin: 0;

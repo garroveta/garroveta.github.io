@@ -26,13 +26,7 @@ export type EventLinkParseResult = {
 }
 
 type StandingColumn =
-  | 'rank'
-  | 'name'
-  | 'points'
-  | 'record'
-  | 'omw'
-  | 'gwp'
-  | 'ogwp'
+  'rank' | 'name' | 'points' | 'record' | 'omw' | 'gwp' | 'ogwp'
 
 const requiredColumns: StandingColumn[] = [
   'rank',
@@ -122,7 +116,8 @@ function parseSourceMetadata(html: string, document: Document) {
   )
 
   return {
-    storeId: sourceUrl?.[1] ?? routeElement?.getAttribute('storeid') ?? undefined,
+    storeId:
+      sourceUrl?.[1] ?? routeElement?.getAttribute('storeid') ?? undefined,
     externalEventId:
       sourceUrl?.[2] ?? routeElement?.getAttribute('eventid') ?? undefined,
     roundNumber:
@@ -171,7 +166,9 @@ export function parseEventLinkHtml(html: string): EventLinkParseResult {
     const rank = parseInteger(value('rank'))
     const displayName = value('name')
     const eventPoints = parseInteger(value('points'))
-    const record = value('record').match(/^(\d+)\s*[/\-]\s*(\d+)\s*[/\-]\s*(\d+)$/)
+    const record = value('record').match(
+      /^(\d+)\s*[/-]\s*(\d+)\s*[/-]\s*(\d+)$/,
+    )
     const opponentMatchWinPercentage = parsePercentage(value('omw'))
     const gameWinPercentage = parsePercentage(value('gwp'))
     const opponentGameWinPercentage = parsePercentage(value('ogwp'))
@@ -227,7 +224,8 @@ export function parseEventLinkHtml(html: string): EventLinkParseResult {
     standing: {
       eventTitle:
         normalizedText(
-          document.querySelector('.event-page-header__title')?.textContent ?? '',
+          document.querySelector('.event-page-header__title')?.textContent ??
+            '',
         ) || undefined,
       ...metadata,
       completed,

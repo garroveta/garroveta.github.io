@@ -5,6 +5,7 @@ import {
   ChevronRight,
   Clock3,
   Edit3,
+  FileUp,
   ListChecks,
   MapPin,
   Plus,
@@ -19,6 +20,7 @@ import type { FormEvent } from 'react'
 import { useEffect, useRef, useState } from 'react'
 
 import type { DemoRole } from '../app/demoRoles'
+import { EventLinkImportPanel } from '../components/EventLinkImportPanel'
 import {
   cancelEventRegistration,
   deleteCommunityEvent,
@@ -837,6 +839,7 @@ function ManagerEventRow({
   onDeleteCancel,
   onDeleteRequest,
   onEdit,
+  onImport,
   onParticipants,
 }: {
   item: EventListItem
@@ -845,6 +848,7 @@ function ManagerEventRow({
   onDeleteCancel: () => void
   onDeleteRequest: (eventId: string) => void
   onEdit: (eventId: string) => void
+  onImport: (eventId: string) => void
   onParticipants: (eventId: string) => void
 }) {
   const startsAt = new Date(item.event.startsAt)
@@ -881,6 +885,16 @@ function ManagerEventRow({
         <button type="button" onClick={() => onParticipants(item.event.id)}>
           <ListChecks aria-hidden="true" size={16} />
           Inscripciones <span>{registrationCount}</span>
+        </button>
+        <button
+          className="manager-event-item__icon-action"
+          type="button"
+          aria-label={`Importar resultados de ${item.event.title}`}
+          title="Importar resultados"
+          onClick={() => onImport(item.event.id)}
+        >
+          <FileUp aria-hidden="true" size={16} />
+          <span className="manager-event-item__action-label">Resultados</span>
         </button>
         <button
           className="manager-event-item__icon-action"
@@ -932,9 +946,11 @@ export function EventsPage({
   const [editingEventId, setEditingEventId] = useState<string>()
   const [managedParticipantEventId, setManagedParticipantEventId] =
     useState<string>()
+  const [managedImportEventId, setManagedImportEventId] = useState<string>()
   const [pendingDeleteEventId, setPendingDeleteEventId] = useState<string>()
   const [publicationMessage, setPublicationMessage] = useState('')
   const participantPanelRef = useRef<HTMLDivElement>(null)
+  const importPanelRef = useRef<HTMLDivElement>(null)
   const completeAgenda = getEventAgenda(data, currentMember.id)
   const agenda = filterEventAgenda(completeAgenda, {
     gameId: selectedGameId,
@@ -951,6 +967,13 @@ export function EventsPage({
   const managedParticipantEvent = managedParticipantEventId
     ? getEventById(data, currentMember.id, managedParticipantEventId)
     : undefined
+  const managedImportEvent = managedImportEventId
+    ? getEventById(data, currentMember.id, managedImportEventId)
+    : undefined
+  const managerEvents = [
+    ...completeAgenda.upcoming,
+    ...completeAgenda.past.slice(0, 8),
+  ]
 
   useEffect(() => {
     if (!managedParticipantEventId || !participantPanelRef.current) {
@@ -963,10 +986,22 @@ export function EventsPage({
     })
   }, [managedParticipantEventId])
 
+  useEffect(() => {
+    if (!managedImportEventId || !importPanelRef.current) {
+      return
+    }
+
+    importPanelRef.current.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  }, [managedImportEventId])
+
   const closeManagerPanels = () => {
     setIsComposerOpen(false)
     setEditingEventId(undefined)
     setManagedParticipantEventId(undefined)
+    setManagedImportEventId(undefined)
     setPendingDeleteEventId(undefined)
   }
 
@@ -1050,7 +1085,7 @@ export function EventsPage({
             />
           ) : (
             <div className="manager-event-list">
-              {completeAgenda.upcoming.map((item) => (
+              {managerEvents.map((item) => (
                 <ManagerEventRow
                   item={item}
                   isDeletePending={pendingDeleteEventId === item.event.id}
@@ -1063,7 +1098,13 @@ export function EventsPage({
                     setEditingEventId(eventId)
                     setIsComposerOpen(true)
                   }}
+                  onImport={(eventId) => {
+                    closeManagerPanels()
+                    setPublicationMessage('')
+                    setManagedImportEventId(eventId)
+                  }}
                   onParticipants={(eventId) => {
+                    setManagedImportEventId(undefined)
                     setManagedParticipantEventId((currentEventId) =>
                       currentEventId === eventId ? undefined : eventId,
                     )
@@ -1073,6 +1114,21 @@ export function EventsPage({
               ))}
             </div>
           )}
+          <div
+            className="manager-event-actions-legend"
+            role="note"
+            aria-label="Leyenda de acciones de eventos"
+          >
+            <span>
+              <FileUp aria-hidden="true" size={14} /> Importar resultados
+            </span>
+            <span>
+              <Edit3 aria-hidden="true" size={14} /> Modificar
+            </span>
+            <span>
+              <Trash2 aria-hidden="true" size={14} /> Eliminar
+            </span>
+          </div>
           <p className="action-message" aria-live="polite">
             {publicationMessage}
           </p>
@@ -1095,6 +1151,21 @@ export function EventsPage({
                 eventId={managedParticipantEvent.event.id}
                 managerId={publishingMember.id}
                 onDataChange={onDataChange}
+              />
+            </div>
+          ) : null}
+          {managedImportEvent ? (
+            <div className="manager-import-panel" ref={importPanelRef}>
+              <EventLinkImportPanel
+                data={data}
+                event={managedImportEvent.event}
+                manager={publishingMember}
+                onClose={() => setManagedImportEventId(undefined)}
+                onDataChange={onDataChange}
+                onImported={(message) => {
+                  setManagedImportEventId(undefined)
+                  setPublicationMessage(message)
+                }}
               />
             </div>
           ) : null}
