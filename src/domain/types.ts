@@ -127,6 +127,13 @@ export type EventStanding = {
   id: EntityId
   eventId: EntityId
   entries: EventStandingEntry[]
+  source?: {
+    kind: 'eventlink_html'
+    storeId?: string
+    externalEventId?: string
+    roundNumber?: number
+    importedAt: ISODateTime
+  }
 }
 
 export type EventRegistration = {
