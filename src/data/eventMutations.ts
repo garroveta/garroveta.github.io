@@ -4,6 +4,8 @@ import { DEMO_REFERENCE_TIME } from './dashboardSelectors'
 export type CommunityEventInput = {
   createdByMemberId: string
   gameId: string
+  formatId?: string
+  competitionEventKindId?: string
   type: EventType
   title: string
   description: string
@@ -47,6 +49,14 @@ export function publishCommunityEvent(
 ): DemoDataSet {
   const creator = data.members.find(({ id }) => id === input.createdByMemberId)
   const game = data.games.find(({ id }) => id === input.gameId)
+  const format = input.formatId
+    ? data.competitionFormats.find(({ id }) => id === input.formatId)
+    : undefined
+  const eventKind = input.competitionEventKindId
+    ? data.competitionEventKinds.find(
+        ({ id }) => id === input.competitionEventKindId,
+      )
+    : undefined
   const title = input.title.trim()
   const description = input.description.trim()
   const startsAt = new Date(input.startsAt)
@@ -59,6 +69,10 @@ export function publishCommunityEvent(
     !creator ||
     creator.role !== 'manager' ||
     !game ||
+    (Boolean(input.formatId) && !format) ||
+    (Boolean(format) && format?.gameId !== game.id) ||
+    (Boolean(input.competitionEventKindId) && !eventKind) ||
+    (game.id === 'game-mtg' && (format?.gameId !== game.id || !eventKind)) ||
     !title ||
     !description ||
     Number.isNaN(startsAt.getTime()) ||
@@ -82,6 +96,8 @@ export function publishCommunityEvent(
         id: createEventId(data, title),
         communityId: data.community.id,
         gameId: game.id,
+        formatId: format?.id,
+        competitionEventKindId: eventKind?.id,
         type: input.type,
         title,
         description,
@@ -110,6 +126,14 @@ export function updateCommunityEvent(
   )
   const event = data.events.find(({ id }) => id === input.eventId)
   const game = data.games.find(({ id }) => id === input.gameId)
+  const format = input.formatId
+    ? data.competitionFormats.find(({ id }) => id === input.formatId)
+    : undefined
+  const eventKind = input.competitionEventKindId
+    ? data.competitionEventKinds.find(
+        ({ id }) => id === input.competitionEventKindId,
+      )
+    : undefined
   const title = input.title.trim()
   const description = input.description.trim()
   const startsAt = new Date(input.startsAt)
@@ -125,6 +149,10 @@ export function updateCommunityEvent(
     !manager ||
     !event ||
     !game ||
+    (Boolean(input.formatId) && !format) ||
+    (Boolean(format) && format?.gameId !== game.id) ||
+    (Boolean(input.competitionEventKindId) && !eventKind) ||
+    (game.id === 'game-mtg' && (format?.gameId !== game.id || !eventKind)) ||
     !title ||
     !description ||
     Number.isNaN(startsAt.getTime()) ||
@@ -148,10 +176,11 @@ export function updateCommunityEvent(
         ? {
             ...candidate,
             gameId: game.id,
-            formatId: gameChanged ? undefined : candidate.formatId,
-            competitionEventKindId: gameChanged
-              ? undefined
-              : candidate.competitionEventKindId,
+            formatId:
+              format?.id ?? (gameChanged ? undefined : candidate.formatId),
+            competitionEventKindId:
+              eventKind?.id ??
+              (gameChanged ? undefined : candidate.competitionEventKindId),
             countsForCommunityRanking: gameChanged
               ? false
               : candidate.countsForCommunityRanking,

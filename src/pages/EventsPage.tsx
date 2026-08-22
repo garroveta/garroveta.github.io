@@ -20,6 +20,7 @@ import type { FormEvent } from 'react'
 import { useEffect, useRef, useState } from 'react'
 
 import type { DemoRole } from '../app/demoRoles'
+import type { AppRoute } from '../app/navigation'
 import { EventLinkImportPanel } from '../components/EventLinkImportPanel'
 import {
   cancelEventRegistration,
@@ -53,6 +54,7 @@ type EventsPageProps = {
   currentMember: CommunityMember
   publishingMember: CommunityMember
   onDataChange: (updater: DemoDataUpdater) => void
+  onNavigate: (route: AppRoute, query?: string) => void
 }
 
 const eventDateFormatter = new Intl.DateTimeFormat('es-ES', {
@@ -142,6 +144,18 @@ function EventComposer({
   const [gameId, setGameId] = useState(
     eventToEdit?.gameId ?? data.games[0]?.id ?? '',
   )
+  const initialGameId = eventToEdit?.gameId ?? data.games[0]?.id ?? ''
+  const [formatId, setFormatId] = useState(
+    eventToEdit
+      ? (eventToEdit.formatId ?? '')
+      : (data.competitionFormats.find(({ gameId }) => gameId === initialGameId)
+          ?.id ?? ''),
+  )
+  const [competitionEventKindId, setCompetitionEventKindId] = useState(
+    eventToEdit
+      ? (eventToEdit.competitionEventKindId ?? '')
+      : (data.competitionEventKinds[0]?.id ?? ''),
+  )
   const [type, setType] = useState<EventType>(eventToEdit?.type ?? 'tournament')
   const [title, setTitle] = useState(eventToEdit?.title ?? '')
   const [description, setDescription] = useState(eventToEdit?.description ?? '')
@@ -168,6 +182,9 @@ function EventComposer({
       const input = {
         createdByMemberId: publishingMember.id,
         gameId,
+        formatId: gameId === 'game-mtg' ? formatId : undefined,
+        competitionEventKindId:
+          gameId === 'game-mtg' ? competitionEventKindId : undefined,
         type,
         title,
         description,
@@ -214,8 +231,14 @@ function EventComposer({
           <select
             value={gameId}
             onChange={(event) => {
-              setGameId(event.target.value)
-              if (event.target.value !== 'game-mtg') {
+              const nextGameId = event.target.value
+              setGameId(nextGameId)
+              setFormatId(
+                data.competitionFormats.find(
+                  ({ gameId: formatGameId }) => formatGameId === nextGameId,
+                )?.id ?? '',
+              )
+              if (nextGameId !== 'game-mtg') {
                 setRegistrationEnabled(false)
               }
             }}
@@ -243,6 +266,49 @@ function EventComposer({
           </select>
         </label>
       </div>
+
+      {gameId === 'game-mtg' ? (
+        <div className="event-composer__grid">
+          <label className="form-field">
+            <span>Formato MTG</span>
+            <select
+              value={formatId}
+              onChange={(event) => setFormatId(event.target.value)}
+              required
+            >
+              <option disabled value="">
+                Seleccionar formato
+              </option>
+              {data.competitionFormats
+                .filter(({ gameId: formatGameId }) => formatGameId === gameId)
+                .map((format) => (
+                  <option key={format.id} value={format.id}>
+                    {format.name}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label className="form-field">
+            <span>Tipo de evento competitivo</span>
+            <select
+              value={competitionEventKindId}
+              onChange={(event) =>
+                setCompetitionEventKindId(event.target.value)
+              }
+              required
+            >
+              <option disabled value="">
+                Seleccionar tipo
+              </option>
+              {data.competitionEventKinds.map((eventKind) => (
+                <option key={eventKind.id} value={eventKind.id}>
+                  {eventKind.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      ) : null}
 
       <label className="form-field">
         <span>Título</span>
@@ -979,6 +1045,7 @@ export function EventsPage({
   currentMember,
   publishingMember,
   onDataChange,
+  onNavigate,
 }: EventsPageProps) {
   const [selectedEventId, setSelectedEventId] = useState<string>()
   const [selectedGameId, setSelectedGameId] = useState<string>()
@@ -990,6 +1057,7 @@ export function EventsPage({
   const [managedImportEventId, setManagedImportEventId] = useState<string>()
   const [pendingDeleteEventId, setPendingDeleteEventId] = useState<string>()
   const [publicationMessage, setPublicationMessage] = useState('')
+  const [importedStandingId, setImportedStandingId] = useState<string>()
   const participantPanelRef = useRef<HTMLDivElement>(null)
   const importPanelRef = useRef<HTMLDivElement>(null)
   const completeAgenda = getEventAgenda(data, currentMember.id)
@@ -1052,6 +1120,7 @@ export function EventsPage({
       deleteCommunityEvent(currentData, eventId, publishingMember.id),
     )
     closeManagerPanels()
+    setImportedStandingId(undefined)
     setPublicationMessage(
       eventTitle ? `« ${eventTitle} » se ha eliminado.` : 'Evento eliminado.',
     )
@@ -1098,6 +1167,7 @@ export function EventsPage({
                 onClick={() => {
                   closeManagerPanels()
                   setPublicationMessage('')
+                  setImportedStandingId(undefined)
                   setIsComposerOpen(true)
                 }}
               >
@@ -1115,6 +1185,7 @@ export function EventsPage({
               onDataChange={onDataChange}
               onPublished={() => {
                 closeManagerPanels()
+                setImportedStandingId(undefined)
                 setSelectedGameId(undefined)
                 setSelectedType(undefined)
                 setPublicationMessage(
@@ -1142,6 +1213,7 @@ export function EventsPage({
                   onImport={(eventId) => {
                     closeManagerPanels()
                     setPublicationMessage('')
+                    setImportedStandingId(undefined)
                     setManagedImportEventId(eventId)
                   }}
                   onParticipants={(eventId) => {
@@ -1170,9 +1242,25 @@ export function EventsPage({
               <Trash2 aria-hidden="true" size={14} /> Eliminar
             </span>
           </div>
-          <p className="action-message" aria-live="polite">
-            {publicationMessage}
-          </p>
+          {publicationMessage ? (
+            <div className="manager-event-feedback" aria-live="polite">
+              <p className="action-message">{publicationMessage}</p>
+              {importedStandingId ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    onNavigate(
+                      'ranking',
+                      `view=events&standing=${encodeURIComponent(importedStandingId)}`,
+                    )
+                  }
+                >
+                  Ver clasificación
+                  <ChevronRight aria-hidden="true" size={16} />
+                </button>
+              ) : null}
+            </div>
+          ) : null}
           {managedParticipantEvent ? (
             <div
               className="manager-participant-panel"
@@ -1203,9 +1291,10 @@ export function EventsPage({
                 manager={publishingMember}
                 onClose={() => setManagedImportEventId(undefined)}
                 onDataChange={onDataChange}
-                onImported={(message) => {
+                onImported={(message, standingId) => {
                   setManagedImportEventId(undefined)
                   setPublicationMessage(message)
+                  setImportedStandingId(standingId)
                 }}
               />
             </div>

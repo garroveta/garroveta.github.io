@@ -47,6 +47,7 @@ export function App() {
   const publishingMember = getPublishingMember(data, activeRole)
   const dataSummary = getDemoDataSummary(data)
   const cardRouteParams = new URLSearchParams(routeQuery)
+  const rankingRouteParams = new URLSearchParams(routeQuery)
   const sharedCardsMemberId =
     activeRoute === 'cartas' ? cardRouteParams.get('member') : null
 
@@ -75,9 +76,16 @@ export function App() {
             currentMember={currentMember}
             publishingMember={publishingMember}
             onDataChange={updateData}
+            onNavigate={navigate}
           />
         ) : activeRoute === 'ranking' ? (
-          <RankingsPage data={data} />
+          <RankingsPage
+            data={data}
+            initialStandingId={rankingRouteParams.get('standing') ?? undefined}
+            initialView={
+              rankingRouteParams.get('view') === 'events' ? 'events' : undefined
+            }
+          />
         ) : activeRoute === 'cartas' && sharedCardsMemberId ? (
           <SharedCardsPage
             data={data}

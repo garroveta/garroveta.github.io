@@ -12,6 +12,19 @@ import { reserveMarketplaceListing } from './data/cardLifecycle'
 import { demoData } from './data/demoData'
 import { createLocalDemoRepository } from './data/demoRepository'
 
+const importedEventLinkHtml = `
+  <!-- saved from url=(0077)https://eventlink.wizards.com/stores/18452/events/11620006/rounds/3/standings -->
+  <h1 class="event-page-header__title">Presentación: The Hobbit</h1>
+  <div class="round-timer__complete">Se completó</div>
+  <table>
+    <thead><tr><th>Puesto</th><th>Nombre</th><th>Puntos</th><th>V/D/E</th><th>%VPO</th><th>%JG</th><th>%JGO</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Pep Peralta Isern</td><td>9</td><td>3/0/0</td><td>60.0%</td><td>100.0%</td><td>55.0%</td></tr>
+      <tr><td>2</td><td>José Thomas 🔴⚪</td><td>6</td><td>2/1/0</td><td>55.0%</td><td>66.7%</td><td>50.0%</td></tr>
+    </tbody>
+  </table>
+`
+
 describe('App', () => {
   beforeEach(() => {
     window.history.replaceState(null, '', '/')
@@ -344,6 +357,58 @@ describe('App', () => {
     const importPanel = screen.getByRole('region', { name: 'FNM Pauper' })
     expect(
       within(importPanel).getByText('HTML · máximo 5 MB'),
+    ).toBeInTheDocument()
+  })
+
+  it('shows an imported EventLink result and updates the community ranking', async () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
+    fireEvent.click(screen.getByRole('link', { name: 'Eventos' }))
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Importar resultados de Presentación: The Hobbit',
+      }),
+    )
+
+    const importPanel = screen.getByRole('region', {
+      name: 'Presentación: The Hobbit',
+    })
+    const file = new File([importedEventLinkHtml], 'eventlink.html', {
+      type: 'text/html',
+    })
+    Object.defineProperty(file, 'text', {
+      value: async () => importedEventLinkHtml,
+    })
+    fireEvent.change(importPanel.querySelector('input[type="file"]')!, {
+      target: { files: [file] },
+    })
+
+    expect(await within(importPanel).findByText('2/2')).toBeInTheDocument()
+    fireEvent.click(
+      within(importPanel).getByRole('button', {
+        name: 'Importar clasificación',
+      }),
+    )
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Ver clasificación' }),
+    )
+
+    expect(
+      screen.getByRole('tab', { name: 'Últimos eventos' }),
+    ).toHaveAttribute('aria-selected', 'true')
+    expect(
+      screen.getByRole('heading', { name: 'Presentación: The Hobbit' }),
+    ).toBeInTheDocument()
+    expect(screen.getAllByText('Pep Peralta Isern')).not.toHaveLength(0)
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Comunidad' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Mostrar todos' }))
+    expect(
+      within(
+        screen.getByRole('table', { name: 'Clasificación acumulada' }),
+      ).getByText('Pep Peralta Isern'),
     ).toBeInTheDocument()
   })
 

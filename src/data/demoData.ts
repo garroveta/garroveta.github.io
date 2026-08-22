@@ -2,6 +2,7 @@ import type {
   Card,
   CardCondition,
   CardLanguage,
+  CommunityMember,
   DemoDataSet,
   DemoDataSummary,
   EventStandingEntry,
@@ -54,6 +55,25 @@ const eventLinkDemoPlayerNames = [
   'Fran Parra',
   'Jose Ramis',
 ] as const
+
+const eventLinkDemoMembers: CommunityMember[] = eventLinkDemoPlayerNames.map(
+  (displayName, index) => ({
+    id: `member-eventlink-${String(index + 1).padStart(2, '0')}`,
+    communityId,
+    displayName,
+    initials: displayName
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => Array.from(part)[0]?.toLocaleUpperCase('es') ?? '')
+      .join(''),
+    role: 'player',
+    status: 'approved',
+    tagIds: ['tag-pauper'],
+    favoriteGameIds: ['game-mtg'],
+    contactMethods: [],
+    joinedAt: `2026-07-${String((index % 22) + 1).padStart(2, '0')}T18:00:00+02:00`,
+  }),
+)
 
 type RankingMemberId = keyof typeof rankingMemberNames
 
@@ -769,6 +789,7 @@ export const demoData = {
       contactMethods: [],
       joinedAt: '2024-08-30T18:50:00+02:00',
     },
+    ...eventLinkDemoMembers,
   ],
   events: [
     {

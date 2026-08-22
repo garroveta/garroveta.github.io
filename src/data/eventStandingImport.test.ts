@@ -61,6 +61,27 @@ describe('EventLink member matching', () => {
     })
   })
 
+  it('links the realistic EventLink player names added to the community', () => {
+    const matches = matchEventLinkMembers(
+      [
+        { ...parsedStanding.rows[0], displayName: 'Pep Peralta Isern' },
+        { ...parsedStanding.rows[1], displayName: 'José Thomas 🔴⚪' },
+      ],
+      demoData.members,
+    )
+
+    expect(matches).toEqual([
+      expect.objectContaining({
+        status: 'matched',
+        memberId: 'member-eventlink-01',
+      }),
+      expect.objectContaining({
+        status: 'matched',
+        memberId: 'member-eventlink-18',
+      }),
+    ])
+  })
+
   it('does not choose automatically between duplicate names', () => {
     const sergio = demoData.members.find(({ id }) => id === 'member-sergio')!
     const matches = matchEventLinkMembers(parsedStanding.rows, [
@@ -160,5 +181,30 @@ describe('EventLink standing mutations', () => {
         memberIdsByRow: ['member-sergio', 'member-sergio'],
       }),
     ).toBe(demoData)
+  })
+
+  it('rejects imports when the MTG event has no competitive metadata', () => {
+    const dataWithoutMetadata = {
+      ...demoData,
+      events: demoData.events.map((event) =>
+        event.id === 'event-presentation-hobbit'
+          ? {
+              ...event,
+              formatId: undefined,
+              competitionEventKindId: undefined,
+            }
+          : event,
+      ),
+    }
+
+    expect(
+      saveEventLinkStanding(dataWithoutMetadata, {
+        eventId: 'event-presentation-hobbit',
+        managerId: 'member-lucia',
+        parsedStanding,
+        memberIdsByRow: ['member-sergio', undefined],
+        countsForCommunityRanking: true,
+      }),
+    ).toBe(dataWithoutMetadata)
   })
 })

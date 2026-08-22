@@ -19,11 +19,13 @@ import {
 } from '../data/rankingSelectors'
 import type { DemoDataSet, EventStandingEntry } from '../domain/types'
 
+type RankingView = 'community' | 'events'
+
 type RankingsPageProps = {
   data: DemoDataSet
+  initialView?: RankingView
+  initialStandingId?: string
 }
-
-type RankingView = 'community' | 'events'
 
 const eventDateFormatter = new Intl.DateTimeFormat('es-ES', {
   day: 'numeric',
@@ -676,12 +678,16 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
   )
 }
 
-export function RankingsPage({ data }: RankingsPageProps) {
+export function RankingsPage({
+  data,
+  initialView = 'community',
+  initialStandingId,
+}: RankingsPageProps) {
   const standings = useMemo(() => getLatestEventStandings(data), [data])
   const rankingDetailRef = useRef<HTMLElement>(null)
-  const [activeView, setActiveView] = useState<RankingView>('community')
+  const [activeView, setActiveView] = useState<RankingView>(initialView)
   const [selectedStandingId, setSelectedStandingId] = useState(
-    standings[0]?.standing.id ?? '',
+    initialStandingId ?? standings[0]?.standing.id ?? '',
   )
   const selectedStanding =
     standings.find(({ standing }) => standing.id === selectedStandingId) ??

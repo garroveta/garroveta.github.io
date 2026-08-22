@@ -2261,6 +2261,32 @@ a {
   font-weight: 750;
 }
 
+.manager-event-feedback {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+}
+
+.manager-event-feedback .action-message {
+  margin: 0;
+}
+
+.manager-event-feedback button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+  border: 0;
+  color: #633477;
+  background: transparent;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .news-feed {
   margin-top: 2rem;
 }

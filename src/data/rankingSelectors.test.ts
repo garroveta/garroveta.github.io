@@ -5,6 +5,7 @@ import {
   getCommunityLeaderboard,
   getCommunityPoints,
   getLatestEventStandings,
+  RANKING_REFERENCE_TIME,
 } from './rankingSelectors'
 
 describe('rankingSelectors', () => {
@@ -32,11 +33,15 @@ describe('rankingSelectors', () => {
   })
 
   it('builds a six-month MTG Pauper ranking across all event kinds', () => {
-    const ranking = getCommunityLeaderboard(demoData, {
-      gameId: 'game-mtg',
-      formatId: 'format-mtg-pauper',
-      months: 6,
-    })
+    const ranking = getCommunityLeaderboard(
+      demoData,
+      {
+        gameId: 'game-mtg',
+        formatId: 'format-mtg-pauper',
+        months: 6,
+      },
+      RANKING_REFERENCE_TIME,
+    )
 
     expect(
       ranking
@@ -56,28 +61,40 @@ describe('rankingSelectors', () => {
   })
 
   it('filters the cumulative ranking by FNM and rolling period', () => {
-    const sixMonths = getCommunityLeaderboard(demoData, {
-      gameId: 'game-mtg',
-      formatId: 'format-mtg-pauper',
-      competitionEventKindId: 'event-kind-fnm',
-      months: 6,
-    })
-    const twelveMonths = getCommunityLeaderboard(demoData, {
-      gameId: 'game-mtg',
-      formatId: 'format-mtg-pauper',
-      competitionEventKindId: 'event-kind-fnm',
-      months: 12,
-    })
+    const sixMonths = getCommunityLeaderboard(
+      demoData,
+      {
+        gameId: 'game-mtg',
+        formatId: 'format-mtg-pauper',
+        competitionEventKindId: 'event-kind-fnm',
+        months: 6,
+      },
+      RANKING_REFERENCE_TIME,
+    )
+    const twelveMonths = getCommunityLeaderboard(
+      demoData,
+      {
+        gameId: 'game-mtg',
+        formatId: 'format-mtg-pauper',
+        competitionEventKindId: 'event-kind-fnm',
+        months: 12,
+      },
+      RANKING_REFERENCE_TIME,
+    )
 
     expect(sixMonths[0]).toMatchObject({ points: 38, eventsPlayed: 5 })
     expect(twelveMonths[0].eventsPlayed).toBe(6)
   })
 
   it('keeps games separate', () => {
-    const onePieceRanking = getCommunityLeaderboard(demoData, {
-      gameId: 'game-one-piece',
-      months: 6,
-    })
+    const onePieceRanking = getCommunityLeaderboard(
+      demoData,
+      {
+        gameId: 'game-one-piece',
+        months: 6,
+      },
+      RANKING_REFERENCE_TIME,
+    )
 
     expect(onePieceRanking[0]).toMatchObject({
       member: { displayName: 'Marc Vidal' },

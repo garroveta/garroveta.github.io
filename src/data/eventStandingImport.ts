@@ -87,6 +87,14 @@ export function saveEventLinkStanding(
       id === input.managerId && role === 'manager' && status === 'approved',
   )
   const event = data.events.find(({ id }) => id === input.eventId)
+  const format = event?.formatId
+    ? data.competitionFormats.find(({ id }) => id === event.formatId)
+    : undefined
+  const eventKind = event?.competitionEventKindId
+    ? data.competitionEventKinds.find(
+        ({ id }) => id === event.competitionEventKindId,
+      )
+    : undefined
   const validMembers = new Set(
     data.members
       .filter(({ status }) => status === 'approved')
@@ -100,6 +108,8 @@ export function saveEventLinkStanding(
     !manager ||
     !event ||
     event.gameId !== 'game-mtg' ||
+    format?.gameId !== event.gameId ||
+    !eventKind ||
     input.parsedStanding.rows.length === 0 ||
     input.memberIdsByRow.length !== input.parsedStanding.rows.length ||
     assignedMemberIds.some((memberId) => !validMembers.has(memberId)) ||

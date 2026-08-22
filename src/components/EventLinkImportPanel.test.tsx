@@ -83,6 +83,7 @@ describe('EventLinkImportPanel', () => {
     ])
     expect(onImported).toHaveBeenCalledWith(
       'La clasificación EventLink se ha importado.',
+      'standing-event-presentation-hobbit',
     )
   })
 })

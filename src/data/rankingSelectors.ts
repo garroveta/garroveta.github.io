@@ -100,7 +100,7 @@ function subtractMonths(referenceTime: string, months: number) {
 export function getCommunityLeaderboard(
   data: DemoDataSet,
   filters: RankingFilters,
-  referenceTime = RANKING_REFERENCE_TIME,
+  referenceTime = new Date().toISOString(),
 ): CommunityRankingPlayer[] {
   const referenceTimestamp = new Date(referenceTime).getTime()
   const cutoffTimestamp = subtractMonths(referenceTime, filters.months)

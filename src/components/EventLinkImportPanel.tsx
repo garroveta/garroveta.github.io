@@ -29,7 +29,7 @@ type EventLinkImportPanelProps = {
   manager: CommunityMember
   onClose: () => void
   onDataChange: (updater: DemoDataUpdater) => void
-  onImported: (message: string) => void
+  onImported: (message: string, standingId: string) => void
 }
 
 export function EventLinkImportPanel({
@@ -61,6 +61,14 @@ export function EventLinkImportPanel({
   )
   const existingStanding = data.eventStandings.find(
     ({ eventId }) => eventId === event.id,
+  )
+  const hasCompetitionMetadata = Boolean(
+    data.competitionFormats.some(
+      ({ id, gameId }) => id === event.formatId && gameId === event.gameId,
+    ) &&
+    data.competitionEventKinds.some(
+      ({ id }) => id === event.competitionEventKindId,
+    ),
   )
   const linkedCount = memberIdsByRow.filter(Boolean).length
   const assignedMemberIds = new Set(memberIdsByRow.filter(Boolean))
@@ -108,7 +116,7 @@ export function EventLinkImportPanel({
   }
 
   const importStanding = () => {
-    if (!parsedStanding) {
+    if (!parsedStanding || !hasCompetitionMetadata) {
       return
     }
 
@@ -125,6 +133,7 @@ export function EventLinkImportPanel({
       existingStanding
         ? 'La clasificación EventLink se ha sustituido.'
         : 'La clasificación EventLink se ha importado.',
+      existingStanding?.id ?? `standing-${event.id}`,
     )
   }
 
@@ -150,6 +159,17 @@ export function EventLinkImportPanel({
         </p>
       </header>
 
+      {!hasCompetitionMetadata ? (
+        <div className="eventlink-import__messages eventlink-import__messages--error">
+          <AlertTriangle aria-hidden="true" size={18} />
+          <p>
+            Modifica primero el evento para indicar su formato MTG y su tipo
+            competitivo. Estos datos son necesarios para mostrar el resultado y
+            actualizar el ranking.
+          </p>
+        </div>
+      ) : null}
+
       <label
         className="eventlink-dropzone"
         onDragOver={(dragEvent) => dragEvent.preventDefault()}
@@ -160,6 +180,7 @@ export function EventLinkImportPanel({
         <span>HTML · máximo 5 MB</span>
         <input
           accept=".html,.htm,text/html"
+          disabled={!hasCompetitionMetadata}
           type="file"
           onChange={handleFileChange}
         />
@@ -316,6 +337,7 @@ export function EventLinkImportPanel({
             </button>
             <button
               className="primary-button"
+              disabled={!hasCompetitionMetadata}
               type="button"
               onClick={importStanding}
             >
