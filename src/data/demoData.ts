@@ -28,6 +28,33 @@ const rankingMemberNames = {
   'member-joan': 'Joan Roig de la Fuente',
 } as const
 
+// Nombres procedentes de una clasificación EventLink realista, incluidos
+// apellidos compuestos y caracteres especiales para probar el importador.
+const eventLinkDemoPlayerNames = [
+  'Pep Peralta Isern',
+  'jaume pozas vich',
+  'Tomeu Cabot',
+  'Antoni Daniel Frontera Borrueco',
+  'javier llorente downes',
+  'Miquel Oliver',
+  'Alexandre Alemany Moyà',
+  'Nicolas Fernandez',
+  'Vicenç Massutí Villalonga',
+  'andres cabot rayo',
+  'Marc Bauza',
+  'Iván Yusty',
+  'josep cañellas villalonga',
+  'Marc Escribano',
+  'Antoni V',
+  'Joan Guillem',
+  'xisco solivellas',
+  'José Thomas 🔴⚪',
+  'Llorenç Massutí',
+  'Aitor Fernández',
+  'Fran Parra',
+  'Jose Ramis',
+] as const
+
 type RankingMemberId = keyof typeof rankingMemberNames
 
 type StandingIdentity = Pick<
@@ -1257,7 +1284,7 @@ export const demoData = {
           'member-joan',
           'member-aina',
         ],
-        ['Toni M.', 'Pep R.'],
+        [...eventLinkDemoPlayerNames],
       ),
     },
     {

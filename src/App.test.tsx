@@ -146,7 +146,7 @@ describe('App', () => {
       behavior: 'auto',
       block: 'start',
     })
-    expect(screen.getByText('16 participantes')).toBeInTheDocument()
+    expect(screen.getByText('36 participantes')).toBeInTheDocument()
     expect(screen.getAllByText('Sergio Gil')).not.toHaveLength(0)
   })
 

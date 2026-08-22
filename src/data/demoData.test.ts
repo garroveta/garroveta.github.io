@@ -234,4 +234,21 @@ describe('demoData', () => {
         .map(({ capacity }) => capacity),
     ).toEqual([4, 8])
   })
+
+  it('includes realistic EventLink player names for import tests', () => {
+    const standing = demoData.eventStandings.find(
+      ({ eventId }) => eventId === 'event-result-fnm-pauper-2026-07-24',
+    )
+
+    expect(standing?.entries.map(({ displayName }) => displayName)).toEqual(
+      expect.arrayContaining([
+        'Pep Peralta Isern',
+        'Antoni Daniel Frontera Borrueco',
+        'Vicenç Massutí Villalonga',
+        'José Thomas 🔴⚪',
+        'Jose Ramis',
+      ]),
+    )
+    expect(standing?.entries).toHaveLength(36)
+  })
 })
