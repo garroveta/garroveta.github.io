@@ -128,11 +128,13 @@ a {
 }
 
 .app-content {
+  min-width: 0;
   width: 100%;
   padding: 1.6rem 1.25rem calc(6.5rem + env(safe-area-inset-bottom));
 }
 
 .page {
+  min-width: 0;
   width: min(100%, 62rem);
   margin: 0 auto;
 }
@@ -6298,6 +6300,7 @@ a {
 }
 
 .event-ranking-detail {
+  min-width: 0;
   scroll-margin-top: 6.5rem;
   margin-inline: -0.35rem;
   padding: 0.65rem;
@@ -6570,6 +6573,8 @@ a {
 }
 
 .ranking-table-wrap {
+  min-width: 0;
+  max-width: 100%;
   margin-top: 1.25rem;
   overflow-x: auto;
   border: 1px solid #ebe5ed;
@@ -7215,6 +7220,32 @@ a {
     grid-column: 2;
     grid-row: 2;
     padding: 2.5rem 2.5rem 3rem;
+  }
+
+  .event-standing-table {
+    min-width: 48rem;
+    table-layout: fixed;
+  }
+
+  .event-standing-table th:first-child,
+  .event-standing-table td:first-child {
+    width: 3.4rem;
+  }
+
+  .event-standing-table th:nth-child(n + 3),
+  .event-standing-table td:nth-child(n + 3) {
+    width: 5rem;
+    padding-inline: 0.45rem;
+  }
+
+  .event-standing-table th:last-child,
+  .event-standing-table td:last-child {
+    width: 6.5rem;
+  }
+
+  .event-standing-table th:last-child {
+    line-height: 1.15;
+    white-space: normal;
   }
 
   .app-navigation {
