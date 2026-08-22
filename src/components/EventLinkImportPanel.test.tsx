@@ -7,7 +7,7 @@ import { EventLinkImportPanel } from './EventLinkImportPanel'
 
 const eventLinkHtml = `
   <!-- saved from url=(0077)https://eventlink.wizards.com/stores/18452/events/11620006/rounds/5/standings -->
-  <h1 class="event-page-header__title">Pauper de prueba</h1>
+  <h1 class="event-page-header__title">Standard de prueba</h1>
   <div class="round-timer__complete">Se completó</div>
   <table>
     <thead><tr><th>Puesto</th><th>Nombre</th><th>Puntos</th><th>V/D/E</th><th>%VPO</th><th>%JG</th><th>%JGO</th></tr></thead>
@@ -47,7 +47,7 @@ describe('EventLinkImportPanel', () => {
       target: { files: [file] },
     })
 
-    expect(await screen.findByText('Pauper de prueba')).toBeInTheDocument()
+    expect(await screen.findByText('Standard de prueba')).toBeInTheDocument()
     expect(screen.getByText('1/2')).toBeInTheDocument()
     expect(
       screen.getByLabelText('Miembro Garroveta para Sergio Gil'),

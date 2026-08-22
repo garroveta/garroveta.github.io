@@ -19,9 +19,9 @@ describe('rankingSelectors', () => {
     const standings = getLatestEventStandings(demoData)
 
     expect(standings[0]).toMatchObject({
-      event: { title: 'Win a Box Pauper' },
+      event: { title: 'Win a Box Standard' },
       game: { shortName: 'MTG' },
-      format: { shortName: 'Pauper' },
+      format: { shortName: 'Standard' },
       eventKind: { shortName: 'Win a Box' },
     })
     expect(standings[0].standing.entries.slice(0, 4)).toMatchObject([
@@ -32,12 +32,12 @@ describe('rankingSelectors', () => {
     ])
   })
 
-  it('builds a six-month MTG Pauper ranking across all event kinds', () => {
+  it('builds a six-month MTG Standard ranking across all event kinds', () => {
     const ranking = getCommunityLeaderboard(
       demoData,
       {
         gameId: 'game-mtg',
-        formatId: 'format-mtg-pauper',
+        formatId: 'format-mtg-standard',
         months: 6,
       },
       RANKING_REFERENCE_TIME,
@@ -65,7 +65,7 @@ describe('rankingSelectors', () => {
       demoData,
       {
         gameId: 'game-mtg',
-        formatId: 'format-mtg-pauper',
+        formatId: 'format-mtg-standard',
         competitionEventKindId: 'event-kind-fnm',
         months: 6,
       },
@@ -75,7 +75,7 @@ describe('rankingSelectors', () => {
       demoData,
       {
         gameId: 'game-mtg',
-        formatId: 'format-mtg-pauper',
+        formatId: 'format-mtg-standard',
         competitionEventKindId: 'event-kind-fnm',
         months: 12,
       },

@@ -9,6 +9,22 @@ function expectUniqueIds(items: Array<{ id: string }>) {
 }
 
 describe('demoData', () => {
+  it('uses Standard for the demo results while keeping Pauper available', () => {
+    const mtgFormats = demoData.competitionFormats
+      .filter(({ gameId }) => gameId === 'game-mtg')
+      .map(({ name }) => name)
+
+    expect(mtgFormats).toEqual(expect.arrayContaining(['Standard', 'Pauper']))
+    expect(
+      demoData.events
+        .filter(({ id }) => id.includes('event-result-fnm'))
+        .every(
+          ({ formatId, title }) =>
+            formatId === 'format-mtg-standard' && title.includes('Standard'),
+        ),
+    ).toBe(true)
+  })
+
   it('contains unique identifiers in every collection', () => {
     expectUniqueIds(demoData.games)
     expectUniqueIds(demoData.competitionFormats)
@@ -210,11 +226,11 @@ describe('demoData', () => {
     ])
 
     expect(
-      demoData.events.find(({ id }) => id === 'event-fnm-pauper'),
+      demoData.events.find(({ id }) => id === 'event-fnm-standard'),
     ).toMatchObject({
-      title: 'FNM Pauper',
+      title: 'FNM Standard',
       startsAt: '2026-07-31T18:00:00+02:00',
-      tagIds: ['tag-pauper'],
+      tagIds: ['tag-standard'],
       description: expect.stringContaining('tres rondas fijas'),
     })
 
@@ -237,7 +253,7 @@ describe('demoData', () => {
 
   it('includes realistic EventLink player names for import tests', () => {
     const standing = demoData.eventStandings.find(
-      ({ eventId }) => eventId === 'event-result-fnm-pauper-2026-07-24',
+      ({ eventId }) => eventId === 'event-result-fnm-standard-2026-07-24',
     )
 
     expect(standing?.entries.map(({ displayName }) => displayName)).toEqual(

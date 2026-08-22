@@ -9,7 +9,7 @@ import {
 import { demoData } from './demoData'
 
 const parsedStanding: ParsedEventLinkStanding = {
-  eventTitle: 'Pauper de prueba',
+  eventTitle: 'Standard de prueba',
   storeId: '18452',
   externalEventId: '11620006',
   roundNumber: 5,
@@ -135,7 +135,7 @@ describe('EventLink standing mutations', () => {
   })
 
   it('replaces an existing standing instead of appending a duplicate', () => {
-    const eventId = 'event-result-win-a-box-pauper-2026-08-02'
+    const eventId = 'event-result-win-a-box-standard-2026-08-02'
     const previousCount = demoData.eventStandings.length
     const previousStanding = demoData.eventStandings.find(
       (standing) => standing.eventId === eventId,

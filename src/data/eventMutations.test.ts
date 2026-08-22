@@ -312,8 +312,8 @@ describe('event registration mutations', () => {
   })
 
   it('does not register players when registrations are disabled', () => {
-    expect(registerForEvent(demoData, 'event-fnm-pauper', 'member-biel')).toBe(
-      demoData,
-    )
+    expect(
+      registerForEvent(demoData, 'event-fnm-standard', 'member-biel'),
+    ).toBe(demoData)
   })
 })

@@ -74,7 +74,7 @@ describe('App', () => {
       screen.getByRole('heading', { name: 'Próximos eventos' }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { name: 'FNM Pauper' }),
+      screen.getByRole('heading', { name: 'FNM Standard' }),
     ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Eventos' })).toHaveAttribute(
       'aria-current',
@@ -98,7 +98,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Últimos eventos' }))
 
     expect(
-      screen.getByRole('heading', { name: 'Win a Box Pauper' }),
+      screen.getByRole('heading', { name: 'Win a Box Standard' }),
     ).toBeInTheDocument()
     expect(screen.getAllByText('Carla Pons Alcover')).not.toHaveLength(0)
     expect(
@@ -120,7 +120,7 @@ describe('App', () => {
     ).toBeInTheDocument()
 
     const mobileRanking = screen.getByRole('region', {
-      name: 'Clasificación móvil de Win a Box Pauper',
+      name: 'Clasificación móvil de Win a Box Standard',
     })
     const firstMobileEntry = within(mobileRanking).getAllByRole('listitem')[0]
     expect(
@@ -151,7 +151,7 @@ describe('App', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: /FNM Pauper.*24 de julio de 2026/,
+        name: /FNM Standard.*24 de julio de 2026/,
       }),
     )
 
@@ -230,17 +230,17 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
-    const pauperCard = screen
-      .getByRole('heading', { name: 'FNM Pauper' })
+    const standardCard = screen
+      .getByRole('heading', { name: 'FNM Standard' })
       .closest('article')
     fireEvent.click(
-      within(pauperCard as HTMLElement).getByRole('button', {
+      within(standardCard as HTMLElement).getByRole('button', {
         name: 'Ver detalles',
       }),
     )
 
     expect(
-      screen.getByRole('heading', { name: 'FNM Pauper' }),
+      screen.getByRole('heading', { name: 'FNM Standard' }),
     ).toBeInTheDocument()
     expect(screen.getByText('CRC Delorean')).toBeInTheDocument()
     expect(screen.queryByText(/confirmadas/)).not.toBeInTheDocument()
@@ -267,7 +267,7 @@ describe('App', () => {
       }),
     ).toBeInTheDocument()
     expect(
-      screen.queryByRole('heading', { name: 'FNM Pauper' }),
+      screen.queryByRole('heading', { name: 'FNM Standard' }),
     ).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Torneo' }))
@@ -277,7 +277,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Restablecer' }))
 
     expect(
-      screen.getByRole('heading', { name: 'FNM Pauper' }),
+      screen.getByRole('heading', { name: 'FNM Standard' }),
     ).toBeInTheDocument()
   })
 
@@ -339,7 +339,7 @@ describe('App', () => {
 
     expect(
       screen.getByRole('button', {
-        name: 'Importar resultados de FNM Pauper',
+        name: 'Importar resultados de FNM Standard',
       }),
     ).toBeInTheDocument()
     expect(
@@ -350,11 +350,11 @@ describe('App', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'Importar resultados de FNM Pauper',
+        name: 'Importar resultados de FNM Standard',
       }),
     )
 
-    const importPanel = screen.getByRole('region', { name: 'FNM Pauper' })
+    const importPanel = screen.getByRole('region', { name: 'FNM Standard' })
     expect(
       within(importPanel).getByText('HTML · máximo 5 MB'),
     ).toBeInTheDocument()

@@ -17,7 +17,7 @@ describe('event selectors', () => {
       'event-gundam-store-championship-wednesday',
       'event-painting-table',
       'event-modern-tournament',
-      'event-fnm-pauper',
+      'event-fnm-standard',
       'event-gundam-store-championship-friday',
       'event-one-piece-store-championship',
       'event-commander-night',
@@ -52,7 +52,7 @@ describe('event selectors', () => {
 
     expect(filteredAgenda.upcoming.map(({ event }) => event.id)).toEqual([
       'event-modern-tournament',
-      'event-fnm-pauper',
+      'event-fnm-standard',
     ])
     expect(filteredAgenda.past.map(({ event }) => event.id)).toEqual([
       'event-store-championship',

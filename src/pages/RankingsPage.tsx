@@ -47,11 +47,11 @@ function EventRankingCard({
   selected: boolean
   onSelect: () => void
 }) {
-  const isPauper = item.format.id === 'format-mtg-pauper'
+  const isStandard = item.format.id === 'format-mtg-standard'
 
   return (
     <button
-      className={`result-card${selected ? ' result-card--selected' : ''}${isPauper ? ' result-card--pauper' : ''}`}
+      className={`result-card${selected ? ' result-card--selected' : ''}${isStandard ? ' result-card--standard' : ''}`}
       type="button"
       onClick={onSelect}
       aria-pressed={selected}

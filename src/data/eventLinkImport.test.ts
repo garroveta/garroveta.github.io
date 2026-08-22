@@ -5,7 +5,7 @@ import { parseEventLinkHtml } from './eventLinkImport'
 const eventLinkFixture = `
   <!-- saved from url=(0077)https://eventlink.wizards.com/stores/18452/events/11620006/rounds/5/standings -->
   <main>
-    <h1 class="event-page-header__title">Pauper de prueba</h1>
+    <h1 class="event-page-header__title">Standard de prueba</h1>
     <div class="round-timer__complete">Se completó</div>
     <div class="round-timer__round-number">Ronda 5</div>
     <div storeid="18452" eventid="11620006" roundnumber="5">
@@ -31,7 +31,7 @@ describe('EventLink standings imports', () => {
 
     expect(result.errors).toEqual([])
     expect(result.standing).toMatchObject({
-      eventTitle: 'Pauper de prueba',
+      eventTitle: 'Standard de prueba',
       storeId: '18452',
       externalEventId: '11620006',
       roundNumber: 5,
