@@ -55,15 +55,15 @@ describe('manager dashboard selectors', () => {
   it('summarizes upcoming events and operational alerts', () => {
     const dashboard = getManagerDashboard(demoData)
 
-    expect(dashboard.upcomingEvents).toHaveLength(10)
+    expect(dashboard.upcomingEvents).toHaveLength(12)
     expect(dashboard.upcomingEvents[0]).toMatchObject({
       event: { id: 'event-dragon-ball-store-championship' },
       game: { shortName: 'Dragon Ball' },
     })
-    expect(dashboard.totalWaitlisted).toBe(3)
-    expect(dashboard.fullEvents).toBe(1)
+    expect(dashboard.totalWaitlisted).toBe(4)
+    expect(dashboard.fullEvents).toBe(2)
     expect(dashboard.attentionEvents.map(({ event }) => event.id)).toContain(
-      'event-fnm-pauper',
+      'event-presentation-hobbit',
     )
     expect(dashboard.latestNews[0].id).toBe('news-summer-hours')
   })

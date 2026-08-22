@@ -62,7 +62,6 @@ export function EventLinkImportPanel({
   const existingStanding = data.eventStandings.find(
     ({ eventId }) => eventId === event.id,
   )
-  const registeredPlayerCount = event.registrationSummary.confirmed
   const linkedCount = memberIdsByRow.filter(Boolean).length
   const assignedMemberIds = new Set(memberIdsByRow.filter(Boolean))
 
@@ -200,10 +199,7 @@ export function EventLinkImportPanel({
             </div>
           </div>
 
-          {parsedStanding.warnings.length > 0 ||
-          existingStanding ||
-          (registeredPlayerCount > 0 &&
-            registeredPlayerCount !== parsedStanding.rows.length) ? (
+          {parsedStanding.warnings.length > 0 || existingStanding ? (
             <div className="eventlink-import__messages">
               <AlertTriangle aria-hidden="true" size={18} />
               <div>
@@ -214,15 +210,6 @@ export function EventLinkImportPanel({
                   <p>
                     Este evento ya tiene una clasificación. Al confirmar se
                     sustituirá por este archivo.
-                  </p>
-                ) : null}
-                {registeredPlayerCount > 0 &&
-                registeredPlayerCount !== parsedStanding.rows.length ? (
-                  <p>
-                    Garroveta tiene {registeredPlayerCount} inscripciones
-                    confirmadas, pero el archivo contiene{' '}
-                    {parsedStanding.rows.length} jugadores. Comprueba que has
-                    seleccionado el evento correcto.
                   </p>
                 ) : null}
               </div>

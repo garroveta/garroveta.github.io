@@ -24,6 +24,7 @@ describe('event registration mutations', () => {
       description: '  Evento para probar el formulario.  ',
       startsAt: '2026-08-15T17:00:00+02:00',
       endsAt: '2026-08-15T21:00:00+02:00',
+      registrationEnabled: true,
       capacity: 20,
       tagIds: ['tag-principiantes', 'unknown-tag'],
     })
@@ -33,7 +34,8 @@ describe('event registration mutations', () => {
       gameId: 'game-one-piece',
       title: 'Torneo de prueba',
       description: 'Evento para probar el formulario.',
-      capacity: 20,
+      registrationEnabled: false,
+      capacity: 0,
       tagIds: ['tag-principiantes'],
       createdByMemberId: 'member-lucia',
       registrationSummary: { confirmed: 0, waitlisted: 0 },
@@ -52,6 +54,7 @@ describe('event registration mutations', () => {
         description: 'No debe publicarse.',
         startsAt: '2026-08-15T17:00:00+02:00',
         endsAt: '2026-08-15T20:00:00+02:00',
+        registrationEnabled: false,
         capacity: 8,
         tagIds: [],
       }),
@@ -68,7 +71,8 @@ describe('event registration mutations', () => {
       description: 'Nueva información para la comunidad.',
       startsAt: '2026-08-08T18:00:00+02:00',
       endsAt: '2026-08-08T22:00:00+02:00',
-      capacity: 28,
+      registrationEnabled: true,
+      capacity: 32,
       tagIds: ['tag-draft'],
     })
 
@@ -76,7 +80,7 @@ describe('event registration mutations', () => {
       updatedData.events.find(({ id }) => id === 'event-presentation-hobbit'),
     ).toMatchObject({
       title: 'Presentación: The Hobbit actualizada',
-      capacity: 28,
+      capacity: 32,
       startsAt: '2026-08-08T18:00:00+02:00',
     })
 
@@ -90,6 +94,7 @@ describe('event registration mutations', () => {
         description: 'No debe aplicarse.',
         startsAt: '2026-08-08T18:00:00+02:00',
         endsAt: '2026-08-08T22:00:00+02:00',
+        registrationEnabled: true,
         capacity: 7,
         tagIds: [],
       }),
@@ -116,16 +121,15 @@ describe('event registration mutations', () => {
   it('lets the manager add an approved member to an event', () => {
     const updatedData = registerMemberForEventByManager(
       demoData,
-      'event-presentation-hobbit',
-      'member-marta',
+      'event-mtg-draft-night',
+      'member-biel',
       'member-lucia',
     )
 
     expect(
       updatedData.registrations.find(
         ({ eventId, memberId }) =>
-          eventId === 'event-presentation-hobbit' &&
-          memberId === 'member-marta',
+          eventId === 'event-mtg-draft-night' && memberId === 'member-biel',
       )?.status,
     ).toBe('confirmed')
   })
@@ -133,41 +137,41 @@ describe('event registration mutations', () => {
   it('confirms a registration when a place is available', () => {
     const updatedData = registerForEvent(
       demoData,
-      'event-modern-league',
+      'event-mtg-draft-night',
       demoData.currentMemberId,
     )
     const event = updatedData.events.find(
-      ({ id }) => id === 'event-modern-league',
+      ({ id }) => id === 'event-mtg-draft-night',
     )
 
-    expect(event?.registrationSummary.confirmed).toBe(15)
+    expect(event?.registrationSummary.confirmed).toBe(7)
     expect(
       updatedData.registrations.find(
         ({ eventId, memberId }) =>
-          eventId === 'event-modern-league' &&
+          eventId === 'event-mtg-draft-night' &&
           memberId === demoData.currentMemberId,
       )?.status,
     ).toBe('confirmed')
     expect(
       demoData.events.find(({ id }) => id === event?.id)?.registrationSummary
         .confirmed,
-    ).toBe(14)
+    ).toBe(6)
   })
 
   it('cancels a confirmed registration and releases the place', () => {
     const updatedData = cancelEventRegistration(
       demoData,
-      'event-commander-night',
-      demoData.currentMemberId,
+      'event-presentation-hobbit',
+      'member-nora',
     )
     const event = updatedData.events.find(
-      ({ id }) => id === 'event-commander-night',
+      ({ id }) => id === 'event-presentation-hobbit',
     )
 
-    expect(event?.registrationSummary.confirmed).toBe(26)
+    expect(event?.registrationSummary.confirmed).toBe(30)
     expect(
       updatedData.registrations.find(
-        ({ id }) => id === 'registration-alex-commander',
+        ({ id }) => id === 'registration-nora-hobbit',
       )?.status,
     ).toBe('cancelled')
   })
@@ -175,19 +179,21 @@ describe('event registration mutations', () => {
   it('adds a player to the waitlist when an event is full', () => {
     const updatedData = registerForEvent(
       demoData,
-      'event-fnm-pauper',
-      'member-nora',
+      'event-presentation-hobbit',
+      'member-biel',
     )
-    const event = updatedData.events.find(({ id }) => id === 'event-fnm-pauper')
+    const event = updatedData.events.find(
+      ({ id }) => id === 'event-presentation-hobbit',
+    )
 
     expect(event?.registrationSummary).toMatchObject({
-      confirmed: 24,
+      confirmed: 30,
       waitlisted: 4,
     })
     expect(
       updatedData.registrations.find(
         ({ eventId, memberId }) =>
-          eventId === 'event-fnm-pauper' && memberId === 'member-nora',
+          eventId === 'event-presentation-hobbit' && memberId === 'member-biel',
       )?.status,
     ).toBe('waitlisted')
   })
@@ -195,17 +201,17 @@ describe('event registration mutations', () => {
   it('lets a player leave the waitlist', () => {
     const updatedData = leaveEventWaitlist(
       demoData,
-      'event-fnm-pauper',
+      'event-presentation-hobbit',
       demoData.currentMemberId,
     )
 
     expect(
-      updatedData.events.find(({ id }) => id === 'event-fnm-pauper')
+      updatedData.events.find(({ id }) => id === 'event-presentation-hobbit')
         ?.registrationSummary.waitlisted,
     ).toBe(2)
     expect(
       updatedData.registrations.find(
-        ({ id }) => id === 'registration-alex-pauper',
+        ({ id }) => id === 'registration-alex-hobbit',
       )?.status,
     ).toBe('cancelled')
   })
@@ -213,26 +219,26 @@ describe('event registration mutations', () => {
   it('promotes the first waiting player when a place is released', () => {
     const dataWithConfirmedPlayer = structuredClone(demoData)
     dataWithConfirmedPlayer.registrations.push({
-      id: 'registration-marta-pauper',
-      eventId: 'event-fnm-pauper',
-      memberId: 'member-marta',
+      id: 'registration-biel-hobbit',
+      eventId: 'event-presentation-hobbit',
+      memberId: 'member-biel',
       status: 'confirmed',
       registeredAt: '2026-07-20T10:00:00+02:00',
     })
 
     const updatedData = cancelEventRegistration(
       dataWithConfirmedPlayer,
-      'event-fnm-pauper',
-      'member-marta',
+      'event-presentation-hobbit',
+      'member-biel',
     )
 
     expect(
-      updatedData.events.find(({ id }) => id === 'event-fnm-pauper')
+      updatedData.events.find(({ id }) => id === 'event-presentation-hobbit')
         ?.registrationSummary,
-    ).toMatchObject({ confirmed: 24, waitlisted: 2 })
+    ).toMatchObject({ confirmed: 30, waitlisted: 2 })
     expect(
       updatedData.registrations.find(
-        ({ id }) => id === 'registration-alex-pauper',
+        ({ id }) => id === 'registration-sergio-hobbit',
       )?.status,
     ).toBe('confirmed')
   })
@@ -240,31 +246,31 @@ describe('event registration mutations', () => {
   it('records and clears a participant attendance', () => {
     const attendedData = setEventAttendance(
       demoData,
-      'event-commander-night',
-      demoData.currentMemberId,
+      'event-mtg-draft-express',
+      'member-sergio',
       true,
     )
 
     expect(
       attendedData.registrations.find(
-        ({ id }) => id === 'registration-alex-commander',
+        ({ id }) => id === 'registration-sergio-draft-express',
       )?.status,
     ).toBe('attended')
     expect(
-      attendedData.events.find(({ id }) => id === 'event-commander-night')
+      attendedData.events.find(({ id }) => id === 'event-mtg-draft-express')
         ?.registrationSummary.attended,
     ).toBe(1)
 
     const correctedData = setEventAttendance(
       attendedData,
-      'event-commander-night',
-      demoData.currentMemberId,
+      'event-mtg-draft-express',
+      'member-sergio',
       false,
     )
 
     expect(
       correctedData.registrations.find(
-        ({ id }) => id === 'registration-alex-commander',
+        ({ id }) => id === 'registration-sergio-draft-express',
       )?.status,
     ).toBe('confirmed')
   })
@@ -272,32 +278,38 @@ describe('event registration mutations', () => {
   it('lets the manager remove a participant and promote the waitlist', () => {
     const dataWithConfirmedPlayer = structuredClone(demoData)
     dataWithConfirmedPlayer.registrations.push({
-      id: 'registration-marta-pauper',
-      eventId: 'event-fnm-pauper',
-      memberId: 'member-marta',
+      id: 'registration-biel-draft-express',
+      eventId: 'event-mtg-draft-express',
+      memberId: 'member-biel',
       status: 'confirmed',
       registeredAt: '2026-07-20T10:00:00+02:00',
     })
 
     const updatedData = removeEventParticipant(
       dataWithConfirmedPlayer,
-      'event-fnm-pauper',
-      'member-marta',
+      'event-mtg-draft-express',
+      'member-biel',
     )
 
     expect(
       updatedData.registrations.find(
-        ({ id }) => id === 'registration-marta-pauper',
+        ({ id }) => id === 'registration-biel-draft-express',
       )?.status,
     ).toBe('cancelled')
     expect(
       updatedData.registrations.find(
-        ({ id }) => id === 'registration-alex-pauper',
+        ({ id }) => id === 'registration-alex-draft-express',
       )?.status,
     ).toBe('confirmed')
     expect(
-      updatedData.events.find(({ id }) => id === 'event-fnm-pauper')
+      updatedData.events.find(({ id }) => id === 'event-mtg-draft-express')
         ?.registrationSummary,
-    ).toMatchObject({ confirmed: 24, waitlisted: 2 })
+    ).toMatchObject({ confirmed: 4, waitlisted: 0 })
+  })
+
+  it('does not register players when registrations are disabled', () => {
+    expect(registerForEvent(demoData, 'event-fnm-pauper', 'member-biel')).toBe(
+      demoData,
+    )
   })
 })

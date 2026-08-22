@@ -154,7 +154,7 @@ export function getManagerDashboard(
       event,
       game: event.gameId ? gamesById.get(event.gameId) : undefined,
       occupancyRate:
-        event.capacity > 0
+        event.registrationEnabled && event.capacity > 0
           ? Math.min(
               100,
               Math.round(
@@ -165,21 +165,28 @@ export function getManagerDashboard(
     }))
   const attentionEvents = upcomingEvents.filter(
     ({ event, occupancyRate }) =>
-      event.registrationSummary.waitlisted > 0 || occupancyRate >= 90,
+      event.registrationEnabled &&
+      (event.registrationSummary.waitlisted > 0 || occupancyRate >= 90),
   )
 
   return {
     upcomingEvents,
     totalConfirmed: upcomingEvents.reduce(
-      (total, { event }) => total + event.registrationSummary.confirmed,
+      (total, { event }) =>
+        total +
+        (event.registrationEnabled ? event.registrationSummary.confirmed : 0),
       0,
     ),
     totalWaitlisted: upcomingEvents.reduce(
-      (total, { event }) => total + event.registrationSummary.waitlisted,
+      (total, { event }) =>
+        total +
+        (event.registrationEnabled ? event.registrationSummary.waitlisted : 0),
       0,
     ),
     fullEvents: upcomingEvents.filter(
-      ({ event }) => event.registrationSummary.confirmed >= event.capacity,
+      ({ event }) =>
+        event.registrationEnabled &&
+        event.registrationSummary.confirmed >= event.capacity,
     ).length,
     attentionEvents,
     latestNews: [...data.newsPosts]

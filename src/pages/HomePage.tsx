@@ -108,7 +108,9 @@ function NextEventCard({
   const eventDate = new Date(event.startsAt)
   const registrationLabel = registration
     ? registrationLabels[registration.status]
-    : 'Inscripción disponible'
+    : event.registrationEnabled
+      ? 'Inscripción disponible'
+      : undefined
 
   return (
     <section
@@ -117,7 +119,9 @@ function NextEventCard({
     >
       <div className="dashboard-card__topline">
         <span className="dashboard-label">Próximo evento</span>
-        <span className="event-registration">{registrationLabel}</span>
+        {registrationLabel ? (
+          <span className="event-registration">{registrationLabel}</span>
+        ) : null}
       </div>
 
       <div className="event-card__body">
@@ -142,10 +146,12 @@ function NextEventCard({
               <Clock3 aria-hidden="true" size={15} />
               {timeFormatter.format(eventDate)}
             </span>
-            <span>
-              <UsersRound aria-hidden="true" size={15} />
-              {event.registrationSummary.confirmed}/{event.capacity} plazas
-            </span>
+            {event.registrationEnabled ? (
+              <span>
+                <UsersRound aria-hidden="true" size={15} />
+                {event.registrationSummary.confirmed}/{event.capacity} plazas
+              </span>
+            ) : null}
           </div>
         </div>
       </div>
@@ -196,14 +202,16 @@ function ManagerEventRow({ item }: { item: ManagerDashboardEvent }) {
           <span>{item.game?.shortName ?? 'Comunidad'}</span>
           <h3>{item.event.title}</h3>
         </div>
-        <div className="occupancy-summary">
-          <span>
-            {item.event.registrationSummary.confirmed}/{item.event.capacity}
-          </span>
-          <div aria-label={`${item.occupancyRate}% de ocupación`}>
-            <span style={{ width: `${item.occupancyRate}%` }} />
+        {item.event.registrationEnabled ? (
+          <div className="occupancy-summary">
+            <span>
+              {item.event.registrationSummary.confirmed}/{item.event.capacity}
+            </span>
+            <div aria-label={`${item.occupancyRate}% de ocupación`}>
+              <span style={{ width: `${item.occupancyRate}%` }} />
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
     </article>
   )

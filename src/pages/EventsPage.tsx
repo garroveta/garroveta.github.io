@@ -155,6 +155,9 @@ function EventComposer({
     eventToEdit ? madridTimePart(eventToEdit.endsAt) : '21:00',
   )
   const [capacity, setCapacity] = useState(String(eventToEdit?.capacity ?? 24))
+  const [registrationEnabled, setRegistrationEnabled] = useState(
+    eventToEdit?.registrationEnabled ?? false,
+  )
   const [tagIds, setTagIds] = useState<string[]>(eventToEdit?.tagIds ?? [])
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -170,6 +173,7 @@ function EventComposer({
         description,
         startsAt: buildMadridIso(date, startsAt),
         endsAt: buildMadridIso(endDate, endsAt),
+        registrationEnabled,
         capacity: Number(capacity),
         tagIds,
       }
@@ -209,7 +213,12 @@ function EventComposer({
           <span>Juego</span>
           <select
             value={gameId}
-            onChange={(event) => setGameId(event.target.value)}
+            onChange={(event) => {
+              setGameId(event.target.value)
+              if (event.target.value !== 'game-mtg') {
+                setRegistrationEnabled(false)
+              }
+            }}
             required
           >
             {data.games.map((game) => (
@@ -284,18 +293,34 @@ function EventComposer({
             required
           />
         </label>
-        <label className="form-field">
-          <span>Plazas</span>
-          <input
-            type="number"
-            value={capacity}
-            onChange={(event) => setCapacity(event.target.value)}
-            min={eventToEdit?.registrationSummary.confirmed ?? 1}
-            max="500"
-            required
-          />
-        </label>
+        {registrationEnabled ? (
+          <label className="form-field">
+            <span>Plazas</span>
+            <input
+              type="number"
+              value={capacity}
+              onChange={(event) => setCapacity(event.target.value)}
+              min={eventToEdit?.registrationSummary.confirmed ?? 1}
+              max="500"
+              required
+            />
+          </label>
+        ) : null}
       </div>
+
+      {gameId === 'game-mtg' ? (
+        <label className="event-registration-option">
+          <input
+            type="checkbox"
+            checked={registrationEnabled}
+            onChange={(event) => setRegistrationEnabled(event.target.checked)}
+          />
+          <span>
+            <strong>Activar inscripciones</strong>
+            Gestiona plazas y lista de espera para este evento MTG.
+          </span>
+        </label>
+      ) : null}
 
       <fieldset className="composer-tags">
         <legend>Etiquetas opcionales</legend>
@@ -393,7 +418,7 @@ function EventListCard({
       <div className="agenda-card__body">
         <div className="agenda-card__topline">
           <EventTags item={item} />
-          {item.registration ? (
+          {item.event.registrationEnabled && item.registration ? (
             <span className="agenda-registration">
               {registrationLabels[item.registration.status]}
             </span>
@@ -408,10 +433,12 @@ function EventListCard({
             <Clock3 aria-hidden="true" size={15} />
             {timeFormatter.format(startsAt)}
           </span>
-          <span>
-            <UsersRound aria-hidden="true" size={15} />
-            {item.event.registrationSummary.confirmed}/{item.event.capacity}
-          </span>
+          {item.event.registrationEnabled ? (
+            <span>
+              <UsersRound aria-hidden="true" size={15} />
+              {item.event.registrationSummary.confirmed}/{item.event.capacity}
+            </span>
+          ) : null}
         </div>
 
         <button
@@ -474,6 +501,7 @@ function EventDetail({
   const startsAt = new Date(item.event.startsAt)
   const endsAt = new Date(item.event.endsAt)
   const canRegister =
+    item.event.registrationEnabled === true &&
     item.event.status !== 'completed' &&
     item.event.registrationSummary.confirmed < item.event.capacity
   const isConfirmed = item.registration?.status === 'confirmed'
@@ -542,32 +570,39 @@ function EventDetail({
             </dt>
             <dd>{communityName}</dd>
           </div>
-          <div>
-            <dt>
-              <UsersRound aria-hidden="true" size={18} />
-              Plazas
-            </dt>
-            <dd>
-              {item.event.registrationSummary.confirmed}/{item.event.capacity}{' '}
-              confirmadas
-            </dd>
-          </div>
+          {item.event.registrationEnabled ? (
+            <div>
+              <dt>
+                <UsersRound aria-hidden="true" size={18} />
+                Plazas
+              </dt>
+              <dd>
+                {item.event.registrationSummary.confirmed}/{item.event.capacity}{' '}
+                confirmadas
+              </dd>
+            </div>
+          ) : null}
         </dl>
 
-        {item.event.registrationSummary.waitlisted > 0 ? (
+        {item.event.registrationEnabled &&
+        item.event.registrationSummary.waitlisted > 0 ? (
           <p className="event-waitlist-summary">
             {item.event.registrationSummary.waitlisted} personas en lista de
             espera
           </p>
         ) : null}
 
-        {item.registration && activeRole !== 'gerente' ? (
+        {item.event.registrationEnabled &&
+        item.registration &&
+        activeRole !== 'gerente' ? (
           <p className="event-detail__registration">
             {registrationLabels[item.registration.status]}
           </p>
         ) : null}
 
-        {item.event.status !== 'completed' && activeRole !== 'gerente' ? (
+        {item.event.registrationEnabled &&
+        item.event.status !== 'completed' &&
+        activeRole !== 'gerente' ? (
           <button
             className="primary-button event-action"
             type="button"
@@ -873,19 +908,23 @@ function ManagerEventRow({
           <h3>{item.event.title}</h3>
         </div>
         <p>
-          {timeFormatter.format(startsAt)} ·{' '}
-          {item.event.registrationSummary.confirmed}/{item.event.capacity}{' '}
-          confirmadas
-          {item.event.registrationSummary.waitlisted > 0
-            ? ` · ${item.event.registrationSummary.waitlisted} en espera`
+          {timeFormatter.format(startsAt)}
+          {item.event.registrationEnabled
+            ? ` · ${item.event.registrationSummary.confirmed}/${item.event.capacity} confirmadas${
+                item.event.registrationSummary.waitlisted > 0
+                  ? ` · ${item.event.registrationSummary.waitlisted} en espera`
+                  : ''
+              }`
             : ''}
         </p>
       </div>
       <div className="manager-event-item__actions">
-        <button type="button" onClick={() => onParticipants(item.event.id)}>
-          <ListChecks aria-hidden="true" size={16} />
-          Inscripciones <span>{registrationCount}</span>
-        </button>
+        {item.event.registrationEnabled ? (
+          <button type="button" onClick={() => onParticipants(item.event.id)}>
+            <ListChecks aria-hidden="true" size={16} />
+            Inscripciones <span>{registrationCount}</span>
+          </button>
+        ) : null}
         {item.event.gameId === 'game-mtg' ? (
           <button
             className="manager-event-item__icon-action"

@@ -92,7 +92,7 @@ describe('EventLink standing mutations', () => {
     ).toMatchObject({
       status: 'completed',
       countsForCommunityRanking: true,
-      registrationSummary: { attended: 2 },
+      registrationSummary: { confirmed: 30, waitlisted: 3 },
     })
     expect(
       updated.eventStandings.find(

@@ -230,10 +230,10 @@ describe('App', () => {
       screen.getByRole('heading', { name: 'FNM Pauper' }),
     ).toBeInTheDocument()
     expect(screen.getByText('CRC Delorean')).toBeInTheDocument()
-    expect(screen.getByText('24/24 confirmadas')).toBeInTheDocument()
+    expect(screen.queryByText(/confirmadas/)).not.toBeInTheDocument()
     expect(
-      screen.getByText('3 personas en lista de espera'),
-    ).toBeInTheDocument()
+      screen.queryByRole('button', { name: /Inscribirme/ }),
+    ).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Volver a la agenda' }))
 
@@ -310,7 +310,7 @@ describe('App', () => {
       .getByText('En lista de espera')
       .closest('article')
     expect(
-      within(waitlistMetric as HTMLElement).getByText('3'),
+      within(waitlistMetric as HTMLElement).getByText('4'),
     ).toBeInTheDocument()
     expect(
       screen.queryByRole('heading', { name: '2 coincidencias nuevas' }),
@@ -351,19 +351,19 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
-    const hobbitCard = screen
-      .getByRole('heading', { name: 'Presentación: The Hobbit' })
+    const draftCard = screen
+      .getByRole('heading', { name: 'Draft Night MTG' })
       .closest('article')
 
     fireEvent.click(
-      within(hobbitCard as HTMLElement).getByRole('button', {
+      within(draftCard as HTMLElement).getByRole('button', {
         name: 'Ver detalles',
       }),
     )
     fireEvent.click(screen.getByRole('button', { name: 'Inscribirme' }))
 
     expect(screen.getByText('Tu plaza está confirmada.')).toBeInTheDocument()
-    expect(screen.getByText('9/30 confirmadas')).toBeInTheDocument()
+    expect(screen.getByText('7/8 confirmadas')).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'Cancelar inscripción' }),
     ).toBeInTheDocument()
@@ -375,19 +375,19 @@ describe('App', () => {
     expect(
       screen.getByText('Tu inscripción se ha cancelado.'),
     ).toBeInTheDocument()
-    expect(screen.getByText('8/30 confirmadas')).toBeInTheDocument()
+    expect(screen.getByText('6/8 confirmadas')).toBeInTheDocument()
   })
 
   it('leaves and rejoins the waitlist of a full event', () => {
     render(<App />)
 
     fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
-    const pauperCard = screen
-      .getByRole('heading', { name: 'FNM Pauper' })
+    const presentationCard = screen
+      .getByRole('heading', { name: 'Presentación: The Hobbit' })
       .closest('article')
 
     fireEvent.click(
-      within(pauperCard as HTMLElement).getByRole('button', {
+      within(presentationCard as HTMLElement).getByRole('button', {
         name: 'Ver detalles',
       }),
     )
@@ -544,9 +544,6 @@ describe('App', () => {
     fireEvent.change(screen.getByLabelText('Descripción'), {
       target: { value: 'Cuatro jornadas abiertas a la comunidad.' },
     })
-    fireEvent.change(screen.getByLabelText('Plazas'), {
-      target: { value: '16' },
-    })
     fireEvent.click(screen.getByLabelText('Principiantes'))
     fireEvent.click(screen.getByRole('button', { name: 'Publicar evento' }))
 
@@ -562,7 +559,8 @@ describe('App', () => {
       gameId: 'game-one-piece',
       type: 'league',
       title: 'Liga One Piece',
-      capacity: 16,
+      registrationEnabled: false,
+      capacity: 0,
       tagIds: ['tag-principiantes'],
     })
   })
@@ -573,11 +571,11 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
     fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
     fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
-    const commanderCard = screen
-      .getByRole('heading', { name: 'Noche de Commander' })
+    const draftCard = screen
+      .getByRole('heading', { name: 'Draft express MTG' })
       .closest('article')
     fireEvent.click(
-      within(commanderCard as HTMLElement).getByRole('button', {
+      within(draftCard as HTMLElement).getByRole('button', {
         name: /Inscripciones/,
       }),
     )
@@ -585,34 +583,35 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Participantes' }),
     ).toBeInTheDocument()
-    const alexParticipant = screen.getByText('Álex Romero').closest('article')
+    const sergioParticipant = screen.getByText('Sergio Gil').closest('article')
     fireEvent.click(
-      within(alexParticipant as HTMLElement).getByRole('button', {
+      within(sergioParticipant as HTMLElement).getByRole('button', {
         name: 'Registrar asistencia',
       }),
     )
 
     expect(
-      within(alexParticipant as HTMLElement).getByText('Presente'),
+      within(sergioParticipant as HTMLElement).getByText('Presente'),
     ).toBeInTheDocument()
     expect(
-      within(alexParticipant as HTMLElement).getByRole('button', {
+      within(sergioParticipant as HTMLElement).getByRole('button', {
         name: 'Anular asistencia',
       }),
     ).toBeInTheDocument()
 
     fireEvent.click(
-      within(alexParticipant as HTMLElement).getByRole('button', {
+      within(sergioParticipant as HTMLElement).getByRole('button', {
         name: 'Liberar plaza',
       }),
     )
 
-    expect(alexParticipant).not.toBeInTheDocument()
+    expect(sergioParticipant).not.toBeInTheDocument()
     expect(
       createLocalDemoRepository(window.localStorage)
         .load()
-        .registrations.find(({ id }) => id === 'registration-alex-commander')
-        ?.status,
+        .registrations.find(
+          ({ id }) => id === 'registration-sergio-draft-express',
+        )?.status,
     ).toBe('cancelled')
   })
 
@@ -632,10 +631,10 @@ describe('App', () => {
       }),
     )
     fireEvent.change(screen.getByLabelText('Añadir una inscripción'), {
-      target: { value: 'member-marta' },
+      target: { value: 'member-biel' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Añadir' }))
-    expect(screen.getByText('Marta Soler')).toBeInTheDocument()
+    expect(screen.getByText('Biel Ferrer')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }))
     fireEvent.click(

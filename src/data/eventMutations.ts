@@ -9,6 +9,7 @@ export type CommunityEventInput = {
   description: string
   startsAt: string
   endsAt: string
+  registrationEnabled: boolean
   capacity: number
   tagIds: string[]
 }
@@ -50,7 +51,9 @@ export function publishCommunityEvent(
   const description = input.description.trim()
   const startsAt = new Date(input.startsAt)
   const endsAt = new Date(input.endsAt)
-  const capacity = Math.floor(input.capacity)
+  const registrationEnabled =
+    input.gameId === 'game-mtg' && input.registrationEnabled
+  const capacity = registrationEnabled ? Math.floor(input.capacity) : 0
 
   if (
     !creator ||
@@ -61,7 +64,7 @@ export function publishCommunityEvent(
     Number.isNaN(startsAt.getTime()) ||
     Number.isNaN(endsAt.getTime()) ||
     endsAt <= startsAt ||
-    capacity < 1
+    (registrationEnabled && capacity < 1)
   ) {
     return data
   }
@@ -84,6 +87,7 @@ export function publishCommunityEvent(
         description,
         startsAt: input.startsAt,
         endsAt: input.endsAt,
+        registrationEnabled,
         capacity,
         status: 'scheduled',
         tagIds,
@@ -110,7 +114,12 @@ export function updateCommunityEvent(
   const description = input.description.trim()
   const startsAt = new Date(input.startsAt)
   const endsAt = new Date(input.endsAt)
-  const capacity = Math.floor(input.capacity)
+  const registrationEnabled =
+    input.gameId === 'game-mtg' && input.registrationEnabled
+  const capacity = registrationEnabled ? Math.floor(input.capacity) : 0
+  const currentConfirmed = event?.registrationEnabled
+    ? event.registrationSummary.confirmed
+    : 0
 
   if (
     !manager ||
@@ -121,7 +130,7 @@ export function updateCommunityEvent(
     Number.isNaN(startsAt.getTime()) ||
     Number.isNaN(endsAt.getTime()) ||
     endsAt <= startsAt ||
-    capacity < event.registrationSummary.confirmed
+    (registrationEnabled && (capacity < 1 || capacity < currentConfirmed))
   ) {
     return data
   }
@@ -151,17 +160,28 @@ export function updateCommunityEvent(
             description,
             startsAt: input.startsAt,
             endsAt: input.endsAt,
+            registrationEnabled,
             capacity,
             status:
               candidate.status === 'completed'
                 ? ('completed' as const)
-                : candidate.registrationSummary.confirmed >= capacity
+                : registrationEnabled && currentConfirmed >= capacity
                   ? ('full' as const)
                   : ('scheduled' as const),
             tagIds,
+            registrationSummary:
+              registrationEnabled && candidate.registrationEnabled
+                ? candidate.registrationSummary
+                : { confirmed: 0, waitlisted: 0 },
           }
         : candidate,
     ),
+    registrations: registrationEnabled
+      ? data.registrations
+      : data.registrations.filter(
+          ({ eventId: registrationEventId }) =>
+            registrationEventId !== event.id,
+        ),
   }
 }
 
@@ -202,7 +222,11 @@ export function registerForEvent(
 ): DemoDataSet {
   const event = data.events.find(({ id }) => id === eventId)
 
-  if (!event || event.status === 'completed') {
+  if (
+    !event ||
+    event.registrationEnabled !== true ||
+    event.status === 'completed'
+  ) {
     return data
   }
 
@@ -300,7 +324,12 @@ export function cancelEventRegistration(
   )
   const event = data.events.find(({ id }) => id === eventId)
 
-  if (!registration || !event || event.status === 'completed') {
+  if (
+    !registration ||
+    !event ||
+    event.registrationEnabled !== true ||
+    event.status === 'completed'
+  ) {
     return data
   }
 
@@ -364,7 +393,12 @@ export function leaveEventWaitlist(
   )
   const event = data.events.find(({ id }) => id === eventId)
 
-  if (!registration || !event || event.status === 'completed') {
+  if (
+    !registration ||
+    !event ||
+    event.registrationEnabled !== true ||
+    event.status === 'completed'
+  ) {
     return data
   }
 
@@ -406,7 +440,7 @@ export function setEventAttendance(
   )
   const event = data.events.find(({ id }) => id === eventId)
 
-  if (!registration || !event) {
+  if (!registration || !event || event.registrationEnabled !== true) {
     return data
   }
 
@@ -457,7 +491,12 @@ export function removeEventParticipant(
   )
   const event = data.events.find(({ id }) => id === eventId)
 
-  if (!registration || !event || event.status === 'completed') {
+  if (
+    !registration ||
+    !event ||
+    event.registrationEnabled !== true ||
+    event.status === 'completed'
+  ) {
     return data
   }
 

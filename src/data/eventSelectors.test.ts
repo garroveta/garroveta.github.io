@@ -22,6 +22,8 @@ describe('event selectors', () => {
       'event-one-piece-store-championship',
       'event-commander-night',
       'event-modern-league',
+      'event-mtg-draft-express',
+      'event-mtg-draft-night',
       'event-presentation-hobbit',
     ])
     expect(agenda.past.map(({ event }) => event.id)).toEqual([
@@ -33,11 +35,11 @@ describe('event selectors', () => {
     const item = getEventById(
       demoData,
       demoData.currentMemberId,
-      'event-fnm-pauper',
+      'event-presentation-hobbit',
     )
 
     expect(item?.game?.shortName).toBe('MTG')
-    expect(item?.tags.map(({ name }) => name)).toEqual(['Pauper'])
+    expect(item?.tags.map(({ name }) => name)).toEqual(['Draft'])
     expect(item?.registration?.status).toBe('waitlisted')
   })
 
@@ -58,10 +60,13 @@ describe('event selectors', () => {
   })
 
   it('joins event registrations with members and orders the waitlist', () => {
-    const participants = getEventParticipants(demoData, 'event-fnm-pauper')
+    const participants = getEventParticipants(
+      demoData,
+      'event-mtg-draft-express',
+    )
 
-    expect(participants).toHaveLength(1)
-    expect(participants[0]).toMatchObject({
+    expect(participants).toHaveLength(3)
+    expect(participants.at(-1)).toMatchObject({
       member: { displayName: 'Álex Romero' },
       registration: { status: 'waitlisted' },
       waitlistPosition: 1,

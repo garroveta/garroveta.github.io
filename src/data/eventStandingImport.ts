@@ -135,10 +135,6 @@ export function saveEventLinkStanding(
             ...candidate,
             status: 'completed' as const,
             countsForCommunityRanking: input.countsForCommunityRanking,
-            registrationSummary: {
-              ...candidate.registrationSummary,
-              attended: input.parsedStanding.rows.length,
-            },
           }
         : candidate,
     ),

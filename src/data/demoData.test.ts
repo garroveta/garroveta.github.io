@@ -161,7 +161,7 @@ describe('demoData', () => {
   it('exposes the expected pilot summary', () => {
     expect(getDemoDataSummary()).toEqual({
       members: 150,
-      events: 22,
+      events: 24,
       newsPosts: 6,
       cardMatches: 9,
     })
@@ -223,7 +223,15 @@ describe('demoData', () => {
     ).toMatchObject({
       title: 'Presentación: The Hobbit',
       startsAt: '2026-08-08T17:00:00+02:00',
+      registrationEnabled: true,
       capacity: 30,
+      registrationSummary: { confirmed: 30, waitlisted: 3 },
     })
+
+    expect(
+      demoData.events
+        .filter(({ type }) => type === 'draft')
+        .map(({ capacity }) => capacity),
+    ).toEqual([4, 8])
   })
 })

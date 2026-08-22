@@ -103,6 +103,7 @@ export type CommunityEvent = {
   description: string
   startsAt: ISODateTime
   endsAt: ISODateTime
+  registrationEnabled?: boolean
   capacity: number
   status: 'scheduled' | 'full' | 'completed'
   tagIds: EntityId[]
