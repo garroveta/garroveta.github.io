@@ -142,12 +142,21 @@ function MobileEventStandingList({
                     </span>
                   ) : null}
                 </div>
-                <span
-                  className="mobile-standing-point mobile-standing-point--community"
-                  aria-label={`Más ${getCommunityPoints(entry.rank)} puntos comunidad`}
-                >
-                  <strong>+{getCommunityPoints(entry.rank)}</strong>
-                </span>
+                {entry.memberId ? (
+                  <span
+                    className="mobile-standing-point mobile-standing-point--community"
+                    aria-label={`Más ${getCommunityPoints(entry.rank)} puntos comunidad`}
+                  >
+                    <strong>+{getCommunityPoints(entry.rank)}</strong>
+                  </span>
+                ) : (
+                  <span
+                    className="mobile-standing-point mobile-standing-point--guest"
+                    aria-label="Sin puntos comunidad: jugador no vinculado"
+                  >
+                    <strong>—</strong>
+                  </span>
+                )}
               </div>
 
               <div className="mobile-standing-card__summary">
@@ -333,9 +342,18 @@ function EventRankingDetail({
                 <td>{formatPercentage(entry.gameWinPercentage)}</td>
                 <td>{formatPercentage(entry.opponentGameWinPercentage)}</td>
                 <td>
-                  <strong className="community-points-value">
-                    +{getCommunityPoints(entry.rank)}
-                  </strong>
+                  {entry.memberId ? (
+                    <strong className="community-points-value">
+                      +{getCommunityPoints(entry.rank)}
+                    </strong>
+                  ) : (
+                    <strong
+                      className="community-points-value community-points-value--guest"
+                      aria-label="Sin puntos comunidad: jugador no vinculado"
+                    >
+                      —
+                    </strong>
+                  )}
                 </td>
               </tr>
             ))}

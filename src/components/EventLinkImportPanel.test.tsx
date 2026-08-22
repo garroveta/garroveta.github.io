@@ -55,6 +55,9 @@ describe('EventLinkImportPanel', () => {
     expect(
       screen.getByLabelText('Miembro Garroveta para Invitada Externa'),
     ).toHaveValue('')
+    expect(
+      screen.getByText(/Garroveta tiene 8 inscripciones confirmadas/),
+    ).toBeInTheDocument()
 
     fireEvent.click(
       screen.getByRole('button', { name: 'Importar clasificación' }),

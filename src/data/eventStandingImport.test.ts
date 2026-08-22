@@ -132,7 +132,10 @@ describe('EventLink standing mutations', () => {
       updated.eventStandings.find((standing) => standing.eventId === eventId),
     ).toMatchObject({
       id: previousStanding.id,
-      entries: [{ displayName: 'Sergio Gil' }, { displayName: 'Invitado Nuevo' }],
+      entries: [
+        { displayName: 'Sergio Gil' },
+        { displayName: 'Invitado Nuevo' },
+      ],
     })
   })
 

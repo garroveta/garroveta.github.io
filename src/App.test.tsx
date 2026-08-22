@@ -317,6 +317,36 @@ describe('App', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('offers EventLink result imports only for MTG events', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
+    fireEvent.click(screen.getByRole('link', { name: 'Eventos' }))
+
+    expect(
+      screen.getByRole('button', {
+        name: 'Importar resultados de FNM Pauper',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', {
+        name: 'Importar resultados de Store Championship Dragon Ball',
+      }),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Importar resultados de FNM Pauper',
+      }),
+    )
+
+    const importPanel = screen.getByRole('region', { name: 'FNM Pauper' })
+    expect(
+      within(importPanel).getByText('HTML · máximo 5 MB'),
+    ).toBeInTheDocument()
+  })
+
   it('registers for an available event and cancels the registration', () => {
     render(<App />)
 

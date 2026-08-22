@@ -886,16 +886,18 @@ function ManagerEventRow({
           <ListChecks aria-hidden="true" size={16} />
           Inscripciones <span>{registrationCount}</span>
         </button>
-        <button
-          className="manager-event-item__icon-action"
-          type="button"
-          aria-label={`Importar resultados de ${item.event.title}`}
-          title="Importar resultados"
-          onClick={() => onImport(item.event.id)}
-        >
-          <FileUp aria-hidden="true" size={16} />
-          <span className="manager-event-item__action-label">Resultados</span>
-        </button>
+        {item.event.gameId === 'game-mtg' ? (
+          <button
+            className="manager-event-item__icon-action"
+            type="button"
+            aria-label={`Importar resultados de ${item.event.title}`}
+            title="Importar resultados"
+            onClick={() => onImport(item.event.id)}
+          >
+            <FileUp aria-hidden="true" size={16} />
+            <span className="manager-event-item__action-label">Resultados</span>
+          </button>
+        ) : null}
         <button
           className="manager-event-item__icon-action"
           type="button"

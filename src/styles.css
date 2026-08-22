@@ -6421,6 +6421,11 @@ a {
   background: #633777;
 }
 
+.mobile-standing-point--guest {
+  color: #817884;
+  background: #efebf0;
+}
+
 .mobile-standing-card__summary {
   display: flex;
   align-items: center;
@@ -6638,6 +6643,11 @@ a {
   padding: 0 0.35rem;
   border-radius: 0.5rem;
   font-size: 0.72rem;
+}
+
+.community-points-value--guest {
+  color: #817884;
+  background: #efebf0;
 }
 
 .ranking-record {
