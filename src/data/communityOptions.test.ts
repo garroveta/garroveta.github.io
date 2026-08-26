@@ -28,16 +28,11 @@ describe('community options', () => {
       isActive: true,
     })
 
-    const updated = updateCommunityOption(
-      added,
-      managerId,
-      newOption!.id,
-      {
-        section: 'competitionEventKinds',
-        name: 'Regional Championship Qualifier',
-        shortName: 'RCQ',
-      },
-    )
+    const updated = updateCommunityOption(added, managerId, newOption!.id, {
+      section: 'competitionEventKinds',
+      name: 'Regional Championship Qualifier',
+      shortName: 'RCQ',
+    })
     const deactivated = setCommunityOptionActive(
       updated,
       managerId,
@@ -61,12 +56,16 @@ describe('community options', () => {
   })
 
   it('does not allow a player to change community options', () => {
-    const result = addCommunityOption(structuredClone(demoData), 'member-alex', {
-      section: 'tags',
-      name: 'Legacy',
-      color: '#333333',
-      tagKind: 'format',
-    })
+    const result = addCommunityOption(
+      structuredClone(demoData),
+      'member-alex',
+      {
+        section: 'tags',
+        name: 'Legacy',
+        color: '#333333',
+        tagKind: 'format',
+      },
+    )
 
     expect(result).toEqual(demoData)
   })
@@ -83,19 +82,12 @@ describe('community options', () => {
       color: '#777777',
     })
 
-    expect(getCommunityOptionUsageCount(data, 'tags', usedTagId)).toBeGreaterThan(
-      0,
-    )
     expect(
-      deleteCommunityOption(data, managerId, 'tags', usedTagId),
-    ).toBe(data)
+      getCommunityOptionUsageCount(data, 'tags', usedTagId),
+    ).toBeGreaterThan(0)
+    expect(deleteCommunityOption(data, managerId, 'tags', usedTagId)).toBe(data)
 
-    const deleted = deleteCommunityOption(
-      data,
-      managerId,
-      'tags',
-      unusedTagId,
-    )
+    const deleted = deleteCommunityOption(data, managerId, 'tags', unusedTagId)
     expect(deleted.tags.some(({ id }) => id === unusedTagId)).toBe(false)
   })
 })

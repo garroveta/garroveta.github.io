@@ -8,10 +8,7 @@ import type {
 } from '../domain/types'
 
 export type CommunityOptionSection =
-  | 'games'
-  | 'competitionFormats'
-  | 'competitionEventKinds'
-  | 'tags'
+  'games' | 'competitionFormats' | 'competitionEventKinds' | 'tags'
 
 export interface CommunityOptionInput {
   section: CommunityOptionSection
@@ -353,11 +350,7 @@ export function reorderCommunityOption(
   const currentIndex = options.findIndex(({ id }) => id === optionId)
   const nextIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
 
-  if (
-    currentIndex < 0 ||
-    nextIndex < 0 ||
-    nextIndex >= options.length
-  ) {
+  if (currentIndex < 0 || nextIndex < 0 || nextIndex >= options.length) {
     return data
   }
 
