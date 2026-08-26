@@ -16,6 +16,7 @@ export type CommunityEventInput = {
   listedInAgenda?: boolean
   countsForCommunityRanking?: boolean
   registrationEnabled: boolean
+  waitlistEnabled?: boolean
   capacity: number
   tagIds: string[]
 }
@@ -68,6 +69,7 @@ export function publishCommunityEvent(
   const endsAt = new Date(input.endsAt)
   const registrationEnabled =
     input.gameId === 'game-mtg' && input.registrationEnabled
+  const waitlistEnabled = registrationEnabled && input.waitlistEnabled !== false
   const capacity = registrationEnabled ? Math.floor(input.capacity) : 0
 
   if (
@@ -118,6 +120,7 @@ export function publishCommunityEvent(
         countsForCommunityRanking:
           game.id === 'game-mtg' && input.countsForCommunityRanking === true,
         registrationEnabled,
+        waitlistEnabled,
         capacity,
         status: 'scheduled',
         tagIds,
@@ -155,6 +158,7 @@ export function updateCommunityEvent(
   const endsAt = new Date(input.endsAt)
   const registrationEnabled =
     input.gameId === 'game-mtg' && input.registrationEnabled
+  const waitlistEnabled = registrationEnabled && input.waitlistEnabled !== false
   const capacity = registrationEnabled ? Math.floor(input.capacity) : 0
   const currentConfirmed = event?.registrationEnabled
     ? event.registrationSummary.confirmed
@@ -224,6 +228,7 @@ export function updateCommunityEvent(
             listedInAgenda:
               input.listedInAgenda ?? candidate.listedInAgenda ?? true,
             registrationEnabled,
+            waitlistEnabled,
             capacity,
             status:
               candidate.status === 'completed'
@@ -303,6 +308,10 @@ export function registerForEvent(
   }
 
   const hasAvailablePlace = event.registrationSummary.confirmed < event.capacity
+  if (!hasAvailablePlace && event.waitlistEnabled === false) {
+    return data
+  }
+
   const registrationStatus: EventRegistration['status'] = hasAvailablePlace
     ? 'confirmed'
     : 'waitlisted'

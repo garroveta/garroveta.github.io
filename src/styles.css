@@ -897,7 +897,7 @@ a {
 
 .settings-navigation {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.35rem;
   margin: 1.25rem 0 1rem;
   padding: 0.35rem;
@@ -909,6 +909,7 @@ a {
 .settings-navigation button {
   display: inline-flex;
   min-height: 3rem;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
@@ -931,6 +932,143 @@ a {
 .settings-navigation button:focus-visible {
   outline: 3px solid #b99ac7;
   outline-offset: 2px;
+}
+
+.registration-settings-panel {
+  overflow: hidden;
+  border: 1px solid #d9cddd;
+  border-radius: 0.95rem;
+  background: #faf7fb;
+}
+
+.configuration-panel-heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.configuration-panel-heading > span {
+  display: grid;
+  width: 2.65rem;
+  height: 2.65rem;
+  place-items: center;
+  border-radius: 0.8rem;
+  color: #fff;
+  background: #663579;
+}
+
+.configuration-panel-heading > div > span {
+  color: #7b5689;
+  font-size: 0.64rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.configuration-panel-heading h2 {
+  margin: 0.12rem 0 0;
+  color: #302735;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.configuration-panel-heading p {
+  margin: 0.2rem 0 0;
+  color: #817784;
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.registration-settings-panel > form {
+  display: grid;
+  gap: 1rem;
+  padding: 0.9rem;
+  border-top: 1px solid #e5dfe7;
+  background: #fff;
+}
+
+.registration-rule-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.registration-rule {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem;
+  border: 1px solid #e5dfe7;
+  border-radius: 0.8rem;
+  background: #fcfafc;
+}
+
+.registration-rule__identity {
+  min-width: 0;
+}
+
+.registration-rule__identity strong,
+.registration-rule__identity small {
+  display: block;
+}
+
+.registration-rule__identity strong {
+  color: #342c37;
+  font-size: 0.8rem;
+}
+
+.registration-rule__identity small {
+  margin-top: 0.15rem;
+  color: #857b88;
+  font-size: 0.66rem;
+}
+
+.registration-rule__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #5f5363;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.registration-rule__toggle input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #643778;
+}
+
+.registration-rule__capacity {
+  grid-column: 1 / 2;
+}
+
+.registration-rule__capacity input {
+  min-height: 2.5rem;
+  padding: 0.5rem 0.65rem;
+}
+
+.registration-settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.registration-settings-actions > span {
+  margin-right: auto;
+  color: #2f6b59;
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.event-registration-option--nested {
+  margin-left: 1.8rem;
+  border-style: dashed;
+  background: #fff;
 }
 
 .registration-page {
@@ -8144,6 +8282,18 @@ a {
   .manager-settings-entry .primary-button {
     grid-column: auto;
     width: auto;
+  }
+
+  .settings-navigation button {
+    flex-direction: row;
+  }
+
+  .registration-rule {
+    grid-template-columns: minmax(10rem, 1fr) auto 5.5rem auto;
+  }
+
+  .registration-rule__capacity {
+    grid-column: auto;
   }
 
   .registration-field-grid {

@@ -78,6 +78,17 @@ export type CommunityRankingSettings = {
   defaultLimit: 10 | 'all'
 }
 
+export type EventRegistrationRule = {
+  eventType: EventType
+  enabledByDefault: boolean
+  defaultCapacity: number
+  waitlistEnabled: boolean
+}
+
+export type CommunityRegistrationSettings = {
+  rules: EventRegistrationRule[]
+}
+
 export type CommunityRole = 'player' | 'manager' | 'moderator'
 
 export type ContactMethod = {
@@ -123,6 +134,7 @@ export type CommunityEvent = {
   startsAt: ISODateTime
   endsAt: ISODateTime
   registrationEnabled?: boolean
+  waitlistEnabled?: boolean
   capacity: number
   status: 'scheduled' | 'full' | 'completed'
   tagIds: EntityId[]
@@ -279,6 +291,7 @@ export type DemoDataSet = {
   competitionFormats: CompetitionFormat[]
   competitionEventKinds: CompetitionEventKind[]
   rankingSettings: CommunityRankingSettings
+  registrationSettings: CommunityRegistrationSettings
   tags: CommunityTag[]
   members: CommunityMember[]
   events: CommunityEvent[]

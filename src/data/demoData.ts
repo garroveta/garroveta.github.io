@@ -8,6 +8,7 @@ import type {
   EventStandingEntry,
   MarketplaceListing,
 } from '../domain/types'
+import { DEFAULT_COMMUNITY_REGISTRATION_SETTINGS } from './registrationSettings'
 
 const communityId = 'community-crc-delorean'
 
@@ -532,6 +533,9 @@ export const demoData = {
     defaultPeriodMonths: 6,
     defaultLimit: 10,
   },
+  registrationSettings: structuredClone(
+    DEFAULT_COMMUNITY_REGISTRATION_SETTINGS,
+  ),
   tags: [
     {
       id: 'tag-commander',

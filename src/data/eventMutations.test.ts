@@ -247,6 +247,16 @@ describe('event registration mutations', () => {
     ).toBe('waitlisted')
   })
 
+  it('does not register another player when a full event has no waitlist', () => {
+    const data: DemoDataSet = structuredClone(demoData)
+    const event = data.events.find(
+      ({ id }) => id === 'event-presentation-hobbit',
+    )!
+    event.waitlistEnabled = false
+
+    expect(registerForEvent(data, event.id, 'member-biel')).toBe(data)
+  })
+
   it('lets a player leave the waitlist', () => {
     const updatedData = leaveEventWaitlist(
       demoData,

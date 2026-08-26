@@ -43,6 +43,10 @@ import {
   type EventListItem,
 } from '../data/eventSelectors'
 import type { DemoDataUpdater } from '../data/demoRepository'
+import {
+  EVENT_TYPE_LABELS,
+  getRegistrationRule,
+} from '../data/registrationSettings'
 import type {
   CommunityEvent,
   CommunityMember,
@@ -112,15 +116,6 @@ const compactRegistrationLabels = {
   waitlisted: 'En espera',
   attended: 'Asistió',
   cancelled: '',
-}
-
-const eventTypeLabels = {
-  tournament: 'Torneo',
-  league: 'Liga',
-  draft: 'Draft',
-  casual: 'Juego libre',
-  workshop: 'Taller',
-  launch: 'Presentación',
 }
 
 function madridOffsetForDate(date: string) {
@@ -209,9 +204,19 @@ function EventComposer({
   const [endsAt, setEndsAt] = useState(
     eventToEdit ? madridTimePart(eventToEdit.endsAt) : '21:00',
   )
-  const [capacity, setCapacity] = useState(String(eventToEdit?.capacity ?? 24))
+  const initialRegistrationRule = getRegistrationRule(
+    data.registrationSettings,
+    eventToEdit?.type ?? 'tournament',
+  )
+  const [capacity, setCapacity] = useState(
+    String(eventToEdit?.capacity || initialRegistrationRule.defaultCapacity),
+  )
   const [registrationEnabled, setRegistrationEnabled] = useState(
-    eventToEdit?.registrationEnabled ?? false,
+    eventToEdit?.registrationEnabled ??
+      initialRegistrationRule.enabledByDefault,
+  )
+  const [waitlistEnabled, setWaitlistEnabled] = useState(
+    eventToEdit?.waitlistEnabled ?? initialRegistrationRule.waitlistEnabled,
   )
   const [listedInAgenda, setListedInAgenda] = useState(
     eventToEdit?.listedInAgenda ?? true,
@@ -255,6 +260,7 @@ function EventComposer({
         listedInAgenda,
         countsForCommunityRanking,
         registrationEnabled,
+        waitlistEnabled,
         capacity: Number(capacity),
         tagIds,
       }
@@ -307,6 +313,14 @@ function EventComposer({
               if (nextGameId !== 'game-mtg') {
                 setRegistrationEnabled(false)
                 setCountsForCommunityRanking(false)
+              } else if (!eventToEdit) {
+                const rule = getRegistrationRule(
+                  data.registrationSettings,
+                  type,
+                )
+                setRegistrationEnabled(rule.enabledByDefault)
+                setCapacity(String(rule.defaultCapacity))
+                setWaitlistEnabled(rule.waitlistEnabled)
               }
             }}
             required
@@ -323,13 +337,28 @@ function EventComposer({
           <span>Tipo de actividad</span>
           <select
             value={type}
-            onChange={(event) => setType(event.target.value as EventType)}
+            onChange={(event) => {
+              const nextType = event.target.value as EventType
+              setType(nextType)
+
+              if (!eventToEdit && gameId === 'game-mtg') {
+                const rule = getRegistrationRule(
+                  data.registrationSettings,
+                  nextType,
+                )
+                setRegistrationEnabled(rule.enabledByDefault)
+                setCapacity(String(rule.defaultCapacity))
+                setWaitlistEnabled(rule.waitlistEnabled)
+              }
+            }}
           >
-            {(Object.keys(eventTypeLabels) as EventType[]).map((eventType) => (
-              <option key={eventType} value={eventType}>
-                {eventTypeLabels[eventType]}
-              </option>
-            ))}
+            {(Object.keys(EVENT_TYPE_LABELS) as EventType[]).map(
+              (eventType) => (
+                <option key={eventType} value={eventType}>
+                  {EVENT_TYPE_LABELS[eventType]}
+                </option>
+              ),
+            )}
           </select>
         </label>
       </div>
@@ -493,6 +522,21 @@ function EventComposer({
             </span>
           </label>
         ) : null}
+
+        {gameId === 'game-mtg' && registrationEnabled ? (
+          <label className="event-registration-option event-registration-option--nested">
+            <input
+              type="checkbox"
+              checked={waitlistEnabled}
+              onChange={(event) => setWaitlistEnabled(event.target.checked)}
+            />
+            <span>
+              <strong>Activar lista de espera</strong>
+              Cuando se completen las plazas, conserva las siguientes
+              solicitudes en orden de inscripción.
+            </span>
+          </label>
+        ) : null}
       </div>
 
       <fieldset className="composer-tags">
@@ -564,7 +608,7 @@ function EventTags({ item }: { item: EventListItem }) {
           {item.game.shortName}
         </span>
       ) : null}
-      <span className="event-type">{eventTypeLabels[item.event.type]}</span>
+      <span className="event-type">{EVENT_TYPE_LABELS[item.event.type]}</span>
       {item.tags.map((tag) => (
         <span
           key={tag.id}
@@ -689,7 +733,7 @@ function eventContextLabel(item: EventListItem) {
   return [
     ...new Set([
       item.game?.shortName,
-      eventTypeLabels[item.event.type],
+      EVENT_TYPE_LABELS[item.event.type],
       ...item.tags.map(({ name }) => name),
     ]),
   ]
@@ -812,6 +856,11 @@ function EventDetail({
     item.event.registrationEnabled === true &&
     item.event.status !== 'completed' &&
     item.event.registrationSummary.confirmed < item.event.capacity
+  const canJoinWaitlist =
+    item.event.registrationEnabled === true &&
+    item.event.status !== 'completed' &&
+    item.event.registrationSummary.confirmed >= item.event.capacity &&
+    item.event.waitlistEnabled !== false
   const isConfirmed = item.registration?.status === 'confirmed'
   const isWaitlisted = item.registration?.status === 'waitlisted'
 
@@ -909,7 +958,7 @@ function EventDetail({
         ) : null}
 
         {item.event.registrationEnabled &&
-        item.event.status !== 'completed' &&
+        (canRegister || canJoinWaitlist || item.registration) &&
         activeRole !== 'gerente' ? (
           <button
             className="primary-button event-action"
@@ -1621,11 +1670,13 @@ export function EventsPage({
                   }
                 >
                   <option value="">Todas</option>
-                  {(Object.keys(eventTypeLabels) as EventType[]).map((type) => (
-                    <option key={type} value={type}>
-                      {eventTypeLabels[type]}
-                    </option>
-                  ))}
+                  {(Object.keys(EVENT_TYPE_LABELS) as EventType[]).map(
+                    (type) => (
+                      <option key={type} value={type}>
+                        {EVENT_TYPE_LABELS[type]}
+                      </option>
+                    ),
+                  )}
                 </select>
               </label>
             </div>
@@ -1670,16 +1721,18 @@ export function EventsPage({
                   >
                     Todas
                   </button>
-                  {(Object.keys(eventTypeLabels) as EventType[]).map((type) => (
-                    <button
-                      type="button"
-                      key={type}
-                      aria-pressed={selectedType === type}
-                      onClick={() => setSelectedType(type)}
-                    >
-                      {eventTypeLabels[type]}
-                    </button>
-                  ))}
+                  {(Object.keys(EVENT_TYPE_LABELS) as EventType[]).map(
+                    (type) => (
+                      <button
+                        type="button"
+                        key={type}
+                        aria-pressed={selectedType === type}
+                        onClick={() => setSelectedType(type)}
+                      >
+                        {EVENT_TYPE_LABELS[type]}
+                      </button>
+                    ),
+                  )}
                 </div>
               </div>
             </div>

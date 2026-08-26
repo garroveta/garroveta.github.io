@@ -1,12 +1,13 @@
-import { ArrowLeft, ListTree, Trophy } from 'lucide-react'
+import { ArrowLeft, ListTree, Trophy, UsersRound } from 'lucide-react'
 import { useState } from 'react'
 
 import { CommunityOptionManager } from '../components/CommunityOptionManager'
 import { RankingSettingsPanel } from '../components/RankingSettingsPanel'
+import { RegistrationSettingsPanel } from '../components/RegistrationSettingsPanel'
 import type { DemoDataUpdater } from '../data/demoRepository'
 import type { DemoDataSet } from '../domain/types'
 
-type SettingsSection = 'options' | 'ranking'
+type SettingsSection = 'options' | 'registrations' | 'ranking'
 
 type SettingsPageProps = {
   data: DemoDataSet
@@ -56,6 +57,15 @@ export function SettingsPage({
         <button
           type="button"
           role="tab"
+          aria-selected={activeSection === 'registrations'}
+          onClick={() => setActiveSection('registrations')}
+        >
+          <UsersRound aria-hidden="true" size={18} />
+          Inscripciones
+        </button>
+        <button
+          type="button"
+          role="tab"
           aria-selected={activeSection === 'ranking'}
           onClick={() => setActiveSection('ranking')}
         >
@@ -66,6 +76,12 @@ export function SettingsPage({
 
       {activeSection === 'options' ? (
         <CommunityOptionManager
+          data={data}
+          managerId={managerId}
+          onDataChange={onDataChange}
+        />
+      ) : activeSection === 'registrations' ? (
+        <RegistrationSettingsPanel
           data={data}
           managerId={managerId}
           onDataChange={onDataChange}

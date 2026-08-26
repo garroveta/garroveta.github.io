@@ -263,6 +263,45 @@ describe('App', () => {
     ).not.toHaveLength(0)
   })
 
+  it('lets the manager configure registration defaults for new MTG events', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Inscripciones' }))
+
+    fireEvent.change(screen.getByLabelText('Plazas por defecto para Draft'), {
+      target: { value: '4' },
+    })
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Guardar configuración' }),
+    )
+
+    expect(screen.getByText('Configuración guardada.')).toBeInTheDocument()
+    expect(
+      createLocalDemoRepository(window.localStorage)
+        .load()
+        .registrationSettings.rules.find(
+          ({ eventType }) => eventType === 'draft',
+        ),
+    ).toMatchObject({ defaultCapacity: 4, enabledByDefault: true })
+
+    fireEvent.click(screen.getByRole('link', { name: 'Eventos' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Nuevo evento' }))
+    fireEvent.change(screen.getByLabelText('Tipo de actividad'), {
+      target: { value: 'draft' },
+    })
+
+    expect(screen.getByLabelText('Plazas')).toHaveValue(4)
+    expect(
+      screen.getByRole('checkbox', { name: /^Activar inscripciones/ }),
+    ).toBeChecked()
+    expect(
+      screen.getByRole('checkbox', { name: /^Activar lista de espera/ }),
+    ).toBeChecked()
+  })
+
   it('opens an event detail and returns to the agenda', () => {
     render(<App />)
 
