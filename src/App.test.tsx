@@ -589,6 +589,31 @@ describe('App', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('filters all news with the compact mobile selector', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Noticias/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: 'Todas' }))
+    fireEvent.change(
+      screen.getByRole('combobox', {
+        name: 'Filtrar publicaciones por etiqueta',
+      }),
+      { target: { value: 'tag-commander' } },
+    )
+
+    expect(
+      screen.getByRole('heading', { name: 'Nuevas mesas para Commander' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', {
+        name: 'Reposición de sobres y accesorios',
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Restablecer' }),
+    ).toBeInTheDocument()
+  })
+
   it('lets a manager publish a targeted communication', () => {
     render(<App />)
 

@@ -83,7 +83,9 @@ function NewsCard({
   onSelect: (newsPostId: string) => void
 }) {
   return (
-    <article className="publication-card">
+    <article
+      className={`publication-card${item.post.pinned ? ' publication-card--pinned' : ''}`}
+    >
       <div className="publication-card__topline">
         <span
           className={`publication-type publication-type--${item.post.type}`}
@@ -397,17 +399,24 @@ export function NewsPage({
         </div>
       ) : null}
 
-      <section className="news-feed" aria-labelledby="news-feed-title">
+      <section
+        className="news-filter-panel"
+        aria-labelledby="news-filters-title"
+      >
         <div className="section-heading">
           <div>
-            <span>Comunidad</span>
-            <h2 id="news-feed-title">
-              {feedMode === 'personalized'
-                ? 'Publicaciones para ti'
-                : 'Todas las publicaciones'}
-            </h2>
+            <span>Personaliza las noticias</span>
+            <h2 id="news-filters-title">Filtrar publicaciones</h2>
           </div>
-          <p>{feed.length} publicadas</p>
+          {feedMode === 'all' && activeTagId ? (
+            <button
+              className="filter-reset"
+              type="button"
+              onClick={() => setActiveTagId(undefined)}
+            >
+              Restablecer
+            </button>
+          ) : null}
         </div>
 
         <div className="news-feed-controls">
@@ -433,32 +442,66 @@ export function NewsPage({
 
           {feedMode === 'personalized' ? (
             <p>
-              Incluye avisos generales y tus etiquetas:{' '}
+              Avisos generales y tus etiquetas:{' '}
               <strong>
                 {memberTags.map(({ name }) => name).join(', ') || 'ninguna'}
               </strong>
             </p>
           ) : (
-            <div className="tag-filter" aria-label="Filtrar por etiqueta">
-              <button
-                type="button"
-                aria-pressed={!activeTagId}
-                onClick={() => setActiveTagId(undefined)}
-              >
-                Todas
-              </button>
-              {publicationTags.map((tag) => (
-                <button
-                  key={tag.id}
-                  type="button"
-                  aria-pressed={activeTagId === tag.id}
-                  onClick={() => setActiveTagId(tag.id)}
+            <>
+              <label className="news-tag-select">
+                <span>Etiqueta</span>
+                <select
+                  aria-label="Filtrar publicaciones por etiqueta"
+                  value={activeTagId ?? ''}
+                  onChange={(event) =>
+                    setActiveTagId(event.currentTarget.value || undefined)
+                  }
                 >
-                  {tag.name}
+                  <option value="">Todas las etiquetas</option>
+                  {publicationTags.map((tag) => (
+                    <option key={tag.id} value={tag.id}>
+                      {tag.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="tag-filter" aria-label="Filtrar por etiqueta">
+                <button
+                  type="button"
+                  aria-pressed={!activeTagId}
+                  onClick={() => setActiveTagId(undefined)}
+                >
+                  Todas
                 </button>
-              ))}
-            </div>
+                {publicationTags.map((tag) => (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    aria-pressed={activeTagId === tag.id}
+                    onClick={() => setActiveTagId(tag.id)}
+                  >
+                    {tag.name}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
+        </div>
+      </section>
+
+      <section className="news-feed" aria-labelledby="news-feed-title">
+        <div className="section-heading">
+          <div>
+            <span>Comunidad</span>
+            <h2 id="news-feed-title">
+              {feedMode === 'personalized'
+                ? 'Publicaciones para ti'
+                : 'Todas las publicaciones'}
+            </h2>
+          </div>
+          <p>{feed.length} publicadas</p>
         </div>
 
         <div className="publication-list">
