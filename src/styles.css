@@ -2437,6 +2437,17 @@ a {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.event-composer__grid--schedule > .form-field:first-child,
+.event-composer__grid--schedule > .form-field:nth-child(4) {
+  grid-column: 1 / -1;
+}
+
+.event-composer__grid > .form-field,
+.event-composer__grid > .form-field input,
+.event-composer__grid > .form-field select {
+  min-width: 0;
+}
+
 .event-registration-option {
   display: flex;
   align-items: flex-start;
@@ -8217,6 +8228,11 @@ a {
 
   .event-composer__grid--schedule {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .event-composer__grid--schedule > .form-field:first-child,
+  .event-composer__grid--schedule > .form-field:nth-child(4) {
+    grid-column: auto;
   }
 
   .event-publication-options {
