@@ -10,8 +10,11 @@ export type CommunityEventInput = {
   type: EventType
   title: string
   description: string
+  imageUri?: string
   startsAt: string
   endsAt: string
+  listedInAgenda?: boolean
+  countsForCommunityRanking?: boolean
   registrationEnabled: boolean
   capacity: number
   tagIds: string[]
@@ -60,6 +63,7 @@ export function publishCommunityEvent(
     : undefined
   const title = input.title.trim()
   const description = input.description.trim()
+  const imageUri = input.imageUri?.trim() || undefined
   const startsAt = new Date(input.startsAt)
   const endsAt = new Date(input.endsAt)
   const registrationEnabled =
@@ -107,8 +111,12 @@ export function publishCommunityEvent(
         type: input.type,
         title,
         description,
+        imageUri,
         startsAt: input.startsAt,
         endsAt: input.endsAt,
+        listedInAgenda: input.listedInAgenda !== false,
+        countsForCommunityRanking:
+          game.id === 'game-mtg' && input.countsForCommunityRanking === true,
         registrationEnabled,
         capacity,
         status: 'scheduled',
@@ -142,6 +150,7 @@ export function updateCommunityEvent(
     : undefined
   const title = input.title.trim()
   const description = input.description.trim()
+  const imageUri = input.imageUri?.trim() || undefined
   const startsAt = new Date(input.startsAt)
   const endsAt = new Date(input.endsAt)
   const registrationEnabled =
@@ -200,14 +209,20 @@ export function updateCommunityEvent(
             competitionEventKindId:
               eventKind?.id ??
               (gameChanged ? undefined : candidate.competitionEventKindId),
-            countsForCommunityRanking: gameChanged
-              ? false
-              : candidate.countsForCommunityRanking,
+            countsForCommunityRanking:
+              game.id === 'game-mtg'
+                ? (input.countsForCommunityRanking ??
+                  (gameChanged ? false : candidate.countsForCommunityRanking))
+                : false,
             type: input.type,
             title,
             description,
+            imageUri:
+              input.imageUri === undefined ? candidate.imageUri : imageUri,
             startsAt: input.startsAt,
             endsAt: input.endsAt,
+            listedInAgenda:
+              input.listedInAgenda ?? candidate.listedInAgenda ?? true,
             registrationEnabled,
             capacity,
             status:

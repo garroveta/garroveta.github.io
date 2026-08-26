@@ -110,11 +110,28 @@ export function getEventById(
   memberId: string,
   eventId: string,
 ): EventListItem | undefined {
-  const agenda = getEventAgenda(data, memberId)
+  const event = data.events.find(({ id }) => id === eventId)
 
-  return [...agenda.upcoming, ...agenda.past].find(
-    ({ event }) => event.id === eventId,
-  )
+  if (!event) {
+    return undefined
+  }
+
+  return {
+    event,
+    game: event.gameId
+      ? data.games.find(({ id }) => id === event.gameId)
+      : undefined,
+    tags: event.tagIds.flatMap((tagId) => {
+      const tag = data.tags.find(({ id }) => id === tagId)
+      return tag ? [tag] : []
+    }),
+    registration: data.registrations.find(
+      (registration) =>
+        registration.eventId === eventId &&
+        registration.memberId === memberId &&
+        registration.status !== 'cancelled',
+    ),
+  }
 }
 
 export function getEventParticipants(

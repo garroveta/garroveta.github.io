@@ -43,6 +43,22 @@ describe('event selectors', () => {
     expect(item?.registration?.status).toBe('waitlisted')
   })
 
+  it('keeps a hidden event editable without exposing it in the agenda', () => {
+    const hiddenEvent = demoData.events.find(
+      ({ listedInAgenda }) => listedInAgenda === false,
+    )!
+    const agenda = getEventAgenda(demoData, demoData.currentMemberId)
+
+    expect(
+      [...agenda.upcoming, ...agenda.past].some(
+        ({ event }) => event.id === hiddenEvent.id,
+      ),
+    ).toBe(false)
+    expect(
+      getEventById(demoData, demoData.currentMemberId, hiddenEvent.id)?.event,
+    ).toBe(hiddenEvent)
+  })
+
   it('combines game and activity filters', () => {
     const agenda = getEventAgenda(demoData, demoData.currentMemberId)
     const filteredAgenda = filterEventAgenda(agenda, {

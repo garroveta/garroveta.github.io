@@ -2467,6 +2467,11 @@ a {
   color: #342c37;
 }
 
+.event-publication-options {
+  display: grid;
+  gap: 0.7rem;
+}
+
 .event-filter-panel .section-heading {
   margin-bottom: 1rem;
 }
@@ -8114,6 +8119,10 @@ a {
 
   .event-composer__grid--schedule {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .event-publication-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .event-ranking-detail__header {

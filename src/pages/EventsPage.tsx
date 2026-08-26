@@ -199,6 +199,7 @@ function EventComposer({
   const [type, setType] = useState<EventType>(eventToEdit?.type ?? 'tournament')
   const [title, setTitle] = useState(eventToEdit?.title ?? '')
   const [description, setDescription] = useState(eventToEdit?.description ?? '')
+  const [imageUri, setImageUri] = useState(eventToEdit?.imageUri ?? '')
   const [date, setDate] = useState(
     eventToEdit ? madridDatePart(eventToEdit.startsAt) : '2026-08-15',
   )
@@ -211,6 +212,12 @@ function EventComposer({
   const [capacity, setCapacity] = useState(String(eventToEdit?.capacity ?? 24))
   const [registrationEnabled, setRegistrationEnabled] = useState(
     eventToEdit?.registrationEnabled ?? false,
+  )
+  const [listedInAgenda, setListedInAgenda] = useState(
+    eventToEdit?.listedInAgenda ?? true,
+  )
+  const [countsForCommunityRanking, setCountsForCommunityRanking] = useState(
+    eventToEdit?.countsForCommunityRanking ?? false,
   )
   const [tagIds, setTagIds] = useState<string[]>(eventToEdit?.tagIds ?? [])
   const availableFormats = data.competitionFormats.filter(
@@ -242,8 +249,11 @@ function EventComposer({
         type,
         title,
         description,
+        imageUri,
         startsAt: buildMadridIso(date, startsAt),
         endsAt: buildMadridIso(endDate, endsAt),
+        listedInAgenda,
+        countsForCommunityRanking,
         registrationEnabled,
         capacity: Number(capacity),
         tagIds,
@@ -296,6 +306,7 @@ function EventComposer({
               )
               if (nextGameId !== 'game-mtg') {
                 setRegistrationEnabled(false)
+                setCountsForCommunityRanking(false)
               }
             }}
             required
@@ -385,6 +396,16 @@ function EventComposer({
         />
       </label>
 
+      <label className="form-field">
+        <span>URL de la imagen o cartel (opcional)</span>
+        <input
+          type="url"
+          value={imageUri}
+          onChange={(event) => setImageUri(event.target.value)}
+          placeholder="https://…"
+        />
+      </label>
+
       <div className="event-composer__grid event-composer__grid--schedule">
         <label className="form-field">
           <span>Fecha</span>
@@ -428,19 +449,51 @@ function EventComposer({
         ) : null}
       </div>
 
-      {gameId === 'game-mtg' ? (
+      <div className="event-publication-options">
         <label className="event-registration-option">
           <input
             type="checkbox"
-            checked={registrationEnabled}
-            onChange={(event) => setRegistrationEnabled(event.target.checked)}
+            checked={listedInAgenda}
+            onChange={(event) => setListedInAgenda(event.target.checked)}
           />
           <span>
-            <strong>Activar inscripciones</strong>
-            Gestiona plazas y lista de espera para este evento MTG.
+            <strong>Mostrar en la agenda</strong>
+            Permite preparar el evento antes de hacerlo visible para la
+            comunidad.
           </span>
         </label>
-      ) : null}
+
+        {gameId === 'game-mtg' ? (
+          <label className="event-registration-option">
+            <input
+              type="checkbox"
+              checked={countsForCommunityRanking}
+              onChange={(event) =>
+                setCountsForCommunityRanking(event.target.checked)
+              }
+            />
+            <span>
+              <strong>Contar para el ranking comunitario</strong>
+              Los resultados importados sumarán puntos según el barómetro de la
+              comunidad.
+            </span>
+          </label>
+        ) : null}
+
+        {gameId === 'game-mtg' ? (
+          <label className="event-registration-option">
+            <input
+              type="checkbox"
+              checked={registrationEnabled}
+              onChange={(event) => setRegistrationEnabled(event.target.checked)}
+            />
+            <span>
+              <strong>Activar inscripciones</strong>
+              Gestiona plazas y lista de espera para este evento MTG.
+            </span>
+          </label>
+        ) : null}
+      </div>
 
       <fieldset className="composer-tags">
         <legend>Etiquetas opcionales</legend>
@@ -520,6 +573,9 @@ function EventTags({ item }: { item: EventListItem }) {
           {tag.name}
         </span>
       ))}
+      {item.event.listedInAgenda === false ? (
+        <span className="event-type">No visible</span>
+      ) : null}
     </div>
   )
 }
@@ -1268,7 +1324,16 @@ export function EventsPage({
   const managedImportEvent = managedImportEventId
     ? getEventById(data, currentMember.id, managedImportEventId)
     : undefined
+  const hiddenManagerEvents = data.events.flatMap((event) => {
+    if (event.listedInAgenda !== false || event.status === 'completed') {
+      return []
+    }
+
+    const item = getEventById(data, currentMember.id, event.id)
+    return item ? [item] : []
+  })
   const managerEvents = [
+    ...hiddenManagerEvents,
     ...completeAgenda.upcoming,
     ...completeAgenda.past.slice(0, 8),
   ]
