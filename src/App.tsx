@@ -131,9 +131,9 @@ export function App() {
         ) : activeRoute === 'perfil' ? (
           <ProfilePage
             activeRole={activeRole}
-            community={data.community}
-            games={data.games}
+            data={data}
             currentMember={currentMember}
+            managerId={publishingMember.id}
             dataSummary={dataSummary}
             onRoleChange={setActiveRole}
             onDataChange={updateData}

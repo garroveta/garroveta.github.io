@@ -349,6 +349,94 @@ describe('App', () => {
     expect(screen.getByText('2 seleccionados')).toBeInTheDocument()
   })
 
+  it('lets a manager maintain configurable community options', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Configuración de la comunidad',
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getAllByRole('tab')).toHaveLength(4)
+    fireEvent.click(screen.getByRole('tab', { name: /Tipos de evento/ }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Añadir tipo de evento' }),
+    )
+    fireEvent.change(screen.getByLabelText('Nombre'), {
+      target: { value: 'Regional Qualifier' },
+    })
+    fireEvent.change(screen.getByLabelText('Nombre corto'), {
+      target: { value: 'RCQ' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    const createdOption = screen
+      .getByText('Regional Qualifier')
+      .closest('article')
+    expect(createdOption).toBeTruthy()
+    expect(
+      within(createdOption as HTMLElement).getByRole('button', {
+        name: 'Eliminar definitivamente Regional Qualifier',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', {
+        name: 'Eliminar definitivamente Friday Night Magic',
+      }),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(
+      within(createdOption as HTMLElement).getByRole('button', {
+        name: 'Modificar Regional Qualifier',
+      }),
+    )
+    fireEvent.change(screen.getByLabelText('Nombre'), {
+      target: { value: 'Regional Championship Qualifier' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    const updatedOption = screen
+      .getByText('Regional Championship Qualifier')
+      .closest('article')
+    fireEvent.click(
+      within(updatedOption as HTMLElement).getByRole('button', {
+        name: 'Desactivar Regional Championship Qualifier',
+      }),
+    )
+    expect(
+      within(updatedOption as HTMLElement).getByText('Desactivada'),
+    ).toBeInTheDocument()
+    fireEvent.click(
+      within(updatedOption as HTMLElement).getByRole('button', {
+        name: 'Subir Regional Championship Qualifier',
+      }),
+    )
+
+    expect(
+      createLocalDemoRepository(window.localStorage)
+        .load()
+        .competitionEventKinds.at(-2),
+    ).toMatchObject({
+      name: 'Regional Championship Qualifier',
+      isActive: false,
+    })
+
+    fireEvent.click(
+      within(updatedOption as HTMLElement).getByRole('button', {
+        name: 'Eliminar definitivamente Regional Championship Qualifier',
+      }),
+    )
+    fireEvent.click(
+      within(updatedOption as HTMLElement).getByRole('button', {
+        name: 'Eliminar',
+      }),
+    )
+    expect(screen.queryByText('Regional Championship Qualifier')).toBeNull()
+  })
+
   it('prepares a new member registration for manager approval', () => {
     render(<App />)
 

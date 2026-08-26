@@ -6,21 +6,21 @@ import {
   getDemoRoleOption,
   type DemoRole,
 } from '../app/demoRoles'
+import { CommunityOptionManager } from '../components/CommunityOptionManager'
 import { DemoDataSummary } from '../components/DemoDataSummary'
 import { toggleFavoriteGame } from '../data/memberPreferences'
 import type { DemoDataUpdater } from '../data/demoRepository'
 import type {
-  Community,
-  CommunityGame,
   CommunityMember,
+  DemoDataSet,
   DemoDataSummary as DemoDataSummaryValue,
 } from '../domain/types'
 
 type ProfilePageProps = {
   activeRole: DemoRole
-  community: Community
-  games: CommunityGame[]
+  data: DemoDataSet
   currentMember: CommunityMember
+  managerId: string
   dataSummary: DemoDataSummaryValue
   onRoleChange: (role: DemoRole) => void
   onDataChange: (updater: DemoDataUpdater) => void
@@ -30,9 +30,9 @@ type ProfilePageProps = {
 
 export function ProfilePage({
   activeRole,
-  community,
-  games,
+  data,
   currentMember,
+  managerId,
   dataSummary,
   onRoleChange,
   onDataChange,
@@ -78,7 +78,7 @@ export function ProfilePage({
         <div className="profile-summary__identity">
           <span>Perfil activo</span>
           <h2 id="profile-name">{currentMember.displayName}</h2>
-          <p>Miembro validado · {community.name}</p>
+          <p>Miembro validado · {data.community.name}</p>
         </div>
         <span className="current-role">
           <currentRole.icon aria-hidden="true" size={17} />
@@ -86,7 +86,15 @@ export function ProfilePage({
         </span>
       </section>
 
-      <DemoDataSummary community={community} summary={dataSummary} />
+      <DemoDataSummary community={data.community} summary={dataSummary} />
+
+      {activeRole === 'gerente' ? (
+        <CommunityOptionManager
+          data={data}
+          managerId={managerId}
+          onDataChange={onDataChange}
+        />
+      ) : null}
 
       <section className="game-preferences" aria-labelledby="favorite-games">
         <div className="section-heading">
@@ -102,7 +110,7 @@ export function ProfilePage({
         </p>
 
         <div className="favorite-game-options">
-          {games.map((game) => {
+          {data.games.map((game) => {
             const isFavorite = currentMember.favoriteGameIds.includes(game.id)
 
             return (
