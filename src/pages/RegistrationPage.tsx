@@ -154,7 +154,7 @@ export function RegistrationPage({
               <input
                 required
                 autoComplete="name"
-                placeholder="Ej. Pep Peralta Isern"
+                placeholder="Ej. Marina Valverde"
                 value={displayName}
                 onChange={(event) => setDisplayName(event.target.value)}
               />
