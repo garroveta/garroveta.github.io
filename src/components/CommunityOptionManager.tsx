@@ -427,6 +427,8 @@ export function CommunityOptionManager({
       <div className="community-options__list">
         {options.map((option, index) => {
           const isActive = isCommunityOptionActive(option)
+          const optionColor =
+            'color' in option ? option.color : 'var(--color-accent, #6d3d7d)'
           const usageCount = getCommunityOptionUsageCount(
             data,
             activeSection,
@@ -439,13 +441,11 @@ export function CommunityOptionManager({
               data-active={isActive}
               key={option.id}
             >
-              {'color' in option ? (
-                <span
-                  className="community-option-row__color"
-                  style={{ '--option-color': option.color } as CSSProperties}
-                  aria-hidden="true"
-                />
-              ) : null}
+              <span
+                className="community-option-row__color"
+                style={{ '--option-color': optionColor } as CSSProperties}
+                aria-hidden="true"
+              />
               <div className="community-option-row__identity">
                 <strong>{option.name}</strong>
                 <small>{getOptionDetails(data, activeSection, option)}</small>
