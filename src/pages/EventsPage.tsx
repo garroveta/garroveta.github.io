@@ -1506,55 +1506,98 @@ export function EventsPage({
               ) : null}
             </div>
 
-            <div className="event-filter-group">
-              <strong>Juego</strong>
-              <div
-                className="event-filter-chips"
-                aria-label="Filtrar por juego"
-              >
-                <button
-                  type="button"
-                  aria-pressed={!selectedGameId}
-                  onClick={() => setSelectedGameId(undefined)}
+            <div className="event-filter-select-grid">
+              <label>
+                <span>Juego</span>
+                <select
+                  aria-label="Filtrar por juego"
+                  value={selectedGameId ?? ''}
+                  onChange={(event) =>
+                    setSelectedGameId(event.currentTarget.value || undefined)
+                  }
                 >
-                  Todos
-                </button>
-                {data.games.map((game) => (
-                  <button
-                    type="button"
-                    key={game.id}
-                    aria-pressed={selectedGameId === game.id}
-                    onClick={() => setSelectedGameId(game.id)}
-                  >
-                    {game.shortName}
-                  </button>
-                ))}
-              </div>
+                  <option value="">Todos</option>
+                  {data.games.map((game) => (
+                    <option key={game.id} value={game.id}>
+                      {game.shortName}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                <span>Actividad</span>
+                <select
+                  aria-label="Filtrar por actividad"
+                  value={selectedType ?? ''}
+                  onChange={(event) =>
+                    setSelectedType(
+                      (event.currentTarget.value || undefined) as
+                        EventType | undefined,
+                    )
+                  }
+                >
+                  <option value="">Todas</option>
+                  {(Object.keys(eventTypeLabels) as EventType[]).map((type) => (
+                    <option key={type} value={type}>
+                      {eventTypeLabels[type]}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
 
-            <div className="event-filter-group">
-              <strong>Actividad</strong>
-              <div
-                className="event-filter-chips"
-                aria-label="Filtrar por actividad"
-              >
-                <button
-                  type="button"
-                  aria-pressed={!selectedType}
-                  onClick={() => setSelectedType(undefined)}
+            <div className="event-filter-chip-groups">
+              <div className="event-filter-group">
+                <strong>Juego</strong>
+                <div
+                  className="event-filter-chips"
+                  aria-label="Filtrar por juego"
                 >
-                  Todas
-                </button>
-                {(Object.keys(eventTypeLabels) as EventType[]).map((type) => (
                   <button
                     type="button"
-                    key={type}
-                    aria-pressed={selectedType === type}
-                    onClick={() => setSelectedType(type)}
+                    aria-pressed={!selectedGameId}
+                    onClick={() => setSelectedGameId(undefined)}
                   >
-                    {eventTypeLabels[type]}
+                    Todos
                   </button>
-                ))}
+                  {data.games.map((game) => (
+                    <button
+                      type="button"
+                      key={game.id}
+                      aria-pressed={selectedGameId === game.id}
+                      onClick={() => setSelectedGameId(game.id)}
+                    >
+                      {game.shortName}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="event-filter-group">
+                <strong>Actividad</strong>
+                <div
+                  className="event-filter-chips"
+                  aria-label="Filtrar por actividad"
+                >
+                  <button
+                    type="button"
+                    aria-pressed={!selectedType}
+                    onClick={() => setSelectedType(undefined)}
+                  >
+                    Todas
+                  </button>
+                  {(Object.keys(eventTypeLabels) as EventType[]).map((type) => (
+                    <button
+                      type="button"
+                      key={type}
+                      aria-pressed={selectedType === type}
+                      onClick={() => setSelectedType(type)}
+                    >
+                      {eventTypeLabels[type]}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </section>

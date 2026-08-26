@@ -307,6 +307,29 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
+  it('filters events with the compact mobile controls', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
+    fireEvent.change(
+      screen.getByRole('combobox', { name: 'Filtrar por juego' }),
+      {
+        target: { value: 'game-one-piece' },
+      },
+    )
+    fireEvent.change(
+      screen.getByRole('combobox', { name: 'Filtrar por actividad' }),
+      { target: { value: 'tournament' } },
+    )
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Store Championship One Piece',
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('1 programados')).toBeInTheDocument()
+  })
+
   it('saves the player favorite games from the profile', () => {
     render(<App />)
 
