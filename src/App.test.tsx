@@ -255,6 +255,32 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
+  it('switches between the illustrated agenda and compact event list', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
+
+    expect(
+      screen.getByRole('img', {
+        name: 'Cartel de Store Championship Dragon Ball',
+      }),
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Lista' }))
+
+    expect(
+      screen.getByRole('group', {
+        name: 'Próximos eventos en vista de lista',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', {
+        name: /Ver FNM Standard, 31 jul a las 18:00/i,
+      }),
+    ).toBeInTheDocument()
+    expect(window.localStorage.getItem('events:view-mode')).toBe('list')
+  })
+
   it('filters events by game and activity', () => {
     render(<App />)
 

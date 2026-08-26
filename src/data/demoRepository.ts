@@ -57,6 +57,22 @@ function isDemoDataSet(value: unknown): value is DemoDataSet {
   )
 }
 
+function applySeedEventImages(data: DemoDataSet): DemoDataSet {
+  const seedImagesByEventId = new Map(
+    demoData.events.flatMap((event) =>
+      event.imageUri ? [[event.id, event.imageUri] as const] : [],
+    ),
+  )
+
+  return {
+    ...data,
+    events: data.events.map((event) => ({
+      ...event,
+      imageUri: event.imageUri ?? seedImagesByEventId.get(event.id),
+    })),
+  }
+}
+
 function parseStoredData(rawValue: string): DemoDataSet | null {
   try {
     const envelope: unknown = JSON.parse(rawValue)
@@ -69,7 +85,7 @@ function parseStoredData(rawValue: string): DemoDataSet | null {
       return null
     }
 
-    return structuredClone(envelope.data)
+    return applySeedEventImages(structuredClone(envelope.data))
   } catch {
     return null
   }

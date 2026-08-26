@@ -10,6 +10,7 @@ import {
   MapPin,
   Plus,
   RotateCcw,
+  Rows3,
   Trash2,
   UserMinus,
   UsersRound,
@@ -70,11 +71,46 @@ const timeFormatter = new Intl.DateTimeFormat('es-ES', {
   timeZone: 'Europe/Madrid',
 })
 
+const compactDateFormatter = new Intl.DateTimeFormat('es-ES', {
+  day: '2-digit',
+  month: 'short',
+  timeZone: 'Europe/Madrid',
+})
+
+type EventViewMode = 'agenda' | 'list'
+
+const eventViewStorageKey = 'events:view-mode'
+
+function getInitialEventViewMode(): EventViewMode {
+  if (typeof window === 'undefined') {
+    return 'agenda'
+  }
+
+  try {
+    const storedView = window.localStorage.getItem(eventViewStorageKey)
+
+    if (storedView === 'agenda' || storedView === 'list') {
+      return storedView
+    }
+  } catch {
+    // A browser can disable local storage while still allowing the prototype.
+  }
+
+  return window.matchMedia?.('(min-width: 58rem)').matches ? 'list' : 'agenda'
+}
+
 const registrationLabels = {
   confirmed: 'Inscripción confirmada',
   waitlisted: 'En lista de espera',
   attended: 'Asistencia registrada',
   cancelled: 'Inscripción cancelada',
+}
+
+const compactRegistrationLabels = {
+  confirmed: 'Inscrito',
+  waitlisted: 'En espera',
+  attended: 'Asistió',
+  cancelled: '',
 }
 
 const eventTypeLabels = {
@@ -478,9 +514,25 @@ function EventListCard({
   onSelect: (eventId: string) => void
 }) {
   const startsAt = new Date(item.event.startsAt)
+  const hasImage = Boolean(item.event.imageUri)
 
   return (
-    <article className="agenda-card">
+    <article
+      className={`agenda-card${hasImage ? ' agenda-card--with-image' : ''}`}
+    >
+      {item.event.imageUri ? (
+        <button
+          className="agenda-card__poster"
+          type="button"
+          aria-label={`Ver el cartel de ${item.event.title}`}
+          onClick={() => onSelect(item.event.id)}
+        >
+          <img
+            src={item.event.imageUri}
+            alt={`Cartel de ${item.event.title}`}
+          />
+        </button>
+      ) : null}
       <div className="agenda-card__body">
         <div className="agenda-card__topline">
           <EventTags item={item} />
@@ -545,6 +597,122 @@ function EventDay({
         ))}
       </div>
     </section>
+  )
+}
+
+function compactDateParts(date: Date) {
+  const parts = compactDateFormatter.formatToParts(date)
+
+  return {
+    day: parts.find(({ type }) => type === 'day')?.value ?? '',
+    month: (parts.find(({ type }) => type === 'month')?.value ?? '')
+      .replace('.', '')
+      .toUpperCase(),
+  }
+}
+
+function eventContextLabel(item: EventListItem) {
+  return [
+    ...new Set([
+      item.game?.shortName,
+      eventTypeLabels[item.event.type],
+      ...item.tags.map(({ name }) => name),
+    ]),
+  ]
+    .filter(Boolean)
+    .join(' · ')
+}
+
+function compactEventStatus(item: EventListItem) {
+  if (item.event.status === 'completed') {
+    return 'Finalizado'
+  }
+
+  if (item.event.registrationEnabled && item.registration) {
+    return compactRegistrationLabels[item.registration.status]
+  }
+
+  if (!item.event.registrationEnabled) {
+    return '—'
+  }
+
+  return item.event.registrationSummary.confirmed >= item.event.capacity
+    ? 'Completo'
+    : 'Disponible'
+}
+
+function CompactEventList({
+  items,
+  label,
+  onSelect,
+}: {
+  items: EventListItem[]
+  label: string
+  onSelect: (eventId: string) => void
+}) {
+  return (
+    <div className="event-compact-table" aria-label={label} role="group">
+      <div className="event-compact-table__header" aria-hidden="true">
+        <span>Fecha</span>
+        <span>Hora</span>
+        <span>Evento</span>
+        <span>Juego / formato</span>
+        <span>Plazas</span>
+        <span>Estado</span>
+        <span aria-hidden="true" />
+      </div>
+      <div className="event-compact-table__body">
+        {items.map((item) => {
+          const startsAt = new Date(item.event.startsAt)
+          const dateParts = compactDateParts(startsAt)
+          const capacity = item.event.registrationEnabled
+            ? `${item.event.registrationSummary.confirmed}/${item.event.capacity}`
+            : '—'
+          const status = compactEventStatus(item)
+
+          return (
+            <button
+              className="event-compact-row"
+              type="button"
+              aria-label={`Ver ${item.event.title}, ${compactDateFormatter.format(startsAt)} a las ${timeFormatter.format(startsAt)}`}
+              key={item.event.id}
+              onClick={() => onSelect(item.event.id)}
+            >
+              <span className="event-compact-row__date">
+                <strong>{dateParts.day}</strong>
+                <small>{dateParts.month}</small>
+              </span>
+              <span className="event-compact-row__time">
+                {timeFormatter.format(startsAt)}
+              </span>
+              <span className="event-compact-row__title">
+                {item.event.title}
+              </span>
+              <span className="event-compact-row__context">
+                {eventContextLabel(item)}
+              </span>
+              <span className="event-compact-row__capacity">{capacity}</span>
+              <span
+                className="event-compact-row__status"
+                data-status={status === '—' ? 'none' : status.toLowerCase()}
+              >
+                {item.event.registrationEnabled ? (
+                  <small className="event-compact-row__mobile-capacity">
+                    {capacity}
+                  </small>
+                ) : null}
+                {status}
+              </span>
+              <ChevronRight
+                className="event-compact-row__arrow"
+                aria-hidden="true"
+                size={17}
+              />
+            </button>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
@@ -1050,6 +1218,9 @@ export function EventsPage({
   const [selectedEventId, setSelectedEventId] = useState<string>()
   const [selectedGameId, setSelectedGameId] = useState<string>()
   const [selectedType, setSelectedType] = useState<EventType>()
+  const [eventViewMode, setEventViewMode] = useState<EventViewMode>(
+    getInitialEventViewMode,
+  )
   const [isComposerOpen, setIsComposerOpen] = useState(false)
   const [editingEventId, setEditingEventId] = useState<string>()
   const [managedParticipantEventId, setManagedParticipantEventId] =
@@ -1083,6 +1254,14 @@ export function EventsPage({
     ...completeAgenda.upcoming,
     ...completeAgenda.past.slice(0, 8),
   ]
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(eventViewStorageKey, eventViewMode)
+    } catch {
+      // The selected view remains available for the current session.
+    }
+  }, [eventViewMode])
 
   useEffect(() => {
     if (!managedParticipantEventId || !participantPanelRef.current) {
@@ -1386,10 +1565,40 @@ export function EventsPage({
                 <span>Agenda</span>
                 <h2 id="upcoming-events">Próximos eventos</h2>
               </div>
-              <p>{agenda.upcoming.length} programados</p>
+              <div className="agenda-section__actions">
+                <p>{agenda.upcoming.length} programados</p>
+                <div
+                  className="event-view-toggle"
+                  role="group"
+                  aria-label="Vista de eventos"
+                >
+                  <button
+                    type="button"
+                    aria-pressed={eventViewMode === 'agenda'}
+                    onClick={() => setEventViewMode('agenda')}
+                  >
+                    <CalendarDays aria-hidden="true" size={16} />
+                    Agenda
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={eventViewMode === 'list'}
+                    onClick={() => setEventViewMode('list')}
+                  >
+                    <Rows3 aria-hidden="true" size={16} />
+                    Lista
+                  </button>
+                </div>
+              </div>
             </div>
 
-            {upcomingDays.length > 0 ? (
+            {agenda.upcoming.length > 0 && eventViewMode === 'list' ? (
+              <CompactEventList
+                items={agenda.upcoming}
+                label="Próximos eventos en vista de lista"
+                onSelect={setSelectedEventId}
+              />
+            ) : upcomingDays.length > 0 ? (
               <div className="agenda-list">
                 {upcomingDays.map((group) => (
                   <EventDay
@@ -1414,7 +1623,13 @@ export function EventsPage({
               </div>
             </div>
 
-            {pastDays.length > 0 ? (
+            {agenda.past.length > 0 && eventViewMode === 'list' ? (
+              <CompactEventList
+                items={agenda.past}
+                label="Eventos pasados en vista de lista"
+                onSelect={setSelectedEventId}
+              />
+            ) : pastDays.length > 0 ? (
               <div className="agenda-list agenda-list--past">
                 {pastDays.map((group) => (
                   <EventDay

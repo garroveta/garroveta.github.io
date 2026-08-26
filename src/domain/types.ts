@@ -101,6 +101,7 @@ export type CommunityEvent = {
   type: EventType
   title: string
   description: string
+  imageUri?: string
   startsAt: ISODateTime
   endsAt: ISODateTime
   registrationEnabled?: boolean

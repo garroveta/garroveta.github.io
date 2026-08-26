@@ -28,6 +28,27 @@ describe('local demo repository', () => {
     expect(repository.load().community.memberCount).toBe(151)
   })
 
+  it('adds new seed event posters without discarding locally saved data', () => {
+    const repository = createLocalDemoRepository(window.localStorage)
+    const previouslySavedData = structuredClone(demoData)
+    const illustratedEvent = previouslySavedData.events.find(
+      ({ id }) => id === 'event-dragon-ball-store-championship',
+    )
+
+    delete illustratedEvent?.imageUri
+    previouslySavedData.community.memberCount = 151
+    repository.save(previouslySavedData)
+
+    const restoredData = repository.load()
+
+    expect(restoredData.community.memberCount).toBe(151)
+    expect(
+      restoredData.events.find(
+        ({ id }) => id === 'event-dragon-ball-store-championship',
+      )?.imageUri,
+    ).toBe('/event-posters/crc-weekly-2026-07-27.jpeg')
+  })
+
   it('falls back to seed data when storage is corrupted', () => {
     window.localStorage.setItem(DEMO_STORAGE_KEY, '{not-valid-json')
 

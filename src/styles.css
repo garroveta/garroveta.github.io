@@ -1153,6 +1153,62 @@ a {
   margin-top: 2rem;
 }
 
+.agenda-section > .section-heading {
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.agenda-section__actions {
+  display: grid;
+  width: 100%;
+  grid-template-columns: auto minmax(10.5rem, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.agenda-section__actions > p {
+  margin: 0;
+  color: #8f8790;
+  font-size: 0.8rem;
+}
+
+.event-view-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.2rem;
+  padding: 0.24rem;
+  border: 1px solid #e0d9e2;
+  border-radius: 0.85rem;
+  background: #f3eff3;
+}
+
+.event-view-toggle button {
+  display: inline-flex;
+  min-height: 2.35rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0 0.65rem;
+  border: 0;
+  border-radius: 0.65rem;
+  color: #7e7480;
+  background: transparent;
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.event-view-toggle button[aria-pressed='true'] {
+  color: #5b2b77;
+  background: #fff;
+  box-shadow: 0 0.35rem 0.9rem rgb(63 47 66 / 9%);
+}
+
+.event-view-toggle button:focus-visible {
+  outline: 3px solid rgb(124 86 137 / 35%);
+  outline-offset: 2px;
+}
+
 .event-filter-panel {
   margin-top: 1.5rem;
   padding: 1rem;
@@ -1857,6 +1913,36 @@ a {
   box-shadow: 0 0.6rem 1.6rem rgb(51 43 55 / 5%);
 }
 
+.agenda-card--with-image {
+  display: grid;
+  grid-template-columns: 5.25rem minmax(0, 1fr);
+  align-items: stretch;
+  gap: 0.85rem;
+  padding: 0.65rem;
+}
+
+.agenda-card__poster {
+  min-height: 9rem;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0.8rem;
+  background: #eee8ef;
+  cursor: pointer;
+}
+
+.agenda-card__poster img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.agenda-card__poster:focus-visible {
+  outline: 3px solid rgb(124 86 137 / 45%);
+  outline-offset: 2px;
+}
+
 .agenda-card__body {
   min-width: 0;
 }
@@ -1958,6 +2044,141 @@ a {
 
 .agenda-list--past {
   opacity: 0.8;
+}
+
+.event-compact-table {
+  overflow: hidden;
+  border: 1px solid #e3dde5;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 0.6rem 1.6rem rgb(51 43 55 / 5%);
+}
+
+.event-compact-table__header {
+  display: none;
+}
+
+.event-compact-table__body {
+  display: grid;
+}
+
+.event-compact-row {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: 3rem minmax(0, 1fr) auto 1rem;
+  grid-template-areas:
+    'date title time arrow'
+    'date context status arrow';
+  align-items: center;
+  gap: 0.22rem 0.65rem;
+  padding: 0.62rem;
+  border: 0;
+  border-bottom: 1px solid #eee9ef;
+  color: #2b2630;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.event-compact-row:last-child {
+  border-bottom: 0;
+}
+
+.event-compact-row:hover {
+  background: #fbf9fc;
+}
+
+.event-compact-row:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 3px solid rgb(124 86 137 / 40%);
+  outline-offset: -3px;
+}
+
+.event-compact-row__date {
+  display: grid;
+  width: 2.85rem;
+  height: 3rem;
+  grid-area: date;
+  place-content: center;
+  justify-items: center;
+  border-radius: 0.7rem;
+  color: #653477;
+  background: #f1eaf4;
+  line-height: 1;
+}
+
+.event-compact-row__date strong {
+  font-size: 1rem;
+}
+
+.event-compact-row__date small {
+  margin-top: 0.2rem;
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+.event-compact-row__time {
+  grid-area: time;
+  justify-self: end;
+  font-size: 0.75rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.event-compact-row__title {
+  min-width: 0;
+  overflow: hidden;
+  grid-area: title;
+  font-size: 0.82rem;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-compact-row__context {
+  min-width: 0;
+  overflow: hidden;
+  grid-area: context;
+  color: #817984;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-compact-row__capacity {
+  display: none;
+  grid-area: capacity;
+}
+
+.event-compact-row__status {
+  display: inline-flex;
+  min-width: 0;
+  grid-area: status;
+  align-items: center;
+  justify-self: end;
+  gap: 0.28rem;
+  color: #654075;
+  font-size: 0.65rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.event-compact-row__status[data-status='none'] {
+  color: #a098a2;
+}
+
+.event-compact-row__mobile-capacity {
+  color: #89808b;
+  font-size: 0.62rem;
+}
+
+.event-compact-row__arrow {
+  grid-area: arrow;
+  color: #653477;
 }
 
 .back-button {
@@ -6919,6 +7140,22 @@ a {
     padding-left: 2rem;
   }
 
+  .agenda-section > .section-heading {
+    flex-wrap: nowrap;
+    align-items: end;
+  }
+
+  .agenda-section__actions {
+    display: flex;
+    width: auto;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .agenda-card--with-image {
+    grid-template-columns: 6.25rem minmax(0, 1fr);
+  }
+
   .participant-row__actions .participant-row__icon-action {
     width: auto;
     padding: 0 0.65rem;
@@ -7228,6 +7465,76 @@ a {
     grid-column: 2;
     grid-row: 2;
     padding: 2.5rem 2.5rem 3rem;
+  }
+
+  .event-compact-table__header,
+  .event-compact-row {
+    display: grid;
+    grid-template-columns:
+      5rem 4.2rem minmax(10rem, 1.35fr) minmax(8.5rem, 0.9fr) 4rem
+      6.5rem 1rem;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .event-compact-table__header {
+    padding: 0.7rem 0.8rem;
+    color: #867c89;
+    background: #f6f2f7;
+    font-size: 0.64rem;
+    font-weight: 850;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .event-compact-row {
+    grid-template-areas: none;
+    padding: 0.7rem 0.8rem;
+  }
+
+  .event-compact-row__date,
+  .event-compact-row__time,
+  .event-compact-row__title,
+  .event-compact-row__context,
+  .event-compact-row__capacity,
+  .event-compact-row__status,
+  .event-compact-row__arrow {
+    grid-area: auto;
+  }
+
+  .event-compact-row__date {
+    display: flex;
+    width: auto;
+    height: auto;
+    justify-content: flex-start;
+    gap: 0.28rem;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .event-compact-row__date strong {
+    font-size: 0.78rem;
+  }
+
+  .event-compact-row__date small {
+    margin: 0;
+    font-size: 0.63rem;
+  }
+
+  .event-compact-row__capacity {
+    display: block;
+    color: #625a65;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-align: center;
+  }
+
+  .event-compact-row__status {
+    justify-self: start;
+  }
+
+  .event-compact-row__mobile-capacity {
+    display: none;
   }
 
   .event-standing-table {

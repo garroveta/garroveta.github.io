@@ -819,6 +819,7 @@ export const demoData = {
       type: 'tournament',
       title: 'Store Championship Dragon Ball',
       description: 'Campeonato de tienda de Dragon Ball Super Card Game.',
+      imageUri: '/event-posters/crc-weekly-2026-07-27.jpeg',
       startsAt: '2026-07-29T17:30:00+02:00',
       endsAt: '2026-07-29T21:30:00+02:00',
       capacity: 24,
