@@ -350,6 +350,11 @@ describe('App', () => {
   })
 
   it('lets a manager maintain configurable community options', () => {
+    const scrollIntoView = vi.fn()
+    Object.defineProperty(Element.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    })
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -393,6 +398,10 @@ describe('App', () => {
         name: 'Modificar Regional Qualifier',
       }),
     )
+    expect(scrollIntoView).toHaveBeenLastCalledWith({
+      behavior: 'smooth',
+      block: 'start',
+    })
     fireEvent.change(screen.getByLabelText('Nombre'), {
       target: { value: 'Regional Championship Qualifier' },
     })

@@ -9,7 +9,7 @@ import {
   X,
 } from 'lucide-react'
 import type { CSSProperties, FormEvent } from 'react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import {
   addCommunityOption,
@@ -341,9 +341,21 @@ export function CommunityOptionManager({
   const [editingOptionId, setEditingOptionId] = useState<string>()
   const [isAdding, setIsAdding] = useState(false)
   const [pendingDeleteId, setPendingDeleteId] = useState<string>()
+  const editorRef = useRef<HTMLDivElement>(null)
   const options = getOptions(data, activeSection)
   const editingOption = options.find(({ id }) => id === editingOptionId)
   const labels = sectionLabels[activeSection]
+
+  useEffect(() => {
+    if (!isAdding && !editingOptionId) {
+      return
+    }
+
+    editorRef.current?.scrollIntoView?.({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  }, [editingOptionId, isAdding])
 
   function closeEditor() {
     setEditingOptionId(undefined)
@@ -413,15 +425,17 @@ export function CommunityOptionManager({
       </div>
 
       {isAdding || editingOption ? (
-        <OptionEditor
-          data={data}
-          initialValues={getFormValues(activeSection, editingOption)}
-          isEditing={Boolean(editingOption)}
-          key={`${activeSection}-${editingOption?.id ?? 'new'}`}
-          section={activeSection}
-          onCancel={closeEditor}
-          onSubmit={saveOption}
-        />
+        <div className="community-option-editor-anchor" ref={editorRef}>
+          <OptionEditor
+            data={data}
+            initialValues={getFormValues(activeSection, editingOption)}
+            isEditing={Boolean(editingOption)}
+            key={`${activeSection}-${editingOption?.id ?? 'new'}`}
+            section={activeSection}
+            onCancel={closeEditor}
+            onSubmit={saveOption}
+          />
+        </div>
       ) : null}
 
       <div className="community-options__list">

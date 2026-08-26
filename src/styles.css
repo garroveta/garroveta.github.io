@@ -1309,6 +1309,10 @@ a {
   outline-offset: 2px;
 }
 
+.community-option-editor-anchor {
+  scroll-margin-top: 5.5rem;
+}
+
 .community-option-form {
   display: grid;
   gap: 0.85rem;
