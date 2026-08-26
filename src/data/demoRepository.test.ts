@@ -28,6 +28,25 @@ describe('local demo repository', () => {
     expect(repository.load().community.memberCount).toBe(151)
   })
 
+  it('adds ranking settings to version 21 without losing local data', () => {
+    const legacyData = structuredClone(demoData) as Partial<DemoDataSet>
+    legacyData.community!.memberCount = 151
+    delete legacyData.rankingSettings
+    window.localStorage.setItem(
+      DEMO_STORAGE_KEY,
+      JSON.stringify({
+        version: 21,
+        savedAt: '2026-08-26T12:00:00+02:00',
+        data: legacyData,
+      }),
+    )
+
+    const loadedData = createLocalDemoRepository(window.localStorage).load()
+
+    expect(loadedData.community.memberCount).toBe(151)
+    expect(loadedData.rankingSettings).toEqual(demoData.rankingSettings)
+  })
+
   it('adds new seed event posters without discarding locally saved data', () => {
     const repository = createLocalDemoRepository(window.localStorage)
     const previouslySavedData = structuredClone(demoData)

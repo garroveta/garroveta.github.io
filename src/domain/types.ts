@@ -64,6 +64,20 @@ export type CompetitionEventKind = {
   isActive?: boolean
 }
 
+export type CommunityRankingSettings = {
+  points: {
+    first: number
+    second: number
+    third: number
+    fourth: number
+    fifth: number
+    sixthToTenth: number
+    participation: number
+  }
+  defaultPeriodMonths: 3 | 6 | 12
+  defaultLimit: 10 | 'all'
+}
+
 export type CommunityRole = 'player' | 'manager' | 'moderator'
 
 export type ContactMethod = {
@@ -264,6 +278,7 @@ export type DemoDataSet = {
   games: CommunityGame[]
   competitionFormats: CompetitionFormat[]
   competitionEventKinds: CompetitionEventKind[]
+  rankingSettings: CommunityRankingSettings
   tags: CommunityTag[]
   members: CommunityMember[]
   events: CommunityEvent[]

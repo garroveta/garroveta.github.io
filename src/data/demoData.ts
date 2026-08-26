@@ -519,6 +519,19 @@ export const demoData = {
       shortName: 'Win a Box',
     },
   ],
+  rankingSettings: {
+    points: {
+      first: 10,
+      second: 8,
+      third: 6,
+      fourth: 5,
+      fifth: 4,
+      sixthToTenth: 3,
+      participation: 1,
+    },
+    defaultPeriodMonths: 6,
+    defaultLimit: 10,
+  },
   tags: [
     {
       id: 'tag-commander',

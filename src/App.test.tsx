@@ -226,6 +226,42 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
+  it('lets the manager configure the community ranking barometer', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
+    fireEvent.click(screen.getByRole('link', { name: 'Ranking' }))
+    fireEvent.click(screen.getByText('Configuración del ranking'))
+
+    fireEvent.change(screen.getByLabelText('Puntos para 1.º'), {
+      target: { value: '12' },
+    })
+    fireEvent.change(screen.getByLabelText('Periodo por defecto'), {
+      target: { value: '12' },
+    })
+    fireEvent.change(screen.getByLabelText('Jugadores mostrados'), {
+      target: { value: 'all' },
+    })
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Guardar configuración' }),
+    )
+
+    expect(screen.getByText('Configuración guardada.')).toBeInTheDocument()
+    expect(
+      createLocalDemoRepository(window.localStorage).load().rankingSettings,
+    ).toMatchObject({
+      points: { first: 12 },
+      defaultPeriodMonths: 12,
+      defaultLimit: 'all',
+    })
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Últimos eventos' }))
+    expect(
+      screen.getAllByLabelText('Más 12 puntos comunidad'),
+    ).not.toHaveLength(0)
+  })
+
   it('opens an event detail and returns to the agenda', () => {
     render(<App />)
 

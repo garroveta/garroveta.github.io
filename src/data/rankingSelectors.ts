@@ -7,25 +7,11 @@ import type {
   DemoDataSet,
   EventStanding,
 } from '../domain/types'
+import { getCommunityPoints } from './rankingSettings'
+
+export { getCommunityPoints } from './rankingSettings'
 
 export const RANKING_REFERENCE_TIME = '2026-08-06T12:00:00+02:00'
-
-export const communityPointsByRank = [
-  { minRank: 1, maxRank: 1, points: 10 },
-  { minRank: 2, maxRank: 2, points: 8 },
-  { minRank: 3, maxRank: 3, points: 6 },
-  { minRank: 4, maxRank: 4, points: 5 },
-  { minRank: 5, maxRank: 5, points: 4 },
-  { minRank: 6, maxRank: 10, points: 3 },
-] as const
-
-export function getCommunityPoints(rank: number) {
-  return (
-    communityPointsByRank.find(
-      ({ minRank, maxRank }) => rank >= minRank && rank <= maxRank,
-    )?.points ?? 1
-  )
-}
 
 export type ResolvedEventStanding = {
   standing: EventStanding
@@ -144,7 +130,8 @@ export function getCommunityLeaderboard(
       }
 
       totals.set(entry.memberId, {
-        points: current.points + getCommunityPoints(entry.rank),
+        points:
+          current.points + getCommunityPoints(entry.rank, data.rankingSettings),
         eventsPlayed: current.eventsPlayed + 1,
         eventWins: current.eventWins + Number(entry.rank === 1),
         podiums: current.podiums + Number(entry.rank <= 3),

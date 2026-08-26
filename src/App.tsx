@@ -87,7 +87,10 @@ export function App() {
           />
         ) : activeRoute === 'ranking' ? (
           <RankingsPage
+            activeRole={activeRole}
             data={data}
+            managerId={publishingMember.id}
+            onDataChange={updateData}
             initialStandingId={rankingRouteParams.get('standing') ?? undefined}
             initialView={
               rankingRouteParams.get('view') === 'events' ? 'events' : undefined

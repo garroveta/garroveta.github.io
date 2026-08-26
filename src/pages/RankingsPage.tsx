@@ -4,25 +4,46 @@ import {
   ChevronRight,
   ListOrdered,
   Medal,
+  Save,
+  Settings2,
   Trophy,
   UserRound,
   UsersRound,
 } from 'lucide-react'
-import { useMemo, useRef, useState, type RefObject } from 'react'
+import {
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type RefObject,
+} from 'react'
 
+import type { DemoRole } from '../app/demoRoles'
+import type { DemoDataUpdater } from '../data/demoRepository'
 import {
   getCommunityLeaderboard,
-  getCommunityPoints,
   getLatestEventStandings,
   type RankingFilters,
   type ResolvedEventStanding,
 } from '../data/rankingSelectors'
-import type { DemoDataSet, EventStandingEntry } from '../domain/types'
+import {
+  getCommunityPoints,
+  isCommunityRankingSettingsValid,
+  updateCommunityRankingSettings,
+} from '../data/rankingSettings'
+import type {
+  CommunityRankingSettings,
+  DemoDataSet,
+  EventStandingEntry,
+} from '../domain/types'
 
 type RankingView = 'community' | 'events'
 
 type RankingsPageProps = {
+  activeRole: DemoRole
   data: DemoDataSet
+  managerId: string
+  onDataChange: (updater: DemoDataUpdater) => void
   initialView?: RankingView
   initialStandingId?: string
 }
@@ -75,9 +96,11 @@ function EventRankingCard({
 function MobileEventStandingList({
   entries,
   eventTitle,
+  rankingSettings,
 }: {
   entries: EventStandingEntry[]
   eventTitle: string
+  rankingSettings: CommunityRankingSettings
 }) {
   const [expandedEntries, setExpandedEntries] = useState<Set<number>>(
     () => new Set(),
@@ -147,9 +170,11 @@ function MobileEventStandingList({
                 {entry.memberId ? (
                   <span
                     className="mobile-standing-point mobile-standing-point--community"
-                    aria-label={`Más ${getCommunityPoints(entry.rank)} puntos comunidad`}
+                    aria-label={`Más ${getCommunityPoints(entry.rank, rankingSettings)} puntos comunidad`}
                   >
-                    <strong>+{getCommunityPoints(entry.rank)}</strong>
+                    <strong>
+                      +{getCommunityPoints(entry.rank, rankingSettings)}
+                    </strong>
                   </span>
                 ) : (
                   <span
@@ -227,9 +252,11 @@ function MobileEventStandingList({
 
 function EventRankingDetail({
   item,
+  rankingSettings,
   sectionRef,
 }: {
   item: ResolvedEventStanding
+  rankingSettings: CommunityRankingSettings
   sectionRef: RefObject<HTMLElement | null>
 }) {
   return (
@@ -264,6 +291,7 @@ function EventRankingDetail({
         key={item.standing.id}
         entries={item.standing.entries}
         eventTitle={item.event.title}
+        rankingSettings={rankingSettings}
       />
 
       <div className="ranking-table-wrap event-standing-desktop">
@@ -346,7 +374,7 @@ function EventRankingDetail({
                 <td>
                   {entry.memberId ? (
                     <strong className="community-points-value">
-                      +{getCommunityPoints(entry.rank)}
+                      +{getCommunityPoints(entry.rank, rankingSettings)}
                     </strong>
                   ) : (
                     <strong
@@ -371,12 +399,147 @@ function EventRankingDetail({
   )
 }
 
+function RankingSettingsPanel({
+  data,
+  managerId,
+  onDataChange,
+}: {
+  data: DemoDataSet
+  managerId: string
+  onDataChange: (updater: DemoDataUpdater) => void
+}) {
+  const [settings, setSettings] = useState(data.rankingSettings)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'invalid'>(
+    'idle',
+  )
+  const pointFields = [
+    ['first', '1.º'],
+    ['second', '2.º'],
+    ['third', '3.º'],
+    ['fourth', '4.º'],
+    ['fifth', '5.º'],
+    ['sixthToTenth', '6.º–10.º'],
+    ['participation', 'Participación'],
+  ] as const
+
+  function saveSettings(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (!isCommunityRankingSettingsValid(settings)) {
+      setSaveStatus('invalid')
+      return
+    }
+
+    onDataChange((currentData) =>
+      updateCommunityRankingSettings(currentData, managerId, settings),
+    )
+    setSaveStatus('saved')
+  }
+
+  return (
+    <details className="ranking-settings-panel">
+      <summary>
+        <span>
+          <Settings2 aria-hidden="true" size={18} />
+          Configuración del ranking
+        </span>
+        <small>Barómetro y valores por defecto</small>
+      </summary>
+      <form onSubmit={saveSettings}>
+        <fieldset>
+          <legend>Puntos comunitarios por posición</legend>
+          <div className="ranking-settings-points">
+            {pointFields.map(([field, label]) => (
+              <label className="form-field" key={field}>
+                <span>{label}</span>
+                <input
+                  aria-label={`Puntos para ${label}`}
+                  type="number"
+                  min="0"
+                  max="100"
+                  required
+                  value={settings.points[field]}
+                  onChange={(event) => {
+                    setSaveStatus('idle')
+                    setSettings((current) => ({
+                      ...current,
+                      points: {
+                        ...current.points,
+                        [field]: Number(event.target.value),
+                      },
+                    }))
+                  }}
+                />
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        <div className="ranking-settings-defaults">
+          <label className="form-field">
+            <span>Periodo por defecto</span>
+            <select
+              value={settings.defaultPeriodMonths}
+              onChange={(event) => {
+                setSaveStatus('idle')
+                setSettings((current) => ({
+                  ...current,
+                  defaultPeriodMonths: Number(event.target.value) as 3 | 6 | 12,
+                }))
+              }}
+            >
+              <option value="3">3 meses</option>
+              <option value="6">6 meses</option>
+              <option value="12">12 meses</option>
+            </select>
+          </label>
+          <label className="form-field">
+            <span>Jugadores mostrados</span>
+            <select
+              value={settings.defaultLimit}
+              onChange={(event) => {
+                setSaveStatus('idle')
+                setSettings((current) => ({
+                  ...current,
+                  defaultLimit:
+                    event.target.value === 'all' ? 'all' : (10 as const),
+                }))
+              }}
+            >
+              <option value="10">Top 10</option>
+              <option value="all">Todos</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="ranking-settings-actions">
+          <span aria-live="polite">
+            {saveStatus === 'saved'
+              ? 'Configuración guardada.'
+              : saveStatus === 'invalid'
+                ? 'Los puntos deben disminuir según la posición.'
+                : ''}
+          </span>
+          <button className="primary-button" type="submit">
+            <Save aria-hidden="true" size={16} />
+            Guardar configuración
+          </button>
+        </div>
+      </form>
+    </details>
+  )
+}
+
 function CommunityRanking({ data }: { data: DemoDataSet }) {
   const [gameId, setGameId] = useState('game-mtg')
   const [formatId, setFormatId] = useState('')
   const [eventKindId, setEventKindId] = useState('')
-  const [months, setMonths] = useState<RankingFilters['months']>(6)
-  const [limit, setLimit] = useState<10 | 'all'>(10)
+  const [months, setMonths] = useState<RankingFilters['months']>(
+    data.rankingSettings.defaultPeriodMonths,
+  )
+  const [limit, setLimit] = useState<10 | 'all'>(
+    data.rankingSettings.defaultLimit,
+  )
   const games = data.games.filter(
     ({ category }) => category !== 'role_playing_game',
   )
@@ -679,7 +842,10 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
 }
 
 export function RankingsPage({
+  activeRole,
   data,
+  managerId,
+  onDataChange,
   initialView = 'community',
   initialStandingId,
 }: RankingsPageProps) {
@@ -729,6 +895,14 @@ export function RankingsPage({
         </button>
       </div>
 
+      {activeRole === 'gerente' && activeView === 'community' ? (
+        <RankingSettingsPanel
+          data={data}
+          managerId={managerId}
+          onDataChange={onDataChange}
+        />
+      ) : null}
+
       {activeView === 'community' ? (
         <CommunityRanking data={data} />
       ) : (
@@ -736,6 +910,7 @@ export function RankingsPage({
           {selectedStanding ? (
             <EventRankingDetail
               item={selectedStanding}
+              rankingSettings={data.rankingSettings}
               sectionRef={rankingDetailRef}
             />
           ) : null}
@@ -778,8 +953,13 @@ export function RankingsPage({
           <strong>Un barómetro simple para empezar</strong>
           <p>
             Los puntos oficiales siguen visibles en cada evento. Garroveta
-            atribuye por separado entre 10 puntos al primer puesto y 1 punto de
-            participación para construir esta clasificación comunitaria.
+            atribuye por separado entre {data.rankingSettings.points.first}{' '}
+            puntos al primer puesto y{' '}
+            {data.rankingSettings.points.participation}{' '}
+            {data.rankingSettings.points.participation === 1
+              ? 'punto'
+              : 'puntos'}{' '}
+            de participación para construir esta clasificación comunitaria.
           </p>
         </div>
       </aside>
