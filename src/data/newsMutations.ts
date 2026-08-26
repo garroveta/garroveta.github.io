@@ -1,4 +1,5 @@
 import type { DemoDataSet, NewsPostType } from '../domain/types'
+import { isCommunityOptionActive } from './communityOptions'
 import { DEMO_REFERENCE_TIME } from './dashboardSelectors'
 
 export type NewsPostInput = {
@@ -48,7 +49,9 @@ export function publishNewsPost(
     return data
   }
 
-  const validTagIds = new Set(data.tags.map(({ id }) => id))
+  const validTagIds = new Set(
+    data.tags.filter(isCommunityOptionActive).map(({ id }) => id),
+  )
   const tagIds = [...new Set(input.tagIds)].filter((tagId) =>
     validTagIds.has(tagId),
   )

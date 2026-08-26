@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import type { DemoDataSet } from '../domain/types'
 import { demoData } from './demoData'
 import { toggleFavoriteGame } from './memberPreferences'
 
@@ -35,5 +36,14 @@ describe('member game preferences', () => {
     expect(toggleFavoriteGame(demoData, 'unknown-member', 'game-mtg')).toBe(
       demoData,
     )
+  })
+
+  it('does not add a deactivated favorite game', () => {
+    const data: DemoDataSet = structuredClone(demoData)
+    data.games.find(({ id }) => id === 'game-gundam')!.isActive = false
+
+    expect(
+      toggleFavoriteGame(data, demoData.currentMemberId, 'game-gundam'),
+    ).toBe(data)
   })
 })

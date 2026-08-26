@@ -1,4 +1,5 @@
 import type { DemoDataSet, EventRegistration, EventType } from '../domain/types'
+import { isCommunityOptionActive } from './communityOptions'
 import { DEMO_REFERENCE_TIME } from './dashboardSelectors'
 
 export type CommunityEventInput = {
@@ -69,9 +70,12 @@ export function publishCommunityEvent(
     !creator ||
     creator.role !== 'manager' ||
     !game ||
+    !isCommunityOptionActive(game) ||
     (Boolean(input.formatId) && !format) ||
+    (Boolean(format) && !isCommunityOptionActive(format!)) ||
     (Boolean(format) && format?.gameId !== game.id) ||
     (Boolean(input.competitionEventKindId) && !eventKind) ||
+    (Boolean(eventKind) && !isCommunityOptionActive(eventKind!)) ||
     (game.id === 'game-mtg' && (format?.gameId !== game.id || !eventKind)) ||
     !title ||
     !description ||
@@ -83,7 +87,9 @@ export function publishCommunityEvent(
     return data
   }
 
-  const validTagIds = new Set(data.tags.map(({ id }) => id))
+  const validTagIds = new Set(
+    data.tags.filter(isCommunityOptionActive).map(({ id }) => id),
+  )
   const tagIds = [...new Set(input.tagIds)].filter((tagId) =>
     validTagIds.has(tagId),
   )
@@ -149,9 +155,16 @@ export function updateCommunityEvent(
     !manager ||
     !event ||
     !game ||
+    (!isCommunityOptionActive(game) && game.id !== event.gameId) ||
     (Boolean(input.formatId) && !format) ||
+    (Boolean(format) &&
+      !isCommunityOptionActive(format!) &&
+      format?.id !== event.formatId) ||
     (Boolean(format) && format?.gameId !== game.id) ||
     (Boolean(input.competitionEventKindId) && !eventKind) ||
+    (Boolean(eventKind) &&
+      !isCommunityOptionActive(eventKind!) &&
+      eventKind?.id !== event.competitionEventKindId) ||
     (game.id === 'game-mtg' && (format?.gameId !== game.id || !eventKind)) ||
     !title ||
     !description ||
@@ -163,7 +176,13 @@ export function updateCommunityEvent(
     return data
   }
 
-  const validTagIds = new Set(data.tags.map(({ id }) => id))
+  const validTagIds = new Set(
+    data.tags
+      .filter(
+        (tag) => isCommunityOptionActive(tag) || event.tagIds.includes(tag.id),
+      )
+      .map(({ id }) => id),
+  )
   const tagIds = [...new Set(input.tagIds)].filter((tagId) =>
     validTagIds.has(tagId),
   )

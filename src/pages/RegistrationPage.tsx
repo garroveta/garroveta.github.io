@@ -10,6 +10,7 @@ import {
 import type { CSSProperties, FormEvent } from 'react'
 import { useState } from 'react'
 
+import { isCommunityOptionActive } from '../data/communityOptions'
 import type { Community, CommunityGame, CommunityTag } from '../domain/types'
 
 type RegistrationPageProps = {
@@ -27,6 +28,8 @@ export function RegistrationPage({
   tags,
   onBack,
 }: RegistrationPageProps) {
+  const activeGames = games.filter(isCommunityOptionActive)
+  const activeTags = tags.filter(isCommunityOptionActive)
   const [step, setStep] = useState<RegistrationStep>('account')
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
@@ -34,8 +37,10 @@ export function RegistrationPage({
   const [passwordConfirmation, setPasswordConfirmation] = useState('')
   const [acceptedRules, setAcceptedRules] = useState(false)
   const [selectedGameIds, setSelectedGameIds] = useState<string[]>([])
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
-    community.suggestedTagIds,
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(() =>
+    community.suggestedTagIds.filter((tagId) =>
+      activeTags.some(({ id }) => id === tagId),
+    ),
   )
   const [passwordError, setPasswordError] = useState('')
 
@@ -240,7 +245,7 @@ export function RegistrationPage({
             <legend>Mis juegos</legend>
             <p>Selecciona al menos un juego.</p>
             <div className="registration-game-options">
-              {games.map((game) => {
+              {activeGames.map((game) => {
                 const isSelected = selectedGameIds.includes(game.id)
 
                 return (
@@ -278,7 +283,7 @@ export function RegistrationPage({
             <legend>Mis grupos y avisos</legend>
             <p>Puedes cambiar esta selección más adelante desde tu perfil.</p>
             <div className="registration-tag-options">
-              {tags.map((tag) => {
+              {activeTags.map((tag) => {
                 const isSelected = selectedTagIds.includes(tag.id)
 
                 return (

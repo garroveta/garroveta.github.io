@@ -23,6 +23,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { DemoRole } from '../app/demoRoles'
 import type { AppRoute } from '../app/navigation'
 import { EventLinkImportPanel } from '../components/EventLinkImportPanel'
+import { isCommunityOptionActive } from '../data/communityOptions'
 import {
   cancelEventRegistration,
   deleteCommunityEvent,
@@ -177,20 +178,23 @@ function EventComposer({
   onDataChange: (updater: DemoDataUpdater) => void
   onPublished: () => void
 }) {
-  const [gameId, setGameId] = useState(
-    eventToEdit?.gameId ?? data.games[0]?.id ?? '',
+  const availableGames = data.games.filter(
+    (game) => isCommunityOptionActive(game) || game.id === eventToEdit?.gameId,
   )
-  const initialGameId = eventToEdit?.gameId ?? data.games[0]?.id ?? ''
+  const initialGameId = eventToEdit?.gameId ?? availableGames[0]?.id ?? ''
+  const [gameId, setGameId] = useState(initialGameId)
   const [formatId, setFormatId] = useState(
     eventToEdit
       ? (eventToEdit.formatId ?? '')
-      : (data.competitionFormats.find(({ gameId }) => gameId === initialGameId)
-          ?.id ?? ''),
+      : (data.competitionFormats.find(
+          (format) =>
+            format.gameId === initialGameId && isCommunityOptionActive(format),
+        )?.id ?? ''),
   )
   const [competitionEventKindId, setCompetitionEventKindId] = useState(
     eventToEdit
       ? (eventToEdit.competitionEventKindId ?? '')
-      : (data.competitionEventKinds[0]?.id ?? ''),
+      : (data.competitionEventKinds.find(isCommunityOptionActive)?.id ?? ''),
   )
   const [type, setType] = useState<EventType>(eventToEdit?.type ?? 'tournament')
   const [title, setTitle] = useState(eventToEdit?.title ?? '')
@@ -209,6 +213,20 @@ function EventComposer({
     eventToEdit?.registrationEnabled ?? false,
   )
   const [tagIds, setTagIds] = useState<string[]>(eventToEdit?.tagIds ?? [])
+  const availableFormats = data.competitionFormats.filter(
+    (format) =>
+      format.gameId === gameId &&
+      (isCommunityOptionActive(format) || format.id === eventToEdit?.formatId),
+  )
+  const availableEventKinds = data.competitionEventKinds.filter(
+    (eventKind) =>
+      isCommunityOptionActive(eventKind) ||
+      eventKind.id === eventToEdit?.competitionEventKindId,
+  )
+  const availableTags = data.tags.filter(
+    (tag) =>
+      isCommunityOptionActive(tag) || eventToEdit?.tagIds.includes(tag.id),
+  )
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -271,7 +289,9 @@ function EventComposer({
               setGameId(nextGameId)
               setFormatId(
                 data.competitionFormats.find(
-                  ({ gameId: formatGameId }) => formatGameId === nextGameId,
+                  (format) =>
+                    format.gameId === nextGameId &&
+                    isCommunityOptionActive(format),
                 )?.id ?? '',
               )
               if (nextGameId !== 'game-mtg') {
@@ -280,7 +300,7 @@ function EventComposer({
             }}
             required
           >
-            {data.games.map((game) => (
+            {availableGames.map((game) => (
               <option key={game.id} value={game.id}>
                 {game.name}
               </option>
@@ -315,13 +335,11 @@ function EventComposer({
               <option disabled value="">
                 Seleccionar formato
               </option>
-              {data.competitionFormats
-                .filter(({ gameId: formatGameId }) => formatGameId === gameId)
-                .map((format) => (
-                  <option key={format.id} value={format.id}>
-                    {format.name}
-                  </option>
-                ))}
+              {availableFormats.map((format) => (
+                <option key={format.id} value={format.id}>
+                  {format.name}
+                </option>
+              ))}
             </select>
           </label>
           <label className="form-field">
@@ -336,7 +354,7 @@ function EventComposer({
               <option disabled value="">
                 Seleccionar tipo
               </option>
-              {data.competitionEventKinds.map((eventKind) => (
+              {availableEventKinds.map((eventKind) => (
                 <option key={eventKind.id} value={eventKind.id}>
                   {eventKind.name}
                 </option>
@@ -428,7 +446,7 @@ function EventComposer({
         <legend>Etiquetas opcionales</legend>
         <p>Ayudan a los jugadores a identificar el formato y el público.</p>
         <div>
-          {data.tags.map((tag) => (
+          {availableTags.map((tag) => (
             <label key={tag.id}>
               <input
                 type="checkbox"

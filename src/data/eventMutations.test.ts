@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import type { DemoDataSet } from '../domain/types'
 import {
   cancelEventRegistration,
   deleteCommunityEvent,
@@ -42,6 +43,44 @@ describe('event registration mutations', () => {
     })
     expect(updatedData.events).toHaveLength(originalEventCount + 1)
     expect(demoData.events).toHaveLength(originalEventCount)
+  })
+
+  it('does not offer deactivated options to new events', () => {
+    const data: DemoDataSet = structuredClone(demoData)
+    const game = data.games.find(({ id }) => id === 'game-one-piece')!
+    game.isActive = false
+
+    expect(
+      publishCommunityEvent(data, {
+        createdByMemberId: 'member-lucia',
+        gameId: game.id,
+        type: 'tournament',
+        title: 'Evento con juego retirado',
+        description: 'No debe publicarse.',
+        startsAt: '2026-08-15T17:00:00+02:00',
+        endsAt: '2026-08-15T21:00:00+02:00',
+        registrationEnabled: false,
+        capacity: 0,
+        tagIds: [],
+      }),
+    ).toBe(data)
+
+    game.isActive = true
+    data.tags.find(({ id }) => id === 'tag-principiantes')!.isActive = false
+    const published = publishCommunityEvent(data, {
+      createdByMemberId: 'member-lucia',
+      gameId: game.id,
+      type: 'tournament',
+      title: 'Evento sin etiqueta retirada',
+      description: 'La etiqueta no debe volver a utilizarse.',
+      startsAt: '2026-08-15T17:00:00+02:00',
+      endsAt: '2026-08-15T21:00:00+02:00',
+      registrationEnabled: false,
+      capacity: 0,
+      tagIds: ['tag-principiantes'],
+    })
+
+    expect(published.events.at(-1)?.tagIds).toEqual([])
   })
 
   it('rejects event publication from a player', () => {

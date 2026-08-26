@@ -437,6 +437,33 @@ describe('App', () => {
     expect(screen.queryByText('Regional Championship Qualifier')).toBeNull()
   })
 
+  it('keeps deactivated options in history but removes them from new forms', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Desactivar One Piece Card Game',
+      }),
+    )
+
+    fireEvent.click(screen.getByRole('link', { name: 'Eventos' }))
+    expect(
+      screen.getByRole('heading', {
+        name: 'Store Championship One Piece',
+      }),
+    ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Nuevo evento' }))
+
+    expect(
+      within(screen.getByLabelText('Juego')).queryByRole('option', {
+        name: 'One Piece Card Game',
+      }),
+    ).not.toBeInTheDocument()
+  })
+
   it('prepares a new member registration for manager approval', () => {
     render(<App />)
 

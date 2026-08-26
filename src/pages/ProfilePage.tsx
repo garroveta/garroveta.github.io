@@ -8,6 +8,7 @@ import {
 } from '../app/demoRoles'
 import { CommunityOptionManager } from '../components/CommunityOptionManager'
 import { DemoDataSummary } from '../components/DemoDataSummary'
+import { isCommunityOptionActive } from '../data/communityOptions'
 import { toggleFavoriteGame } from '../data/memberPreferences'
 import type { DemoDataUpdater } from '../data/demoRepository'
 import type {
@@ -40,6 +41,10 @@ export function ProfilePage({
   onStartRegistration,
 }: ProfilePageProps) {
   const currentRole = getDemoRoleOption(activeRole)
+  const activeGames = data.games.filter(isCommunityOptionActive)
+  const favoriteGameCount = activeGames.filter(({ id }) =>
+    currentMember.favoriteGameIds.includes(id),
+  ).length
 
   return (
     <div className="page">
@@ -102,7 +107,7 @@ export function ProfilePage({
             <span>Tu agenda</span>
             <h2 id="favorite-games">Mis juegos</h2>
           </div>
-          <p>{currentMember.favoriteGameIds.length} seleccionados</p>
+          <p>{favoriteGameCount} seleccionados</p>
         </div>
         <p>
           Elige los juegos que quieres seguir. Garroveta usará esta selección
@@ -110,7 +115,7 @@ export function ProfilePage({
         </p>
 
         <div className="favorite-game-options">
-          {data.games.map((game) => {
+          {activeGames.map((game) => {
             const isFavorite = currentMember.favoriteGameIds.includes(game.id)
 
             return (

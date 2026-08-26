@@ -1,11 +1,14 @@
 import type { DemoDataSet } from '../domain/types'
+import { isCommunityOptionActive } from './communityOptions'
 
 export function toggleFavoriteGame(
   data: DemoDataSet,
   memberId: string,
   gameId: string,
 ): DemoDataSet {
-  if (!data.games.some(({ id }) => id === gameId)) {
+  const game = data.games.find(({ id }) => id === gameId)
+
+  if (!game) {
     return data
   }
 
@@ -16,6 +19,10 @@ export function toggleFavoriteGame(
   }
 
   const isFavorite = member.favoriteGameIds.includes(gameId)
+
+  if (!isFavorite && !isCommunityOptionActive(game)) {
+    return data
+  }
 
   return {
     ...data,

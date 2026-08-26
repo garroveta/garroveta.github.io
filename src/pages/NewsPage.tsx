@@ -12,6 +12,7 @@ import type { CSSProperties, FormEvent } from 'react'
 import { useState } from 'react'
 
 import type { DemoRole } from '../app/demoRoles'
+import { isCommunityOptionActive } from '../data/communityOptions'
 import { publishNewsPost } from '../data/newsMutations'
 import {
   getNewsById,
@@ -277,7 +278,7 @@ function NewsComposer({
         <legend>Público</legend>
         <p>Sin etiqueta, la publicación será visible para toda la comunidad.</p>
         <div>
-          {data.tags.map((tag) => (
+          {data.tags.filter(isCommunityOptionActive).map((tag) => (
             <label key={tag.id}>
               <input
                 type="checkbox"

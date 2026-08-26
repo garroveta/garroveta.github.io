@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import type { DemoDataSet } from '../domain/types'
 import { demoData } from './demoData'
 import { publishNewsPost } from './newsMutations'
 
@@ -27,6 +28,15 @@ describe('news mutations', () => {
       tagIds: ['tag-pauper'],
       pinned: true,
     })
+  })
+
+  it('ignores deactivated tags on new publications', () => {
+    const data: DemoDataSet = structuredClone(demoData)
+    data.tags.find(({ id }) => id === 'tag-pauper')!.isActive = false
+
+    expect(publishNewsPost(data, publication).newsPosts.at(-1)?.tagIds).toEqual(
+      [],
+    )
   })
 
   it('rejects a publication from a player or with missing content', () => {
