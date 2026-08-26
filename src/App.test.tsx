@@ -349,6 +349,54 @@ describe('App', () => {
     expect(screen.getByText('2 seleccionados')).toBeInTheDocument()
   })
 
+  it('prepares a new member registration for manager approval', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Crear cuenta' }))
+
+    expect(
+      screen.getByRole('heading', { name: 'Crear una cuenta' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByLabelText('Vista actual: Nuevo miembro'),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('navigation', { name: 'Navegación principal' }),
+    ).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Nombre visible'), {
+      target: { value: 'Pep Peralta Isern' },
+    })
+    fireEvent.change(screen.getByLabelText('Correo electrónico'), {
+      target: { value: 'pep@example.com' },
+    })
+    fireEvent.change(screen.getByLabelText('Contraseña'), {
+      target: { value: 'garroveta-demo' },
+    })
+    fireEvent.change(screen.getByLabelText('Repetir contraseña'), {
+      target: { value: 'garroveta-demo' },
+    })
+    fireEvent.click(screen.getByLabelText(/Acepto las normas/))
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
+
+    const sendRequest = screen.getByRole('button', {
+      name: 'Enviar solicitud',
+    })
+    expect(sendRequest).toBeDisabled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'MTG' }))
+    expect(sendRequest).toBeEnabled()
+    fireEvent.click(sendRequest)
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Tu cuenta está pendiente de validación',
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/Tomás o un moderador/)).toBeInTheDocument()
+  })
+
   it('shows the operational dashboard in manager mode', () => {
     render(<App />)
 

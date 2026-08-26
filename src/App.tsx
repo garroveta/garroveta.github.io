@@ -13,6 +13,7 @@ import { NewsPage } from './pages/NewsPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { RankingsPage } from './pages/RankingsPage'
+import { RegistrationPage } from './pages/RegistrationPage'
 import { SharedCardsPage } from './pages/SharedCardsPage'
 
 function getCurrentMember(data: DemoDataSet) {
@@ -48,6 +49,9 @@ export function App() {
   const dataSummary = getDemoDataSummary(data)
   const cardRouteParams = new URLSearchParams(routeQuery)
   const rankingRouteParams = new URLSearchParams(routeQuery)
+  const profileRouteParams = new URLSearchParams(routeQuery)
+  const isRegistrationView =
+    activeRoute === 'perfil' && profileRouteParams.get('view') === 'registro'
   const sharedCardsMemberId =
     activeRoute === 'cartas' ? cardRouteParams.get('member') : null
 
@@ -58,7 +62,10 @@ export function App() {
 
   return (
     <div className="app-shell">
-      <AppHeader activeRole={activeRole} />
+      <AppHeader
+        activeRole={activeRole}
+        registrationMode={isRegistrationView}
+      />
 
       <main className="app-content" id="main-content">
         {activeRoute === 'inicio' ? (
@@ -114,6 +121,13 @@ export function App() {
             publishingMember={publishingMember}
             onDataChange={updateData}
           />
+        ) : isRegistrationView ? (
+          <RegistrationPage
+            community={data.community}
+            games={data.games}
+            tags={data.tags}
+            onBack={() => navigate('perfil')}
+          />
         ) : activeRoute === 'perfil' ? (
           <ProfilePage
             activeRole={activeRole}
@@ -124,13 +138,16 @@ export function App() {
             onRoleChange={setActiveRole}
             onDataChange={updateData}
             onReset={resetDemo}
+            onStartRegistration={() => navigate('perfil', 'view=registro')}
           />
         ) : (
           <PlaceholderPage route={activeRoute} onNavigate={navigate} />
         )}
       </main>
 
-      <AppNavigation activeRoute={activeRoute} onNavigate={navigate} />
+      {isRegistrationView ? null : (
+        <AppNavigation activeRoute={activeRoute} onNavigate={navigate} />
+      )}
     </div>
   )
 }

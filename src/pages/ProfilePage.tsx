@@ -1,4 +1,4 @@
-import { Check, RotateCcw } from 'lucide-react'
+import { Check, RotateCcw, UserPlus } from 'lucide-react'
 import type { CSSProperties } from 'react'
 
 import {
@@ -25,6 +25,7 @@ type ProfilePageProps = {
   onRoleChange: (role: DemoRole) => void
   onDataChange: (updater: DemoDataUpdater) => void
   onReset: () => void
+  onStartRegistration: () => void
 }
 
 export function ProfilePage({
@@ -36,6 +37,7 @@ export function ProfilePage({
   onRoleChange,
   onDataChange,
   onReset,
+  onStartRegistration,
 }: ProfilePageProps) {
   const currentRole = getDemoRoleOption(activeRole)
 
@@ -48,6 +50,26 @@ export function ProfilePage({
           Cambia de vista para explorar el prototipo con cada tipo de usuario.
         </p>
       </header>
+
+      <section className="registration-entry">
+        <span className="registration-entry__icon" aria-hidden="true">
+          <UserPlus size={22} />
+        </span>
+        <div>
+          <strong>Probar el alta de un nuevo miembro</strong>
+          <p>
+            Recorre la creación de cuenta y la solicitud de acceso a CRC
+            Delorean.
+          </p>
+        </div>
+        <button
+          className="secondary-button"
+          type="button"
+          onClick={onStartRegistration}
+        >
+          Crear cuenta
+        </button>
+      </section>
 
       <section className="profile-summary" aria-labelledby="profile-name">
         <span className="profile-avatar" aria-hidden="true">

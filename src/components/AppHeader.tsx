@@ -1,12 +1,16 @@
+import { UserPlus } from 'lucide-react'
+
 import { getDemoRoleOption, type DemoRole } from '../app/demoRoles'
 
 type AppHeaderProps = {
   activeRole: DemoRole
+  registrationMode?: boolean
 }
 
-export function AppHeader({ activeRole }: AppHeaderProps) {
+export function AppHeader({ activeRole, registrationMode }: AppHeaderProps) {
   const role = getDemoRoleOption(activeRole)
-  const RoleIcon = role.icon
+  const RoleIcon = registrationMode ? UserPlus : role.icon
+  const roleLabel = registrationMode ? 'Nuevo miembro' : role.label
 
   return (
     <header className="app-header">
@@ -22,10 +26,10 @@ export function AppHeader({ activeRole }: AppHeaderProps) {
 
       <span
         className="active-role-badge"
-        aria-label={`Vista actual: ${role.label}`}
+        aria-label={`Vista actual: ${roleLabel}`}
       >
         <RoleIcon aria-hidden="true" size={16} />
-        <span>{role.label}</span>
+        <span>{roleLabel}</span>
       </span>
     </header>
   )
