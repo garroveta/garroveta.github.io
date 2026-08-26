@@ -33,6 +33,7 @@ export type CommunityTag = {
   name: string
   kind: 'format' | 'interest' | 'communication'
   color: string
+  isActive?: boolean
 }
 
 export type GameCategory = 'card_game' | 'miniatures' | 'role_playing_game'
@@ -44,6 +45,7 @@ export type CommunityGame = {
   shortName: string
   category: GameCategory
   color: string
+  isActive?: boolean
 }
 
 export type CompetitionFormat = {
@@ -52,12 +54,14 @@ export type CompetitionFormat = {
   name: string
   shortName: string
   color: string
+  isActive?: boolean
 }
 
 export type CompetitionEventKind = {
   id: EntityId
   name: string
   shortName: string
+  isActive?: boolean
 }
 
 export type CommunityRole = 'player' | 'manager' | 'moderator'
