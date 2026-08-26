@@ -1,4 +1,4 @@
-import { Check, RotateCcw, UserPlus } from 'lucide-react'
+import { Check, RotateCcw, Settings2, UserPlus } from 'lucide-react'
 import type { CSSProperties } from 'react'
 
 import {
@@ -6,7 +6,6 @@ import {
   getDemoRoleOption,
   type DemoRole,
 } from '../app/demoRoles'
-import { CommunityOptionManager } from '../components/CommunityOptionManager'
 import { DemoDataSummary } from '../components/DemoDataSummary'
 import { isCommunityOptionActive } from '../data/communityOptions'
 import { toggleFavoriteGame } from '../data/memberPreferences'
@@ -21,24 +20,24 @@ type ProfilePageProps = {
   activeRole: DemoRole
   data: DemoDataSet
   currentMember: CommunityMember
-  managerId: string
   dataSummary: DemoDataSummaryValue
   onRoleChange: (role: DemoRole) => void
   onDataChange: (updater: DemoDataUpdater) => void
   onReset: () => void
   onStartRegistration: () => void
+  onOpenSettings: () => void
 }
 
 export function ProfilePage({
   activeRole,
   data,
   currentMember,
-  managerId,
   dataSummary,
   onRoleChange,
   onDataChange,
   onReset,
   onStartRegistration,
+  onOpenSettings,
 }: ProfilePageProps) {
   const currentRole = getDemoRoleOption(activeRole)
   const activeGames = data.games.filter(isCommunityOptionActive)
@@ -94,11 +93,26 @@ export function ProfilePage({
       <DemoDataSummary community={data.community} summary={dataSummary} />
 
       {activeRole === 'gerente' ? (
-        <CommunityOptionManager
-          data={data}
-          managerId={managerId}
-          onDataChange={onDataChange}
-        />
+        <section className="manager-settings-entry">
+          <span className="manager-settings-entry__icon" aria-hidden="true">
+            <Settings2 size={22} />
+          </span>
+          <div>
+            <span>Herramientas del gerente</span>
+            <h2>Configuración del local</h2>
+            <p>
+              Gestiona juegos, formatos, tipos de evento, etiquetas y reglas del
+              ranking.
+            </p>
+          </div>
+          <button
+            className="primary-button"
+            type="button"
+            onClick={onOpenSettings}
+          >
+            Abrir configuración
+          </button>
+        </section>
       ) : null}
 
       <section className="game-preferences" aria-labelledby="favorite-games">

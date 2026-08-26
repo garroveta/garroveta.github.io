@@ -828,6 +828,111 @@ a {
   grid-column: 1 / -1;
 }
 
+.manager-settings-entry {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #d9cce0;
+  border-radius: 1.1rem;
+  background: linear-gradient(135deg, #f3eaf7, #fff);
+  box-shadow: 0 0.75rem 2rem rgb(51 43 55 / 6%);
+}
+
+.manager-settings-entry__icon {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border-radius: 0.85rem;
+  color: #fff;
+  background: #663579;
+}
+
+.manager-settings-entry > div {
+  min-width: 0;
+}
+
+.manager-settings-entry > div > span {
+  color: #7b5689;
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.manager-settings-entry h2 {
+  margin: 0.15rem 0 0;
+  color: #302735;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.manager-settings-entry p {
+  margin: 0.25rem 0 0;
+  color: #776d7a;
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.manager-settings-entry .primary-button {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.settings-page {
+  width: min(100%, 56rem);
+}
+
+.settings-page > .back-button {
+  margin-top: 0.25rem;
+}
+
+.settings-heading {
+  margin-top: 1rem;
+}
+
+.settings-navigation {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin: 1.25rem 0 1rem;
+  padding: 0.35rem;
+  border: 1px solid #ddd4df;
+  border-radius: 1rem;
+  background: #f2edf3;
+}
+
+.settings-navigation button {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 0;
+  border-radius: 0.75rem;
+  color: #756c77;
+  background: transparent;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.settings-navigation button[aria-selected='true'] {
+  color: #5b2b77;
+  background: #fff;
+  box-shadow: 0 0.35rem 0.9rem rgb(51 43 55 / 8%);
+}
+
+.settings-navigation button:focus-visible {
+  outline: 3px solid #b99ac7;
+  outline-offset: 2px;
+}
+
 .registration-page {
   width: min(100%, 48rem);
 }
@@ -7060,28 +7165,45 @@ a {
   background: #faf7fb;
 }
 
-.ranking-settings-panel > summary {
-  display: flex;
-  min-height: 3.4rem;
+.ranking-settings-panel__heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.75rem 0.85rem;
-  color: #633777;
-  cursor: pointer;
+  padding: 1rem;
 }
 
-.ranking-settings-panel > summary > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-size: 0.76rem;
+.ranking-settings-panel__icon {
+  display: grid;
+  width: 2.65rem;
+  height: 2.65rem;
+  place-items: center;
+  border-radius: 0.8rem;
+  color: #fff;
+  background: #663579;
+}
+
+.ranking-settings-panel__heading > div > span {
+  color: #7b5689;
+  font-size: 0.64rem;
   font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.ranking-settings-panel > summary small {
-  color: #887d8b;
-  font-size: 0.63rem;
+.ranking-settings-panel__heading h2 {
+  margin: 0.12rem 0 0;
+  color: #302735;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.ranking-settings-panel__heading p {
+  margin: 0.2rem 0 0;
+  color: #817784;
+  font-size: 0.7rem;
+  line-height: 1.4;
 }
 
 .ranking-settings-panel form {
@@ -8013,6 +8135,15 @@ a {
 
   .registration-entry .secondary-button {
     grid-column: auto;
+  }
+
+  .manager-settings-entry {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .manager-settings-entry .primary-button {
+    grid-column: auto;
+    width: auto;
   }
 
   .registration-field-grid {

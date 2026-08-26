@@ -15,6 +15,7 @@ import { ProfilePage } from './pages/ProfilePage'
 import { RankingsPage } from './pages/RankingsPage'
 import { RegistrationPage } from './pages/RegistrationPage'
 import { SharedCardsPage } from './pages/SharedCardsPage'
+import { SettingsPage } from './pages/SettingsPage'
 
 function getCurrentMember(data: DemoDataSet) {
   const member = data.members.find(({ id }) => id === data.currentMemberId)
@@ -52,6 +53,10 @@ export function App() {
   const profileRouteParams = new URLSearchParams(routeQuery)
   const isRegistrationView =
     activeRoute === 'perfil' && profileRouteParams.get('view') === 'registro'
+  const isSettingsView =
+    activeRoute === 'perfil' &&
+    profileRouteParams.get('view') === 'configuracion' &&
+    activeRole === 'gerente'
   const sharedCardsMemberId =
     activeRoute === 'cartas' ? cardRouteParams.get('member') : null
 
@@ -87,10 +92,7 @@ export function App() {
           />
         ) : activeRoute === 'ranking' ? (
           <RankingsPage
-            activeRole={activeRole}
             data={data}
-            managerId={publishingMember.id}
-            onDataChange={updateData}
             initialStandingId={rankingRouteParams.get('standing') ?? undefined}
             initialView={
               rankingRouteParams.get('view') === 'events' ? 'events' : undefined
@@ -131,17 +133,24 @@ export function App() {
             tags={data.tags}
             onBack={() => navigate('perfil')}
           />
+        ) : isSettingsView ? (
+          <SettingsPage
+            data={data}
+            managerId={publishingMember.id}
+            onDataChange={updateData}
+            onBack={() => navigate('perfil')}
+          />
         ) : activeRoute === 'perfil' ? (
           <ProfilePage
             activeRole={activeRole}
             data={data}
             currentMember={currentMember}
-            managerId={publishingMember.id}
             dataSummary={dataSummary}
             onRoleChange={setActiveRole}
             onDataChange={updateData}
             onReset={resetDemo}
             onStartRegistration={() => navigate('perfil', 'view=registro')}
+            onOpenSettings={() => navigate('perfil', 'view=configuracion')}
           />
         ) : (
           <PlaceholderPage route={activeRoute} onNavigate={navigate} />

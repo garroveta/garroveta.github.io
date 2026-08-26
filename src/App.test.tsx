@@ -231,8 +231,8 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
     fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
-    fireEvent.click(screen.getByRole('link', { name: 'Ranking' }))
-    fireEvent.click(screen.getByText('Configuración del ranking'))
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Ranking' }))
 
     fireEvent.change(screen.getByLabelText('Puntos para 1.º'), {
       target: { value: '12' },
@@ -256,6 +256,7 @@ describe('App', () => {
       defaultLimit: 'all',
     })
 
+    fireEvent.click(screen.getByRole('link', { name: 'Ranking' }))
     fireEvent.click(screen.getByRole('tab', { name: 'Últimos eventos' }))
     expect(
       screen.getAllByLabelText('Más 12 puntos comunidad'),
@@ -395,14 +396,20 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
     fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
 
+    const optionManager = screen
+      .getByRole('heading', { name: 'Configuración de la comunidad' })
+      .closest('section')
+    expect(optionManager).toBeTruthy()
     expect(
-      screen.getByRole('heading', {
-        name: 'Configuración de la comunidad',
+      within(optionManager as HTMLElement).getAllByRole('tab'),
+    ).toHaveLength(4)
+    fireEvent.click(
+      within(optionManager as HTMLElement).getByRole('tab', {
+        name: /Tipos de evento/,
       }),
-    ).toBeInTheDocument()
-    expect(screen.getAllByRole('tab')).toHaveLength(4)
-    fireEvent.click(screen.getByRole('tab', { name: /Tipos de evento/ }))
+    )
     fireEvent.click(
       screen.getByRole('button', { name: 'Añadir tipo de evento' }),
     )
@@ -487,6 +494,7 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
     fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
 
     fireEvent.click(
       screen.getByRole('button', {
