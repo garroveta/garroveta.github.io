@@ -1,5 +1,4 @@
 import {
-  ArrowLeft,
   Check,
   CheckCircle2,
   ChevronRight,
@@ -10,7 +9,7 @@ import {
   ShieldCheck,
   UserPlus,
 } from 'lucide-react'
-import type { CSSProperties, FormEvent } from 'react'
+import type { CSSProperties, FormEvent, ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 
 import { isCommunityOptionActive } from '../data/communityOptions'
@@ -20,7 +19,7 @@ type RegistrationPageProps = {
   community: Community
   games: CommunityGame[]
   tags: CommunityTag[]
-  onBack: () => void
+  onComplete: () => void
 }
 
 type RegistrationStep = 'access' | 'verification' | 'profile' | 'complete'
@@ -37,11 +36,46 @@ function formatCountdown(totalSeconds: number) {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
 
+type RegistrationShellProps = {
+  children: ReactNode
+  community: Community
+}
+
+function RegistrationShell({ children, community }: RegistrationShellProps) {
+  return (
+    <div className="registration-shell">
+      <header className="registration-site-header">
+        <span className="registration-brand" aria-label="Garroveta">
+          <span
+            className={`brand__mark${community.logoUrl ? ' brand__mark--image' : ''}`}
+            aria-hidden="true"
+          >
+            {community.logoUrl ? <img src={community.logoUrl} alt="" /> : 'G'}
+          </span>
+          <span className="brand__text">
+            <strong>Garroveta</strong>
+            <small>
+              {community.name} · {community.city}
+            </small>
+          </span>
+        </span>
+        <span className="registration-access-badge">
+          <ShieldCheck aria-hidden="true" size={16} />
+          Acceso por invitación
+        </span>
+      </header>
+      <main className="registration-main" id="main-content">
+        {children}
+      </main>
+    </div>
+  )
+}
+
 export function RegistrationPage({
   community,
   games,
   tags,
-  onBack,
+  onComplete,
 }: RegistrationPageProps) {
   const activeGames = games.filter(isCommunityOptionActive)
   const activeTags = tags.filter(isCommunityOptionActive)
@@ -149,313 +183,325 @@ export function RegistrationPage({
 
   if (step === 'complete') {
     return (
-      <div className="page registration-page">
-        <section className="registration-pending" aria-live="polite">
-          <span className="registration-pending__icon" aria-hidden="true">
-            <CheckCircle2 size={32} />
-          </span>
-          <span className="page-eyebrow">Perfil completado</span>
-          <h1>Ya puedes entrar en {community.name}</h1>
-          <p>
-            La identidad de <strong>{displayName}</strong> se ha verificado con
-            el código enviado a <strong>{email}</strong>.
-          </p>
+      <RegistrationShell community={community}>
+        <div className="page registration-page">
+          <section className="registration-pending" aria-live="polite">
+            <span className="registration-pending__icon" aria-hidden="true">
+              <CheckCircle2 size={32} />
+            </span>
+            <span className="page-eyebrow">Perfil completado</span>
+            <h1>Ya puedes entrar en {community.name}</h1>
+            <p>
+              La identidad de <strong>{displayName}</strong> se ha verificado
+              con el código enviado a <strong>{email}</strong>.
+            </p>
 
-          <div className="registration-status-card">
-            <ShieldCheck aria-hidden="true" size={20} />
-            <div>
-              <strong>Acceso mediante invitación</strong>
-              <p>
-                No necesitas recordar ninguna contraseña. En el producto real,
-                cada conexión se validará con un código temporal.
-              </p>
+            <div className="registration-status-card">
+              <ShieldCheck aria-hidden="true" size={20} />
+              <div>
+                <strong>Acceso mediante invitación</strong>
+                <p>
+                  No necesitas recordar ninguna contraseña. En el producto real,
+                  cada conexión se validará con un código temporal.
+                </p>
+              </div>
             </div>
-          </div>
 
-          <button className="primary-button" type="button" onClick={onBack}>
-            Entrar en Garroveta
-          </button>
-        </section>
-      </div>
+            <button
+              className="primary-button"
+              type="button"
+              onClick={onComplete}
+            >
+              Entrar en Garroveta
+            </button>
+          </section>
+        </div>
+      </RegistrationShell>
     )
   }
 
   return (
-    <div className="page registration-page">
-      <button className="back-button" type="button" onClick={onBack}>
-        <ArrowLeft aria-hidden="true" size={18} />
-        Volver al inicio
-      </button>
+    <RegistrationShell community={community}>
+      <div className="page registration-page">
+        <header className="registration-heading">
+          <span className="page-eyebrow">
+            <UserPlus aria-hidden="true" size={15} />
+            Acceso al piloto
+          </span>
+          <h1>Únete a la comunidad</h1>
+          <p>
+            El acceso a {community.name} está reservado a las personas
+            invitadas. Solo necesitas tu correo y un código temporal.
+          </p>
+        </header>
 
-      <header className="registration-heading">
-        <span className="page-eyebrow">
-          <UserPlus aria-hidden="true" size={15} />
-          Acceso al piloto
-        </span>
-        <h1>Únete a la comunidad</h1>
-        <p>
-          El acceso a {community.name} está reservado a las personas invitadas.
-          Solo necesitas tu correo y un código temporal.
-        </p>
-      </header>
+        <ol
+          className="registration-progress"
+          aria-label="Progreso del registro"
+        >
+          {progressSteps.map(({ id, label }, index) => {
+            const isCurrent = step === id
+            const isComplete = currentProgressIndex > index
 
-      <ol className="registration-progress" aria-label="Progreso del registro">
-        {progressSteps.map(({ id, label }, index) => {
-          const isCurrent = step === id
-          const isComplete = currentProgressIndex > index
+            return (
+              <li
+                aria-current={isCurrent ? 'step' : undefined}
+                className={isComplete ? 'registration-progress__complete' : ''}
+                key={id}
+              >
+                <span>{isComplete ? <Check size={15} /> : index + 1}</span>
+                {label}
+              </li>
+            )
+          })}
+        </ol>
 
-          return (
-            <li
-              aria-current={isCurrent ? 'step' : undefined}
-              className={isComplete ? 'registration-progress__complete' : ''}
-              key={id}
-            >
-              <span>{isComplete ? <Check size={15} /> : index + 1}</span>
-              {label}
-            </li>
-          )
-        })}
-      </ol>
+        {step === 'access' ? (
+          <form className="registration-form" onSubmit={handleAccessSubmit}>
+            <div className="registration-form__heading">
+              <span>Primera etapa</span>
+              <h2>Acceso al piloto</h2>
+              <p>
+                Introduce el correo que recibió la invitación de la comunidad.
+              </p>
+            </div>
 
-      {step === 'access' ? (
-        <form className="registration-form" onSubmit={handleAccessSubmit}>
-          <div className="registration-form__heading">
-            <span>Primera etapa</span>
-            <h2>Acceso al piloto</h2>
-            <p>
-              Introduce el correo que recibió la invitación de la comunidad.
-            </p>
-          </div>
+            <label className="form-field">
+              <span>Correo electrónico</span>
+              <span className="registration-input-with-icon">
+                <Mail aria-hidden="true" size={18} />
+                <input
+                  required
+                  autoComplete="email"
+                  type="email"
+                  placeholder="tu@email.com"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                />
+              </span>
+            </label>
 
-          <label className="form-field">
-            <span>Correo electrónico</span>
-            <span className="registration-input-with-icon">
-              <Mail aria-hidden="true" size={18} />
-              <input
-                required
-                autoComplete="email"
-                type="email"
-                placeholder="tu@email.com"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-              />
-            </span>
-          </label>
+            <div className="registration-approval-note">
+              <ShieldCheck aria-hidden="true" size={20} />
+              <p>
+                <strong>Comunidad privada</strong>
+                En producción, solo los correos invitados por Tomás o un
+                moderador podrán recibir un código.
+              </p>
+            </div>
 
-          <div className="registration-approval-note">
-            <ShieldCheck aria-hidden="true" size={20} />
-            <p>
-              <strong>Comunidad privada</strong>
-              En producción, solo los correos invitados por Tomás o un moderador
-              podrán recibir un código.
-            </p>
-          </div>
+            <div className="registration-actions">
+              <button className="primary-button" type="submit">
+                Recibir un código
+                <ChevronRight aria-hidden="true" size={17} />
+              </button>
+            </div>
+          </form>
+        ) : step === 'verification' ? (
+          <form className="registration-form" onSubmit={handleOtpSubmit}>
+            <div className="registration-form__heading">
+              <span>Segunda etapa</span>
+              <h2>Código de verificación</h2>
+              <p>
+                Hemos enviado seis cifras a <strong>{email}</strong>.
+              </p>
+            </div>
 
-          <div className="registration-actions">
-            <button className="primary-button" type="submit">
-              Recibir un código
-              <ChevronRight aria-hidden="true" size={17} />
-            </button>
-          </div>
-        </form>
-      ) : step === 'verification' ? (
-        <form className="registration-form" onSubmit={handleOtpSubmit}>
-          <div className="registration-form__heading">
-            <span>Segunda etapa</span>
-            <h2>Código de verificación</h2>
-            <p>
-              Hemos enviado seis cifras a <strong>{email}</strong>.
-            </p>
-          </div>
+            <label className="form-field registration-otp-field">
+              <span>Código de seis cifras</span>
+              <span className="registration-input-with-icon">
+                <KeyRound aria-hidden="true" size={18} />
+                <input
+                  required
+                  autoFocus
+                  aria-describedby="otp-help"
+                  autoComplete="one-time-code"
+                  className="registration-code-input"
+                  disabled={isOtpExpired || isOtpLocked}
+                  inputMode="numeric"
+                  maxLength={6}
+                  pattern="[0-9]{6}"
+                  placeholder="000000"
+                  value={otp}
+                  onChange={(event) =>
+                    setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))
+                  }
+                />
+              </span>
+            </label>
 
-          <label className="form-field registration-otp-field">
-            <span>Código de seis cifras</span>
-            <span className="registration-input-with-icon">
-              <KeyRound aria-hidden="true" size={18} />
-              <input
-                required
-                autoFocus
-                aria-describedby="otp-help"
-                autoComplete="one-time-code"
-                className="registration-code-input"
-                disabled={isOtpExpired || isOtpLocked}
-                inputMode="numeric"
-                maxLength={6}
-                pattern="[0-9]{6}"
-                placeholder="000000"
-                value={otp}
-                onChange={(event) =>
-                  setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))
-                }
-              />
-            </span>
-          </label>
+            <div className="registration-otp-meta" id="otp-help">
+              <span>
+                <Clock3 aria-hidden="true" size={16} />
+                {isOtpExpired
+                  ? 'Código caducado'
+                  : `Caduca en ${formatCountdown(expirationRemaining)}`}
+              </span>
+              <span>{attemptsRemaining} intentos disponibles</span>
+            </div>
 
-          <div className="registration-otp-meta" id="otp-help">
-            <span>
-              <Clock3 aria-hidden="true" size={16} />
-              {isOtpExpired
-                ? 'Código caducado'
-                : `Caduca en ${formatCountdown(expirationRemaining)}`}
-            </span>
-            <span>{attemptsRemaining} intentos disponibles</span>
-          </div>
+            <div className="registration-demo-note">
+              <strong>Modo prototipo</strong>
+              Utiliza el código <code>{DEMO_OTP}</code>. El envío real se
+              conectará al backend más adelante.
+            </div>
 
-          <div className="registration-demo-note">
-            <strong>Modo prototipo</strong>
-            Utiliza el código <code>{DEMO_OTP}</code>. El envío real se
-            conectará al backend más adelante.
-          </div>
+            {otpError ? (
+              <p className="registration-error" role="alert">
+                {otpError}
+              </p>
+            ) : null}
 
-          {otpError ? (
-            <p className="registration-error" role="alert">
-              {otpError}
-            </p>
-          ) : null}
+            <div className="registration-actions registration-actions--split">
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => setStep('access')}
+              >
+                Cambiar correo
+              </button>
+              <button
+                className="primary-button"
+                type="submit"
+                disabled={isOtpExpired || isOtpLocked || otp.length !== 6}
+              >
+                Verificar código
+              </button>
+            </div>
 
-          <div className="registration-actions registration-actions--split">
             <button
-              className="secondary-button"
+              className="registration-resend"
               type="button"
-              onClick={() => setStep('access')}
+              disabled={resendRemaining > 0}
+              onClick={startOtp}
             >
-              Cambiar correo
+              <RefreshCw aria-hidden="true" size={15} />
+              {resendRemaining > 0
+                ? `Reenviar dentro de ${resendRemaining} s`
+                : 'Reenviar el código'}
             </button>
-            <button
-              className="primary-button"
-              type="submit"
-              disabled={isOtpExpired || isOtpLocked || otp.length !== 6}
-            >
-              Verificar código
-            </button>
-          </div>
+          </form>
+        ) : (
+          <form className="registration-form" onSubmit={handleProfileSubmit}>
+            <div className="registration-form__heading">
+              <span>Tercera etapa</span>
+              <h2>Completa tu perfil</h2>
+              <p>Elige el nombre y los intereses que verá la comunidad.</p>
+            </div>
 
-          <button
-            className="registration-resend"
-            type="button"
-            disabled={resendRemaining > 0}
-            onClick={startOtp}
-          >
-            <RefreshCw aria-hidden="true" size={15} />
-            {resendRemaining > 0
-              ? `Reenviar dentro de ${resendRemaining} s`
-              : 'Reenviar el código'}
-          </button>
-        </form>
-      ) : (
-        <form className="registration-form" onSubmit={handleProfileSubmit}>
-          <div className="registration-form__heading">
-            <span>Tercera etapa</span>
-            <h2>Completa tu perfil</h2>
-            <p>Elige el nombre y los intereses que verá la comunidad.</p>
-          </div>
+            <label className="form-field">
+              <span>Nombre visible</span>
+              <input
+                required
+                autoComplete="name"
+                placeholder="Ej. Marina Valverde"
+                value={displayName}
+                onChange={(event) => setDisplayName(event.target.value)}
+              />
+            </label>
 
-          <label className="form-field">
-            <span>Nombre visible</span>
-            <input
-              required
-              autoComplete="name"
-              placeholder="Ej. Marina Valverde"
-              value={displayName}
-              onChange={(event) => setDisplayName(event.target.value)}
-            />
-          </label>
+            <fieldset className="registration-choice-group">
+              <legend>Mis juegos</legend>
+              <p>Selecciona al menos un juego.</p>
+              <div className="registration-game-options">
+                {activeGames.map((game) => {
+                  const isSelected = selectedGameIds.includes(game.id)
 
-          <fieldset className="registration-choice-group">
-            <legend>Mis juegos</legend>
-            <p>Selecciona al menos un juego.</p>
-            <div className="registration-game-options">
-              {activeGames.map((game) => {
-                const isSelected = selectedGameIds.includes(game.id)
-
-                return (
-                  <button
-                    type="button"
-                    key={game.id}
-                    aria-pressed={isSelected}
-                    onClick={() =>
-                      toggleSelection(
-                        game.id,
-                        selectedGameIds,
-                        setSelectedGameIds,
-                      )
-                    }
-                  >
-                    <span
-                      className="registration-game-color"
-                      style={{ '--game-color': game.color } as CSSProperties}
-                      aria-hidden="true"
-                    />
-                    <span>{game.shortName}</span>
-                    <span
-                      className="registration-choice-check"
-                      aria-hidden="true"
+                  return (
+                    <button
+                      type="button"
+                      key={game.id}
+                      aria-pressed={isSelected}
+                      onClick={() =>
+                        toggleSelection(
+                          game.id,
+                          selectedGameIds,
+                          setSelectedGameIds,
+                        )
+                      }
                     >
-                      {isSelected ? <Check size={14} strokeWidth={3} /> : null}
-                    </span>
-                  </button>
-                )
-              })}
+                      <span
+                        className="registration-game-color"
+                        style={{ '--game-color': game.color } as CSSProperties}
+                        aria-hidden="true"
+                      />
+                      <span>{game.shortName}</span>
+                      <span
+                        className="registration-choice-check"
+                        aria-hidden="true"
+                      >
+                        {isSelected ? (
+                          <Check size={14} strokeWidth={3} />
+                        ) : null}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </fieldset>
+
+            <fieldset className="registration-choice-group">
+              <legend>Mis grupos favoritos</legend>
+              <p>Puedes cambiar esta selección más adelante.</p>
+              <div className="registration-tag-options">
+                {activeTags.map((tag) => {
+                  const isSelected = selectedTagIds.includes(tag.id)
+
+                  return (
+                    <button
+                      type="button"
+                      key={tag.id}
+                      aria-pressed={isSelected}
+                      onClick={() =>
+                        toggleSelection(
+                          tag.id,
+                          selectedTagIds,
+                          setSelectedTagIds,
+                        )
+                      }
+                    >
+                      {tag.name}
+                      {isSelected ? (
+                        <Check aria-hidden="true" size={14} strokeWidth={3} />
+                      ) : null}
+                    </button>
+                  )
+                })}
+              </div>
+            </fieldset>
+
+            <label className="registration-rules">
+              <input
+                required
+                type="checkbox"
+                checked={acceptedRules}
+                onChange={(event) => setAcceptedRules(event.target.checked)}
+              />
+              <span>
+                <strong>Acepto las normas de la comunidad</strong>
+                Mis datos serán visibles únicamente para los miembros validados.
+              </span>
+            </label>
+
+            <div className="registration-actions registration-actions--split">
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => setStep('verification')}
+              >
+                Atrás
+              </button>
+              <button
+                className="primary-button"
+                type="submit"
+                disabled={selectedGameIds.length === 0 || !acceptedRules}
+              >
+                Completar perfil
+              </button>
             </div>
-          </fieldset>
-
-          <fieldset className="registration-choice-group">
-            <legend>Mis grupos favoritos</legend>
-            <p>Puedes cambiar esta selección más adelante.</p>
-            <div className="registration-tag-options">
-              {activeTags.map((tag) => {
-                const isSelected = selectedTagIds.includes(tag.id)
-
-                return (
-                  <button
-                    type="button"
-                    key={tag.id}
-                    aria-pressed={isSelected}
-                    onClick={() =>
-                      toggleSelection(tag.id, selectedTagIds, setSelectedTagIds)
-                    }
-                  >
-                    {tag.name}
-                    {isSelected ? (
-                      <Check aria-hidden="true" size={14} strokeWidth={3} />
-                    ) : null}
-                  </button>
-                )
-              })}
-            </div>
-          </fieldset>
-
-          <label className="registration-rules">
-            <input
-              required
-              type="checkbox"
-              checked={acceptedRules}
-              onChange={(event) => setAcceptedRules(event.target.checked)}
-            />
-            <span>
-              <strong>Acepto las normas de la comunidad</strong>
-              Mis datos serán visibles únicamente para los miembros validados.
-            </span>
-          </label>
-
-          <div className="registration-actions registration-actions--split">
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={() => setStep('verification')}
-            >
-              Atrás
-            </button>
-            <button
-              className="primary-button"
-              type="submit"
-              disabled={selectedGameIds.length === 0 || !acceptedRules}
-            >
-              Completar perfil
-            </button>
-          </div>
-        </form>
-      )}
-    </div>
+          </form>
+        )}
+      </div>
+    </RegistrationShell>
   )
 }

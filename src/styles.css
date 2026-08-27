@@ -1972,6 +1972,52 @@ a {
   width: min(100%, 48rem);
 }
 
+.registration-shell {
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 85% 5%, rgb(129 74 151 / 9%), transparent 22rem),
+    #fbfaf8;
+}
+
+.registration-site-header {
+  display: flex;
+  min-height: 4.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid #e7e2dc;
+  background: rgb(251 250 248 / 94%);
+}
+
+.registration-brand {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.7rem;
+  color: #26212d;
+}
+
+.registration-access-badge {
+  display: inline-flex;
+  min-height: 2.25rem;
+  align-items: center;
+  gap: 0.38rem;
+  padding: 0 0.65rem;
+  border: 1px solid #ded4e5;
+  border-radius: 999px;
+  color: #694477;
+  background: #f4eef7;
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.registration-main {
+  width: 100%;
+  padding: 1.6rem 1.25rem 3rem;
+}
+
 .registration-heading {
   max-width: 40rem;
   margin-top: 1.5rem;
@@ -2090,8 +2136,9 @@ a {
   pointer-events: none;
 }
 
-.registration-input-with-icon > input {
+.form-field .registration-input-with-icon > input {
   width: 100%;
+  padding-right: 0.8rem;
   padding-left: 2.75rem;
 }
 
@@ -2099,6 +2146,15 @@ a {
   font-variant-numeric: tabular-nums;
   font-weight: 800;
   letter-spacing: 0.35em;
+}
+
+@media (max-width: 27rem) {
+  .registration-access-badge {
+    width: 2.5rem;
+    padding: 0;
+    justify-content: center;
+    font-size: 0;
+  }
 }
 
 .registration-otp-meta {

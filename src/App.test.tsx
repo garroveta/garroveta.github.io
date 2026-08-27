@@ -780,9 +780,11 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Únete a la comunidad' }),
     ).toBeInTheDocument()
+    expect(screen.getByText('Acceso por invitación')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Garroveta, inicio' })).toBeNull()
     expect(
-      screen.getByLabelText('Vista actual: Nuevo miembro'),
-    ).toBeInTheDocument()
+      screen.queryByRole('button', { name: 'Volver al inicio' }),
+    ).toBeNull()
     expect(
       screen.queryByRole('navigation', { name: 'Navegación principal' }),
     ).not.toBeInTheDocument()

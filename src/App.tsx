@@ -55,7 +55,6 @@ export function App() {
   const profileRouteParams = new URLSearchParams(routeQuery)
   const newsRouteParams = new URLSearchParams(routeQuery)
   const requestedSettingsSection = profileRouteParams.get('section')
-  const isRegistrationView = activeRoute === 'registro'
   const isSettingsView =
     activeRoute === 'perfil' &&
     profileRouteParams.get('view') === 'configuracion' &&
@@ -68,13 +67,20 @@ export function App() {
     resetData()
   }
 
+  if (activeRoute === 'registro') {
+    return (
+      <RegistrationPage
+        community={data.community}
+        games={data.games}
+        tags={data.tags}
+        onComplete={() => navigate('inicio')}
+      />
+    )
+  }
+
   return (
     <div className="app-shell">
-      <AppHeader
-        activeRole={activeRole}
-        community={data.community}
-        registrationMode={isRegistrationView}
-      />
+      <AppHeader activeRole={activeRole} community={data.community} />
 
       <main className="app-content" id="main-content">
         {activeRoute === 'inicio' ? (
@@ -135,13 +141,6 @@ export function App() {
               navigate('perfil', 'view=configuracion&section=communications')
             }
           />
-        ) : activeRoute === 'registro' ? (
-          <RegistrationPage
-            community={data.community}
-            games={data.games}
-            tags={data.tags}
-            onBack={() => navigate('inicio')}
-          />
         ) : isSettingsView ? (
           <SettingsPage
             data={data}
@@ -173,9 +172,7 @@ export function App() {
         )}
       </main>
 
-      {isRegistrationView ? null : (
-        <AppNavigation activeRoute={activeRoute} onNavigate={navigate} />
-      )}
+      <AppNavigation activeRoute={activeRoute} onNavigate={navigate} />
     </div>
   )
 }
