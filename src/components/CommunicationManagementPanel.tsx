@@ -1,4 +1,6 @@
 import {
+  Check,
+  Copy,
   Megaphone,
   Pencil,
   Pin,
@@ -18,6 +20,7 @@ import {
   setNewsPostPinned,
   updateNewsPost,
 } from '../data/newsMutations'
+import { formatNewsPostForWhatsApp } from '../data/newsSharing'
 import type { DemoDataSet, NewsPost, NewsPostType } from '../domain/types'
 import { isCommunityOptionActive } from '../data/communityOptions'
 
@@ -43,6 +46,27 @@ const dateFormatter = new Intl.DateTimeFormat('es-ES', {
   year: 'numeric',
   timeZone: 'Europe/Madrid',
 })
+
+async function copyText(text: string) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text)
+    return
+  }
+
+  const textarea = document.createElement('textarea')
+  textarea.value = text
+  textarea.setAttribute('readonly', '')
+  textarea.style.position = 'fixed'
+  textarea.style.opacity = '0'
+  document.body.appendChild(textarea)
+  textarea.select()
+  const copied = document.execCommand('copy')
+  textarea.remove()
+
+  if (!copied) {
+    throw new Error('Clipboard unavailable')
+  }
+}
 
 function CommunicationEditor({
   data,
@@ -194,6 +218,7 @@ export function CommunicationManagementPanel({
     'closed',
   )
   const [pendingDeleteId, setPendingDeleteId] = useState<string>()
+  const [copiedPostId, setCopiedPostId] = useState<string>()
   const [actionMessage, setActionMessage] = useState('')
   const filteredPosts = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase('es')
@@ -347,6 +372,42 @@ export function CommunicationManagementPanel({
               </div>
 
               <div className="managed-communication-row__actions">
+                <button
+                  className={
+                    copiedPostId === post.id
+                      ? 'managed-communication-row__copy managed-communication-row__copy--done'
+                      : 'managed-communication-row__copy'
+                  }
+                  type="button"
+                  aria-label={`Copiar ${post.title} para WhatsApp`}
+                  title="Copiar para WhatsApp"
+                  onClick={async () => {
+                    try {
+                      await copyText(
+                        formatNewsPostForWhatsApp(
+                          post,
+                          tagNames,
+                          data.community,
+                        ),
+                      )
+                      setCopiedPostId(post.id)
+                      setActionMessage(
+                        'Comunicación copiada. Ya puedes pegarla en WhatsApp.',
+                      )
+                    } catch {
+                      setCopiedPostId(undefined)
+                      setActionMessage(
+                        'No se ha podido copiar. Revisa los permisos del navegador.',
+                      )
+                    }
+                  }}
+                >
+                  {copiedPostId === post.id ? (
+                    <Check aria-hidden="true" size={16} />
+                  ) : (
+                    <Copy aria-hidden="true" size={16} />
+                  )}
+                </button>
                 <button
                   type="button"
                   aria-label={

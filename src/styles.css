@@ -1667,6 +1667,12 @@ a {
   color: #985348;
 }
 
+.managed-communication-row__actions .managed-communication-row__copy--done {
+  border-color: #b8d7ca;
+  color: #2f6b59;
+  background: #f3faf7;
+}
+
 .communication-delete-confirmation {
   display: flex;
   grid-column: 1 / -1;

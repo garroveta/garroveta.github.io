@@ -353,7 +353,9 @@ describe('App', () => {
     })
   })
 
-  it('lets the manager create, edit, pin and delete communications', () => {
+  it('lets the manager create, copy, edit, pin and delete communications', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', { clipboard: { writeText } })
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -390,6 +392,20 @@ describe('App', () => {
         .load()
         .newsPosts.find(({ title }) => title === 'Cambio de horario'),
     ).toMatchObject({ type: 'urgent', tagIds: ['tag-pauper'], pinned: true })
+
+    fireEvent.click(
+      within(publishedRow as HTMLElement).getByRole('button', {
+        name: 'Copiar Cambio de horario para WhatsApp',
+      }),
+    )
+    await waitFor(() =>
+      expect(writeText).toHaveBeenCalledWith(
+        expect.stringContaining('📣 *Cambio de horario*'),
+      ),
+    )
+    expect(
+      screen.getByText('Comunicación copiada. Ya puedes pegarla en WhatsApp.'),
+    ).toBeInTheDocument()
 
     fireEvent.click(
       within(publishedRow as HTMLElement).getByRole('button', {
