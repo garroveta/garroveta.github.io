@@ -1,9 +1,23 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "mtg-community-inca",
+  "name": "garroveta-api",
   "main": "./worker/index.ts",
-  "compatibility_date": "2026-07-29",
+  "compatibility_date": "2026-08-27",
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "not_found_handling": "single-page-application",
   },
+  "vars": {
+    "APP_ORIGIN": "https://garroveta.es",
+    "BETTER_AUTH_URL": "https://api.garroveta.es",
+    "RESEND_FROM_EMAIL": "Garroveta <noreply@garroveta.es>",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "garroveta-production",
+      "database_id": "956dba71-82ec-41d1-9c3b-6993232b1699",
+      "migrations_dir": "migrations",
+    },
+  ],
 }

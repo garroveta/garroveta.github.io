@@ -6,6 +6,7 @@ dist/
 dist-pages/
 .wrangler/
 .dev.vars*
+!.dev.vars.example
 
 # Test coverage
 coverage/

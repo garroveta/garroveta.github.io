@@ -3,3 +3,4 @@ dist
 node_modules
 package-lock.json
 questions-ouvertes.txt
+worker/env.d.ts
