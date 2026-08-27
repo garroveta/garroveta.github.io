@@ -55,8 +55,7 @@ export function App() {
   const profileRouteParams = new URLSearchParams(routeQuery)
   const newsRouteParams = new URLSearchParams(routeQuery)
   const requestedSettingsSection = profileRouteParams.get('section')
-  const isRegistrationView =
-    activeRoute === 'perfil' && profileRouteParams.get('view') === 'registro'
+  const isRegistrationView = activeRoute === 'registro'
   const isSettingsView =
     activeRoute === 'perfil' &&
     profileRouteParams.get('view') === 'configuracion' &&
@@ -136,12 +135,12 @@ export function App() {
               navigate('perfil', 'view=configuracion&section=communications')
             }
           />
-        ) : isRegistrationView ? (
+        ) : activeRoute === 'registro' ? (
           <RegistrationPage
             community={data.community}
             games={data.games}
             tags={data.tags}
-            onBack={() => navigate('perfil')}
+            onBack={() => navigate('inicio')}
           />
         ) : isSettingsView ? (
           <SettingsPage
@@ -167,7 +166,6 @@ export function App() {
             onRoleChange={setActiveRole}
             onDataChange={updateData}
             onReset={resetDemo}
-            onStartRegistration={() => navigate('perfil', 'view=registro')}
             onOpenSettings={() => navigate('perfil', 'view=configuracion')}
           />
         ) : (

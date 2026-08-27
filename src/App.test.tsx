@@ -773,14 +773,12 @@ describe('App', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('prepares a new member registration for manager approval', () => {
+  it('registers an invited member with an OTP and no password', () => {
+    window.location.hash = '#registro'
     render(<App />)
 
-    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Crear cuenta' }))
-
     expect(
-      screen.getByRole('heading', { name: 'Crear una cuenta' }),
+      screen.getByRole('heading', { name: 'Únete a la comunidad' }),
     ).toBeInTheDocument()
     expect(
       screen.getByLabelText('Vista actual: Nuevo miembro'),
@@ -789,36 +787,78 @@ describe('App', () => {
       screen.queryByRole('navigation', { name: 'Navegación principal' }),
     ).not.toBeInTheDocument()
 
-    fireEvent.change(screen.getByLabelText('Nombre visible'), {
-      target: { value: 'Pep Peralta Isern' },
-    })
     fireEvent.change(screen.getByLabelText('Correo electrónico'), {
       target: { value: 'pep@example.com' },
     })
-    fireEvent.change(screen.getByLabelText('Contraseña'), {
-      target: { value: 'garroveta-demo' },
-    })
-    fireEvent.change(screen.getByLabelText('Repetir contraseña'), {
-      target: { value: 'garroveta-demo' },
-    })
-    fireEvent.click(screen.getByLabelText(/Acepto las normas/))
-    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
+    expect(screen.queryByLabelText(/Contraseña/)).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Recibir un código' }))
 
-    const sendRequest = screen.getByRole('button', {
-      name: 'Enviar solicitud',
+    expect(
+      screen.getByRole('heading', { name: 'Código de verificación' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/Caduca en 10:00/)).toBeInTheDocument()
+    expect(screen.getByText('3 intentos disponibles')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Código de seis cifras'), {
+      target: { value: '246810' },
     })
-    expect(sendRequest).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Verificar código' }))
+
+    fireEvent.change(screen.getByLabelText('Nombre visible'), {
+      target: { value: 'Pep Peralta Isern' },
+    })
+    const completeProfile = screen.getByRole('button', {
+      name: 'Completar perfil',
+    })
+    expect(completeProfile).toBeDisabled()
 
     fireEvent.click(screen.getByRole('button', { name: 'MTG' }))
-    expect(sendRequest).toBeEnabled()
-    fireEvent.click(sendRequest)
+    fireEvent.click(screen.getByLabelText(/Acepto las normas/))
+    expect(completeProfile).toBeEnabled()
+    fireEvent.click(completeProfile)
 
     expect(
       screen.getByRole('heading', {
-        name: 'Tu cuenta está pendiente de validación',
+        name: 'Ya puedes entrar en CRC Delorean',
       }),
     ).toBeInTheDocument()
-    expect(screen.getByText(/Tomás o un moderador/)).toBeInTheDocument()
+    expect(screen.getByText(/No necesitas recordar/)).toBeInTheDocument()
+  })
+
+  it('does not expose registration from the connected profile', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+
+    expect(screen.queryByText('Probar el alta de un nuevo miembro')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Crear cuenta' })).toBeNull()
+  })
+
+  it('locks OTP verification after three incorrect attempts', () => {
+    window.location.hash = '#registro'
+    render(<App />)
+
+    fireEvent.change(screen.getByLabelText('Correo electrónico'), {
+      target: { value: 'invitado@example.com' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Recibir un código' }))
+
+    const otpField = screen.getByLabelText('Código de seis cifras')
+    const verifyButton = screen.getByRole('button', {
+      name: 'Verificar código',
+    })
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      fireEvent.change(otpField, { target: { value: '111111' } })
+      fireEvent.click(verifyButton)
+    }
+
+    expect(
+      screen.getByText(
+        'Has agotado los tres intentos. Solicita un código nuevo.',
+      ),
+    ).toBeInTheDocument()
+    expect(otpField).toBeDisabled()
+    expect(verifyButton).toBeDisabled()
   })
 
   it('shows the operational dashboard in manager mode', () => {

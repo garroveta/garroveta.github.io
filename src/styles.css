@@ -860,49 +860,6 @@ a {
   box-shadow: 0 0.75rem 2rem rgb(51 43 55 / 6%);
 }
 
-.registration-entry {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 0.8rem;
-  margin-top: 1.5rem;
-  padding: 1rem;
-  border: 1px solid #d9cce0;
-  border-radius: 1.1rem;
-  background: linear-gradient(135deg, #f7f0fa, #fff);
-  box-shadow: 0 0.75rem 2rem rgb(51 43 55 / 6%);
-}
-
-.registration-entry__icon {
-  display: grid;
-  width: 2.75rem;
-  height: 2.75rem;
-  place-items: center;
-  border-radius: 0.85rem;
-  color: #fff;
-  background: #663579;
-}
-
-.registration-entry > div {
-  min-width: 0;
-}
-
-.registration-entry strong {
-  color: #312937;
-  font-size: 0.88rem;
-}
-
-.registration-entry p {
-  margin: 0.25rem 0 0;
-  color: #776d7a;
-  font-size: 0.74rem;
-  line-height: 1.45;
-}
-
-.registration-entry .secondary-button {
-  grid-column: 1 / -1;
-}
-
 .manager-settings-entry {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -2040,7 +1997,7 @@ a {
 
 .registration-progress {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;
   margin: 1.5rem 0 0;
   padding: 0;
@@ -2073,7 +2030,7 @@ a {
 }
 
 .registration-progress li[aria-current='step'] > span,
-.registration-progress li:first-child:not([aria-current='step']) > span {
+.registration-progress li.registration-progress__complete > span {
   color: #fff;
   background: #663579;
 }
@@ -2116,6 +2073,93 @@ a {
 .registration-field-grid {
   display: grid;
   gap: 0.85rem;
+}
+
+.registration-input-with-icon {
+  position: relative;
+  display: block;
+}
+
+.registration-input-with-icon > svg {
+  position: absolute;
+  top: 50%;
+  left: 0.9rem;
+  z-index: 1;
+  color: #837987;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.registration-input-with-icon > input {
+  width: 100%;
+  padding-left: 2.75rem;
+}
+
+.registration-code-input {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  letter-spacing: 0.35em;
+}
+
+.registration-otp-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.45rem 0.8rem;
+  margin-top: -0.45rem;
+  color: #766c79;
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.registration-otp-meta span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.registration-demo-note {
+  padding: 0.8rem;
+  border: 1px dashed #cdbbd3;
+  border-radius: 0.85rem;
+  color: #705f75;
+  background: #faf6fb;
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.registration-demo-note strong {
+  display: block;
+  color: #51335e;
+}
+
+.registration-demo-note code {
+  color: #542c67;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.registration-resend {
+  display: inline-flex;
+  min-height: 2.35rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  justify-self: center;
+  padding: 0 0.75rem;
+  border: 0;
+  color: #633477;
+  background: transparent;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.registration-resend:disabled {
+  color: #9a919c;
+  cursor: default;
 }
 
 .registration-error {
@@ -2360,6 +2404,11 @@ a {
 }
 
 .registration-pending > .secondary-button {
+  width: 100%;
+  margin-top: 1.2rem;
+}
+
+.registration-pending > .primary-button {
   width: 100%;
   margin-top: 1.2rem;
 }
@@ -9256,14 +9305,6 @@ a {
 }
 
 @media (min-width: 44rem) {
-  .registration-entry {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-  }
-
-  .registration-entry .secondary-button {
-    grid-column: auto;
-  }
-
   .manager-settings-entry {
     grid-template-columns: auto minmax(0, 1fr) auto;
   }
