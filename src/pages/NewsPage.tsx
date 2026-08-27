@@ -207,7 +207,7 @@ export function NewsPage({
       <header className="page-heading">
         <span className="page-eyebrow">
           <BellRing aria-hidden="true" size={14} />
-          CRC Delorean
+          {data.community.name}
         </span>
         <h1>Noticias</h1>
         <p>

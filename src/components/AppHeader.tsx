@@ -1,13 +1,19 @@
 import { UserPlus } from 'lucide-react'
 
 import { getDemoRoleOption, type DemoRole } from '../app/demoRoles'
+import type { Community } from '../domain/types'
 
 type AppHeaderProps = {
   activeRole: DemoRole
+  community: Pick<Community, 'name' | 'city'>
   registrationMode?: boolean
 }
 
-export function AppHeader({ activeRole, registrationMode }: AppHeaderProps) {
+export function AppHeader({
+  activeRole,
+  community,
+  registrationMode,
+}: AppHeaderProps) {
   const role = getDemoRoleOption(activeRole)
   const RoleIcon = registrationMode ? UserPlus : role.icon
   const roleLabel = registrationMode ? 'Nuevo miembro' : role.label
@@ -20,7 +26,9 @@ export function AppHeader({ activeRole, registrationMode }: AppHeaderProps) {
         </span>
         <span className="brand__text">
           <strong>Garroveta</strong>
-          <small>CRC Delorean · Inca</small>
+          <small>
+            {community.name} · {community.city}
+          </small>
         </span>
       </a>
 

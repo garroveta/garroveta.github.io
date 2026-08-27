@@ -934,6 +934,132 @@ a {
   outline-offset: 2px;
 }
 
+.community-settings-panel {
+  overflow: hidden;
+  border: 1px solid #d9cddd;
+  border-radius: 0.95rem;
+  background: #faf7fb;
+}
+
+.community-settings-panel > form {
+  display: grid;
+  gap: 1rem;
+  padding: 0.9rem;
+  border-top: 1px solid #e5dfe7;
+  background: #fff;
+}
+
+.community-settings-identity {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.community-opening-hours {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.community-opening-hours > legend {
+  padding: 0;
+  color: #4c414f;
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.community-opening-hours > p {
+  margin: 0.2rem 0 0.65rem;
+  color: #887e8a;
+  font-size: 0.65rem;
+  line-height: 1.4;
+}
+
+.community-opening-hours__list {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid #e3dce5;
+  border-radius: 0.8rem;
+}
+
+.community-opening-hours__row {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem;
+  border-bottom: 1px solid #eee8ef;
+  background: #fcfafc;
+}
+
+.community-opening-hours__row:last-child {
+  border-bottom: 0;
+}
+
+.community-opening-hours__row > strong {
+  color: #3b323e;
+  font-size: 0.72rem;
+}
+
+.community-opening-hours__toggle,
+.community-opening-hours__next-day {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #655a68;
+  font-size: 0.64rem;
+  font-weight: 800;
+}
+
+.community-opening-hours__toggle input,
+.community-opening-hours__next-day input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #643778;
+}
+
+.community-opening-hours__row > .form-field {
+  min-width: 0;
+}
+
+.community-opening-hours__row > .form-field input {
+  min-height: 2.25rem;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.7rem;
+}
+
+.community-opening-hours__row > .form-field:nth-of-type(2) {
+  grid-column: 1 / 2;
+}
+
+.community-opening-hours__row > .form-field:nth-of-type(3) {
+  grid-column: 2 / 3;
+}
+
+.community-opening-hours__next-day {
+  grid-column: 1 / -1;
+}
+
+.community-opening-hours__closed {
+  grid-column: 1 / -1;
+  color: #958b97;
+  font-size: 0.62rem;
+}
+
+.community-settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.community-settings-actions > span {
+  margin-right: auto;
+  color: #2f6b59;
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
 .registration-settings-panel {
   overflow: hidden;
   border: 1px solid #d9cddd;
@@ -8989,7 +9115,26 @@ a {
   }
 
   .settings-navigation {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .community-settings-identity {
+    grid-template-columns: minmax(0, 1fr) minmax(12rem, 0.55fr);
+  }
+
+  .community-opening-hours__row {
+    grid-template-columns: minmax(6rem, 1fr) 6rem 7rem 7rem minmax(7rem, auto);
+  }
+
+  .community-opening-hours__row > .form-field:nth-of-type(2),
+  .community-opening-hours__row > .form-field:nth-of-type(3),
+  .community-opening-hours__next-day,
+  .community-opening-hours__closed {
+    grid-column: auto;
+  }
+
+  .community-opening-hours__closed {
+    grid-column: 3 / -1;
   }
 
   .communication-management-heading {

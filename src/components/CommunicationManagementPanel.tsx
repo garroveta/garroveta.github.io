@@ -454,7 +454,7 @@ export function CommunicationManagementPanel({
                   {tagNames.length > 0
                     ? tagNames.join(', ')
                     : 'Toda la comunidad'}{' '}
-                  · {author?.displayName ?? 'CRC Delorean'} ·{' '}
+                  · {author?.displayName ?? data.community.name} ·{' '}
                   {dateFormatter.format(new Date(post.publishedAt))}
                 </small>
               </div>

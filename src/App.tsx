@@ -70,6 +70,7 @@ export function App() {
     <div className="app-shell">
       <AppHeader
         activeRole={activeRole}
+        community={data.community}
         registrationMode={isRegistrationView}
       />
 

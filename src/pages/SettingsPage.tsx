@@ -1,5 +1,6 @@
 import {
   ArrowLeft,
+  Building2,
   ListTree,
   Megaphone,
   Trophy,
@@ -9,6 +10,7 @@ import {
 import { useState } from 'react'
 
 import { CommunityOptionManager } from '../components/CommunityOptionManager'
+import { CommunitySettingsPanel } from '../components/CommunitySettingsPanel'
 import { CommunicationManagementPanel } from '../components/CommunicationManagementPanel'
 import { MemberManagementPanel } from '../components/MemberManagementPanel'
 import { RankingSettingsPanel } from '../components/RankingSettingsPanel'
@@ -17,7 +19,12 @@ import type { DemoDataUpdater } from '../data/demoRepository'
 import type { DemoDataSet } from '../domain/types'
 
 export type SettingsSection =
-  'options' | 'registrations' | 'members' | 'communications' | 'ranking'
+  | 'community'
+  | 'options'
+  | 'registrations'
+  | 'members'
+  | 'communications'
+  | 'ranking'
 
 type SettingsPageProps = {
   data: DemoDataSet
@@ -51,8 +58,9 @@ export function SettingsPage({
         <span className="page-eyebrow">Herramientas del gerente</span>
         <h1>Configuración</h1>
         <p>
-          Administra las opciones, las inscripciones, los miembros, las
-          publicaciones y las reglas del ranking desde un único lugar.
+          Administra la comunidad, las opciones, las inscripciones, los
+          miembros, las publicaciones y las reglas del ranking desde un único
+          lugar.
         </p>
       </header>
 
@@ -61,6 +69,15 @@ export function SettingsPage({
         role="tablist"
         aria-label="Secciones de configuración"
       >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeSection === 'community'}
+          onClick={() => setActiveSection('community')}
+        >
+          <Building2 aria-hidden="true" size={18} />
+          Comunidad
+        </button>
         <button
           type="button"
           role="tab"
@@ -108,7 +125,13 @@ export function SettingsPage({
         </button>
       </div>
 
-      {activeSection === 'options' ? (
+      {activeSection === 'community' ? (
+        <CommunitySettingsPanel
+          data={data}
+          managerId={managerId}
+          onDataChange={onDataChange}
+        />
+      ) : activeSection === 'options' ? (
         <CommunityOptionManager
           data={data}
           managerId={managerId}

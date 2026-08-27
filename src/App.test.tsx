@@ -302,6 +302,46 @@ describe('App', () => {
     ).toBeChecked()
   })
 
+  it('lets the manager configure community identity and opening hours', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Comunidad' }))
+
+    fireEvent.change(screen.getByLabelText('Nombre de la comunidad'), {
+      target: { value: 'CRC Delorean Inca' },
+    })
+    fireEvent.change(screen.getByLabelText('Ciudad'), {
+      target: { value: 'Palma' },
+    })
+    fireEvent.change(screen.getByLabelText('Apertura del Miércoles'), {
+      target: { value: '18:00' },
+    })
+    const sundayRow = screen.getByText('Domingo').closest('div')
+    expect(sundayRow).toBeTruthy()
+    fireEvent.click(
+      within(sundayRow as HTMLElement).getByRole('checkbox', {
+        name: 'Abierto',
+      }),
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar información' }))
+
+    expect(screen.getByText('Información guardada.')).toBeInTheDocument()
+    expect(screen.getByText('CRC Delorean Inca · Palma')).toBeInTheDocument()
+    expect(
+      createLocalDemoRepository(window.localStorage).load().community,
+    ).toMatchObject({
+      name: 'CRC Delorean Inca',
+      city: 'Palma',
+      openingHours: expect.arrayContaining([
+        { day: 'wednesday', opensAt: '18:00', closesAt: '24:00' },
+        { day: 'sunday' },
+      ]),
+    })
+  })
+
   it('lets the manager approve members and manage their permissions', () => {
     render(<App />)
 
