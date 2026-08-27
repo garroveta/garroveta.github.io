@@ -1,6 +1,7 @@
 import {
   ArrowLeft,
   ListTree,
+  Megaphone,
   Trophy,
   UserRoundCog,
   UsersRound,
@@ -8,13 +9,15 @@ import {
 import { useState } from 'react'
 
 import { CommunityOptionManager } from '../components/CommunityOptionManager'
+import { CommunicationManagementPanel } from '../components/CommunicationManagementPanel'
 import { MemberManagementPanel } from '../components/MemberManagementPanel'
 import { RankingSettingsPanel } from '../components/RankingSettingsPanel'
 import { RegistrationSettingsPanel } from '../components/RegistrationSettingsPanel'
 import type { DemoDataUpdater } from '../data/demoRepository'
 import type { DemoDataSet } from '../domain/types'
 
-type SettingsSection = 'options' | 'registrations' | 'members' | 'ranking'
+type SettingsSection =
+  'options' | 'registrations' | 'members' | 'communications' | 'ranking'
 
 type SettingsPageProps = {
   data: DemoDataSet
@@ -42,8 +45,8 @@ export function SettingsPage({
         <span className="page-eyebrow">Herramientas del gerente</span>
         <h1>Configuración</h1>
         <p>
-          Administra las opciones, las inscripciones, los miembros y las reglas
-          del ranking desde un único lugar.
+          Administra las opciones, las inscripciones, los miembros, las
+          comunicaciones y las reglas del ranking desde un único lugar.
         </p>
       </header>
 
@@ -52,6 +55,15 @@ export function SettingsPage({
         role="tablist"
         aria-label="Secciones de configuración"
       >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeSection === 'communications'}
+          onClick={() => setActiveSection('communications')}
+        >
+          <Megaphone aria-hidden="true" size={18} />
+          Comunicaciones
+        </button>
         <button
           type="button"
           role="tab"
@@ -104,6 +116,12 @@ export function SettingsPage({
         />
       ) : activeSection === 'members' ? (
         <MemberManagementPanel
+          data={data}
+          managerId={managerId}
+          onDataChange={onDataChange}
+        />
+      ) : activeSection === 'communications' ? (
+        <CommunicationManagementPanel
           data={data}
           managerId={managerId}
           onDataChange={onDataChange}

@@ -353,6 +353,82 @@ describe('App', () => {
     })
   })
 
+  it('lets the manager create, edit, pin and delete communications', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Comunicaciones' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Nueva' }))
+
+    fireEvent.change(screen.getByLabelText('Tipo de comunicación'), {
+      target: { value: 'urgent' },
+    })
+    fireEvent.change(screen.getByLabelText('Título'), {
+      target: { value: 'Cambio de horario' },
+    })
+    fireEvent.change(screen.getByLabelText('Resumen'), {
+      target: { value: 'La tienda abrirá una hora más tarde.' },
+    })
+    fireEvent.change(screen.getByLabelText('Contenido'), {
+      target: { value: 'Consulta el nuevo horario antes de venir.' },
+    })
+    fireEvent.click(screen.getByLabelText('Pauper'))
+    fireEvent.click(
+      screen.getByLabelText('Fijar como comunicación prioritaria'),
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar' }))
+
+    expect(screen.getByText('Comunicación publicada.')).toBeInTheDocument()
+    const publishedRow = screen
+      .getByText('Cambio de horario')
+      .closest('article')
+    expect(publishedRow).toBeTruthy()
+    expect(
+      createLocalDemoRepository(window.localStorage)
+        .load()
+        .newsPosts.find(({ title }) => title === 'Cambio de horario'),
+    ).toMatchObject({ type: 'urgent', tagIds: ['tag-pauper'], pinned: true })
+
+    fireEvent.click(
+      within(publishedRow as HTMLElement).getByRole('button', {
+        name: 'Modificar Cambio de horario',
+      }),
+    )
+    fireEvent.change(screen.getByLabelText('Título'), {
+      target: { value: 'Horario actualizado' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+
+    const updatedRow = screen
+      .getByText('Horario actualizado')
+      .closest('article')
+    expect(updatedRow).toBeTruthy()
+    fireEvent.click(
+      within(updatedRow as HTMLElement).getByRole('button', {
+        name: 'Desfijar Horario actualizado',
+      }),
+    )
+    fireEvent.click(
+      within(updatedRow as HTMLElement).getByRole('button', {
+        name: 'Eliminar Horario actualizado',
+      }),
+    )
+    fireEvent.click(
+      within(updatedRow as HTMLElement).getByRole('button', {
+        name: 'Confirmar',
+      }),
+    )
+
+    expect(screen.queryByText('Horario actualizado')).not.toBeInTheDocument()
+    expect(
+      createLocalDemoRepository(window.localStorage)
+        .load()
+        .newsPosts.some(({ title }) => title === 'Horario actualizado'),
+    ).toBe(false)
+  })
+
   it('opens an event detail and returns to the agenda', () => {
     render(<App />)
 

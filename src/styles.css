@@ -897,7 +897,7 @@ a {
 
 .settings-navigation {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.35rem;
   margin: 1.25rem 0 1rem;
   padding: 0.35rem;
@@ -1416,6 +1416,280 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
+}
+
+.communication-management-panel {
+  border: 1px solid #d9cddd;
+  border-radius: 0.95rem;
+  background: #fff;
+}
+
+.communication-management-heading {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.communication-management-heading > .primary-button {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.communication-editor {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0.9rem;
+  border-top: 1px solid #e5dfe7;
+  border-bottom: 1px solid #e5dfe7;
+  background: #faf7fb;
+}
+
+.communication-editor__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.communication-editor__heading span {
+  color: #7d568b;
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.communication-editor__heading h3 {
+  margin: 0.15rem 0 0;
+  color: #302735;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.communication-editor__heading > button,
+.managed-communication-row__actions button {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #ded5e1;
+  border-radius: 0.6rem;
+  color: #663579;
+  background: #fff;
+  cursor: pointer;
+}
+
+.communication-editor__fields {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.communication-audience-editor {
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid #e1d8e4;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.communication-audience-editor legend {
+  padding: 0 0.25rem;
+  color: #5f5263;
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
+.communication-audience-editor > p {
+  margin: 0 0 0.55rem;
+  color: #887d8a;
+  font-size: 0.64rem;
+}
+
+.communication-audience-editor > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.communication-audience-editor label {
+  position: relative;
+  cursor: pointer;
+}
+
+.communication-audience-editor input {
+  position: absolute;
+  opacity: 0;
+}
+
+.communication-audience-editor label span {
+  display: inline-flex;
+  min-height: 1.9rem;
+  align-items: center;
+  padding: 0 0.6rem;
+  border: 1px solid #ded5e1;
+  border-radius: 999px;
+  color: #6e6471;
+  background: #fff;
+  font-size: 0.64rem;
+  font-weight: 800;
+}
+
+.communication-audience-editor input:checked + span {
+  border-color: #643778;
+  color: #fff;
+  background: #643778;
+}
+
+.communication-audience-editor input:focus-visible + span {
+  outline: 3px solid #b99ac7;
+  outline-offset: 2px;
+}
+
+.communication-pin-option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #554b58;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.communication-pin-option input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #643778;
+}
+
+.communication-editor__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.communication-management-toolbar {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.8rem;
+  border-top: 1px solid #e5dfe7;
+  border-bottom: 1px solid #e5dfe7;
+  background: #faf7fb;
+}
+
+.communication-type-filter {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+  color: #776d79;
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
+.communication-type-filter select {
+  min-height: 2.5rem;
+  padding: 0 1.8rem 0 0.65rem;
+  border: 1px solid #d9cddd;
+  border-radius: 0.7rem;
+  color: #3f3543;
+  background: #fff;
+  font: inherit;
+  font-size: 0.7rem;
+}
+
+.communication-action-message {
+  margin: 0;
+  padding: 0.55rem 0.8rem 0;
+}
+
+.communication-action-message:empty {
+  display: none;
+}
+
+.managed-communication-list {
+  display: grid;
+}
+
+.managed-communication-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid #eee8ef;
+}
+
+.managed-communication-row__identity {
+  min-width: 0;
+}
+
+.managed-communication-row__identity > div {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.managed-communication-row__identity strong,
+.managed-communication-row__identity small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.managed-communication-row__identity strong {
+  margin-top: 0.25rem;
+  color: #342c37;
+  font-size: 0.76rem;
+}
+
+.managed-communication-row__identity small {
+  margin-top: 0.15rem;
+  color: #887e8a;
+  font-size: 0.6rem;
+}
+
+.communication-pinned-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: #8a6225;
+  font-size: 0.58rem;
+  font-weight: 850;
+}
+
+.managed-communication-row__actions {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.managed-communication-row__actions .managed-communication-row__delete {
+  border-color: #e5c9c6;
+  color: #985348;
+}
+
+.communication-delete-confirmation {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem;
+  border-radius: 0.6rem;
+  color: #74443e;
+  background: #fff1ee;
+  font-size: 0.64rem;
+  font-weight: 800;
+}
+
+.communication-delete-confirmation button {
+  min-height: 1.85rem;
+  padding: 0 0.5rem;
+  border: 1px solid #dfbeb9;
+  border-radius: 0.5rem;
+  color: #74443e;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
 }
 
 .registration-page {
@@ -8636,7 +8910,29 @@ a {
   }
 
   .settings-navigation {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .communication-management-heading {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .communication-management-heading > .primary-button {
+    grid-column: auto;
+    width: auto;
+  }
+
+  .communication-editor__fields {
+    grid-template-columns: 10rem minmax(0, 1fr);
+  }
+
+  .communication-editor__wide {
+    grid-column: 1 / -1;
+  }
+
+  .communication-management-toolbar {
+    grid-template-columns: minmax(14rem, 1fr) 12rem;
+    align-items: center;
   }
 
   .registration-rule {

@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest'
 
 import type { DemoDataSet } from '../domain/types'
 import { demoData } from './demoData'
-import { publishNewsPost } from './newsMutations'
+import {
+  deleteNewsPost,
+  publishNewsPost,
+  setNewsPostPinned,
+  updateNewsPost,
+} from './newsMutations'
 
 const publication = {
   authorMemberId: 'member-lucia',
@@ -51,6 +56,61 @@ describe('news mutations', () => {
         ...publication,
         content: '  ',
       }),
+    ).toBe(demoData)
+  })
+
+  it('updates, pins and deletes a communication as manager', () => {
+    const postId = 'news-arrival'
+    const post = demoData.newsPosts.find(({ id }) => id === postId)!
+    const updated = updateNewsPost(demoData, postId, 'member-lucia', {
+      type: 'urgent',
+      title: '  Llegada confirmada  ',
+      excerpt: '  Ya está disponible.  ',
+      content: '  Consulta los productos en el local.  ',
+      tagIds: ['tag-pauper', 'missing-tag'],
+      pinned: false,
+    })
+
+    expect(updated.newsPosts.find(({ id }) => id === postId)).toMatchObject({
+      title: 'Llegada confirmada',
+      type: 'urgent',
+      tagIds: ['tag-pauper'],
+      authorMemberId: post.authorMemberId,
+      publishedAt: post.publishedAt,
+    })
+
+    const pinned = setNewsPostPinned(updated, postId, 'member-lucia', true)
+    expect(pinned.newsPosts.find(({ id }) => id === postId)?.pinned).toBe(true)
+    expect(
+      deleteNewsPost(pinned, postId, 'member-lucia').newsPosts.some(
+        ({ id }) => id === postId,
+      ),
+    ).toBe(false)
+  })
+
+  it('protects communications from unauthorized management', () => {
+    const input = {
+      type: 'news' as const,
+      title: 'Título',
+      excerpt: 'Resumen',
+      content: 'Contenido',
+      tagIds: [],
+      pinned: false,
+    }
+
+    expect(
+      updateNewsPost(demoData, 'news-arrival', demoData.currentMemberId, input),
+    ).toBe(demoData)
+    expect(
+      deleteNewsPost(demoData, 'news-arrival', demoData.currentMemberId),
+    ).toBe(demoData)
+    expect(
+      setNewsPostPinned(
+        demoData,
+        'news-arrival',
+        demoData.currentMemberId,
+        true,
+      ),
     ).toBe(demoData)
   })
 })
