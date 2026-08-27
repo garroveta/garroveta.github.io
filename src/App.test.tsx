@@ -353,7 +353,7 @@ describe('App', () => {
     })
   })
 
-  it('lets the manager create, copy, edit, pin and delete communications', async () => {
+  it('lets the manager create, share, edit, pin and delete publications', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined)
     vi.stubGlobal('navigator', { clipboard: { writeText } })
     render(<App />)
@@ -361,7 +361,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
     fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
-    fireEvent.click(screen.getByRole('tab', { name: 'Comunicaciones' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Publicaciones' }))
     fireEvent.click(screen.getByRole('button', { name: 'Nueva' }))
 
     fireEvent.change(screen.getByLabelText('Tipo de comunicación'), {
@@ -382,7 +382,14 @@ describe('App', () => {
     )
     fireEvent.click(screen.getByRole('button', { name: 'Publicar' }))
 
-    expect(screen.getByText('Comunicación publicada.')).toBeInTheDocument()
+    expect(screen.getByText('Publicación guardada.')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Copiar para WhatsApp' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Ver la publicación' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Cerrar' })).toBeInTheDocument()
     const publishedRow = screen
       .getByText('Cambio de horario')
       .closest('article')
@@ -394,9 +401,7 @@ describe('App', () => {
     ).toMatchObject({ type: 'urgent', tagIds: ['tag-pauper'], pinned: true })
 
     fireEvent.click(
-      within(publishedRow as HTMLElement).getByRole('button', {
-        name: 'Copiar Cambio de horario para WhatsApp',
-      }),
+      screen.getByRole('button', { name: 'Copiar para WhatsApp' }),
     )
     await waitFor(() =>
       expect(writeText).toHaveBeenCalledWith(
@@ -404,8 +409,9 @@ describe('App', () => {
       ),
     )
     expect(
-      screen.getByText('Comunicación copiada. Ya puedes pegarla en WhatsApp.'),
+      screen.getByText('Publicación copiada. Ya puedes pegarla en WhatsApp.'),
     ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }))
 
     fireEvent.click(
       within(publishedRow as HTMLElement).getByRole('button', {
@@ -416,6 +422,8 @@ describe('App', () => {
       target: { value: 'Horario actualizado' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect(screen.getByText('Publicación actualizada.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }))
 
     const updatedRow = screen
       .getByText('Horario actualizado')
@@ -1012,15 +1020,26 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
-  it('lets a manager publish a targeted communication', () => {
+  it('centralizes publication management and opens a saved news item', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
     fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
     fireEvent.click(screen.getAllByRole('link', { name: /Noticias/ }).at(-1)!)
-    fireEvent.click(screen.getByRole('button', { name: 'Nueva publicación' }))
+    expect(
+      screen.queryByRole('button', { name: 'Nueva publicación' }),
+    ).not.toBeInTheDocument()
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Gestionar publicaciones' }),
+    )
 
-    fireEvent.change(screen.getByLabelText('Tipo'), {
+    expect(screen.getByRole('tab', { name: 'Publicaciones' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Nueva' }))
+
+    fireEvent.change(screen.getByLabelText('Tipo de comunicación'), {
       target: { value: 'urgent' },
     })
     fireEvent.change(screen.getByLabelText('Título'), {
@@ -1036,20 +1055,19 @@ describe('App', () => {
       },
     })
     fireEvent.click(screen.getByLabelText('Commander'))
-    fireEvent.click(screen.getByLabelText(/Fijar publicación/))
+    fireEvent.click(
+      screen.getByLabelText('Fijar como comunicación prioritaria'),
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Publicar' }))
 
-    expect(
-      screen.getByText('La publicación ya está visible.'),
-    ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Ver la publicación' }))
     expect(
       screen.getByRole('heading', { name: 'Cambio de sala' }),
     ).toBeInTheDocument()
-    const publishedNews = screen
-      .getByRole('heading', { name: 'Cambio de sala' })
-      .closest('article')
     expect(
-      within(publishedNews as HTMLElement).getByText(/Tomás/),
+      screen.getByText(
+        'Por motivos de organización, todas las rondas se jugarán en la sala principal.',
+      ),
     ).toBeInTheDocument()
     expect(
       createLocalDemoRepository(window.localStorage).load().newsPosts.at(-1),

@@ -1605,6 +1605,64 @@ a {
   display: none;
 }
 
+.communication-save-actions {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.35rem 0.65rem;
+  align-items: center;
+  margin: 0.8rem;
+  padding: 0.8rem;
+  border: 1px solid #bed9cc;
+  border-radius: 0.8rem;
+  color: #315f50;
+  background: #f3faf7;
+}
+
+.communication-save-actions__message {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.communication-save-actions__message strong {
+  color: #284f42;
+  font-size: 0.76rem;
+}
+
+.communication-save-actions__message span {
+  color: #668176;
+  font-size: 0.64rem;
+}
+
+.communication-save-actions__buttons {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: 1fr;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
+
+.communication-save-actions__buttons button {
+  display: inline-flex;
+  min-height: 2.35rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0 0.65rem;
+  border: 1px solid #c9dcd3;
+  border-radius: 0.65rem;
+  color: #315f50;
+  background: #fff;
+  font: inherit;
+  font-size: 0.66rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.communication-save-actions__buttons button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
 .managed-communication-list {
   display: grid;
 }
@@ -4416,7 +4474,22 @@ a {
 }
 
 .manager-news-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
   margin-top: 1.5rem;
+  padding: 0.75rem;
+  border: 1px solid #ded5e1;
+  border-radius: 0.9rem;
+  background: #faf7fb;
+}
+
+.manager-news-tools p {
+  margin: 0;
+  color: #746a77;
+  font-size: 0.7rem;
 }
 
 .news-composer {
@@ -8939,6 +9012,11 @@ a {
   .communication-management-toolbar {
     grid-template-columns: minmax(14rem, 1fr) 12rem;
     align-items: center;
+  }
+
+  .communication-save-actions__buttons {
+    grid-template-columns: repeat(3, auto);
+    justify-content: start;
   }
 
   .registration-rule {

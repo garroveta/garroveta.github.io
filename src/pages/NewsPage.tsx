@@ -4,22 +4,18 @@ import {
   ChevronRight,
   Megaphone,
   Pin,
-  Plus,
+  Settings2,
   Tags,
-  X,
 } from 'lucide-react'
-import type { CSSProperties, FormEvent } from 'react'
+import type { CSSProperties } from 'react'
 import { useState } from 'react'
 
 import type { DemoRole } from '../app/demoRoles'
-import { isCommunityOptionActive } from '../data/communityOptions'
-import { publishNewsPost } from '../data/newsMutations'
 import {
   getNewsById,
   getNewsFeed,
   type NewsListItem,
 } from '../data/newsSelectors'
-import type { DemoDataUpdater } from '../data/demoRepository'
 import type {
   CommunityMember,
   DemoDataSet,
@@ -30,8 +26,8 @@ type NewsPageProps = {
   activeRole: DemoRole
   data: DemoDataSet
   currentMember: CommunityMember
-  publishingMember: CommunityMember
-  onDataChange: (updater: DemoDataUpdater) => void
+  initialPostId?: string
+  onManagePublications: () => void
 }
 
 const newsTypeLabels: Record<NewsPostType, string> = {
@@ -42,8 +38,6 @@ const newsTypeLabels: Record<NewsPostType, string> = {
   poll: 'Encuesta',
   rule: 'Normas',
 }
-
-const newsTypes = Object.keys(newsTypeLabels) as NewsPostType[]
 
 const newsDateFormatter = new Intl.DateTimeFormat('es-ES', {
   day: 'numeric',
@@ -171,160 +165,16 @@ function NewsDetail({
   )
 }
 
-function NewsComposer({
-  data,
-  publishingMember,
-  onClose,
-  onDataChange,
-  onPublished,
-}: {
-  data: DemoDataSet
-  publishingMember: CommunityMember
-  onClose: () => void
-  onDataChange: (updater: DemoDataUpdater) => void
-  onPublished: () => void
-}) {
-  const [type, setType] = useState<NewsPostType>('news')
-  const [title, setTitle] = useState('')
-  const [excerpt, setExcerpt] = useState('')
-  const [content, setContent] = useState('')
-  const [tagIds, setTagIds] = useState<string[]>([])
-  const [pinned, setPinned] = useState(false)
-
-  const toggleTag = (tagId: string) => {
-    setTagIds((currentTagIds) =>
-      currentTagIds.includes(tagId)
-        ? currentTagIds.filter((currentTagId) => currentTagId !== tagId)
-        : [...currentTagIds, tagId],
-    )
-  }
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    onDataChange((currentData) =>
-      publishNewsPost(currentData, {
-        authorMemberId: publishingMember.id,
-        type,
-        title,
-        excerpt,
-        content,
-        tagIds,
-        pinned,
-      }),
-    )
-    onPublished()
-  }
-
-  return (
-    <form
-      className="news-composer"
-      aria-label="Nueva publicación"
-      onSubmit={handleSubmit}
-    >
-      <div className="news-composer__heading">
-        <div>
-          <span>Publicar como {publishingMember.displayName}</span>
-          <h2>Nueva publicación</h2>
-        </div>
-        <button type="button" aria-label="Cerrar formulario" onClick={onClose}>
-          <X aria-hidden="true" size={18} />
-        </button>
-      </div>
-
-      <label className="form-field">
-        <span>Tipo</span>
-        <select
-          value={type}
-          onChange={(event) => setType(event.target.value as NewsPostType)}
-        >
-          {newsTypes.map((newsType) => (
-            <option key={newsType} value={newsType}>
-              {newsTypeLabels[newsType]}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label className="form-field">
-        <span>Título</span>
-        <input
-          required
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
-        />
-      </label>
-
-      <label className="form-field">
-        <span>Resumen</span>
-        <textarea
-          required
-          rows={2}
-          value={excerpt}
-          onChange={(event) => setExcerpt(event.target.value)}
-        />
-      </label>
-
-      <label className="form-field">
-        <span>Contenido</span>
-        <textarea
-          required
-          rows={5}
-          value={content}
-          onChange={(event) => setContent(event.target.value)}
-        />
-      </label>
-
-      <fieldset className="composer-tags">
-        <legend>Público</legend>
-        <p>Sin etiqueta, la publicación será visible para toda la comunidad.</p>
-        <div>
-          {data.tags.filter(isCommunityOptionActive).map((tag) => (
-            <label key={tag.id}>
-              <input
-                type="checkbox"
-                checked={tagIds.includes(tag.id)}
-                onChange={() => toggleTag(tag.id)}
-              />
-              <span>{tag.name}</span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
-
-      <label className="pin-option">
-        <input
-          type="checkbox"
-          checked={pinned}
-          onChange={(event) => setPinned(event.target.checked)}
-        />
-        <span>
-          <strong>Fijar publicación</strong>
-          Mantenerla entre las comunicaciones prioritarias.
-        </span>
-      </label>
-
-      <div className="composer-actions">
-        <button className="secondary-button" type="button" onClick={onClose}>
-          Cancelar
-        </button>
-        <button className="primary-button" type="submit">
-          Publicar
-        </button>
-      </div>
-    </form>
-  )
-}
-
 export function NewsPage({
   activeRole,
   data,
   currentMember,
-  publishingMember,
-  onDataChange,
+  initialPostId,
+  onManagePublications,
 }: NewsPageProps) {
-  const [selectedPostId, setSelectedPostId] = useState<string>()
-  const [isComposerOpen, setIsComposerOpen] = useState(false)
-  const [publicationMessage, setPublicationMessage] = useState('')
+  const [selectedPostId, setSelectedPostId] = useState<string | undefined>(
+    initialPostId,
+  )
   const [feedMode, setFeedMode] = useState<'personalized' | 'all'>(
     'personalized',
   )
@@ -366,37 +216,17 @@ export function NewsPage({
         </p>
       </header>
 
-      {activeRole !== 'jugador' ? (
+      {activeRole === 'gerente' ? (
         <div className="manager-news-tools">
-          {isComposerOpen ? (
-            <NewsComposer
-              data={data}
-              publishingMember={publishingMember}
-              onClose={() => setIsComposerOpen(false)}
-              onDataChange={onDataChange}
-              onPublished={() => {
-                setIsComposerOpen(false)
-                setFeedMode('all')
-                setActiveTagId(undefined)
-                setPublicationMessage('La publicación ya está visible.')
-              }}
-            />
-          ) : (
-            <button
-              className="primary-button"
-              type="button"
-              onClick={() => {
-                setPublicationMessage('')
-                setIsComposerOpen(true)
-              }}
-            >
-              <Plus aria-hidden="true" size={17} />
-              Nueva publicación
-            </button>
-          )}
-          <p className="action-message" aria-live="polite">
-            {publicationMessage}
-          </p>
+          <p>La creación y la edición están centralizadas en Configuración.</p>
+          <button
+            className="primary-button"
+            type="button"
+            onClick={onManagePublications}
+          >
+            <Settings2 aria-hidden="true" size={17} />
+            Gestionar publicaciones
+          </button>
         </div>
       ) : null}
 

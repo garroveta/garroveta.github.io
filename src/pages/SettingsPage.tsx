@@ -16,23 +16,29 @@ import { RegistrationSettingsPanel } from '../components/RegistrationSettingsPan
 import type { DemoDataUpdater } from '../data/demoRepository'
 import type { DemoDataSet } from '../domain/types'
 
-type SettingsSection =
+export type SettingsSection =
   'options' | 'registrations' | 'members' | 'communications' | 'ranking'
 
 type SettingsPageProps = {
   data: DemoDataSet
   managerId: string
+  initialSection?: SettingsSection
   onDataChange: (updater: DemoDataUpdater) => void
   onBack: () => void
+  onViewNewsPost: (postId: string) => void
 }
 
 export function SettingsPage({
   data,
   managerId,
+  initialSection,
   onDataChange,
   onBack,
+  onViewNewsPost,
 }: SettingsPageProps) {
-  const [activeSection, setActiveSection] = useState<SettingsSection>('options')
+  const [activeSection, setActiveSection] = useState<SettingsSection>(
+    initialSection ?? 'options',
+  )
 
   return (
     <div className="page settings-page">
@@ -46,7 +52,7 @@ export function SettingsPage({
         <h1>Configuración</h1>
         <p>
           Administra las opciones, las inscripciones, los miembros, las
-          comunicaciones y las reglas del ranking desde un único lugar.
+          publicaciones y las reglas del ranking desde un único lugar.
         </p>
       </header>
 
@@ -62,7 +68,7 @@ export function SettingsPage({
           onClick={() => setActiveSection('communications')}
         >
           <Megaphone aria-hidden="true" size={18} />
-          Comunicaciones
+          Publicaciones
         </button>
         <button
           type="button"
@@ -125,6 +131,7 @@ export function SettingsPage({
           data={data}
           managerId={managerId}
           onDataChange={onDataChange}
+          onViewPost={onViewNewsPost}
         />
       ) : (
         <RankingSettingsPanel

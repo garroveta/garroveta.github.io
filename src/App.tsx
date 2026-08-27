@@ -51,6 +51,7 @@ export function App() {
   const cardRouteParams = new URLSearchParams(routeQuery)
   const rankingRouteParams = new URLSearchParams(routeQuery)
   const profileRouteParams = new URLSearchParams(routeQuery)
+  const newsRouteParams = new URLSearchParams(routeQuery)
   const isRegistrationView =
     activeRoute === 'perfil' && profileRouteParams.get('view') === 'registro'
   const isSettingsView =
@@ -123,8 +124,10 @@ export function App() {
             activeRole={activeRole}
             data={data}
             currentMember={currentMember}
-            publishingMember={publishingMember}
-            onDataChange={updateData}
+            initialPostId={newsRouteParams.get('post') ?? undefined}
+            onManagePublications={() =>
+              navigate('perfil', 'view=configuracion&section=communications')
+            }
           />
         ) : isRegistrationView ? (
           <RegistrationPage
@@ -137,8 +140,16 @@ export function App() {
           <SettingsPage
             data={data}
             managerId={publishingMember.id}
+            initialSection={
+              profileRouteParams.get('section') === 'communications'
+                ? 'communications'
+                : undefined
+            }
             onDataChange={updateData}
             onBack={() => navigate('perfil')}
+            onViewNewsPost={(postId) =>
+              navigate('noticias', `post=${encodeURIComponent(postId)}`)
+            }
           />
         ) : activeRoute === 'perfil' ? (
           <ProfilePage

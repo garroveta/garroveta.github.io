@@ -1,6 +1,8 @@
 import {
   Check,
+  CheckCircle2,
   Copy,
+  ExternalLink,
   Megaphone,
   Pencil,
   Pin,
@@ -15,6 +17,7 @@ import { useMemo, useState } from 'react'
 
 import type { DemoDataUpdater } from '../data/demoRepository'
 import {
+  createNewsPostId,
   deleteNewsPost,
   publishNewsPost,
   setNewsPostPinned,
@@ -28,6 +31,7 @@ type CommunicationManagementPanelProps = {
   data: DemoDataSet
   managerId: string
   onDataChange: (updater: DemoDataUpdater) => void
+  onViewPost: (postId: string) => void
 }
 
 const typeLabels: Record<NewsPostType, string> = {
@@ -75,10 +79,10 @@ function CommunicationEditor({
   onClose,
   onDataChange,
   onSaved,
-}: CommunicationManagementPanelProps & {
+}: Omit<CommunicationManagementPanelProps, 'onViewPost'> & {
   post?: NewsPost
   onClose: () => void
-  onSaved: (message: string) => void
+  onSaved: (postId: string, message: string) => void
 }) {
   const [type, setType] = useState<NewsPostType>(post?.type ?? 'news')
   const [title, setTitle] = useState(post?.title ?? '')
@@ -99,6 +103,7 @@ function CommunicationEditor({
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const input = { type, title, excerpt, content, tagIds, pinned }
+    const savedPostId = post?.id ?? createNewsPostId(data, title)
 
     onDataChange((currentData) =>
       post
@@ -108,7 +113,10 @@ function CommunicationEditor({
             authorMemberId: managerId,
           }),
     )
-    onSaved(post ? 'Comunicación actualizada.' : 'Comunicación publicada.')
+    onSaved(
+      savedPostId,
+      post ? 'Publicación actualizada.' : 'Publicación guardada.',
+    )
   }
 
   return (
@@ -211,6 +219,7 @@ export function CommunicationManagementPanel({
   data,
   managerId,
   onDataChange,
+  onViewPost,
 }: CommunicationManagementPanelProps) {
   const [query, setQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<'all' | NewsPostType>('all')
@@ -220,6 +229,10 @@ export function CommunicationManagementPanel({
   const [pendingDeleteId, setPendingDeleteId] = useState<string>()
   const [copiedPostId, setCopiedPostId] = useState<string>()
   const [actionMessage, setActionMessage] = useState('')
+  const [savedPublication, setSavedPublication] = useState<{
+    postId: string
+    message: string
+  }>()
   const filteredPosts = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase('es')
 
@@ -252,10 +265,14 @@ export function CommunicationManagementPanel({
       : undefined
 
   const closeEditor = () => setEditorMode('closed')
-  const handleSaved = (message: string) => {
-    setActionMessage(message)
+  const handleSaved = (postId: string, message: string) => {
+    setActionMessage('')
+    setSavedPublication({ postId, message })
     closeEditor()
   }
+  const savedPost = savedPublication
+    ? data.newsPosts.find(({ id }) => id === savedPublication.postId)
+    : undefined
 
   return (
     <section
@@ -268,7 +285,7 @@ export function CommunicationManagementPanel({
         </span>
         <div>
           <span>Información de la tienda</span>
-          <h2 id="communication-management-title">Comunicaciones</h2>
+          <h2 id="communication-management-title">Publicaciones</h2>
           <p>
             Publica avisos segmentados y mantén actualizada la información
             visible para la comunidad.
@@ -279,6 +296,7 @@ export function CommunicationManagementPanel({
           type="button"
           onClick={() => {
             setActionMessage('')
+            setSavedPublication(undefined)
             setEditorMode('new')
           }}
         >
@@ -299,12 +317,82 @@ export function CommunicationManagementPanel({
         />
       ) : null}
 
+      {savedPublication ? (
+        <section
+          className="communication-save-actions"
+          aria-labelledby="communication-save-title"
+        >
+          <CheckCircle2 aria-hidden="true" size={22} />
+          <div className="communication-save-actions__message">
+            <strong id="communication-save-title">
+              {savedPublication.message}
+            </strong>
+            <span>¿Qué quieres hacer ahora?</span>
+          </div>
+          <div className="communication-save-actions__buttons">
+            <button
+              type="button"
+              disabled={!savedPost}
+              onClick={async () => {
+                if (!savedPost) {
+                  return
+                }
+
+                const tagNames = savedPost.tagIds.flatMap((tagId) => {
+                  const tag = data.tags.find(({ id }) => id === tagId)
+                  return tag ? [tag.name] : []
+                })
+
+                try {
+                  await copyText(
+                    formatNewsPostForWhatsApp(
+                      savedPost,
+                      tagNames,
+                      data.community,
+                    ),
+                  )
+                  setCopiedPostId(savedPost.id)
+                  setActionMessage(
+                    'Publicación copiada. Ya puedes pegarla en WhatsApp.',
+                  )
+                } catch {
+                  setActionMessage(
+                    'No se ha podido copiar. Revisa los permisos del navegador.',
+                  )
+                }
+              }}
+            >
+              <Copy aria-hidden="true" size={16} />
+              Copiar para WhatsApp
+            </button>
+            <button
+              type="button"
+              disabled={!savedPost}
+              onClick={() => (savedPost ? onViewPost(savedPost.id) : undefined)}
+            >
+              <ExternalLink aria-hidden="true" size={16} />
+              Ver la publicación
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSavedPublication(undefined)
+                setActionMessage('')
+              }}
+            >
+              <X aria-hidden="true" size={16} />
+              Cerrar
+            </button>
+          </div>
+        </section>
+      ) : null}
+
       <div className="communication-management-toolbar">
         <label className="member-search">
           <Search aria-hidden="true" size={18} />
           <input
             type="search"
-            aria-label="Buscar comunicaciones"
+            aria-label="Buscar publicaciones"
             placeholder="Buscar por título, tipo o etiqueta"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -439,6 +527,7 @@ export function CommunicationManagementPanel({
                   title="Modificar"
                   onClick={() => {
                     setActionMessage('')
+                    setSavedPublication(undefined)
                     setEditorMode(post.id)
                   }}
                 >
@@ -485,7 +574,7 @@ export function CommunicationManagementPanel({
 
       {filteredPosts.length === 0 ? (
         <p className="filtered-empty-state">
-          No hay comunicaciones para estos filtros.
+          No hay publicaciones para estos filtros.
         </p>
       ) : null}
     </section>

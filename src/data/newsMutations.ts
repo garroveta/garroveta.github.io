@@ -24,7 +24,7 @@ function slugify(value: string) {
     .slice(0, 40)
 }
 
-function createPostId(data: DemoDataSet, title: string) {
+export function createNewsPostId(data: DemoDataSet, title: string) {
   const baseId = `news-${slugify(title) || 'publication'}`
   let candidateId = baseId
   let suffix = 2
@@ -70,7 +70,7 @@ export function publishNewsPost(
     newsPosts: [
       ...data.newsPosts,
       {
-        id: createPostId(data, title),
+        id: createNewsPostId(data, title),
         communityId: data.community.id,
         authorMemberId: author.id,
         type: input.type,
