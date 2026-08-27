@@ -7,7 +7,16 @@ import type {
 
 export type CommunitySettingsInput = Pick<
   Community,
-  'name' | 'city' | 'openingHours'
+  | 'name'
+  | 'city'
+  | 'address'
+  | 'contactEmail'
+  | 'contactPhone'
+  | 'websiteUrl'
+  | 'instagramUrl'
+  | 'facebookUrl'
+  | 'logoUrl'
+  | 'openingHours'
 >
 
 export const COMMUNITY_WEEKDAYS: Weekday[] = [
@@ -31,6 +40,26 @@ export const COMMUNITY_WEEKDAY_LABELS: Record<Weekday, string> = {
 }
 
 const timePattern = /^(?:[01]\d|2[0-3]):[0-5]\d$|^24:00$/
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function isOptionalUrlValid(value?: string) {
+  const normalizedValue = value?.trim()
+
+  if (!normalizedValue) {
+    return true
+  }
+
+  try {
+    const url = new URL(normalizedValue)
+    return url.protocol === 'http:' || url.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+function normalizeOptionalText(value?: string) {
+  return value?.trim() || undefined
+}
 
 function isOpeningHoursEntryValid(entry: OpeningHours) {
   const isClosed = !entry.opensAt && !entry.closesAt
@@ -54,6 +83,15 @@ export function isCommunitySettingsValid(input: CommunitySettingsInput) {
   return (
     input.name.trim().length >= 2 &&
     input.city.trim().length >= 2 &&
+    (!input.address?.trim() || input.address.trim().length >= 3) &&
+    (!input.contactEmail?.trim() ||
+      emailPattern.test(input.contactEmail.trim())) &&
+    (!input.contactPhone?.trim() ||
+      input.contactPhone.replace(/\D/g, '').length >= 6) &&
+    isOptionalUrlValid(input.websiteUrl) &&
+    isOptionalUrlValid(input.instagramUrl) &&
+    isOptionalUrlValid(input.facebookUrl) &&
+    isOptionalUrlValid(input.logoUrl) &&
     input.openingHours.length === COMMUNITY_WEEKDAYS.length &&
     COMMUNITY_WEEKDAYS.every((day) => days.has(day)) &&
     input.openingHours.every(isOpeningHoursEntryValid)
@@ -97,6 +135,13 @@ export function updateCommunitySettings(
       ...data.community,
       name: input.name.trim(),
       city: input.city.trim(),
+      address: normalizeOptionalText(input.address),
+      contactEmail: normalizeOptionalText(input.contactEmail),
+      contactPhone: normalizeOptionalText(input.contactPhone),
+      websiteUrl: normalizeOptionalText(input.websiteUrl),
+      instagramUrl: normalizeOptionalText(input.instagramUrl),
+      facebookUrl: normalizeOptionalText(input.facebookUrl),
+      logoUrl: normalizeOptionalText(input.logoUrl),
       openingHours: normalizeOpeningHours(input.openingHours),
     },
   }

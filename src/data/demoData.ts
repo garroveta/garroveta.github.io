@@ -331,6 +331,7 @@ export const demoData = {
     id: communityId,
     name: 'CRC Delorean',
     city: 'Inca',
+    contactEmail: 'crcdelorean@gmail.com',
     memberCount: 150,
     accessPolicy: 'approval_required',
     suggestedTagIds: [

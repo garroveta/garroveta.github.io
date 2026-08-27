@@ -316,6 +316,18 @@ describe('App', () => {
     fireEvent.change(screen.getByLabelText('Ciudad'), {
       target: { value: 'Palma' },
     })
+    fireEvent.change(screen.getByLabelText('Dirección (opcional)'), {
+      target: { value: 'Carrer Major, 12' },
+    })
+    fireEvent.change(screen.getByLabelText('Correo de contacto'), {
+      target: { value: 'hola@delorean.example' },
+    })
+    fireEvent.change(screen.getByLabelText('Sitio web'), {
+      target: { value: 'https://delorean.example' },
+    })
+    fireEvent.change(screen.getByLabelText('URL del logo'), {
+      target: { value: 'https://delorean.example/logo.png' },
+    })
     fireEvent.change(screen.getByLabelText('Apertura del Miércoles'), {
       target: { value: '18:00' },
     })
@@ -335,11 +347,25 @@ describe('App', () => {
     ).toMatchObject({
       name: 'CRC Delorean Inca',
       city: 'Palma',
+      address: 'Carrer Major, 12',
+      contactEmail: 'hola@delorean.example',
+      websiteUrl: 'https://delorean.example',
+      logoUrl: 'https://delorean.example/logo.png',
       openingHours: expect.arrayContaining([
         { day: 'wednesday', opensAt: '18:00', closesAt: '24:00' },
         { day: 'sunday' },
       ]),
     })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Volver al perfil' }))
+    expect(screen.getByText('Carrer Major, 12')).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: 'hola@delorean.example' }),
+    ).toHaveAttribute('href', 'mailto:hola@delorean.example')
+    expect(screen.getByRole('link', { name: 'Web' })).toHaveAttribute(
+      'href',
+      'https://delorean.example',
+    )
   })
 
   it('lets the manager approve members and manage their permissions', () => {

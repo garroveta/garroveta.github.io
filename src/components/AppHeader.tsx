@@ -5,7 +5,7 @@ import type { Community } from '../domain/types'
 
 type AppHeaderProps = {
   activeRole: DemoRole
-  community: Pick<Community, 'name' | 'city'>
+  community: Pick<Community, 'name' | 'city' | 'logoUrl'>
   registrationMode?: boolean
 }
 
@@ -21,8 +21,11 @@ export function AppHeader({
   return (
     <header className="app-header">
       <a className="brand" href="#inicio" aria-label="Garroveta, inicio">
-        <span className="brand__mark" aria-hidden="true">
-          G
+        <span
+          className={`brand__mark${community.logoUrl ? ' brand__mark--image' : ''}`}
+          aria-hidden="true"
+        >
+          {community.logoUrl ? <img src={community.logoUrl} alt="" /> : 'G'}
         </span>
         <span className="brand__text">
           <strong>Garroveta</strong>

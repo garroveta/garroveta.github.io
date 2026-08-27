@@ -1,4 +1,4 @@
-import { Building2, Save } from 'lucide-react'
+import { Building2, Image, Save } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 
 import {
@@ -31,6 +31,13 @@ export function CommunitySettingsPanel({
   const [settings, setSettings] = useState<CommunitySettingsInput>({
     name: data.community.name,
     city: data.community.city,
+    address: data.community.address ?? '',
+    contactEmail: data.community.contactEmail ?? '',
+    contactPhone: data.community.contactPhone ?? '',
+    websiteUrl: data.community.websiteUrl ?? '',
+    instagramUrl: data.community.instagramUrl ?? '',
+    facebookUrl: data.community.facebookUrl ?? '',
+    logoUrl: data.community.logoUrl ?? '',
     openingHours: getOrderedOpeningHours(data.community.openingHours),
   })
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'invalid'>(
@@ -45,6 +52,14 @@ export function CommunitySettingsPanel({
         entry.day === day ? { ...entry, ...updates } : entry,
       ),
     }))
+  }
+
+  function updateField(
+    field: Exclude<keyof CommunitySettingsInput, 'openingHours'>,
+    value: string,
+  ) {
+    setSaveStatus('idle')
+    setSettings((current) => ({ ...current, [field]: value }))
   }
 
   function toggleDay(day: Weekday, isOpen: boolean) {
@@ -95,36 +110,120 @@ export function CommunitySettingsPanel({
       </div>
 
       <form onSubmit={saveSettings}>
-        <div className="community-settings-identity">
-          <label className="form-field">
-            <span>Nombre de la comunidad</span>
-            <input
-              required
-              value={settings.name}
-              onChange={(event) => {
-                setSaveStatus('idle')
-                setSettings((current) => ({
-                  ...current,
-                  name: event.target.value,
-                }))
-              }}
-            />
-          </label>
-          <label className="form-field">
-            <span>Ciudad</span>
-            <input
-              required
-              value={settings.city}
-              onChange={(event) => {
-                setSaveStatus('idle')
-                setSettings((current) => ({
-                  ...current,
-                  city: event.target.value,
-                }))
-              }}
-            />
-          </label>
-        </div>
+        <fieldset className="community-settings-section">
+          <legend>Identidad y ubicación</legend>
+          <div className="community-settings-identity">
+            <label className="form-field">
+              <span>Nombre de la comunidad</span>
+              <input
+                required
+                value={settings.name}
+                onChange={(event) => updateField('name', event.target.value)}
+              />
+            </label>
+            <label className="form-field">
+              <span>Ciudad</span>
+              <input
+                required
+                value={settings.city}
+                onChange={(event) => updateField('city', event.target.value)}
+              />
+            </label>
+            <label className="form-field community-settings-wide-field">
+              <span>Dirección (opcional)</span>
+              <input
+                autoComplete="street-address"
+                placeholder="Calle, número y código postal"
+                value={settings.address ?? ''}
+                onChange={(event) => updateField('address', event.target.value)}
+              />
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset className="community-settings-section">
+          <legend>Contacto y presencia online</legend>
+          <p>
+            Los miembros podrán consultar estos datos desde el perfil de la
+            comunidad.
+          </p>
+          <div className="community-settings-contact-grid">
+            <label className="form-field">
+              <span>Correo de contacto</span>
+              <input
+                autoComplete="email"
+                type="email"
+                placeholder="tienda@email.com"
+                value={settings.contactEmail ?? ''}
+                onChange={(event) =>
+                  updateField('contactEmail', event.target.value)
+                }
+              />
+            </label>
+            <label className="form-field">
+              <span>Teléfono</span>
+              <input
+                autoComplete="tel"
+                type="tel"
+                placeholder="+34 600 000 000"
+                value={settings.contactPhone ?? ''}
+                onChange={(event) =>
+                  updateField('contactPhone', event.target.value)
+                }
+              />
+            </label>
+            <label className="form-field">
+              <span>Sitio web</span>
+              <input
+                type="url"
+                placeholder="https://…"
+                value={settings.websiteUrl ?? ''}
+                onChange={(event) =>
+                  updateField('websiteUrl', event.target.value)
+                }
+              />
+            </label>
+            <label className="form-field">
+              <span>Instagram</span>
+              <input
+                type="url"
+                placeholder="https://instagram.com/…"
+                value={settings.instagramUrl ?? ''}
+                onChange={(event) =>
+                  updateField('instagramUrl', event.target.value)
+                }
+              />
+            </label>
+            <label className="form-field">
+              <span>Facebook</span>
+              <input
+                type="url"
+                placeholder="https://facebook.com/…"
+                value={settings.facebookUrl ?? ''}
+                onChange={(event) =>
+                  updateField('facebookUrl', event.target.value)
+                }
+              />
+            </label>
+            <label className="form-field">
+              <span>URL del logo</span>
+              <input
+                type="url"
+                placeholder="https://…/logo.png"
+                value={settings.logoUrl ?? ''}
+                onChange={(event) => updateField('logoUrl', event.target.value)}
+              />
+            </label>
+          </div>
+          {settings.logoUrl ? (
+            <div className="community-logo-preview">
+              <span>
+                <Image aria-hidden="true" size={15} /> Vista previa
+              </span>
+              <img alt="Vista previa del logo" src={settings.logoUrl} />
+            </div>
+          ) : null}
+        </fieldset>
 
         <fieldset className="community-opening-hours">
           <legend>Horario habitual</legend>
@@ -211,7 +310,7 @@ export function CommunitySettingsPanel({
             {saveStatus === 'saved'
               ? 'Información guardada.'
               : saveStatus === 'invalid'
-                ? 'Revisa el nombre, la ciudad y los horarios.'
+                ? 'Revisa la identidad, los contactos, las URL y los horarios.'
                 : ''}
           </span>
           <button className="primary-button" type="submit">

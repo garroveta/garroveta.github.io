@@ -21,6 +21,13 @@ export type Community = {
   id: EntityId
   name: string
   city: string
+  address?: string
+  contactEmail?: string
+  contactPhone?: string
+  websiteUrl?: string
+  instagramUrl?: string
+  facebookUrl?: string
+  logoUrl?: string
   memberCount: number
   accessPolicy: 'approval_required'
   suggestedTagIds: EntityId[]

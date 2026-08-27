@@ -84,6 +84,19 @@ a {
   font-weight: 700;
 }
 
+.brand__mark--image {
+  overflow: hidden;
+  padding: 0.2rem;
+  background: #fff;
+}
+
+.brand__mark--image img {
+  width: 100%;
+  height: 100%;
+  border-radius: 0.58rem;
+  object-fit: contain;
+}
+
 .brand__text {
   display: grid;
   gap: 0.08rem;
@@ -1014,6 +1027,60 @@ a {
 .community-settings-identity {
   display: grid;
   gap: 0.75rem;
+}
+
+.community-settings-section {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.community-settings-section > legend {
+  padding: 0;
+  color: #4c414f;
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.community-settings-section > p {
+  margin: 0.2rem 0 0.65rem;
+  color: #887e8a;
+  font-size: 0.65rem;
+  line-height: 1.4;
+}
+
+.community-settings-contact-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.community-logo-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding: 0.6rem;
+  border: 1px solid #e3dce5;
+  border-radius: 0.8rem;
+  background: #fcfafc;
+}
+
+.community-logo-preview > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #746878;
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
+.community-logo-preview img {
+  width: 3.25rem;
+  height: 3.25rem;
+  margin-left: auto;
+  border-radius: 0.7rem;
+  object-fit: contain;
 }
 
 .community-opening-hours {
@@ -2662,6 +2729,32 @@ a {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.55rem;
   margin-top: 1rem;
+}
+
+.community-contact-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.8rem;
+}
+
+.community-contact-links a {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 2rem;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0 0.55rem;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 999px;
+  overflow: hidden;
+  color: #e8dceb;
+  background: rgb(255 255 255 / 7%);
+  font-size: 0.65rem;
+  font-weight: 750;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .demo-metric {
@@ -9190,6 +9283,14 @@ a {
 
   .community-settings-identity {
     grid-template-columns: minmax(0, 1fr) minmax(12rem, 0.55fr);
+  }
+
+  .community-settings-wide-field {
+    grid-column: 1 / -1;
+  }
+
+  .community-settings-contact-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .community-opening-hours__row {

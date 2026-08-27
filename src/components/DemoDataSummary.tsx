@@ -1,9 +1,12 @@
 import {
   ArrowLeftRight,
   CalendarDays,
+  ExternalLink,
   HardDrive,
+  Mail,
   MapPin,
   Newspaper,
+  Phone,
   UsersRound,
 } from 'lucide-react'
 
@@ -50,9 +53,45 @@ export function DemoDataSummary({ community, summary }: DemoDataSummaryProps) {
         </div>
         <p>
           <MapPin aria-hidden="true" size={15} />
-          {community.city}
+          {community.address ?? community.city}
         </p>
       </div>
+
+      {community.contactEmail ||
+      community.contactPhone ||
+      community.websiteUrl ||
+      community.instagramUrl ||
+      community.facebookUrl ? (
+        <div
+          className="community-contact-links"
+          aria-label="Contacto del local"
+        >
+          {community.contactEmail ? (
+            <a href={`mailto:${community.contactEmail}`}>
+              <Mail aria-hidden="true" size={14} />
+              {community.contactEmail}
+            </a>
+          ) : null}
+          {community.contactPhone ? (
+            <a href={`tel:${community.contactPhone}`}>
+              <Phone aria-hidden="true" size={14} />
+              {community.contactPhone}
+            </a>
+          ) : null}
+          {[
+            ['Web', community.websiteUrl],
+            ['Instagram', community.instagramUrl],
+            ['Facebook', community.facebookUrl],
+          ].map(([label, url]) =>
+            url ? (
+              <a key={label} href={url} rel="noreferrer" target="_blank">
+                <ExternalLink aria-hidden="true" size={14} />
+                {label}
+              </a>
+            ) : null,
+          )}
+        </div>
+      ) : null}
 
       <div className="demo-metrics">
         {metrics.map(({ icon: Icon, label, value }) => (
