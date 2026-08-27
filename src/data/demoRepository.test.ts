@@ -89,6 +89,33 @@ describe('local demo repository', () => {
     ).toBe('/event-posters/crc-weekly-2026-07-27.jpeg')
   })
 
+  it('adds member management scenarios to version 23 without losing local data', () => {
+    const previouslySavedData = structuredClone(demoData)
+    previouslySavedData.members = previouslySavedData.members.filter(
+      ({ id }) =>
+        id !== 'member-lucas-pending' && id !== 'member-elena-suspended',
+    )
+    previouslySavedData.community.memberCount = 151
+    window.localStorage.setItem(
+      DEMO_STORAGE_KEY,
+      JSON.stringify({
+        version: 23,
+        savedAt: '2026-08-26T12:00:00+02:00',
+        data: previouslySavedData,
+      }),
+    )
+
+    const restoredData = createLocalDemoRepository(window.localStorage).load()
+
+    expect(restoredData.community.memberCount).toBe(151)
+    expect(
+      restoredData.members.find(({ id }) => id === 'member-lucas-pending'),
+    ).toMatchObject({ status: 'pending' })
+    expect(
+      restoredData.members.find(({ id }) => id === 'member-elena-suspended'),
+    ).toMatchObject({ status: 'suspended' })
+  })
+
   it('falls back to seed data when storage is corrupted', () => {
     window.localStorage.setItem(DEMO_STORAGE_KEY, '{not-valid-json')
 

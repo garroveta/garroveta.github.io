@@ -1,13 +1,20 @@
-import { ArrowLeft, ListTree, Trophy, UsersRound } from 'lucide-react'
+import {
+  ArrowLeft,
+  ListTree,
+  Trophy,
+  UserRoundCog,
+  UsersRound,
+} from 'lucide-react'
 import { useState } from 'react'
 
 import { CommunityOptionManager } from '../components/CommunityOptionManager'
+import { MemberManagementPanel } from '../components/MemberManagementPanel'
 import { RankingSettingsPanel } from '../components/RankingSettingsPanel'
 import { RegistrationSettingsPanel } from '../components/RegistrationSettingsPanel'
 import type { DemoDataUpdater } from '../data/demoRepository'
 import type { DemoDataSet } from '../domain/types'
 
-type SettingsSection = 'options' | 'registrations' | 'ranking'
+type SettingsSection = 'options' | 'registrations' | 'members' | 'ranking'
 
 type SettingsPageProps = {
   data: DemoDataSet
@@ -35,8 +42,8 @@ export function SettingsPage({
         <span className="page-eyebrow">Herramientas del gerente</span>
         <h1>Configuración</h1>
         <p>
-          Administra las opciones de la comunidad y las reglas del ranking desde
-          un único lugar.
+          Administra las opciones, las inscripciones, los miembros y las reglas
+          del ranking desde un único lugar.
         </p>
       </header>
 
@@ -66,6 +73,15 @@ export function SettingsPage({
         <button
           type="button"
           role="tab"
+          aria-selected={activeSection === 'members'}
+          onClick={() => setActiveSection('members')}
+        >
+          <UserRoundCog aria-hidden="true" size={18} />
+          Miembros
+        </button>
+        <button
+          type="button"
+          role="tab"
           aria-selected={activeSection === 'ranking'}
           onClick={() => setActiveSection('ranking')}
         >
@@ -82,6 +98,12 @@ export function SettingsPage({
         />
       ) : activeSection === 'registrations' ? (
         <RegistrationSettingsPanel
+          data={data}
+          managerId={managerId}
+          onDataChange={onDataChange}
+        />
+      ) : activeSection === 'members' ? (
+        <MemberManagementPanel
           data={data}
           managerId={managerId}
           onDataChange={onDataChange}

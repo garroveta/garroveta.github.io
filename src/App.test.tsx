@@ -302,6 +302,57 @@ describe('App', () => {
     ).toBeChecked()
   })
 
+  it('lets the manager approve members and manage their permissions', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Miembros' }))
+    fireEvent.change(screen.getByLabelText('Buscar miembros'), {
+      target: { value: 'Lucas Muntaner' },
+    })
+
+    const pendingMember = screen.getByText('Lucas Muntaner').closest('article')
+    expect(pendingMember).toBeTruthy()
+    fireEvent.click(
+      within(pendingMember as HTMLElement).getByRole('button', {
+        name: 'Aceptar',
+      }),
+    )
+    const approvedMember = screen.getByText('Lucas Muntaner').closest('article')
+    expect(
+      within(approvedMember as HTMLElement).getByText('Jugador · Activo'),
+    ).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Buscar miembros'), {
+      target: { value: 'Marta Soler' },
+    })
+    const marta = screen.getByText('Marta Soler').closest('article')
+    expect(marta).toBeTruthy()
+    fireEvent.change(
+      within(marta as HTMLElement).getByLabelText('Rol de Marta Soler'),
+      { target: { value: 'moderator' } },
+    )
+    fireEvent.click(within(marta as HTMLElement).getByText(/^Etiquetas/))
+    fireEvent.click(
+      within(marta as HTMLElement).getByRole('checkbox', { name: 'Pauper' }),
+    )
+    fireEvent.click(
+      within(marta as HTMLElement).getByRole('button', { name: 'Suspender' }),
+    )
+
+    expect(
+      createLocalDemoRepository(window.localStorage)
+        .load()
+        .members.find(({ id }) => id === 'member-marta'),
+    ).toMatchObject({
+      role: 'moderator',
+      status: 'suspended',
+      tagIds: expect.arrayContaining(['tag-pauper']),
+    })
+  })
+
   it('opens an event detail and returns to the agenda', () => {
     render(<App />)
 

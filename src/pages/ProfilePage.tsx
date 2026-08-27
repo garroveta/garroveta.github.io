@@ -101,8 +101,8 @@ export function ProfilePage({
             <span>Herramientas del gerente</span>
             <h2>Configuración del local</h2>
             <p>
-              Gestiona juegos, formatos, tipos de evento, etiquetas y reglas del
-              ranking.
+              Gestiona juegos, eventos, inscripciones, miembros, permisos y
+              reglas del ranking.
             </p>
           </div>
           <button

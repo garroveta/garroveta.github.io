@@ -4,7 +4,7 @@ import { DEFAULT_COMMUNITY_REGISTRATION_SETTINGS } from './registrationSettings'
 import type { DemoDataSet } from '../domain/types'
 
 export const DEMO_STORAGE_KEY = 'mtg-community:demo-data'
-export const DEMO_STORAGE_VERSION = 23
+export const DEMO_STORAGE_VERSION = 24
 
 type DemoStorageEnvelope = {
   version: number
@@ -61,11 +61,19 @@ function isDemoDataSet(value: unknown): value is DemoDataSet {
   )
 }
 
-function applySeedEventImages(data: DemoDataSet): DemoDataSet {
+function applySeedPrototypeEnhancements(data: DemoDataSet): DemoDataSet {
   const seedImagesByEventId = new Map(
     demoData.events.flatMap((event) =>
       event.imageUri ? [[event.id, event.imageUri] as const] : [],
     ),
+  )
+  const memberScenarioIds = new Set([
+    'member-lucas-pending',
+    'member-elena-suspended',
+  ])
+  const existingMemberIds = new Set(data.members.map(({ id }) => id))
+  const missingMemberScenarios = demoData.members.filter(
+    ({ id }) => memberScenarioIds.has(id) && !existingMemberIds.has(id),
   )
 
   return {
@@ -74,6 +82,7 @@ function applySeedEventImages(data: DemoDataSet): DemoDataSet {
       ...event,
       imageUri: event.imageUri ?? seedImagesByEventId.get(event.id),
     })),
+    members: [...data.members, ...structuredClone(missingMemberScenarios)],
   }
 }
 
@@ -95,7 +104,7 @@ function parseStoredData(rawValue: string): DemoDataSet | null {
       }
 
       return isDemoDataSet(migratedData)
-        ? applySeedEventImages(structuredClone(migratedData))
+        ? applySeedPrototypeEnhancements(structuredClone(migratedData))
         : null
     }
 
@@ -111,8 +120,12 @@ function parseStoredData(rawValue: string): DemoDataSet | null {
       }
 
       return isDemoDataSet(migratedData)
-        ? applySeedEventImages(structuredClone(migratedData))
+        ? applySeedPrototypeEnhancements(structuredClone(migratedData))
         : null
+    }
+
+    if (envelope.version === 23 && isDemoDataSet(envelope.data)) {
+      return applySeedPrototypeEnhancements(structuredClone(envelope.data))
     }
 
     if (
@@ -122,7 +135,7 @@ function parseStoredData(rawValue: string): DemoDataSet | null {
       return null
     }
 
-    return applySeedEventImages(structuredClone(envelope.data))
+    return applySeedPrototypeEnhancements(structuredClone(envelope.data))
   } catch {
     return null
   }

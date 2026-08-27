@@ -103,7 +103,7 @@ export type CommunityMember = {
   displayName: string
   initials: string
   role: CommunityRole
-  status: 'approved' | 'pending'
+  status: 'approved' | 'pending' | 'suspended'
   tagIds: EntityId[]
   favoriteGameIds: EntityId[]
   contactMethods: ContactMethod[]
