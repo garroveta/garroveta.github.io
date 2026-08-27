@@ -17,14 +17,7 @@ import { RankingSettingsPanel } from '../components/RankingSettingsPanel'
 import { RegistrationSettingsPanel } from '../components/RegistrationSettingsPanel'
 import type { DemoDataUpdater } from '../data/demoRepository'
 import type { DemoDataSet } from '../domain/types'
-
-export type SettingsSection =
-  | 'community'
-  | 'options'
-  | 'registrations'
-  | 'members'
-  | 'communications'
-  | 'ranking'
+import type { SettingsSection } from './settingsSections'
 
 type SettingsPageProps = {
   data: DemoDataSet

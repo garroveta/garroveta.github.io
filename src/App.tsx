@@ -16,6 +16,7 @@ import { RankingsPage } from './pages/RankingsPage'
 import { RegistrationPage } from './pages/RegistrationPage'
 import { SharedCardsPage } from './pages/SharedCardsPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { isSettingsSection } from './pages/settingsSections'
 
 function getCurrentMember(data: DemoDataSet) {
   const member = data.members.find(({ id }) => id === data.currentMemberId)
@@ -50,8 +51,10 @@ export function App() {
   const dataSummary = getDemoDataSummary(data)
   const cardRouteParams = new URLSearchParams(routeQuery)
   const rankingRouteParams = new URLSearchParams(routeQuery)
+  const eventRouteParams = new URLSearchParams(routeQuery)
   const profileRouteParams = new URLSearchParams(routeQuery)
   const newsRouteParams = new URLSearchParams(routeQuery)
+  const requestedSettingsSection = profileRouteParams.get('section')
   const isRegistrationView =
     activeRoute === 'perfil' && profileRouteParams.get('view') === 'registro'
   const isSettingsView =
@@ -91,6 +94,9 @@ export function App() {
             publishingMember={publishingMember}
             onDataChange={updateData}
             onNavigate={navigate}
+            initialManagerAction={
+              eventRouteParams.get('action') === 'new' ? 'new' : undefined
+            }
           />
         ) : activeRoute === 'ranking' ? (
           <RankingsPage
@@ -142,8 +148,8 @@ export function App() {
             data={data}
             managerId={publishingMember.id}
             initialSection={
-              profileRouteParams.get('section') === 'communications'
-                ? 'communications'
+              isSettingsSection(requestedSettingsSection)
+                ? requestedSettingsSection
                 : undefined
             }
             onDataChange={updateData}

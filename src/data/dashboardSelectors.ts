@@ -39,11 +39,10 @@ export type ManagerDashboardEvent = {
 
 export type ManagerDashboard = {
   upcomingEvents: ManagerDashboardEvent[]
-  totalConfirmed: number
+  pendingMembers: CommunityMember[]
   totalWaitlisted: number
   fullEvents: number
   attentionEvents: ManagerDashboardEvent[]
-  latestNews: NewsPost[]
 }
 
 function byMostRecent(
@@ -171,12 +170,11 @@ export function getManagerDashboard(
 
   return {
     upcomingEvents,
-    totalConfirmed: upcomingEvents.reduce(
-      (total, { event }) =>
-        total +
-        (event.registrationEnabled ? event.registrationSummary.confirmed : 0),
-      0,
-    ),
+    pendingMembers: data.members
+      .filter(({ status }) => status === 'pending')
+      .sort((first, second) =>
+        first.displayName.localeCompare(second.displayName),
+      ),
     totalWaitlisted: upcomingEvents.reduce(
       (total, { event }) =>
         total +
@@ -189,12 +187,5 @@ export function getManagerDashboard(
         event.registrationSummary.confirmed >= event.capacity,
     ).length,
     attentionEvents,
-    latestNews: [...data.newsPosts]
-      .sort(
-        (first, second) =>
-          new Date(second.publishedAt).getTime() -
-          new Date(first.publishedAt).getTime(),
-      )
-      .slice(0, 2),
   }
 }

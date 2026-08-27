@@ -674,6 +674,68 @@ a {
   line-height: 1.45;
 }
 
+.manager-quick-actions {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+.manager-quick-action {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem;
+  border: 1px solid #e6dfe8;
+  border-radius: 0.75rem;
+  color: #5e326f;
+  background: #f8f4f9;
+  text-decoration: none;
+}
+
+.manager-quick-action > span:first-child {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 0.6rem;
+  color: #fff;
+  background: #6b397d;
+}
+
+.manager-quick-action > span:nth-child(2) {
+  display: grid;
+  min-width: 0;
+  gap: 0.1rem;
+}
+
+.manager-quick-action strong,
+.manager-quick-action small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manager-quick-action strong {
+  color: #403645;
+  font-size: 0.72rem;
+}
+
+.manager-quick-action small {
+  color: #857b88;
+  font-size: 0.61rem;
+}
+
+.manager-quick-action:hover {
+  border-color: #cbb9d1;
+  background: #f2eaf5;
+}
+
+.manager-quick-action:focus-visible {
+  outline: 3px solid #b99ac7;
+  outline-offset: 2px;
+}
+
 .manager-clear-state {
   margin: 0.9rem 0 0;
   padding: 0.8rem;

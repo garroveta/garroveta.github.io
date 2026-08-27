@@ -5,10 +5,13 @@ import {
   BellRing,
   CalendarDays,
   Clock3,
+  FileUp,
   MapPin,
   Megaphone,
+  Plus,
+  Settings2,
   Sparkles,
-  UserCheck,
+  UserPlus,
   UsersRound,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -28,7 +31,7 @@ type HomePageProps = {
   data: DemoDataSet
   currentMember: CommunityMember
   publishingMember: CommunityMember
-  onNavigate: (route: AppRoute) => void
+  onNavigate: (route: AppRoute, query?: string) => void
 }
 
 const eventDateFormatter = new Intl.DateTimeFormat('es-ES', {
@@ -64,19 +67,23 @@ const registrationLabels = {
 function DashboardLink({
   children,
   route,
+  query,
   onNavigate,
 }: {
   children: ReactNode
   route: AppRoute
-  onNavigate: (route: AppRoute) => void
+  query?: string
+  onNavigate: (route: AppRoute, query?: string) => void
 }) {
+  const href = `#${route}${query ? `?${query}` : ''}`
+
   return (
     <a
       className="dashboard-link"
-      href={`#${route}`}
+      href={href}
       onClick={(event) => {
         event.preventDefault()
-        onNavigate(route)
+        onNavigate(route, query)
       }}
     >
       {children}
@@ -90,7 +97,7 @@ function NextEventCard({
   onNavigate,
 }: {
   dashboardEvent?: DashboardEvent
-  onNavigate: (route: AppRoute) => void
+  onNavigate: (route: AppRoute, query?: string) => void
 }) {
   if (!dashboardEvent) {
     return (
@@ -217,6 +224,42 @@ function ManagerEventRow({ item }: { item: ManagerDashboardEvent }) {
   )
 }
 
+function ManagerQuickAction({
+  icon,
+  title,
+  detail,
+  route,
+  query,
+  onNavigate,
+}: {
+  icon: ReactNode
+  title: string
+  detail: string
+  route: AppRoute
+  query?: string
+  onNavigate: (route: AppRoute, query?: string) => void
+}) {
+  const href = `#${route}${query ? `?${query}` : ''}`
+
+  return (
+    <a
+      className="manager-quick-action"
+      href={href}
+      onClick={(event) => {
+        event.preventDefault()
+        onNavigate(route, query)
+      }}
+    >
+      <span aria-hidden="true">{icon}</span>
+      <span>
+        <strong>{title}</strong>
+        <small>{detail}</small>
+      </span>
+      <ArrowRight aria-hidden="true" size={16} />
+    </a>
+  )
+}
+
 function ManagerHome({
   data,
   manager,
@@ -224,10 +267,12 @@ function ManagerHome({
 }: {
   data: DemoDataSet
   manager: CommunityMember
-  onNavigate: (route: AppRoute) => void
+  onNavigate: (route: AppRoute, query?: string) => void
 }) {
   const dashboard = getManagerDashboard(data)
   const firstName = manager.displayName.split(' ')[0]
+  const attentionCount =
+    dashboard.pendingMembers.length + dashboard.attentionEvents.length
 
   return (
     <div className="page manager-dashboard">
@@ -248,10 +293,10 @@ function ManagerHome({
           detail="En la agenda"
         />
         <ManagerMetric
-          icon={<UserCheck size={18} />}
-          label="Plazas confirmadas"
-          value={dashboard.totalConfirmed}
-          detail="En próximos eventos"
+          icon={<UserPlus size={18} />}
+          label="Solicitudes pendientes"
+          value={dashboard.pendingMembers.length}
+          detail="Nuevos miembros"
         />
         <ManagerMetric
           icon={<UsersRound size={18} />}
@@ -293,12 +338,29 @@ function ManagerHome({
               <AlertCircle aria-hidden="true" size={15} />
               Atención
             </span>
-            <span>{dashboard.attentionEvents.length} avisos</span>
+            <span>{attentionCount} avisos</span>
           </div>
-          <h2>Acciones prioritarias</h2>
-          {dashboard.attentionEvents.length > 0 ? (
+          <h2>Por revisar</h2>
+          {attentionCount > 0 ? (
             <div className="manager-alert-list">
-              {dashboard.attentionEvents.slice(0, 3).map(({ event }) => (
+              {dashboard.pendingMembers.length > 0 ? (
+                <article>
+                  <strong>
+                    {dashboard.pendingMembers.length}{' '}
+                    {dashboard.pendingMembers.length === 1
+                      ? 'solicitud de acceso'
+                      : 'solicitudes de acceso'}
+                  </strong>
+                  <p>
+                    {dashboard.pendingMembers
+                      .slice(0, 2)
+                      .map(({ displayName }) => displayName)
+                      .join(', ')}
+                    {dashboard.pendingMembers.length > 2 ? '…' : ''}
+                  </p>
+                </article>
+              ) : null}
+              {dashboard.attentionEvents.slice(0, 2).map(({ event }) => (
                 <article key={event.id}>
                   <strong>{event.title}</strong>
                   <p>
@@ -314,33 +376,62 @@ function ManagerHome({
               No hay incidencias pendientes en la agenda.
             </p>
           )}
-          <DashboardLink route="eventos" onNavigate={onNavigate}>
-            Revisar participantes
+          <DashboardLink
+            route={dashboard.pendingMembers.length > 0 ? 'perfil' : 'eventos'}
+            query={
+              dashboard.pendingMembers.length > 0
+                ? 'view=configuracion&section=members'
+                : undefined
+            }
+            onNavigate={onNavigate}
+          >
+            {dashboard.pendingMembers.length > 0
+              ? 'Revisar solicitudes'
+              : 'Revisar participantes'}
           </DashboardLink>
         </section>
 
-        <section className="dashboard-card manager-news-card">
+        <section className="dashboard-card manager-quick-actions-card">
           <div className="dashboard-card__topline">
             <span className="dashboard-label">
-              <Megaphone aria-hidden="true" size={15} />
-              Comunicación
+              <Sparkles aria-hidden="true" size={15} />
+              Gestión
             </span>
           </div>
-          <h2>Últimas publicaciones</h2>
-          <div className="manager-news-list">
-            {dashboard.latestNews.map((post) => (
-              <article key={post.id}>
-                <span>
-                  {post.type === 'urgent' ? 'Importante' : 'Publicada'}
-                </span>
-                <strong>{post.title}</strong>
-                <small>{post.excerpt}</small>
-              </article>
-            ))}
+          <h2>Acciones rápidas</h2>
+          <div className="manager-quick-actions">
+            <ManagerQuickAction
+              icon={<Plus size={17} />}
+              title="Nuevo evento"
+              detail="Añadirlo a la agenda"
+              route="eventos"
+              query="action=new"
+              onNavigate={onNavigate}
+            />
+            <ManagerQuickAction
+              icon={<Megaphone size={17} />}
+              title="Nueva publicación"
+              detail="Comunicar con la comunidad"
+              route="perfil"
+              query="view=configuracion&section=communications"
+              onNavigate={onNavigate}
+            />
+            <ManagerQuickAction
+              icon={<FileUp size={17} />}
+              title="Importar resultados"
+              detail="Abrir la gestión de eventos"
+              route="eventos"
+              onNavigate={onNavigate}
+            />
+            <ManagerQuickAction
+              icon={<Settings2 size={17} />}
+              title="Configuración"
+              detail="Administrar la comunidad"
+              route="perfil"
+              query="view=configuracion&section=community"
+              onNavigate={onNavigate}
+            />
           </div>
-          <DashboardLink route="noticias" onNavigate={onNavigate}>
-            Crear una comunicación
-          </DashboardLink>
         </section>
       </div>
     </div>

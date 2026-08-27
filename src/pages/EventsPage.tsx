@@ -61,6 +61,7 @@ type EventsPageProps = {
   publishingMember: CommunityMember
   onDataChange: (updater: DemoDataUpdater) => void
   onNavigate: (route: AppRoute, query?: string) => void
+  initialManagerAction?: 'new'
 }
 
 const eventDateFormatter = new Intl.DateTimeFormat('es-ES', {
@@ -1337,6 +1338,7 @@ export function EventsPage({
   publishingMember,
   onDataChange,
   onNavigate,
+  initialManagerAction,
 }: EventsPageProps) {
   const [selectedEventId, setSelectedEventId] = useState<string>()
   const [selectedGameId, setSelectedGameId] = useState<string>()
@@ -1344,7 +1346,9 @@ export function EventsPage({
   const [eventViewMode, setEventViewMode] = useState<EventViewMode>(
     getInitialEventViewMode,
   )
-  const [isComposerOpen, setIsComposerOpen] = useState(false)
+  const [isComposerOpen, setIsComposerOpen] = useState(
+    activeRole === 'gerente' && initialManagerAction === 'new',
+  )
   const [editingEventId, setEditingEventId] = useState<string>()
   const [managedParticipantEventId, setManagedParticipantEventId] =
     useState<string>()

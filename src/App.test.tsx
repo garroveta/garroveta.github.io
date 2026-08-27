@@ -806,11 +806,13 @@ describe('App', () => {
       screen.getByRole('heading', { name: 'Hola, Tomás' }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { name: 'Acciones prioritarias' }),
+      screen.getByRole('heading', { name: 'Por revisar' }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { name: 'Últimas publicaciones' }),
+      screen.getByRole('heading', { name: 'Acciones rápidas' }),
     ).toBeInTheDocument()
+    expect(screen.getByText('1 solicitud de acceso')).toBeInTheDocument()
+    expect(screen.getByText('Lucas Muntaner')).toBeInTheDocument()
     expect(
       screen.getByText('3 personas en lista de espera.'),
     ).toBeInTheDocument()
@@ -823,6 +825,25 @@ describe('App', () => {
     expect(
       screen.queryByRole('heading', { name: '2 coincidencias nuevas' }),
     ).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('link', { name: 'Revisar solicitudes' }))
+    expect(screen.getByRole('tab', { name: 'Miembros' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+
+    fireEvent.click(screen.getByRole('link', { name: 'Inicio' }))
+    fireEvent.click(screen.getByRole('link', { name: /Nuevo evento/ }))
+    expect(
+      screen.getByRole('heading', { name: 'Crear un evento' }),
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('link', { name: 'Inicio' }))
+    fireEvent.click(screen.getByRole('link', { name: /Nueva publicación/ }))
+    expect(screen.getByRole('tab', { name: 'Publicaciones' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
   })
 
   it('offers EventLink result imports only for MTG events', () => {

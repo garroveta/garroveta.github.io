@@ -62,9 +62,11 @@ describe('manager dashboard selectors', () => {
     })
     expect(dashboard.totalWaitlisted).toBe(4)
     expect(dashboard.fullEvents).toBe(2)
+    expect(dashboard.pendingMembers.map(({ id }) => id)).toEqual([
+      'member-lucas-pending',
+    ])
     expect(dashboard.attentionEvents.map(({ event }) => event.id)).toContain(
       'event-presentation-hobbit',
     )
-    expect(dashboard.latestNews[0].id).toBe('news-summer-hours')
   })
 })
