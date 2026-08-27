@@ -3526,6 +3526,14 @@ a {
   font-weight: 500;
 }
 
+.event-composer__duplicate-note {
+  max-width: 34rem;
+  margin: 0.35rem 0 0;
+  color: #756c78;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
 .event-composer__heading > button {
   display: grid;
   width: 2.5rem;

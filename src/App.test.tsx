@@ -1284,6 +1284,49 @@ describe('App', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('duplicates an event one week later without its registrations', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
+    fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
+
+    const eventRow = screen
+      .getByRole('heading', { name: 'Presentación: The Hobbit' })
+      .closest('article')
+    fireEvent.click(
+      within(eventRow as HTMLElement).getByRole('button', {
+        name: 'Duplicar Presentación: The Hobbit',
+      }),
+    )
+
+    expect(
+      screen.getByRole('heading', { name: 'Duplicar evento' }),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText('Fecha')).toHaveValue('2026-08-15')
+    expect(screen.getByLabelText('Título')).toHaveValue(
+      'Presentación: The Hobbit',
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Crear copia' }))
+
+    expect(screen.getByText('La copia ya aparece en la agenda.')).toBeVisible()
+    const savedData = createLocalDemoRepository(window.localStorage).load()
+    const copies = savedData.events.filter(
+      ({ title }) => title === 'Presentación: The Hobbit',
+    )
+    expect(copies).toHaveLength(2)
+    expect(copies.at(-1)).toMatchObject({
+      startsAt: '2026-08-15T17:00:00+02:00',
+      registrationSummary: { confirmed: 0, waitlisted: 0 },
+    })
+    expect(
+      savedData.registrations.some(
+        ({ eventId }) => eventId === copies.at(-1)?.id,
+      ),
+    ).toBe(false)
+  })
+
   it('browses marketplace offers and the member wanted list', () => {
     render(<App />)
 

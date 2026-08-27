@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock3,
+  Copy,
   Edit3,
   FileUp,
   ListChecks,
@@ -154,13 +155,18 @@ function madridTimePart(isoDate: string) {
 }
 
 function nextCalendarDate(date: string) {
+  return addCalendarDays(date, 1)
+}
+
+function addCalendarDays(date: string, days: number) {
   const nextDate = new Date(`${date}T12:00:00Z`)
-  nextDate.setUTCDate(nextDate.getUTCDate() + 1)
+  nextDate.setUTCDate(nextDate.getUTCDate() + days)
   return nextDate.toISOString().slice(0, 10)
 }
 
 function EventComposer({
   data,
+  eventToDuplicate,
   eventToEdit,
   publishingMember,
   onClose,
@@ -168,64 +174,70 @@ function EventComposer({
   onPublished,
 }: {
   data: DemoDataSet
+  eventToDuplicate?: CommunityEvent
   eventToEdit?: CommunityEvent
   publishingMember: CommunityMember
   onClose: () => void
   onDataChange: (updater: DemoDataUpdater) => void
   onPublished: () => void
 }) {
+  const sourceEvent = eventToEdit ?? eventToDuplicate
   const availableGames = data.games.filter(
     (game) => isCommunityOptionActive(game) || game.id === eventToEdit?.gameId,
   )
-  const initialGameId = eventToEdit?.gameId ?? availableGames[0]?.id ?? ''
+  const initialGameId = sourceEvent?.gameId ?? availableGames[0]?.id ?? ''
   const [gameId, setGameId] = useState(initialGameId)
   const [formatId, setFormatId] = useState(
-    eventToEdit
-      ? (eventToEdit.formatId ?? '')
+    sourceEvent
+      ? (sourceEvent.formatId ?? '')
       : (data.competitionFormats.find(
           (format) =>
             format.gameId === initialGameId && isCommunityOptionActive(format),
         )?.id ?? ''),
   )
   const [competitionEventKindId, setCompetitionEventKindId] = useState(
-    eventToEdit
-      ? (eventToEdit.competitionEventKindId ?? '')
+    sourceEvent
+      ? (sourceEvent.competitionEventKindId ?? '')
       : (data.competitionEventKinds.find(isCommunityOptionActive)?.id ?? ''),
   )
-  const [type, setType] = useState<EventType>(eventToEdit?.type ?? 'tournament')
-  const [title, setTitle] = useState(eventToEdit?.title ?? '')
-  const [description, setDescription] = useState(eventToEdit?.description ?? '')
-  const [imageUri, setImageUri] = useState(eventToEdit?.imageUri ?? '')
+  const [type, setType] = useState<EventType>(sourceEvent?.type ?? 'tournament')
+  const [title, setTitle] = useState(sourceEvent?.title ?? '')
+  const [description, setDescription] = useState(sourceEvent?.description ?? '')
+  const [imageUri, setImageUri] = useState(sourceEvent?.imageUri ?? '')
   const [date, setDate] = useState(
-    eventToEdit ? madridDatePart(eventToEdit.startsAt) : '2026-08-15',
+    sourceEvent
+      ? eventToDuplicate
+        ? addCalendarDays(madridDatePart(sourceEvent.startsAt), 7)
+        : madridDatePart(sourceEvent.startsAt)
+      : '2026-08-15',
   )
   const [startsAt, setStartsAt] = useState(
-    eventToEdit ? madridTimePart(eventToEdit.startsAt) : '17:00',
+    sourceEvent ? madridTimePart(sourceEvent.startsAt) : '17:00',
   )
   const [endsAt, setEndsAt] = useState(
-    eventToEdit ? madridTimePart(eventToEdit.endsAt) : '21:00',
+    sourceEvent ? madridTimePart(sourceEvent.endsAt) : '21:00',
   )
   const initialRegistrationRule = getRegistrationRule(
     data.registrationSettings,
-    eventToEdit?.type ?? 'tournament',
+    sourceEvent?.type ?? 'tournament',
   )
   const [capacity, setCapacity] = useState(
-    String(eventToEdit?.capacity || initialRegistrationRule.defaultCapacity),
+    String(sourceEvent?.capacity || initialRegistrationRule.defaultCapacity),
   )
   const [registrationEnabled, setRegistrationEnabled] = useState(
-    eventToEdit?.registrationEnabled ??
+    sourceEvent?.registrationEnabled ??
       initialRegistrationRule.enabledByDefault,
   )
   const [waitlistEnabled, setWaitlistEnabled] = useState(
-    eventToEdit?.waitlistEnabled ?? initialRegistrationRule.waitlistEnabled,
+    sourceEvent?.waitlistEnabled ?? initialRegistrationRule.waitlistEnabled,
   )
   const [listedInAgenda, setListedInAgenda] = useState(
-    eventToEdit?.listedInAgenda ?? true,
+    sourceEvent?.listedInAgenda ?? true,
   )
   const [countsForCommunityRanking, setCountsForCommunityRanking] = useState(
-    eventToEdit?.countsForCommunityRanking ?? false,
+    sourceEvent?.countsForCommunityRanking ?? false,
   )
-  const [tagIds, setTagIds] = useState<string[]>(eventToEdit?.tagIds ?? [])
+  const [tagIds, setTagIds] = useState<string[]>(sourceEvent?.tagIds ?? [])
   const availableFormats = data.competitionFormats.filter(
     (format) =>
       format.gameId === gameId &&
@@ -289,7 +301,18 @@ function EventComposer({
       <div className="event-composer__heading">
         <div>
           <span>Herramienta del gerente</span>
-          <h2>{eventToEdit ? 'Modificar evento' : 'Crear un evento'}</h2>
+          <h2>
+            {eventToEdit
+              ? 'Modificar evento'
+              : eventToDuplicate
+                ? 'Duplicar evento'
+                : 'Crear un evento'}
+          </h2>
+          {eventToDuplicate ? (
+            <p className="event-composer__duplicate-note">
+              Se han copiado los datos y la fecha se ha movido siete días.
+            </p>
+          ) : null}
         </div>
         <button type="button" onClick={onClose} aria-label="Cerrar formulario">
           <X aria-hidden="true" size={18} />
@@ -562,7 +585,11 @@ function EventComposer({
           Cancelar
         </button>
         <button className="primary-button" type="submit">
-          {eventToEdit ? 'Guardar cambios' : 'Publicar evento'}
+          {eventToEdit
+            ? 'Guardar cambios'
+            : eventToDuplicate
+              ? 'Crear copia'
+              : 'Publicar evento'}
         </button>
       </div>
     </form>
@@ -1231,6 +1258,7 @@ function ManagerEventRow({
   onDelete,
   onDeleteCancel,
   onDeleteRequest,
+  onDuplicate,
   onEdit,
   onImport,
   onParticipants,
@@ -1240,6 +1268,7 @@ function ManagerEventRow({
   onDelete: (eventId: string) => void
   onDeleteCancel: () => void
   onDeleteRequest: (eventId: string) => void
+  onDuplicate: (eventId: string) => void
   onEdit: (eventId: string) => void
   onImport: (eventId: string) => void
   onParticipants: (eventId: string) => void
@@ -1298,6 +1327,16 @@ function ManagerEventRow({
         <button
           className="manager-event-item__icon-action"
           type="button"
+          aria-label={`Duplicar ${item.event.title}`}
+          title="Duplicar"
+          onClick={() => onDuplicate(item.event.id)}
+        >
+          <Copy aria-hidden="true" size={16} />
+          <span className="manager-event-item__action-label">Duplicar</span>
+        </button>
+        <button
+          className="manager-event-item__icon-action"
+          type="button"
           aria-label={`Modificar ${item.event.title}`}
           title="Modificar"
           onClick={() => onEdit(item.event.id)}
@@ -1350,6 +1389,7 @@ export function EventsPage({
     activeRole === 'gerente' && initialManagerAction === 'new',
   )
   const [editingEventId, setEditingEventId] = useState<string>()
+  const [duplicatingEventId, setDuplicatingEventId] = useState<string>()
   const [managedParticipantEventId, setManagedParticipantEventId] =
     useState<string>()
   const [managedImportEventId, setManagedImportEventId] = useState<string>()
@@ -1370,6 +1410,9 @@ export function EventsPage({
     : undefined
   const editingEvent = editingEventId
     ? data.events.find(({ id }) => id === editingEventId)
+    : undefined
+  const duplicatingEvent = duplicatingEventId
+    ? data.events.find(({ id }) => id === duplicatingEventId)
     : undefined
   const managedParticipantEvent = managedParticipantEventId
     ? getEventById(data, currentMember.id, managedParticipantEventId)
@@ -1424,6 +1467,7 @@ export function EventsPage({
   const closeManagerPanels = () => {
     setIsComposerOpen(false)
     setEditingEventId(undefined)
+    setDuplicatingEventId(undefined)
     setManagedParticipantEventId(undefined)
     setManagedImportEventId(undefined)
     setPendingDeleteEventId(undefined)
@@ -1494,6 +1538,7 @@ export function EventsPage({
           {isComposerOpen ? (
             <EventComposer
               data={data}
+              eventToDuplicate={duplicatingEvent}
               eventToEdit={editingEvent}
               publishingMember={publishingMember}
               onClose={closeManagerPanels}
@@ -1506,7 +1551,9 @@ export function EventsPage({
                 setPublicationMessage(
                   editingEvent
                     ? 'Los cambios se han guardado.'
-                    : 'El evento ya aparece en la agenda.',
+                    : duplicatingEvent
+                      ? 'La copia ya aparece en la agenda.'
+                      : 'El evento ya aparece en la agenda.',
                 )
               }}
             />
@@ -1520,6 +1567,13 @@ export function EventsPage({
                   onDelete={deleteEvent}
                   onDeleteCancel={() => setPendingDeleteEventId(undefined)}
                   onDeleteRequest={setPendingDeleteEventId}
+                  onDuplicate={(eventId) => {
+                    closeManagerPanels()
+                    setPublicationMessage('')
+                    setImportedStandingId(undefined)
+                    setDuplicatingEventId(eventId)
+                    setIsComposerOpen(true)
+                  }}
                   onEdit={(eventId) => {
                     closeManagerPanels()
                     setEditingEventId(eventId)
@@ -1549,6 +1603,9 @@ export function EventsPage({
           >
             <span>
               <FileUp aria-hidden="true" size={14} /> Importar resultados
+            </span>
+            <span>
+              <Copy aria-hidden="true" size={14} /> Duplicar
             </span>
             <span>
               <Edit3 aria-hidden="true" size={14} /> Modificar
