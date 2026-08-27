@@ -175,10 +175,6 @@ export function MemberManagementPanel({
               data-status={member.status}
               key={member.id}
             >
-              <span className="managed-member-row__avatar" aria-hidden="true">
-                {member.initials}
-              </span>
-
               <div className="managed-member-row__identity">
                 <strong>{member.displayName}</strong>
                 <span>
@@ -311,7 +307,7 @@ export function MemberManagementPanel({
                       }
                     >
                       <RotateCcw aria-hidden="true" size={16} />
-                      Reactivar
+                      <span>Reactivar</span>
                     </button>
                   ) : (
                     <button
@@ -330,7 +326,7 @@ export function MemberManagementPanel({
                       }
                     >
                       <Ban aria-hidden="true" size={16} />
-                      Suspender
+                      <span>Suspender</span>
                     </button>
                   )}
                 </>
