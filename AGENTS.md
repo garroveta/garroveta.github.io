@@ -25,7 +25,7 @@ Avant chaque commit :
 
 ## Périmètre technique
 
-- Le projet actuel est un prototype frontend React/Vite.
+- Le projet comprend un frontend React/Vite et un backend Cloudflare Workers/D1.
 - Ne pas ajouter ou modifier le backend sans demande explicite.
 - Lorsqu’une fonction backend est simulée, l’indiquer clairement dans l’interface.
 - Conserver la compatibilité avec GitHub Pages et le routage par hash tant que l’hébergement ne change pas.

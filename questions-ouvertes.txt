@@ -1,5 +1,5 @@
 QUESTIONS OUVERTES — APPLICATION COMMUNAUTAIRE MTG
-Mise à jour : 15 juillet 2026
+Mise à jour : 28 août 2026
 
 Ce document contient uniquement les questions qui restent à trancher.
 Les sujets économiques sont conservés à part, puisqu'ils seront étudiés dans un second temps.
@@ -19,8 +19,6 @@ Les sujets économiques sont conservés à part, puisqu'ils seront étudiés dan
 
 
 2. INSCRIPTION, PROFIL ET VIE PRIVÉE
-
-6. Comment un joueur demandera-t-il à rejoindre la communauté : lien public, QR code en boutique, code d'invitation ou ajout manuel ?
 
 7. Le joueur utilisera-t-il son véritable nom, un pseudonyme, ou les deux ?
 

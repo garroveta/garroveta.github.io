@@ -1,53 +1,26 @@
+import { handleApiRequest } from './api'
 import { type AuthEnv, createAuth } from './auth'
+import {
+  addCorsHeaders,
+  apiError,
+  createPreflightResponse,
+  getAllowedOrigin,
+} from './http'
 
-const LOCAL_APP_ORIGIN = 'http://localhost:5173'
-
-function getAllowedOrigin(request: Request, env: AuthEnv) {
-  const requestOrigin = request.headers.get('Origin')
-  const allowedOrigins = new Set([
-    env.APP_ORIGIN,
-    'https://www.garroveta.es',
-    LOCAL_APP_ORIGIN,
-  ])
-
-  return requestOrigin && allowedOrigins.has(requestOrigin)
-    ? requestOrigin
-    : null
-}
-
-function addCorsHeaders(response: Response, allowedOrigin: string) {
-  const headers = new Headers(response.headers)
-  headers.set('Access-Control-Allow-Credentials', 'true')
-  headers.set('Access-Control-Allow-Origin', allowedOrigin)
-  headers.append('Vary', 'Origin')
-
-  return new Response(response.body, {
-    headers,
-    status: response.status,
-    statusText: response.statusText,
-  })
-}
-
-function createPreflightResponse(allowedOrigin: string) {
-  return new Response(null, {
-    headers: {
-      'Access-Control-Allow-Credentials': 'true',
-      'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Origin': allowedOrigin,
-      'Access-Control-Max-Age': '86400',
-      Vary: 'Origin',
-    },
-    status: 204,
-  })
+function isAuthRequest(pathname: string) {
+  return pathname === '/api/auth' || pathname.startsWith('/api/auth/')
 }
 
 export default {
   async fetch(request, env, context) {
     const requestUrl = new URL(request.url)
 
-    if (requestUrl.pathname.startsWith('/api/auth')) {
+    if (
+      requestUrl.pathname === '/api' ||
+      requestUrl.pathname.startsWith('/api/')
+    ) {
       const allowedOrigin = getAllowedOrigin(request, env)
+      const requestOrigin = request.headers.get('Origin')
 
       if (request.method === 'OPTIONS') {
         return allowedOrigin
@@ -55,9 +28,29 @@ export default {
           : new Response(null, { status: 403 })
       }
 
-      const response = await createAuth({ context, env, request }).handler(
-        request,
-      )
+      if (requestOrigin && !allowedOrigin) {
+        return apiError(
+          403,
+          'origin_not_allowed',
+          'This origin is not allowed.',
+        )
+      }
+
+      let response: Response
+
+      try {
+        response = isAuthRequest(requestUrl.pathname)
+          ? await createAuth({ context, env, request }).handler(request)
+          : await handleApiRequest({ context, env, request })
+      } catch (error) {
+        console.error('Unhandled API request error', error)
+        response = apiError(
+          500,
+          'internal_error',
+          'An unexpected server error occurred.',
+        )
+      }
+
       return allowedOrigin ? addCorsHeaders(response, allowedOrigin) : response
     }
 
