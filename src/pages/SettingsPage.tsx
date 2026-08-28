@@ -3,6 +3,7 @@ import {
   Building2,
   ListTree,
   Megaphone,
+  QrCode,
   Trophy,
   UserRoundCog,
   UsersRound,
@@ -13,6 +14,7 @@ import { CommunityOptionManager } from '../components/CommunityOptionManager'
 import { CommunitySettingsPanel } from '../components/CommunitySettingsPanel'
 import { CommunicationManagementPanel } from '../components/CommunicationManagementPanel'
 import { MemberManagementPanel } from '../components/MemberManagementPanel'
+import { InvitationManagementPanel } from '../components/InvitationManagementPanel'
 import { RankingSettingsPanel } from '../components/RankingSettingsPanel'
 import { RegistrationSettingsPanel } from '../components/RegistrationSettingsPanel'
 import type { DemoDataUpdater } from '../data/demoRepository'
@@ -62,6 +64,15 @@ export function SettingsPage({
         role="tablist"
         aria-label="Secciones de configuración"
       >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeSection === 'invitations'}
+          onClick={() => setActiveSection('invitations')}
+        >
+          <QrCode aria-hidden="true" size={18} />
+          Invitaciones
+        </button>
         <button
           type="button"
           role="tab"
@@ -142,6 +153,8 @@ export function SettingsPage({
           managerId={managerId}
           onDataChange={onDataChange}
         />
+      ) : activeSection === 'invitations' ? (
+        <InvitationManagementPanel communityId={data.community.id} />
       ) : activeSection === 'communications' ? (
         <CommunicationManagementPanel
           data={data}

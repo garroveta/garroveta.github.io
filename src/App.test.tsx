@@ -19,8 +19,12 @@ const registrationApiMocks = vi.hoisted(() => ({
   validateInvitation: vi.fn(),
   verifySignInOtp: vi.fn(),
 }))
+const managerInvitationApiMocks = vi.hoisted(() => ({
+  listCommunityInvitations: vi.fn(),
+}))
 
 vi.mock('./api/registration', () => registrationApiMocks)
+vi.mock('./api/managerInvitations', () => managerInvitationApiMocks)
 
 const validInvitationToken = 'a'.repeat(43)
 
@@ -69,6 +73,21 @@ describe('App', () => {
         status: 'approved',
       },
       status: 'success',
+    })
+    managerInvitationApiMocks.listCommunityInvitations.mockResolvedValue({
+      invitations: [
+        {
+          communityId: 'community-crc-delorean',
+          createdAt: '2026-08-20T17:00:00.000Z',
+          createdByMemberId: 'member-tomas',
+          expiresAt: '2026-09-20T17:00:00.000Z',
+          id: 'invitation-pilot',
+          label: 'Grupo piloto de septiembre',
+          revokedAt: null,
+          status: 'active',
+          usedAt: null,
+        },
+      ],
     })
   })
 
@@ -341,6 +360,24 @@ describe('App', () => {
     expect(
       screen.getByRole('checkbox', { name: /^Activar lista de espera/ }),
     ).toBeChecked()
+  })
+
+  it('lets the manager review community invitations', async () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Invitaciones' }))
+
+    expect(
+      await screen.findByRole('heading', { name: 'Invitaciones' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Grupo piloto de septiembre')).toBeInTheDocument()
+    expect(screen.getAllByText('Activa')).toHaveLength(2)
+    expect(
+      managerInvitationApiMocks.listCommunityInvitations,
+    ).toHaveBeenCalledWith('community-crc-delorean', expect.any(AbortSignal))
   })
 
   it('lets the manager configure community identity and opening hours', () => {
