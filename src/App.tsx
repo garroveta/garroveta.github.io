@@ -68,10 +68,13 @@ export function App() {
   }
 
   if (activeRoute === 'registro') {
+    const registrationRouteParams = new URLSearchParams(routeQuery)
+
     return (
       <RegistrationPage
         community={data.community}
         games={data.games}
+        invitationToken={registrationRouteParams.get('invite')}
         tags={data.tags}
         onComplete={() => navigate('inicio')}
       />

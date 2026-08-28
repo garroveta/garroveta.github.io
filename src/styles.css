@@ -2174,28 +2174,6 @@ a {
   gap: 0.3rem;
 }
 
-.registration-demo-note {
-  padding: 0.8rem;
-  border: 1px dashed #cdbbd3;
-  border-radius: 0.85rem;
-  color: #705f75;
-  background: #faf6fb;
-  font-size: 0.72rem;
-  line-height: 1.5;
-}
-
-.registration-demo-note strong {
-  display: block;
-  color: #51335e;
-}
-
-.registration-demo-note code {
-  color: #542c67;
-  font-size: 0.78rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-}
-
 .registration-resend {
   display: inline-flex;
   min-height: 2.35rem;

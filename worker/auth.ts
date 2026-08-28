@@ -23,22 +23,22 @@ function getAuthBaseUrl(request: Request, productionUrl: string) {
 
 function getOtpSubject(type: string) {
   if (type === 'sign-in') {
-    return 'Votre code de connexion Garroveta'
+    return 'Tu código de acceso a Garroveta'
   }
 
   if (type === 'email-verification') {
-    return 'Confirmez votre adresse e-mail Garroveta'
+    return 'Confirma tu correo electrónico en Garroveta'
   }
 
-  return 'Votre code de sécurité Garroveta'
+  return 'Tu código de seguridad de Garroveta'
 }
 
 function getOtpText(otp: string) {
   return [
-    `Votre code Garroveta est : ${otp}`,
+    `Tu código de Garroveta es: ${otp}`,
     '',
-    'Il expire dans 10 minutes.',
-    "Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail.",
+    'Caduca dentro de 10 minutos.',
+    'Si no has solicitado este código, puedes ignorar este correo.',
   ].join('\n')
 }
 

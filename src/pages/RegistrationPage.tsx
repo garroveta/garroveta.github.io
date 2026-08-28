@@ -12,22 +12,33 @@ import {
 import type { CSSProperties, FormEvent, ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 
+import {
+  redeemInvitation,
+  sendSignInOtp,
+  validateInvitation,
+  verifySignInOtp,
+  type InvitationStatus,
+} from '../api/registration'
+import { ClientApiError } from '../api/client'
 import { isCommunityOptionActive } from '../data/communityOptions'
 import type { Community, CommunityGame, CommunityTag } from '../domain/types'
 
 type RegistrationPageProps = {
   community: Community
   games: CommunityGame[]
+  invitationToken: string | null
   tags: CommunityTag[]
   onComplete: () => void
 }
 
 type RegistrationStep = 'access' | 'verification' | 'profile' | 'complete'
+type InvitationViewState = InvitationStatus | 'error' | 'loading' | 'missing'
 
-const DEMO_OTP = '246810'
 const OTP_EXPIRATION_SECONDS = 10 * 60
 const OTP_RESEND_DELAY_SECONDS = 30
 const OTP_MAX_ATTEMPTS = 3
+const INVITATION_SESSION_KEY = 'garroveta.registration.invitation'
+const INVITATION_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/
 
 function formatCountdown(totalSeconds: number) {
   const minutes = Math.floor(totalSeconds / 60)
@@ -74,18 +85,41 @@ function RegistrationShell({ children, community }: RegistrationShellProps) {
 export function RegistrationPage({
   community,
   games,
+  invitationToken,
   tags,
   onComplete,
 }: RegistrationPageProps) {
   const activeGames = games.filter(isCommunityOptionActive)
   const activeTags = tags.filter(isCommunityOptionActive)
   const [step, setStep] = useState<RegistrationStep>('access')
+  const [invitationRetry, setInvitationRetry] = useState(0)
+  const [invite] = useState(() => {
+    if (invitationToken !== null) {
+      return invitationToken
+    }
+
+    return window.sessionStorage.getItem(INVITATION_SESSION_KEY) ?? ''
+  })
+  const [invitationState, setInvitationState] = useState<InvitationViewState>(
+    () =>
+      invite
+        ? INVITATION_TOKEN_PATTERN.test(invite)
+          ? 'loading'
+          : 'invalid'
+        : 'missing',
+  )
+  const [invitedCommunity, setInvitedCommunity] = useState<{
+    city?: string
+    name?: string
+  } | null>(null)
   const [email, setEmail] = useState('')
   const [otp, setOtp] = useState('')
   const [otpAttempts, setOtpAttempts] = useState(0)
   const [otpSentAt, setOtpSentAt] = useState<number | null>(null)
   const [now, setNow] = useState(() => Date.now())
   const [otpError, setOtpError] = useState('')
+  const [requestError, setRequestError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [displayName, setDisplayName] = useState('')
   const [acceptedRules, setAcceptedRules] = useState(false)
   const [selectedGameIds, setSelectedGameIds] = useState<string[]>([])
@@ -94,6 +128,48 @@ export function RegistrationPage({
       activeTags.some(({ id }) => id === tagId),
     ),
   )
+
+  useEffect(() => {
+    if (!invite) {
+      return
+    }
+
+    if (!INVITATION_TOKEN_PATTERN.test(invite)) {
+      window.sessionStorage.removeItem(INVITATION_SESSION_KEY)
+      return
+    }
+
+    window.sessionStorage.setItem(INVITATION_SESSION_KEY, invite)
+
+    if (window.location.hash !== '#registro') {
+      window.history.replaceState(
+        null,
+        '',
+        `${window.location.pathname}${window.location.search}#registro`,
+      )
+    }
+
+    const controller = new AbortController()
+
+    void validateInvitation(invite, controller.signal)
+      .then((validation) => {
+        setInvitedCommunity(validation.community ?? null)
+        setInvitationState(validation.status)
+
+        if (validation.status !== 'active') {
+          window.sessionStorage.removeItem(INVITATION_SESSION_KEY)
+        }
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return
+        }
+
+        setInvitationState('error')
+      })
+
+    return () => controller.abort()
+  }, [invite, invitationRetry])
 
   useEffect(() => {
     if (step !== 'verification') {
@@ -126,7 +202,22 @@ export function RegistrationPage({
     )
   }
 
-  const startOtp = () => {
+  const startOtp = async () => {
+    setIsSubmitting(true)
+    setRequestError('')
+
+    try {
+      await sendSignInOtp(email.trim())
+    } catch (error) {
+      setRequestError(
+        error instanceof ClientApiError && error.status === 429
+          ? 'Se han solicitado demasiados códigos. Inténtalo de nuevo más tarde.'
+          : 'No se ha podido enviar el código. Comprueba el correo e inténtalo de nuevo.',
+      )
+      setIsSubmitting(false)
+      return
+    }
+
     const sentAt = Date.now()
     setOtp('')
     setOtpAttempts(0)
@@ -134,14 +225,15 @@ export function RegistrationPage({
     setOtpSentAt(sentAt)
     setNow(sentAt)
     setStep('verification')
+    setIsSubmitting(false)
   }
 
-  const handleAccessSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleAccessSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    startOtp()
+    await startOtp()
   }
 
-  const handleOtpSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleOtpSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     if (isOtpExpired) {
@@ -154,24 +246,80 @@ export function RegistrationPage({
       return
     }
 
-    if (otp !== DEMO_OTP) {
-      const nextAttempts = otpAttempts + 1
-      setOtpAttempts(nextAttempts)
-      setOtpError(
-        nextAttempts >= OTP_MAX_ATTEMPTS
-          ? 'Has agotado los tres intentos. Solicita un código nuevo.'
-          : `Código incorrecto. Te quedan ${OTP_MAX_ATTEMPTS - nextAttempts} intentos.`,
-      )
-      return
-    }
-
+    setIsSubmitting(true)
     setOtpError('')
-    setStep('profile')
+
+    try {
+      await verifySignInOtp(email.trim(), otp)
+      setStep('profile')
+    } catch (error) {
+      const code = error instanceof ClientApiError ? error.code : ''
+
+      if (code === 'TOO_MANY_ATTEMPTS') {
+        setOtpAttempts(OTP_MAX_ATTEMPTS)
+        setOtpError('Has agotado los tres intentos. Solicita un código nuevo.')
+      } else if (code === 'OTP_EXPIRED') {
+        setOtpSentAt(Date.now() - OTP_EXPIRATION_SECONDS * 1000)
+        setOtpError('El código ha caducado. Solicita uno nuevo.')
+      } else if (code === 'INVALID_OTP') {
+        const nextAttempts = Math.min(OTP_MAX_ATTEMPTS, otpAttempts + 1)
+        setOtpAttempts(nextAttempts)
+        setOtpError(
+          nextAttempts >= OTP_MAX_ATTEMPTS
+            ? 'Has agotado los tres intentos. Solicita un código nuevo.'
+            : `Código incorrecto. Te quedan ${OTP_MAX_ATTEMPTS - nextAttempts} intentos.`,
+        )
+      } else {
+        setOtpError('No se ha podido verificar el código. Inténtalo de nuevo.')
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  const handleProfileSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleProfileSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setStep('complete')
+    setIsSubmitting(true)
+    setRequestError('')
+
+    try {
+      await redeemInvitation({
+        displayName: displayName.trim(),
+        favoriteGameIds: selectedGameIds,
+        invite,
+        tagIds: selectedTagIds,
+      })
+      window.sessionStorage.removeItem(INVITATION_SESSION_KEY)
+      setStep('complete')
+    } catch (error) {
+      const code = error instanceof ClientApiError ? error.code : ''
+      const invitationErrors: Record<string, string> = {
+        already_member: 'Ya perteneces a esta comunidad.',
+        expired: 'La invitación ha caducado.',
+        invalid: 'La invitación ya no es válida.',
+        membership_suspended:
+          'Tu acceso está suspendido. Contacta con el gerente.',
+        revoked: 'La invitación ha sido revocada.',
+        used: 'Otra persona ya ha utilizado esta invitación.',
+      }
+
+      setRequestError(
+        invitationErrors[code] ??
+          'No se ha podido completar el perfil. Inténtalo de nuevo.',
+      )
+
+      if (
+        code === 'expired' ||
+        code === 'invalid' ||
+        code === 'revoked' ||
+        code === 'used'
+      ) {
+        window.sessionStorage.removeItem(INVITATION_SESSION_KEY)
+        setInvitationState(code)
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const progressSteps = [
@@ -180,6 +328,89 @@ export function RegistrationPage({
     { id: 'profile', label: 'Perfil' },
   ] as const
   const currentProgressIndex = progressSteps.findIndex(({ id }) => id === step)
+
+  if (invitationState === 'loading') {
+    return (
+      <RegistrationShell community={community}>
+        <div className="page registration-page">
+          <section className="registration-pending" aria-live="polite">
+            <span className="registration-pending__icon" aria-hidden="true">
+              <ShieldCheck size={32} />
+            </span>
+            <span className="page-eyebrow">Acceso al piloto</span>
+            <h1>Comprobando la invitación</h1>
+            <p>Estamos verificando que este enlace siga siendo válido.</p>
+          </section>
+        </div>
+      </RegistrationShell>
+    )
+  }
+
+  if (invitationState !== 'active') {
+    const invitationMessages: Record<
+      Exclude<InvitationViewState, 'active' | 'loading'>,
+      { description: string; title: string }
+    > = {
+      error: {
+        description:
+          'No hemos podido comprobar el enlace. Revisa tu conexión y vuelve a intentarlo.',
+        title: 'No se ha podido verificar la invitación',
+      },
+      expired: {
+        description:
+          'Este enlace ha caducado. Pide una nueva invitación al gerente o a un moderador.',
+        title: 'La invitación ha caducado',
+      },
+      invalid: {
+        description:
+          'El enlace está incompleto o no corresponde a una invitación de Garroveta.',
+        title: 'Invitación no válida',
+      },
+      missing: {
+        description:
+          'Para crear una cuenta necesitas abrir el enlace privado enviado por el gerente o un moderador.',
+        title: 'Necesitas una invitación',
+      },
+      revoked: {
+        description:
+          'Este enlace ha sido revocado. Pide una nueva invitación al gerente o a un moderador.',
+        title: 'La invitación ya no está activa',
+      },
+      used: {
+        description:
+          'Este enlace ya se ha utilizado y no puede servir para otra cuenta.',
+        title: 'Invitación ya utilizada',
+      },
+    }
+    const message = invitationMessages[invitationState]
+
+    return (
+      <RegistrationShell community={community}>
+        <div className="page registration-page">
+          <section className="registration-pending" aria-live="polite">
+            <span className="registration-pending__icon" aria-hidden="true">
+              <ShieldCheck size={32} />
+            </span>
+            <span className="page-eyebrow">Acceso al piloto</span>
+            <h1>{message.title}</h1>
+            <p>{message.description}</p>
+            {invitationState === 'error' ? (
+              <button
+                className="primary-button"
+                type="button"
+                onClick={() => {
+                  setInvitationState('loading')
+                  setInvitationRetry((retry) => retry + 1)
+                }}
+              >
+                Volver a intentarlo
+              </button>
+            ) : null}
+          </section>
+        </div>
+      </RegistrationShell>
+    )
+  }
 
   if (step === 'complete') {
     return (
@@ -201,8 +432,8 @@ export function RegistrationPage({
               <div>
                 <strong>Acceso mediante invitación</strong>
                 <p>
-                  No necesitas recordar ninguna contraseña. En el producto real,
-                  cada conexión se validará con un código temporal.
+                  No necesitas recordar ninguna contraseña. Tu acceso queda
+                  protegido mediante códigos temporales enviados por correo.
                 </p>
               </div>
             </div>
@@ -257,7 +488,11 @@ export function RegistrationPage({
         </ol>
 
         {step === 'access' ? (
-          <form className="registration-form" onSubmit={handleAccessSubmit}>
+          <form
+            aria-busy={isSubmitting}
+            className="registration-form"
+            onSubmit={handleAccessSubmit}
+          >
             <div className="registration-form__heading">
               <span>Primera etapa</span>
               <h2>Acceso al piloto</h2>
@@ -285,20 +520,36 @@ export function RegistrationPage({
               <ShieldCheck aria-hidden="true" size={20} />
               <p>
                 <strong>Comunidad privada</strong>
-                En producción, solo los correos invitados por Tomás o un
-                moderador podrán recibir un código.
+                Esta invitación permite solicitar acceso a{' '}
+                {invitedCommunity?.name ?? community.name}
+                {invitedCommunity?.city ? `, ${invitedCommunity.city}` : ''}. El
+                código se enviará al correo que indiques.
               </p>
             </div>
 
+            {requestError ? (
+              <p className="registration-error" role="alert">
+                {requestError}
+              </p>
+            ) : null}
+
             <div className="registration-actions">
-              <button className="primary-button" type="submit">
-                Recibir un código
+              <button
+                className="primary-button"
+                type="submit"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Enviando…' : 'Recibir un código'}
                 <ChevronRight aria-hidden="true" size={17} />
               </button>
             </div>
           </form>
         ) : step === 'verification' ? (
-          <form className="registration-form" onSubmit={handleOtpSubmit}>
+          <form
+            aria-busy={isSubmitting}
+            className="registration-form"
+            onSubmit={handleOtpSubmit}
+          >
             <div className="registration-form__heading">
               <span>Segunda etapa</span>
               <h2>Código de verificación</h2>
@@ -317,7 +568,7 @@ export function RegistrationPage({
                   aria-describedby="otp-help"
                   autoComplete="one-time-code"
                   className="registration-code-input"
-                  disabled={isOtpExpired || isOtpLocked}
+                  disabled={isOtpExpired || isOtpLocked || isSubmitting}
                   inputMode="numeric"
                   maxLength={6}
                   pattern="[0-9]{6}"
@@ -340,12 +591,6 @@ export function RegistrationPage({
               <span>{attemptsRemaining} intentos disponibles</span>
             </div>
 
-            <div className="registration-demo-note">
-              <strong>Modo prototipo</strong>
-              Utiliza el código <code>{DEMO_OTP}</code>. El envío real se
-              conectará al backend más adelante.
-            </div>
-
             {otpError ? (
               <p className="registration-error" role="alert">
                 {otpError}
@@ -356,24 +601,33 @@ export function RegistrationPage({
               <button
                 className="secondary-button"
                 type="button"
-                onClick={() => setStep('access')}
+                disabled={isSubmitting}
+                onClick={() => {
+                  setRequestError('')
+                  setStep('access')
+                }}
               >
                 Cambiar correo
               </button>
               <button
                 className="primary-button"
                 type="submit"
-                disabled={isOtpExpired || isOtpLocked || otp.length !== 6}
+                disabled={
+                  isSubmitting ||
+                  isOtpExpired ||
+                  isOtpLocked ||
+                  otp.length !== 6
+                }
               >
-                Verificar código
+                {isSubmitting ? 'Verificando…' : 'Verificar código'}
               </button>
             </div>
 
             <button
               className="registration-resend"
               type="button"
-              disabled={resendRemaining > 0}
-              onClick={startOtp}
+              disabled={isSubmitting || resendRemaining > 0}
+              onClick={() => void startOtp()}
             >
               <RefreshCw aria-hidden="true" size={15} />
               {resendRemaining > 0
@@ -382,7 +636,11 @@ export function RegistrationPage({
             </button>
           </form>
         ) : (
-          <form className="registration-form" onSubmit={handleProfileSubmit}>
+          <form
+            aria-busy={isSubmitting}
+            className="registration-form"
+            onSubmit={handleProfileSubmit}
+          >
             <div className="registration-form__heading">
               <span>Tercera etapa</span>
               <h2>Completa tu perfil</h2>
@@ -483,10 +741,17 @@ export function RegistrationPage({
               </span>
             </label>
 
+            {requestError ? (
+              <p className="registration-error" role="alert">
+                {requestError}
+              </p>
+            ) : null}
+
             <div className="registration-actions registration-actions--split">
               <button
                 className="secondary-button"
                 type="button"
+                disabled={isSubmitting}
                 onClick={() => setStep('verification')}
               >
                 Atrás
@@ -494,9 +759,11 @@ export function RegistrationPage({
               <button
                 className="primary-button"
                 type="submit"
-                disabled={selectedGameIds.length === 0 || !acceptedRules}
+                disabled={
+                  isSubmitting || selectedGameIds.length === 0 || !acceptedRules
+                }
               >
-                Completar perfil
+                {isSubmitting ? 'Guardando…' : 'Completar perfil'}
               </button>
             </div>
           </form>

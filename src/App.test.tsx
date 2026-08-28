@@ -11,6 +11,18 @@ import { App } from './App'
 import { reserveMarketplaceListing } from './data/cardLifecycle'
 import { demoData } from './data/demoData'
 import { createLocalDemoRepository } from './data/demoRepository'
+import { ClientApiError } from './api/client'
+
+const registrationApiMocks = vi.hoisted(() => ({
+  redeemInvitation: vi.fn(),
+  sendSignInOtp: vi.fn(),
+  validateInvitation: vi.fn(),
+  verifySignInOtp: vi.fn(),
+}))
+
+vi.mock('./api/registration', () => registrationApiMocks)
+
+const validInvitationToken = 'a'.repeat(43)
 
 const importedEventLinkHtml = `
   <!-- saved from url=(0077)https://eventlink.wizards.com/stores/18452/events/11620006/rounds/3/standings -->
@@ -29,6 +41,35 @@ describe('App', () => {
   beforeEach(() => {
     window.history.replaceState(null, '', '/')
     window.localStorage.clear()
+    window.sessionStorage.clear()
+    vi.clearAllMocks()
+    registrationApiMocks.validateInvitation.mockResolvedValue({
+      community: { city: 'Inca', name: 'CRC Delorean' },
+      expiresAt: '2026-09-27T12:00:00.000Z',
+      status: 'active',
+    })
+    registrationApiMocks.sendSignInOtp.mockResolvedValue(undefined)
+    registrationApiMocks.verifySignInOtp.mockImplementation(
+      (_email: string, otp: string) => {
+        if (otp !== '246810') {
+          return Promise.reject(
+            new ClientApiError(400, 'INVALID_OTP', 'Invalid OTP'),
+          )
+        }
+
+        return Promise.resolve({ user: { id: 'user-invited' } })
+      },
+    )
+    registrationApiMocks.redeemInvitation.mockResolvedValue({
+      membership: {
+        communityId: 'community-crc-delorean',
+        displayName: 'Pep Peralta Isern',
+        id: 'member-invited',
+        role: 'player',
+        status: 'approved',
+      },
+      status: 'success',
+    })
   })
 
   afterEach(() => {
@@ -773,13 +814,17 @@ describe('App', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('registers an invited member with an OTP and no password', () => {
-    window.location.hash = '#registro'
+  it('registers an invited member with an OTP and no password', async () => {
+    window.location.hash = `#registro?invite=${validInvitationToken}`
     render(<App />)
 
     expect(
-      screen.getByRole('heading', { name: 'Únete a la comunidad' }),
+      await screen.findByRole('heading', { name: 'Únete a la comunidad' }),
     ).toBeInTheDocument()
+    expect(window.location.hash).toBe('#registro')
+    expect(
+      window.sessionStorage.getItem('garroveta.registration.invitation'),
+    ).toBe(validInvitationToken)
     expect(screen.getByText('Acceso por invitación')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Garroveta, inicio' })).toBeNull()
     expect(
@@ -796,8 +841,11 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Recibir un código' }))
 
     expect(
-      screen.getByRole('heading', { name: 'Código de verificación' }),
+      await screen.findByRole('heading', { name: 'Código de verificación' }),
     ).toBeInTheDocument()
+    expect(registrationApiMocks.sendSignInOtp).toHaveBeenCalledWith(
+      'pep@example.com',
+    )
     expect(screen.getByText(/Caduca en 10:00/)).toBeInTheDocument()
     expect(screen.getByText('3 intentos disponibles')).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Código de seis cifras'), {
@@ -805,7 +853,7 @@ describe('App', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Verificar código' }))
 
-    fireEvent.change(screen.getByLabelText('Nombre visible'), {
+    fireEvent.change(await screen.findByLabelText('Nombre visible'), {
       target: { value: 'Pep Peralta Isern' },
     })
     const completeProfile = screen.getByRole('button', {
@@ -819,11 +867,20 @@ describe('App', () => {
     fireEvent.click(completeProfile)
 
     expect(
-      screen.getByRole('heading', {
+      await screen.findByRole('heading', {
         name: 'Ya puedes entrar en CRC Delorean',
       }),
     ).toBeInTheDocument()
     expect(screen.getByText(/No necesitas recordar/)).toBeInTheDocument()
+    expect(registrationApiMocks.redeemInvitation).toHaveBeenCalledWith({
+      displayName: 'Pep Peralta Isern',
+      favoriteGameIds: ['game-mtg'],
+      invite: validInvitationToken,
+      tagIds: expect.any(Array),
+    })
+    expect(
+      window.sessionStorage.getItem('garroveta.registration.invitation'),
+    ).toBeNull()
   })
 
   it('does not expose registration from the connected profile', () => {
@@ -835,16 +892,16 @@ describe('App', () => {
     expect(screen.queryByRole('button', { name: 'Crear cuenta' })).toBeNull()
   })
 
-  it('locks OTP verification after three incorrect attempts', () => {
-    window.location.hash = '#registro'
+  it('locks OTP verification after three incorrect attempts', async () => {
+    window.location.hash = `#registro?invite=${validInvitationToken}`
     render(<App />)
 
-    fireEvent.change(screen.getByLabelText('Correo electrónico'), {
+    fireEvent.change(await screen.findByLabelText('Correo electrónico'), {
       target: { value: 'invitado@example.com' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Recibir un código' }))
 
-    const otpField = screen.getByLabelText('Código de seis cifras')
+    const otpField = await screen.findByLabelText('Código de seis cifras')
     const verifyButton = screen.getByRole('button', {
       name: 'Verificar código',
     })
@@ -852,6 +909,16 @@ describe('App', () => {
     for (let attempt = 0; attempt < 3; attempt += 1) {
       fireEvent.change(otpField, { target: { value: '111111' } })
       fireEvent.click(verifyButton)
+      await waitFor(() =>
+        expect(registrationApiMocks.verifySignInOtp).toHaveBeenCalledTimes(
+          attempt + 1,
+        ),
+      )
+      await waitFor(() =>
+        expect(
+          screen.getByText(`${2 - attempt} intentos disponibles`),
+        ).toBeInTheDocument(),
+      )
     }
 
     expect(
@@ -861,6 +928,38 @@ describe('App', () => {
     ).toBeInTheDocument()
     expect(otpField).toBeDisabled()
     expect(verifyButton).toBeDisabled()
+  })
+
+  it('requires a valid invitation before showing registration', async () => {
+    window.location.hash = '#registro'
+    render(<App />)
+
+    expect(
+      await screen.findByRole('heading', { name: 'Necesitas una invitación' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByLabelText('Correo electrónico')).toBeNull()
+    expect(registrationApiMocks.validateInvitation).not.toHaveBeenCalled()
+  })
+
+  it('blocks an expired invitation before requesting an OTP', async () => {
+    registrationApiMocks.validateInvitation.mockResolvedValueOnce({
+      community: { city: 'Inca', name: 'CRC Delorean' },
+      expiresAt: '2026-08-01T12:00:00.000Z',
+      status: 'expired',
+    })
+    window.location.hash = `#registro?invite=${validInvitationToken}`
+    render(<App />)
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'La invitación ha caducado',
+      }),
+    ).toBeInTheDocument()
+    expect(screen.queryByLabelText('Correo electrónico')).toBeNull()
+    expect(
+      window.sessionStorage.getItem('garroveta.registration.invitation'),
+    ).toBeNull()
+    expect(registrationApiMocks.sendSignInOtp).not.toHaveBeenCalled()
   })
 
   it('shows the operational dashboard in manager mode', () => {
