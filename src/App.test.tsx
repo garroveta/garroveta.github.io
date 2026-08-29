@@ -997,6 +997,48 @@ describe('App', () => {
     ).toBeNull()
   })
 
+  it('lets an existing member open a session with email and OTP', async () => {
+    window.location.hash = '#acceso'
+    render(<App />)
+
+    expect(
+      screen.getByRole('heading', { name: 'Entra en tu comunidad' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Acceso privado')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('navigation', { name: 'Navegación principal' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: 'Garroveta, inicio' }),
+    ).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Correo electrónico'), {
+      target: { value: 'miembro@example.com' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Recibir un código' }))
+
+    expect(
+      await screen.findByRole('heading', { name: 'Código de verificación' }),
+    ).toBeInTheDocument()
+    expect(registrationApiMocks.sendSignInOtp).toHaveBeenCalledWith(
+      'miembro@example.com',
+    )
+
+    fireEvent.change(screen.getByLabelText('Código de seis cifras'), {
+      target: { value: '246810' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Verificar código' }))
+
+    expect(
+      await screen.findByRole('heading', { name: 'Hola, Álex' }),
+    ).toBeInTheDocument()
+    expect(registrationApiMocks.verifySignInOtp).toHaveBeenCalledWith(
+      'miembro@example.com',
+      '246810',
+    )
+    expect(window.location.hash).toBe('#inicio')
+  })
+
   it('does not expose registration from the connected profile', () => {
     render(<App />)
 

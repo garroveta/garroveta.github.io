@@ -2476,6 +2476,11 @@ a {
   list-style: none;
 }
 
+.registration-progress--access {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 24rem;
+}
+
 .registration-progress li {
   display: flex;
   min-width: 0;
@@ -2627,6 +2632,22 @@ a {
   color: #9c473f;
   font-size: 0.72rem;
   font-weight: 750;
+}
+
+.access-page__security-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 1rem 0 0;
+  color: #817783;
+  font-size: 0.7rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.access-page__security-note > svg {
+  flex: 0 0 auto;
 }
 
 .registration-rules {

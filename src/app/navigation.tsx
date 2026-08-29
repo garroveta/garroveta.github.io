@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 
 export type AppRoute =
+  | 'acceso'
   | 'inicio'
   | 'eventos'
   | 'ranking'
@@ -65,6 +66,8 @@ export const navigationItems: NavigationItem[] = [
 
 export function isAppRoute(value: string): value is AppRoute {
   return (
-    value === 'registro' || navigationItems.some((item) => item.id === value)
+    value === 'acceso' ||
+    value === 'registro' ||
+    navigationItems.some((item) => item.id === value)
   )
 }

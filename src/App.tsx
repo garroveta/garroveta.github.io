@@ -16,6 +16,7 @@ import { RankingsPage } from './pages/RankingsPage'
 import { RegistrationPage } from './pages/RegistrationPage'
 import { SharedCardsPage } from './pages/SharedCardsPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { AccessPage } from './pages/AccessPage'
 import { isSettingsSection } from './pages/settingsSections'
 
 function getCurrentMember(data: DemoDataSet) {
@@ -76,6 +77,15 @@ export function App() {
         games={data.games}
         invitationToken={registrationRouteParams.get('invite')}
         tags={data.tags}
+        onComplete={() => navigate('inicio')}
+      />
+    )
+  }
+
+  if (activeRoute === 'acceso') {
+    return (
+      <AccessPage
+        community={data.community}
         onComplete={() => navigate('inicio')}
       />
     )
