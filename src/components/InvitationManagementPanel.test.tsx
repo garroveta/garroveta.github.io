@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ClientApiError } from '../api/client'
 
@@ -38,6 +38,10 @@ describe('InvitationManagementPanel', () => {
         usedAt: null,
       },
     })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   it('shows invitations and their current states', async () => {
@@ -146,6 +150,8 @@ describe('InvitationManagementPanel', () => {
   })
 
   it('creates a labeled invitation and reveals its URL once', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', { clipboard: { writeText } })
     invitationApiMocks.listCommunityInvitations.mockResolvedValue({
       invitations: [],
     })
@@ -172,6 +178,21 @@ describe('InvitationManagementPanel', () => {
       'community-crc-delorean',
       { expiresInDays: 7, label: 'Grupo de septiembre' },
     )
-    expect(screen.getByText('Grupo de septiembre')).toBeInTheDocument()
+    expect(screen.getAllByText('Grupo de septiembre')).toHaveLength(2)
+    expect(
+      screen.getByTitle('Código QR de la nueva invitación'),
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copiar enlace' }))
+
+    await waitFor(() =>
+      expect(writeText).toHaveBeenCalledWith(
+        'https://www.garroveta.es/#registro?invite=secret-token',
+      ),
+    )
+    expect(screen.getByText('Enlace copiado')).toBeInTheDocument()
+    expect(
+      screen.getByText('Ya puedes pegarlo en WhatsApp.'),
+    ).toBeInTheDocument()
   })
 })

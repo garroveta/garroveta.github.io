@@ -1,8 +1,10 @@
 import {
   CalendarClock,
+  Check,
   CheckCircle2,
   CircleSlash2,
   Clock3,
+  Copy,
   KeyRound,
   Link2,
   Mail,
@@ -11,6 +13,7 @@ import {
   RefreshCw,
   X,
 } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
 
 import { sendSignInOtp, verifySignInOtp } from '../api/authentication'
@@ -223,6 +226,9 @@ export function InvitationManagementPanel({
   const [expiresInDays, setExpiresInDays] = useState(30)
   const [createdInvitation, setCreatedInvitation] =
     useState<CreatedManagerInvitation | null>(null)
+  const [copyState, setCopyState] = useState<'copied' | 'error' | 'idle'>(
+    'idle',
+  )
   const [loadState, setLoadState] = useState<
     | 'authentication-required'
     | 'error'
@@ -289,6 +295,7 @@ export function InvitationManagementPanel({
         ...currentInvitations,
       ])
       setCreatedInvitation(invitation)
+      setCopyState('idle')
       setLabel('')
       setExpiresInDays(30)
       setIsCreateFormOpen(false)
@@ -306,6 +313,23 @@ export function InvitationManagementPanel({
       }
     } finally {
       setIsCreating(false)
+    }
+  }
+
+  const copyInvitationLink = async () => {
+    if (!createdInvitation) {
+      return
+    }
+
+    try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error('Clipboard unavailable')
+      }
+
+      await navigator.clipboard.writeText(createdInvitation.inviteUrl)
+      setCopyState('copied')
+    } catch {
+      setCopyState('error')
     }
   }
 
@@ -432,30 +456,90 @@ export function InvitationManagementPanel({
               className="created-invitation-secret"
               aria-labelledby="created-invitation-title"
             >
-              <Link2 aria-hidden="true" size={20} />
-              <div>
-                <strong id="created-invitation-title">
-                  Guarda este enlace ahora
-                </strong>
-                <p>
-                  Por seguridad, no se podrá volver a consultar después de
-                  cerrar este aviso.
-                </p>
-                <input
-                  aria-label="Enlace de la nueva invitación"
-                  readOnly
-                  value={createdInvitation.inviteUrl}
-                  onFocus={(event) => event.currentTarget.select()}
-                />
+              <div className="created-invitation-secret__heading">
+                <Link2 aria-hidden="true" size={20} />
+                <div>
+                  <strong id="created-invitation-title">
+                    Comparte esta invitación ahora
+                  </strong>
+                  <p>
+                    El QR y el enlace secreto no podrán recuperarse después de
+                    cerrar este aviso.
+                  </p>
+                </div>
+                <button
+                  aria-label="Ocultar el enlace de invitación"
+                  className="icon-button"
+                  type="button"
+                  onClick={() => {
+                    setCreatedInvitation(null)
+                    setCopyState('idle')
+                  }}
+                >
+                  <X aria-hidden="true" size={17} />
+                </button>
               </div>
-              <button
-                aria-label="Ocultar el enlace de invitación"
-                className="icon-button"
-                type="button"
-                onClick={() => setCreatedInvitation(null)}
-              >
-                <X aria-hidden="true" size={17} />
-              </button>
+
+              <div className="created-invitation-secret__content">
+                <div className="created-invitation-qr">
+                  <QRCodeSVG
+                    bgColor="#ffffff"
+                    fgColor="#2f2135"
+                    level="M"
+                    marginSize={4}
+                    size={184}
+                    title="Código QR de la nueva invitación"
+                    value={createdInvitation.inviteUrl}
+                  />
+                  <span>Escanear para registrarse</span>
+                </div>
+
+                <div className="created-invitation-share">
+                  <div>
+                    <span>Invitación</span>
+                    <strong>
+                      {createdInvitation.label?.trim() ||
+                        'Invitación sin nombre'}
+                    </strong>
+                    <small>
+                      Válida hasta el {formatDate(createdInvitation.expiresAt)}
+                    </small>
+                  </div>
+                  <label>
+                    Enlace de acceso
+                    <input
+                      aria-label="Enlace de la nueva invitación"
+                      readOnly
+                      value={createdInvitation.inviteUrl}
+                      onFocus={(event) => event.currentTarget.select()}
+                    />
+                  </label>
+                  <button
+                    className="primary-button"
+                    type="button"
+                    onClick={() => void copyInvitationLink()}
+                  >
+                    {copyState === 'copied' ? (
+                      <Check aria-hidden="true" size={16} />
+                    ) : (
+                      <Copy aria-hidden="true" size={16} />
+                    )}
+                    {copyState === 'copied'
+                      ? 'Enlace copiado'
+                      : 'Copiar enlace'}
+                  </button>
+                  <span
+                    className="created-invitation-copy-status"
+                    aria-live="polite"
+                  >
+                    {copyState === 'copied'
+                      ? 'Ya puedes pegarlo en WhatsApp.'
+                      : copyState === 'error'
+                        ? 'Selecciona el enlace y cópialo manualmente.'
+                        : ''}
+                  </span>
+                </div>
+              </div>
             </section>
           ) : null}
 
