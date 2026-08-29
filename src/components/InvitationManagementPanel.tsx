@@ -4,14 +4,19 @@ import {
   CircleSlash2,
   Clock3,
   KeyRound,
+  Link2,
   Mail,
+  Plus,
   QrCode,
   RefreshCw,
+  X,
 } from 'lucide-react'
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
 
 import { sendSignInOtp, verifySignInOtp } from '../api/authentication'
 import {
+  createCommunityInvitation,
+  type CreatedManagerInvitation,
   listCommunityInvitations,
   type ManagerInvitation,
   type ManagerInvitationStatus,
@@ -211,6 +216,13 @@ export function InvitationManagementPanel({
   communityId,
 }: InvitationManagementPanelProps) {
   const [invitations, setInvitations] = useState<ManagerInvitation[]>([])
+  const [isCreateFormOpen, setIsCreateFormOpen] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const [creationError, setCreationError] = useState('')
+  const [label, setLabel] = useState('')
+  const [expiresInDays, setExpiresInDays] = useState(30)
+  const [createdInvitation, setCreatedInvitation] =
+    useState<CreatedManagerInvitation | null>(null)
   const [loadState, setLoadState] = useState<
     | 'authentication-required'
     | 'error'
@@ -261,6 +273,42 @@ export function InvitationManagementPanel({
     setReloadKey((key) => key + 1)
   }
 
+  const createInvitation = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setIsCreating(true)
+    setCreationError('')
+
+    try {
+      const { invitation } = await createCommunityInvitation(communityId, {
+        expiresInDays,
+        label: label.trim() || null,
+      })
+
+      setInvitations((currentInvitations) => [
+        invitation,
+        ...currentInvitations,
+      ])
+      setCreatedInvitation(invitation)
+      setLabel('')
+      setExpiresInDays(30)
+      setIsCreateFormOpen(false)
+    } catch (error) {
+      if (error instanceof ClientApiError && error.status === 401) {
+        setIsCreateFormOpen(false)
+        setLoadState('authentication-required')
+      } else if (error instanceof ClientApiError && error.status === 403) {
+        setIsCreateFormOpen(false)
+        setLoadState('manager-access-required')
+      } else {
+        setCreationError(
+          'No se ha podido crear la invitación. Vuelve a intentarlo.',
+        )
+      }
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
   return (
     <section
       className="invitation-management-panel"
@@ -303,6 +351,114 @@ export function InvitationManagementPanel({
         </div>
       ) : (
         <>
+          <div className="invitation-creation-toolbar">
+            <div>
+              <strong>Invita a un nuevo miembro</strong>
+              <span>El enlace tendrá un único uso.</span>
+            </div>
+            <button
+              className="primary-button"
+              type="button"
+              onClick={() => {
+                setCreationError('')
+                setIsCreateFormOpen((isOpen) => !isOpen)
+              }}
+            >
+              {isCreateFormOpen ? (
+                <X aria-hidden="true" size={16} />
+              ) : (
+                <Plus aria-hidden="true" size={16} />
+              )}
+              {isCreateFormOpen ? 'Cerrar' : 'Nueva invitación'}
+            </button>
+          </div>
+
+          {isCreateFormOpen ? (
+            <form
+              className="invitation-creation-form"
+              onSubmit={createInvitation}
+            >
+              <div className="invitation-creation-form__fields">
+                <label className="form-field">
+                  Nombre interno (opcional)
+                  <input
+                    maxLength={120}
+                    name="invitation-label"
+                    placeholder="Ej. Grupo piloto de septiembre"
+                    value={label}
+                    onChange={(event) => setLabel(event.target.value)}
+                  />
+                </label>
+                <label className="form-field">
+                  Validez
+                  <select
+                    name="invitation-expiration"
+                    value={expiresInDays}
+                    onChange={(event) =>
+                      setExpiresInDays(Number(event.target.value))
+                    }
+                  >
+                    <option value={1}>1 día</option>
+                    <option value={7}>7 días</option>
+                    <option value={14}>14 días</option>
+                    <option value={30}>30 días</option>
+                    <option value={60}>60 días</option>
+                    <option value={90}>90 días</option>
+                  </select>
+                </label>
+              </div>
+              <p>
+                El nombre solo ayuda a identificar el enlace y no se muestra al
+                futuro miembro.
+              </p>
+              {creationError ? (
+                <p className="registration-error" role="alert">
+                  {creationError}
+                </p>
+              ) : null}
+              <button
+                className="primary-button"
+                disabled={isCreating}
+                type="submit"
+              >
+                <Plus aria-hidden="true" size={16} />
+                {isCreating ? 'Creando…' : 'Crear invitación'}
+              </button>
+            </form>
+          ) : null}
+
+          {createdInvitation ? (
+            <section
+              className="created-invitation-secret"
+              aria-labelledby="created-invitation-title"
+            >
+              <Link2 aria-hidden="true" size={20} />
+              <div>
+                <strong id="created-invitation-title">
+                  Guarda este enlace ahora
+                </strong>
+                <p>
+                  Por seguridad, no se podrá volver a consultar después de
+                  cerrar este aviso.
+                </p>
+                <input
+                  aria-label="Enlace de la nueva invitación"
+                  readOnly
+                  value={createdInvitation.inviteUrl}
+                  onFocus={(event) => event.currentTarget.select()}
+                />
+              </div>
+              <button
+                aria-label="Ocultar el enlace de invitación"
+                className="icon-button"
+                type="button"
+                onClick={() => setCreatedInvitation(null)}
+              >
+                <X aria-hidden="true" size={17} />
+              </button>
+            </section>
+          ) : null}
+
           <div
             className="invitation-status-summary"
             aria-label="Resumen de invitaciones"

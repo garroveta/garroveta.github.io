@@ -14,6 +14,28 @@ export type ManagerInvitation = {
   usedAt: string | null
 }
 
+export type CreatedManagerInvitation = ManagerInvitation & {
+  inviteUrl: string
+}
+
+export type CreateManagerInvitationInput = {
+  expiresInDays: number
+  label: string | null
+}
+
+export function createCommunityInvitation(
+  communityId: string,
+  input: CreateManagerInvitationInput,
+) {
+  return apiRequest<{ invitation: CreatedManagerInvitation }>(
+    `/api/communities/${encodeURIComponent(communityId)}/invitations`,
+    {
+      body: JSON.stringify(input),
+      method: 'POST',
+    },
+  )
+}
+
 export function listCommunityInvitations(
   communityId: string,
   signal?: AbortSignal,

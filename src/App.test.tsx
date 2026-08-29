@@ -20,6 +20,7 @@ const registrationApiMocks = vi.hoisted(() => ({
   verifySignInOtp: vi.fn(),
 }))
 const managerInvitationApiMocks = vi.hoisted(() => ({
+  createCommunityInvitation: vi.fn(),
   listCommunityInvitations: vi.fn(),
 }))
 
@@ -88,6 +89,20 @@ describe('App', () => {
           usedAt: null,
         },
       ],
+    })
+    managerInvitationApiMocks.createCommunityInvitation.mockResolvedValue({
+      invitation: {
+        communityId: 'community-crc-delorean',
+        createdAt: '2026-08-29T17:00:00.000Z',
+        createdByMemberId: 'member-tomas',
+        expiresAt: '2026-09-28T17:00:00.000Z',
+        id: 'invitation-new',
+        inviteUrl: 'https://www.garroveta.es/#registro?invite=secret-token',
+        label: 'Grupo piloto',
+        revokedAt: null,
+        status: 'active',
+        usedAt: null,
+      },
     })
   })
 

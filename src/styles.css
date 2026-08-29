@@ -1397,6 +1397,121 @@ a {
   margin: 0;
 }
 
+.invitation-creation-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.8rem;
+  border-top: 1px solid #e5dfe7;
+}
+
+.invitation-creation-toolbar > div {
+  min-width: 0;
+}
+
+.invitation-creation-toolbar strong,
+.invitation-creation-toolbar span {
+  display: block;
+}
+
+.invitation-creation-toolbar strong {
+  color: #3f3443;
+  font-size: 0.78rem;
+}
+
+.invitation-creation-toolbar span {
+  margin-top: 0.12rem;
+  color: #837987;
+  font-size: 0.64rem;
+}
+
+.invitation-creation-toolbar .primary-button {
+  min-height: 2.4rem;
+  padding: 0 0.7rem;
+  font-size: 0.68rem;
+}
+
+.invitation-creation-form {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.85rem;
+  border-top: 1px solid #e5dfe7;
+  background: #faf7fb;
+}
+
+.invitation-creation-form__fields {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.invitation-creation-form > p:not(.registration-error) {
+  margin: -0.2rem 0 0;
+  color: #837987;
+  font-size: 0.63rem;
+  line-height: 1.45;
+}
+
+.invitation-creation-form .registration-error {
+  margin: 0;
+}
+
+.invitation-creation-form > .primary-button {
+  width: 100%;
+  min-height: 2.65rem;
+}
+
+.created-invitation-secret {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.65rem;
+  margin: 0 0.75rem 0.75rem;
+  padding: 0.8rem;
+  border: 1px solid #d7bddf;
+  border-radius: 0.8rem;
+  color: #613273;
+  background: #f7eff9;
+}
+
+.created-invitation-secret > div {
+  min-width: 0;
+}
+
+.created-invitation-secret strong {
+  display: block;
+  color: #4f3159;
+  font-size: 0.76rem;
+}
+
+.created-invitation-secret p {
+  margin: 0.18rem 0 0.55rem;
+  color: #78687c;
+  font-size: 0.64rem;
+  line-height: 1.45;
+}
+
+.created-invitation-secret input {
+  width: 100%;
+  min-height: 2.35rem;
+  padding: 0 0.65rem;
+  border: 1px solid #d7c9db;
+  border-radius: 0.6rem;
+  color: #4a3b4f;
+  background: #fff;
+  font: inherit;
+  font-size: 0.62rem;
+}
+
+.created-invitation-secret .icon-button {
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 0.55rem;
+  color: #6c4678;
+  background: rgb(255 255 255 / 75%);
+}
+
 .invitation-status-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1494,6 +1609,17 @@ a {
 .managed-invitation-status[data-status='revoked'] {
   color: #8d4e47;
   background: #f8ecea;
+}
+
+@media (min-width: 42rem) {
+  .invitation-creation-form__fields {
+    grid-template-columns: minmax(0, 1fr) 10rem;
+  }
+
+  .invitation-creation-form > .primary-button {
+    width: auto;
+    justify-self: end;
+  }
 }
 
 .member-management-toolbar {

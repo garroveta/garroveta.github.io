@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ClientApiError } from '../api/client'
 
 const invitationApiMocks = vi.hoisted(() => ({
+  createCommunityInvitation: vi.fn(),
   listCommunityInvitations: vi.fn(),
 }))
 const authenticationApiMocks = vi.hoisted(() => ({
@@ -22,6 +23,20 @@ describe('InvitationManagementPanel', () => {
     authenticationApiMocks.sendSignInOtp.mockResolvedValue(undefined)
     authenticationApiMocks.verifySignInOtp.mockResolvedValue({
       user: { id: 'user-tomas' },
+    })
+    invitationApiMocks.createCommunityInvitation.mockResolvedValue({
+      invitation: {
+        communityId: 'community-crc-delorean',
+        createdAt: '2026-08-29T17:00:00.000Z',
+        createdByMemberId: 'member-tomas',
+        expiresAt: '2026-09-05T17:00:00.000Z',
+        id: 'invitation-new',
+        inviteUrl: 'https://www.garroveta.es/#registro?invite=secret-token',
+        label: 'Grupo de septiembre',
+        revokedAt: null,
+        status: 'active',
+        usedAt: null,
+      },
     })
   })
 
@@ -128,5 +143,35 @@ describe('InvitationManagementPanel', () => {
     expect(
       await screen.findByText('Esta cuenta no tiene acceso de gerente'),
     ).toBeInTheDocument()
+  })
+
+  it('creates a labeled invitation and reveals its URL once', async () => {
+    invitationApiMocks.listCommunityInvitations.mockResolvedValue({
+      invitations: [],
+    })
+
+    render(<InvitationManagementPanel communityId="community-crc-delorean" />)
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Nueva invitación' }),
+    )
+    fireEvent.change(screen.getByLabelText('Nombre interno (opcional)'), {
+      target: { value: '  Grupo de septiembre  ' },
+    })
+    fireEvent.change(screen.getByLabelText('Validez'), {
+      target: { value: '7' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Crear invitación' }))
+
+    expect(
+      await screen.findByDisplayValue(
+        'https://www.garroveta.es/#registro?invite=secret-token',
+      ),
+    ).toBeInTheDocument()
+    expect(invitationApiMocks.createCommunityInvitation).toHaveBeenCalledWith(
+      'community-crc-delorean',
+      { expiresInDays: 7, label: 'Grupo de septiembre' },
+    )
+    expect(screen.getByText('Grupo de septiembre')).toBeInTheDocument()
   })
 })
