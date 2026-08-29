@@ -3,11 +3,14 @@ import {
   CheckCircle2,
   CircleSlash2,
   Clock3,
+  KeyRound,
+  Mail,
   QrCode,
   RefreshCw,
 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { type FormEvent, useEffect, useMemo, useState } from 'react'
 
+import { sendSignInOtp, verifySignInOtp } from '../api/authentication'
 import {
   listCommunityInvitations,
   type ManagerInvitation,
@@ -40,12 +43,180 @@ function formatDate(value: string) {
   }).format(new Date(value))
 }
 
+type ManagerOtpLoginProps = {
+  accessDenied: boolean
+  onAuthenticated: () => void
+}
+
+function getAuthenticationError(error: unknown) {
+  if (error instanceof ClientApiError) {
+    if (
+      error.code.toLowerCase().includes('otp') ||
+      error.code.toLowerCase().includes('verification')
+    ) {
+      return 'El código no es válido o ha caducado.'
+    }
+
+    if (error.status === 429) {
+      return 'Has realizado demasiados intentos. Espera antes de continuar.'
+    }
+  }
+
+  return 'No se ha podido completar el acceso. Vuelve a intentarlo.'
+}
+
+function ManagerOtpLogin({
+  accessDenied,
+  onAuthenticated,
+}: ManagerOtpLoginProps) {
+  const [email, setEmail] = useState('')
+  const [otp, setOtp] = useState('')
+  const [step, setStep] = useState<'email' | 'otp'>('email')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+
+  const sendCode = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setIsSubmitting(true)
+    setErrorMessage('')
+
+    try {
+      await sendSignInOtp(email.trim())
+      setStep('otp')
+    } catch (error) {
+      setErrorMessage(getAuthenticationError(error))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const verifyCode = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setIsSubmitting(true)
+    setErrorMessage('')
+
+    try {
+      await verifySignInOtp(email.trim(), otp)
+      onAuthenticated()
+    } catch (error) {
+      setErrorMessage(getAuthenticationError(error))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="manager-authentication-panel">
+      <div className="manager-authentication-panel__heading">
+        <KeyRound aria-hidden="true" size={20} />
+        <div>
+          <strong>
+            {accessDenied
+              ? 'Esta cuenta no tiene acceso de gerente'
+              : 'Accede como gerente'}
+          </strong>
+          <p>
+            {accessDenied
+              ? 'Utiliza el correo de un gerente aprobado de la comunidad.'
+              : 'Recibirás un código temporal por correo. No necesitas contraseña.'}
+          </p>
+        </div>
+      </div>
+
+      {step === 'email' ? (
+        <form className="manager-authentication-form" onSubmit={sendCode}>
+          <label className="form-field">
+            Correo electrónico
+            <span className="registration-input-with-icon">
+              <Mail aria-hidden="true" size={18} />
+              <input
+                autoComplete="email"
+                inputMode="email"
+                name="manager-email"
+                placeholder="gerente@email.com"
+                required
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+            </span>
+          </label>
+          <button
+            className="primary-button"
+            disabled={isSubmitting || !email.trim()}
+            type="submit"
+          >
+            {isSubmitting ? 'Enviando…' : 'Recibir código'}
+          </button>
+        </form>
+      ) : (
+        <form className="manager-authentication-form" onSubmit={verifyCode}>
+          <div className="manager-authentication-email">
+            Código enviado a <strong>{email.trim()}</strong>
+          </div>
+          <label className="form-field">
+            Código de seis cifras
+            <span className="registration-input-with-icon">
+              <KeyRound aria-hidden="true" size={18} />
+              <input
+                autoComplete="one-time-code"
+                className="registration-code-input"
+                inputMode="numeric"
+                maxLength={6}
+                name="manager-otp"
+                pattern="[0-9]{6}"
+                placeholder="000000"
+                required
+                value={otp}
+                onChange={(event) =>
+                  setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))
+                }
+              />
+            </span>
+          </label>
+          <div className="manager-authentication-actions">
+            <button
+              className="secondary-button"
+              disabled={isSubmitting}
+              type="button"
+              onClick={() => {
+                setOtp('')
+                setErrorMessage('')
+                setStep('email')
+              }}
+            >
+              Cambiar correo
+            </button>
+            <button
+              className="primary-button"
+              disabled={isSubmitting || otp.length !== 6}
+              type="submit"
+            >
+              {isSubmitting ? 'Verificando…' : 'Verificar código'}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {errorMessage ? (
+        <p className="registration-error" role="alert">
+          {errorMessage}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
 export function InvitationManagementPanel({
   communityId,
 }: InvitationManagementPanelProps) {
   const [invitations, setInvitations] = useState<ManagerInvitation[]>([])
   const [loadState, setLoadState] = useState<
-    'authentication-required' | 'error' | 'loading' | 'ready'
+    | 'authentication-required'
+    | 'error'
+    | 'loading'
+    | 'manager-access-required'
+    | 'ready'
   >('loading')
   const [reloadKey, setReloadKey] = useState(0)
   const counts = useMemo(
@@ -73,12 +244,13 @@ export function InvitationManagementPanel({
           return
         }
 
-        setLoadState(
-          error instanceof ClientApiError &&
-            (error.status === 401 || error.status === 403)
-            ? 'authentication-required'
-            : 'error',
-        )
+        if (error instanceof ClientApiError && error.status === 401) {
+          setLoadState('authentication-required')
+        } else if (error instanceof ClientApiError && error.status === 403) {
+          setLoadState('manager-access-required')
+        } else {
+          setLoadState('error')
+        }
       })
 
     return () => controller.abort()
@@ -112,20 +284,12 @@ export function InvitationManagementPanel({
           <RefreshCw aria-hidden="true" size={20} />
           <strong>Cargando invitaciones…</strong>
         </div>
-      ) : loadState === 'authentication-required' ? (
-        <div className="invitation-management-state" role="alert">
-          <CircleSlash2 aria-hidden="true" size={20} />
-          <div>
-            <strong>Se necesita una sesión de gerente</strong>
-            <p>
-              Inicia sesión con una cuenta gerente aprobada para consultar las
-              invitaciones reales.
-            </p>
-          </div>
-          <button className="secondary-button" type="button" onClick={retry}>
-            Reintentar
-          </button>
-        </div>
+      ) : loadState === 'authentication-required' ||
+        loadState === 'manager-access-required' ? (
+        <ManagerOtpLogin
+          accessDenied={loadState === 'manager-access-required'}
+          onAuthenticated={retry}
+        />
       ) : loadState === 'error' ? (
         <div className="invitation-management-state" role="alert">
           <CircleSlash2 aria-hidden="true" size={20} />

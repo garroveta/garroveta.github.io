@@ -1331,6 +1331,72 @@ a {
   margin-top: 0.35rem;
 }
 
+.manager-authentication-panel {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  border-top: 1px solid #e5dfe7;
+  background: #faf7fb;
+}
+
+.manager-authentication-panel__heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.65rem;
+  color: #683778;
+}
+
+.manager-authentication-panel__heading > svg {
+  margin-top: 0.05rem;
+}
+
+.manager-authentication-panel__heading strong {
+  display: block;
+  color: #3f3443;
+  font-size: 0.82rem;
+}
+
+.manager-authentication-panel__heading p {
+  margin: 0.18rem 0 0;
+  color: #807683;
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.manager-authentication-form {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.manager-authentication-form .primary-button,
+.manager-authentication-form .secondary-button {
+  min-height: 2.75rem;
+}
+
+.manager-authentication-form > .primary-button {
+  width: 100%;
+}
+
+.manager-authentication-email {
+  color: #756b78;
+  font-size: 0.68rem;
+}
+
+.manager-authentication-email strong {
+  color: #4f3d55;
+}
+
+.manager-authentication-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 0.55rem;
+}
+
+.manager-authentication-panel .registration-error {
+  margin: 0;
+}
+
 .invitation-status-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
