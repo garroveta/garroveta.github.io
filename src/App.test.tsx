@@ -97,7 +97,7 @@ describe('App', () => {
         createdByMemberId: 'member-tomas',
         expiresAt: '2026-09-28T17:00:00.000Z',
         id: 'invitation-new',
-        inviteUrl: 'https://www.garroveta.es/#registro?invite=secret-token',
+        inviteUrl: `https://www.garroveta.es/#registro?invite=${validInvitationToken}`,
         label: 'Grupo piloto',
         revokedAt: null,
         status: 'active',
@@ -393,6 +393,68 @@ describe('App', () => {
     expect(
       managerInvitationApiMocks.listCommunityInvitations,
     ).toHaveBeenCalledWith('community-crc-delorean', expect.any(AbortSignal))
+  })
+
+  it('connects a newly created manager invitation to player activation', async () => {
+    managerInvitationApiMocks.listCommunityInvitations.mockResolvedValue({
+      invitations: [],
+    })
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Invitaciones' }))
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Nueva invitación' }),
+    )
+    fireEvent.change(screen.getByLabelText('Nombre interno (opcional)'), {
+      target: { value: 'Prueba del recorrido completo' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Crear invitación' }))
+
+    const invitationUrl = await screen.findByDisplayValue(
+      `https://www.garroveta.es/#registro?invite=${validInvitationToken}`,
+    )
+    expect(invitationUrl).toBeInTheDocument()
+    expect(
+      screen.getByTitle('Código QR de la nueva invitación'),
+    ).toBeInTheDocument()
+
+    window.location.hash = `#registro?invite=${validInvitationToken}`
+    window.dispatchEvent(new HashChangeEvent('hashchange'))
+
+    fireEvent.change(await screen.findByLabelText('Correo electrónico'), {
+      target: { value: 'nuevo-jugador@example.com' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Recibir un código' }))
+    fireEvent.change(await screen.findByLabelText('Código de seis cifras'), {
+      target: { value: '246810' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Verificar código' }))
+
+    fireEvent.change(await screen.findByLabelText('Nombre visible'), {
+      target: { value: 'Nuevo Jugador' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'MTG' }))
+    fireEvent.click(screen.getByLabelText(/Acepto las normas/))
+    fireEvent.click(screen.getByRole('button', { name: 'Completar perfil' }))
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Ya puedes entrar en CRC Delorean',
+      }),
+    ).toBeInTheDocument()
+    expect(registrationApiMocks.validateInvitation).toHaveBeenCalledWith(
+      validInvitationToken,
+      expect.any(AbortSignal),
+    )
+    expect(registrationApiMocks.redeemInvitation).toHaveBeenCalledWith({
+      displayName: 'Nuevo Jugador',
+      favoriteGameIds: ['game-mtg'],
+      invite: validInvitationToken,
+      tagIds: expect.any(Array),
+    })
   })
 
   it('lets the manager configure community identity and opening hours', () => {
@@ -1013,6 +1075,31 @@ describe('App', () => {
     ).toBeNull()
     expect(registrationApiMocks.sendSignInOtp).not.toHaveBeenCalled()
   })
+
+  it.each([
+    ['revoked', 'La invitación ya no está activa'],
+    ['used', 'Invitación ya utilizada'],
+  ] as const)(
+    'blocks a %s invitation before requesting an OTP',
+    async (status, heading) => {
+      registrationApiMocks.validateInvitation.mockResolvedValueOnce({
+        community: { city: 'Inca', name: 'CRC Delorean' },
+        expiresAt: '2026-09-27T12:00:00.000Z',
+        status,
+      })
+      window.location.hash = `#registro?invite=${validInvitationToken}`
+      render(<App />)
+
+      expect(
+        await screen.findByRole('heading', { name: heading }),
+      ).toBeInTheDocument()
+      expect(screen.queryByLabelText('Correo electrónico')).toBeNull()
+      expect(
+        window.sessionStorage.getItem('garroveta.registration.invitation'),
+      ).toBeNull()
+      expect(registrationApiMocks.sendSignInOtp).not.toHaveBeenCalled()
+    },
+  )
 
   it('shows the operational dashboard in manager mode', () => {
     render(<App />)
