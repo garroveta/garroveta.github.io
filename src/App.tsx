@@ -6,6 +6,7 @@ import type { DemoDataSet } from './domain/types'
 import { useDemoData } from './hooks/useDemoData'
 import { useDemoRole } from './hooks/useDemoRole'
 import { useHashRoute } from './hooks/useHashRoute'
+import { useCurrentUser } from './hooks/useCurrentUser'
 import { EventsPage } from './pages/EventsPage'
 import { CardsPage } from './pages/CardsPage'
 import { HomePage } from './pages/HomePage'
@@ -47,8 +48,21 @@ export function App() {
   const { activeRoute, routeQuery, navigate } = useHashRoute()
   const { activeRole, setActiveRole, resetRole } = useDemoRole()
   const { data, updateData, resetData } = useDemoData()
+  const currentUser = useCurrentUser()
   const currentMember = getCurrentMember(data)
-  const publishingMember = getPublishingMember(data, activeRole)
+  const approvedMembership = currentUser.data?.memberships.find(
+    ({ community, status }) =>
+      community.id === data.community.id && status === 'approved',
+  )
+  const authenticatedRole: DemoRole | null = approvedMembership
+    ? approvedMembership.role === 'manager'
+      ? 'gerente'
+      : approvedMembership.role === 'moderator'
+        ? 'moderador'
+        : 'jugador'
+    : null
+  const effectiveRole = authenticatedRole ?? activeRole
+  const publishingMember = getPublishingMember(data, effectiveRole)
   const dataSummary = getDemoDataSummary(data)
   const cardRouteParams = new URLSearchParams(routeQuery)
   const rankingRouteParams = new URLSearchParams(routeQuery)
@@ -59,7 +73,7 @@ export function App() {
   const isSettingsView =
     activeRoute === 'perfil' &&
     profileRouteParams.get('view') === 'configuracion' &&
-    activeRole === 'gerente'
+    effectiveRole === 'gerente'
   const sharedCardsMemberId =
     activeRoute === 'cartas' ? cardRouteParams.get('member') : null
 
@@ -77,7 +91,10 @@ export function App() {
         games={data.games}
         invitationToken={registrationRouteParams.get('invite')}
         tags={data.tags}
-        onComplete={() => navigate('inicio')}
+        onComplete={async () => {
+          await currentUser.refresh()
+          navigate('inicio')
+        }}
       />
     )
   }
@@ -86,19 +103,22 @@ export function App() {
     return (
       <AccessPage
         community={data.community}
-        onComplete={() => navigate('inicio')}
+        onComplete={async () => {
+          await currentUser.refresh()
+          navigate('inicio')
+        }}
       />
     )
   }
 
   return (
     <div className="app-shell">
-      <AppHeader activeRole={activeRole} community={data.community} />
+      <AppHeader activeRole={effectiveRole} community={data.community} />
 
       <main className="app-content" id="main-content">
         {activeRoute === 'inicio' ? (
           <HomePage
-            activeRole={activeRole}
+            activeRole={effectiveRole}
             data={data}
             currentMember={currentMember}
             publishingMember={publishingMember}
@@ -106,7 +126,7 @@ export function App() {
           />
         ) : activeRoute === 'eventos' ? (
           <EventsPage
-            activeRole={activeRole}
+            activeRole={effectiveRole}
             data={data}
             currentMember={currentMember}
             publishingMember={publishingMember}
@@ -146,7 +166,7 @@ export function App() {
           />
         ) : activeRoute === 'noticias' ? (
           <NewsPage
-            activeRole={activeRole}
+            activeRole={effectiveRole}
             data={data}
             currentMember={currentMember}
             initialPostId={newsRouteParams.get('post') ?? undefined}
@@ -171,7 +191,7 @@ export function App() {
           />
         ) : activeRoute === 'perfil' ? (
           <ProfilePage
-            activeRole={activeRole}
+            activeRole={effectiveRole}
             data={data}
             currentMember={currentMember}
             dataSummary={dataSummary}

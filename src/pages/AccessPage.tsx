@@ -8,7 +8,7 @@ import { useEmailOtp } from '../hooks/useEmailOtp'
 
 type AccessPageProps = {
   community: Community
-  onComplete: () => void
+  onComplete: () => Promise<void> | void
 }
 
 type AccessStage = 'access' | 'verification'
@@ -72,7 +72,7 @@ export function AccessPage({ community, onComplete }: AccessPageProps) {
           flow={emailOtp}
           stage={stage}
           onStageChange={setStage}
-          onVerified={onComplete}
+          onVerified={() => void onComplete()}
         />
 
         <p className="access-page__security-note">

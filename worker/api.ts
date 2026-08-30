@@ -1,5 +1,6 @@
 import { type AuthEnv } from './auth'
 import { apiError, jsonResponse } from './http'
+import { handleCurrentUserRequest } from './current-user'
 import { handleInvitationApiRequest, matchInvitationRoute } from './invitations'
 
 export interface ApiRequestContext {
@@ -28,6 +29,10 @@ export function handleApiRequest({
     return jsonResponse({
       status: 'ok',
     })
+  }
+
+  if (requestUrl.pathname === '/api/me') {
+    return handleCurrentUserRequest({ context, env, request })
   }
 
   const invitationRoute = matchInvitationRoute(requestUrl.pathname)

@@ -23,9 +23,13 @@ const managerInvitationApiMocks = vi.hoisted(() => ({
   createCommunityInvitation: vi.fn(),
   listCommunityInvitations: vi.fn(),
 }))
+const currentUserApiMocks = vi.hoisted(() => ({
+  getCurrentUser: vi.fn(),
+}))
 
 vi.mock('./api/registration', () => registrationApiMocks)
 vi.mock('./api/managerInvitations', () => managerInvitationApiMocks)
+vi.mock('./api/currentUser', () => currentUserApiMocks)
 
 const validInvitationToken = 'a'.repeat(43)
 
@@ -48,6 +52,13 @@ describe('App', () => {
     window.localStorage.clear()
     window.sessionStorage.clear()
     vi.clearAllMocks()
+    currentUserApiMocks.getCurrentUser.mockRejectedValue(
+      new ClientApiError(
+        401,
+        'authentication_required',
+        'Authentication is required.',
+      ),
+    )
     registrationApiMocks.validateInvitation.mockResolvedValue({
       community: { city: 'Inca', name: 'CRC Delorean' },
       expiresAt: '2026-09-27T12:00:00.000Z',
@@ -137,6 +148,40 @@ describe('App', () => {
       0,
     )
     expect(screen.getByRole('link', { name: /Perfil/ })).toBeInTheDocument()
+  })
+
+  it('uses an approved authenticated membership role', async () => {
+    currentUserApiMocks.getCurrentUser.mockResolvedValue({
+      memberships: [
+        {
+          community: {
+            city: 'Inca',
+            id: 'community-crc-delorean',
+            name: 'CRC Delorean',
+            slug: 'crc-delorean',
+          },
+          displayName: 'Tomás',
+          favoriteGameIds: ['game-mtg'],
+          id: 'member-tomas',
+          joinedAt: '2026-01-01T10:00:00.000Z',
+          role: 'manager',
+          status: 'approved',
+          tagIds: [],
+        },
+      ],
+      user: {
+        email: 'tomas@example.com',
+        id: 'user-tomas',
+        name: 'Tomás',
+      },
+    })
+
+    render(<App />)
+
+    expect(
+      await screen.findByRole('heading', { name: 'Hola, Tomás' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Gerente')).toBeInTheDocument()
   })
 
   it('opens a section from the main navigation', () => {
