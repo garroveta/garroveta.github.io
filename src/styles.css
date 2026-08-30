@@ -2650,6 +2650,88 @@ a {
   flex: 0 0 auto;
 }
 
+.community-access-page {
+  display: grid;
+  min-height: calc(100dvh - 7.7rem);
+  place-items: center;
+}
+
+.community-access-card {
+  width: min(100%, 30rem);
+  padding: 1.5rem 1.15rem;
+  border: 1px solid #e1d9e3;
+  border-radius: 1.25rem;
+  background: #fff;
+  box-shadow: 0 0.85rem 2.4rem rgb(51 43 55 / 7%);
+  text-align: center;
+}
+
+.community-access-card__icon {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto 0.85rem;
+  place-items: center;
+  border-radius: 1rem;
+  color: #653379;
+  background: #f2eaf5;
+}
+
+.community-access-card__icon > svg {
+  width: 1.45rem;
+  height: 1.45rem;
+}
+
+.community-access-card__icon > .is-spinning {
+  animation: community-access-spin 1s linear infinite;
+}
+
+.community-access-card h1 {
+  margin: 0.4rem 0 0;
+  color: #29232d;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.8rem, 8vw, 2.45rem);
+  font-weight: 500;
+  line-height: 1.08;
+}
+
+.community-access-card > p {
+  margin: 0.75rem auto 0;
+  color: #766d78;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.community-access-card .community-access-card__account {
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.8rem;
+  background: #f7f3f8;
+  overflow-wrap: anywhere;
+}
+
+.community-access-card .primary-button {
+  width: 100%;
+  margin-top: 1.15rem;
+}
+
+.community-access-card--error .community-access-card__icon,
+.community-access-card--suspended .community-access-card__icon {
+  color: #9b4c44;
+  background: #faefed;
+}
+
+@keyframes community-access-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .community-access-card__icon > .is-spinning {
+    animation: none;
+  }
+}
+
 .registration-rules {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);

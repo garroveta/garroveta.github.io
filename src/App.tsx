@@ -18,6 +18,7 @@ import { RegistrationPage } from './pages/RegistrationPage'
 import { SharedCardsPage } from './pages/SharedCardsPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { AccessPage } from './pages/AccessPage'
+import { CommunityAccessPage } from './pages/CommunityAccessPage'
 import { isSettingsSection } from './pages/settingsSections'
 
 function getCurrentMember(data: DemoDataSet) {
@@ -50,10 +51,11 @@ export function App() {
   const { data, updateData, resetData } = useDemoData()
   const currentUser = useCurrentUser()
   const currentMember = getCurrentMember(data)
-  const approvedMembership = currentUser.data?.memberships.find(
-    ({ community, status }) =>
-      community.id === data.community.id && status === 'approved',
+  const currentMembership = currentUser.data?.memberships.find(
+    ({ community }) => community.id === data.community.id,
   )
+  const approvedMembership =
+    currentMembership?.status === 'approved' ? currentMembership : undefined
   const authenticatedRole: DemoRole | null = approvedMembership
     ? approvedMembership.role === 'manager'
       ? 'gerente'
@@ -99,14 +101,80 @@ export function App() {
     )
   }
 
-  if (activeRoute === 'acceso') {
+  const refreshAccess = async () => {
+    const refreshedUser = await currentUser.refresh()
+
+    return refreshedUser?.memberships.find(
+      ({ community }) => community.id === data.community.id,
+    )
+  }
+
+  if (currentUser.status === 'loading') {
+    return <CommunityAccessPage community={data.community} state="loading" />
+  }
+
+  if (currentUser.status === 'error') {
+    return (
+      <CommunityAccessPage
+        community={data.community}
+        state="error"
+        onAction={() => void currentUser.refresh()}
+      />
+    )
+  }
+
+  if (currentUser.status === 'unauthenticated') {
     return (
       <AccessPage
         community={data.community}
         onComplete={async () => {
-          await currentUser.refresh()
-          navigate('inicio')
+          const membership = await refreshAccess()
+
+          if (activeRoute === 'acceso' && membership?.status === 'approved') {
+            navigate('inicio')
+          }
         }}
+      />
+    )
+  }
+
+  if (!currentMembership) {
+    return (
+      <CommunityAccessPage
+        community={data.community}
+        email={currentUser.data?.user.email}
+        state="missing"
+      />
+    )
+  }
+
+  if (currentMembership.status === 'pending') {
+    return (
+      <CommunityAccessPage
+        community={data.community}
+        email={currentUser.data?.user.email}
+        state="pending"
+      />
+    )
+  }
+
+  if (currentMembership.status === 'suspended') {
+    return (
+      <CommunityAccessPage
+        community={data.community}
+        email={currentUser.data?.user.email}
+        state="suspended"
+      />
+    )
+  }
+
+  if (activeRoute === 'acceso') {
+    return (
+      <CommunityAccessPage
+        community={data.community}
+        email={currentUser.data?.user.email}
+        state="authenticated"
+        onAction={() => navigate('inicio')}
       />
     )
   }

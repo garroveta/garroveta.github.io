@@ -23,15 +23,80 @@ const managerInvitationApiMocks = vi.hoisted(() => ({
   createCommunityInvitation: vi.fn(),
   listCommunityInvitations: vi.fn(),
 }))
-const currentUserApiMocks = vi.hoisted(() => ({
-  getCurrentUser: vi.fn(),
+const currentUserHookMocks = vi.hoisted(() => ({
+  current: null as unknown,
+  refresh: vi.fn(),
 }))
 
 vi.mock('./api/registration', () => registrationApiMocks)
 vi.mock('./api/managerInvitations', () => managerInvitationApiMocks)
-vi.mock('./api/currentUser', () => currentUserApiMocks)
+vi.mock('./hooks/useCurrentUser', async () => {
+  const { useState } = await vi.importActual<typeof import('react')>('react')
+
+  return {
+    useCurrentUser: () => {
+      const [state, setState] = useState(currentUserHookMocks.current)
+
+      return {
+        ...(state as object),
+        refresh: async () => {
+          const user = await currentUserHookMocks.refresh()
+          setState(
+            user
+              ? { data: user, status: 'authenticated' }
+              : { data: null, status: 'unauthenticated' },
+          )
+          return user
+        },
+      }
+    },
+  }
+})
 
 const validInvitationToken = 'a'.repeat(43)
+
+function buildCurrentUser(
+  role: 'manager' | 'moderator' | 'player' = 'player',
+  status: 'approved' | 'pending' | 'suspended' = 'approved',
+) {
+  const identity =
+    role === 'manager'
+      ? { displayName: 'Tomás', id: 'tomas' }
+      : role === 'moderator'
+        ? { displayName: 'Diego Sánchez', id: 'diego' }
+        : { displayName: 'Álex Romero', id: 'alex' }
+
+  return {
+    memberships: [
+      {
+        community: {
+          city: 'Inca',
+          id: 'community-crc-delorean',
+          name: 'CRC Delorean',
+          slug: 'crc-delorean',
+        },
+        displayName: identity.displayName,
+        favoriteGameIds: ['game-mtg'],
+        id: `member-${identity.id}`,
+        joinedAt: '2026-01-01T10:00:00.000Z',
+        role,
+        status,
+        tagIds: [],
+      },
+    ],
+    user: {
+      email: `${identity.id}@example.com`,
+      id: `user-${identity.id}`,
+      name: identity.displayName,
+    },
+  }
+}
+
+function authenticateAsManager() {
+  const user = buildCurrentUser('manager')
+  currentUserHookMocks.current = { data: user, status: 'authenticated' }
+  currentUserHookMocks.refresh.mockResolvedValue(user)
+}
 
 const importedEventLinkHtml = `
   <!-- saved from url=(0077)https://eventlink.wizards.com/stores/18452/events/11620006/rounds/3/standings -->
@@ -52,13 +117,12 @@ describe('App', () => {
     window.localStorage.clear()
     window.sessionStorage.clear()
     vi.clearAllMocks()
-    currentUserApiMocks.getCurrentUser.mockRejectedValue(
-      new ClientApiError(
-        401,
-        'authentication_required',
-        'Authentication is required.',
-      ),
-    )
+    const currentUser = buildCurrentUser()
+    currentUserHookMocks.current = {
+      data: currentUser,
+      status: 'authenticated',
+    }
+    currentUserHookMocks.refresh.mockResolvedValue(currentUser)
     registrationApiMocks.validateInvitation.mockResolvedValue({
       community: { city: 'Inca', name: 'CRC Delorean' },
       expiresAt: '2026-09-27T12:00:00.000Z',
@@ -151,30 +215,7 @@ describe('App', () => {
   })
 
   it('uses an approved authenticated membership role', async () => {
-    currentUserApiMocks.getCurrentUser.mockResolvedValue({
-      memberships: [
-        {
-          community: {
-            city: 'Inca',
-            id: 'community-crc-delorean',
-            name: 'CRC Delorean',
-            slug: 'crc-delorean',
-          },
-          displayName: 'Tomás',
-          favoriteGameIds: ['game-mtg'],
-          id: 'member-tomas',
-          joinedAt: '2026-01-01T10:00:00.000Z',
-          role: 'manager',
-          status: 'approved',
-          tagIds: [],
-        },
-      ],
-      user: {
-        email: 'tomas@example.com',
-        id: 'user-tomas',
-        name: 'Tomás',
-      },
-    })
+    authenticateAsManager()
 
     render(<App />)
 
@@ -347,6 +388,7 @@ describe('App', () => {
   })
 
   it('lets the manager configure the community ranking barometer', () => {
+    authenticateAsManager()
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -384,6 +426,7 @@ describe('App', () => {
   })
 
   it('lets the manager configure registration defaults for new MTG events', () => {
+    authenticateAsManager()
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -423,6 +466,7 @@ describe('App', () => {
   })
 
   it('lets the manager review community invitations', async () => {
+    authenticateAsManager()
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -444,6 +488,7 @@ describe('App', () => {
     managerInvitationApiMocks.listCommunityInvitations.mockResolvedValue({
       invitations: [],
     })
+    authenticateAsManager()
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -503,6 +548,7 @@ describe('App', () => {
   })
 
   it('lets the manager configure community identity and opening hours', () => {
+    authenticateAsManager()
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -569,6 +615,7 @@ describe('App', () => {
   })
 
   it('lets the manager approve members and manage their permissions', () => {
+    authenticateAsManager()
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -622,6 +669,7 @@ describe('App', () => {
   it('lets the manager create, share, edit, pin and delete publications', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined)
     vi.stubGlobal('navigator', { clipboard: { writeText } })
+    authenticateAsManager()
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -848,6 +896,7 @@ describe('App', () => {
       configurable: true,
       value: scrollIntoView,
     })
+    authenticateAsManager()
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -946,6 +995,7 @@ describe('App', () => {
   })
 
   it('keeps deactivated options in history but removes them from new forms', () => {
+    authenticateAsManager()
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -1043,6 +1093,12 @@ describe('App', () => {
   })
 
   it('lets an existing member open a session with email and OTP', async () => {
+    const currentUser = buildCurrentUser()
+    currentUserHookMocks.current = {
+      data: null,
+      status: 'unauthenticated',
+    }
+    currentUserHookMocks.refresh.mockResolvedValue(currentUser)
     window.location.hash = '#acceso'
     render(<App />)
 
@@ -1082,6 +1138,89 @@ describe('App', () => {
       '246810',
     )
     expect(window.location.hash).toBe('#inicio')
+  })
+
+  it('keeps the requested route while an unauthenticated member signs in', async () => {
+    const currentUser = buildCurrentUser()
+    currentUserHookMocks.current = {
+      data: null,
+      status: 'unauthenticated',
+    }
+    currentUserHookMocks.refresh.mockResolvedValue(currentUser)
+    window.location.hash = '#cartas?view=market'
+
+    render(<App />)
+
+    expect(
+      screen.getByRole('heading', { name: 'Entra en tu comunidad' }),
+    ).toBeInTheDocument()
+    expect(window.location.hash).toBe('#cartas?view=market')
+    expect(
+      screen.queryByRole('navigation', { name: 'Navegación principal' }),
+    ).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Correo electrónico'), {
+      target: { value: 'alex@example.com' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Recibir un código' }))
+    fireEvent.change(await screen.findByLabelText('Código de seis cifras'), {
+      target: { value: '246810' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Verificar código' }))
+
+    expect(
+      await screen.findByRole('heading', { name: 'Cartas disponibles' }),
+    ).toBeInTheDocument()
+    expect(window.location.hash).toBe('#cartas?view=market')
+  })
+
+  it.each([
+    ['pending', 'Tu acceso está pendiente'],
+    ['suspended', 'Tu acceso está suspendido'],
+  ] as const)('blocks a %s community membership', (status, heading) => {
+    const currentUser = buildCurrentUser('player', status)
+    currentUserHookMocks.current = {
+      data: currentUser,
+      status: 'authenticated',
+    }
+
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: heading })).toBeInTheDocument()
+    expect(screen.getByText('alex@example.com')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('navigation', { name: 'Navegación principal' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('blocks an account without a membership in the pilot community', () => {
+    const currentUser = buildCurrentUser()
+    currentUser.memberships = []
+    currentUserHookMocks.current = {
+      data: currentUser,
+      status: 'authenticated',
+    }
+
+    render(<App />)
+
+    expect(
+      screen.getByRole('heading', { name: 'Aún no tienes acceso' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('alex@example.com')).toBeInTheDocument()
+  })
+
+  it('lets a member retry when the access check fails', async () => {
+    const currentUser = buildCurrentUser()
+    currentUserHookMocks.current = { data: null, status: 'error' }
+    currentUserHookMocks.refresh.mockResolvedValue(currentUser)
+
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Volver a intentarlo' }))
+
+    expect(
+      await screen.findByRole('heading', { name: 'Hola, Álex' }),
+    ).toBeInTheDocument()
   })
 
   it('does not expose registration from the connected profile', () => {
@@ -1189,6 +1328,7 @@ describe('App', () => {
   )
 
   it('shows the operational dashboard in manager mode', () => {
+    authenticateAsManager()
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -1240,6 +1380,7 @@ describe('App', () => {
   })
 
   it('offers EventLink result imports only for MTG events', () => {
+    authenticateAsManager()
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -1270,6 +1411,7 @@ describe('App', () => {
   })
 
   it('shows an imported EventLink result and updates the community ranking', async () => {
+    authenticateAsManager()
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -1475,6 +1617,7 @@ describe('App', () => {
   })
 
   it('centralizes publication management and opens a saved news item', () => {
+    authenticateAsManager()
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -1534,6 +1677,7 @@ describe('App', () => {
   })
 
   it('lets a manager publish a multi-game event', () => {
+    authenticateAsManager()
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -1575,6 +1719,7 @@ describe('App', () => {
   })
 
   it('lets a manager record attendance and release a participant place', () => {
+    authenticateAsManager()
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -1625,6 +1770,7 @@ describe('App', () => {
   })
 
   it('lets a manager edit, manage registrations and delete events', () => {
+    authenticateAsManager()
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -1678,6 +1824,7 @@ describe('App', () => {
   })
 
   it('duplicates an event one week later without its registrations', () => {
+    authenticateAsManager()
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -2778,7 +2925,7 @@ describe('App', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('switches and resets the demonstration role', () => {
+  it('does not let a player elevate their authenticated role', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -2794,8 +2941,8 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
 
-    expect(screen.getByLabelText('Vista actual: Gerente')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Gerente/ })).toHaveAttribute(
+    expect(screen.getByLabelText('Vista actual: Jugador')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Jugador/ })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
