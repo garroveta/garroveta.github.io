@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const authMocks = vi.hoisted(() => ({
   sendVerificationOtp: vi.fn(),
   signInEmailOtp: vi.fn(),
+  signOut: vi.fn(),
 }))
 
 vi.mock('../auth/client', () => ({
@@ -13,6 +14,7 @@ vi.mock('../auth/client', () => ({
     signIn: {
       emailOtp: authMocks.signInEmailOtp,
     },
+    signOut: authMocks.signOut,
   },
 }))
 
@@ -22,6 +24,7 @@ import {
   validateInvitation,
   verifySignInOtp,
 } from './registration'
+import { signOutCurrentUser } from './authentication'
 
 describe('registration API', () => {
   beforeEach(() => {
@@ -32,6 +35,10 @@ describe('registration API', () => {
     })
     authMocks.signInEmailOtp.mockResolvedValue({
       data: { user: { id: 'existing-user' } },
+      error: null,
+    })
+    authMocks.signOut.mockResolvedValue({
+      data: { success: true },
       error: null,
     })
   })
@@ -52,6 +59,29 @@ describe('registration API', () => {
       email: 'member@example.com',
       name: 'member',
       otp: '123456',
+    })
+  })
+
+  it('uses Better Auth to close the current session', async () => {
+    await signOutCurrentUser()
+
+    expect(authMocks.signOut).toHaveBeenCalledOnce()
+  })
+
+  it('exposes a normalized error when closing the session fails', async () => {
+    authMocks.signOut.mockResolvedValue({
+      data: null,
+      error: {
+        code: 'SIGN_OUT_FAILED',
+        message: 'Session unavailable',
+        status: 500,
+      },
+    })
+
+    await expect(signOutCurrentUser()).rejects.toMatchObject({
+      code: 'SIGN_OUT_FAILED',
+      message: 'Session unavailable',
+      status: 500,
     })
   })
 

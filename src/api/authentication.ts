@@ -53,3 +53,11 @@ export async function verifySignInOtp(email: string, otp: string) {
 
   return data
 }
+
+export async function signOutCurrentUser() {
+  const { error } = await authClient.signOut()
+
+  if (error) {
+    throw toAuthError(error)
+  }
+}

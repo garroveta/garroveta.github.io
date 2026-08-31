@@ -1,4 +1,5 @@
-import { Check, RotateCcw, Settings2 } from 'lucide-react'
+import { Check, LogOut, RotateCcw, Settings2 } from 'lucide-react'
+import { useState } from 'react'
 
 import {
   demoRoleOptions,
@@ -22,6 +23,7 @@ type ProfilePageProps = {
   onRoleChange: (role: DemoRole) => void
   onReset: () => void
   onOpenSettings: () => void
+  onSignOut: () => Promise<void>
   onSaveAccount: (input: {
     displayName: string
     favoriteGameIds: string[]
@@ -38,9 +40,24 @@ export function ProfilePage({
   onRoleChange,
   onReset,
   onOpenSettings,
+  onSignOut,
   onSaveAccount,
 }: ProfilePageProps) {
   const currentRole = getDemoRoleOption(activeRole)
+  const [isSigningOut, setIsSigningOut] = useState(false)
+  const [signOutError, setSignOutError] = useState<string>()
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true)
+    setSignOutError(undefined)
+
+    try {
+      await onSignOut()
+    } catch {
+      setSignOutError('No se ha podido cerrar la sesión. Inténtalo de nuevo.')
+      setIsSigningOut(false)
+    }
+  }
 
   return (
     <div className="page">
@@ -74,6 +91,27 @@ export function ProfilePage({
         tagIds={currentMember.tagIds}
         tags={data.tags}
       />
+
+      <section className="account-session" aria-labelledby="session-title">
+        <div>
+          <span>Acceso a la cuenta</span>
+          <h2 id="session-title">Sesión</h2>
+          <p>
+            Sal de Garroveta en este dispositivo. Podrás volver a entrar con un
+            código enviado a {accountEmail}.
+          </p>
+          {signOutError ? <p role="alert">{signOutError}</p> : null}
+        </div>
+        <button
+          className="secondary-button account-session__action"
+          disabled={isSigningOut}
+          type="button"
+          onClick={() => void handleSignOut()}
+        >
+          <LogOut aria-hidden="true" size={17} />
+          {isSigningOut ? 'Cerrando sesión…' : 'Cerrar sesión'}
+        </button>
+      </section>
 
       <DemoDataSummary community={data.community} summary={dataSummary} />
 

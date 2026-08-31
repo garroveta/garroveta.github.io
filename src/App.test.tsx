@@ -31,10 +31,14 @@ const currentUserHookMocks = vi.hoisted(() => ({
 const currentUserApiMocks = vi.hoisted(() => ({
   updateCurrentMembership: vi.fn(),
 }))
+const authenticationApiMocks = vi.hoisted(() => ({
+  signOutCurrentUser: vi.fn(),
+}))
 
 vi.mock('./api/registration', () => registrationApiMocks)
 vi.mock('./api/managerInvitations', () => managerInvitationApiMocks)
 vi.mock('./api/currentUser', () => currentUserApiMocks)
+vi.mock('./api/authentication', () => authenticationApiMocks)
 vi.mock('./hooks/useCurrentUser', async () => {
   const { useState } = await vi.importActual<typeof import('react')>('react')
 
@@ -131,6 +135,7 @@ describe('App', () => {
     currentUserApiMocks.updateCurrentMembership.mockResolvedValue({
       membership: currentUser.memberships[0],
     })
+    authenticationApiMocks.signOutCurrentUser.mockResolvedValue(undefined)
     registrationApiMocks.validateInvitation.mockResolvedValue({
       community: { city: 'Inca', name: 'CRC Delorean' },
       expiresAt: '2026-09-27T12:00:00.000Z',
@@ -929,6 +934,86 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Álex Romero Vidal' }),
     ).toBeInTheDocument()
+  })
+
+  it('closes the session and returns to member access', async () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    currentUserHookMocks.refresh.mockResolvedValue(null)
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+
+    await waitFor(() =>
+      expect(authenticationApiMocks.signOutCurrentUser).toHaveBeenCalledOnce(),
+    )
+    expect(currentUserHookMocks.refresh).toHaveBeenCalled()
+    expect(
+      await screen.findByRole('heading', { name: 'Entra en tu comunidad' }),
+    ).toBeInTheDocument()
+    expect(window.location.hash).toBe('#acceso')
+  })
+
+  it('restores the persisted membership after signing in again with OTP', async () => {
+    const returningUser = buildCurrentUser()
+    returningUser.memberships[0] = {
+      ...returningUser.memberships[0],
+      displayName: 'Álex Romero Vidal',
+      favoriteGameIds: ['game-mtg', 'game-gundam'],
+      tagIds: ['tag-pauper'],
+    }
+    currentUserHookMocks.refresh
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(returningUser)
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+    expect(
+      await screen.findByRole('heading', { name: 'Entra en tu comunidad' }),
+    ).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Correo electrónico'), {
+      target: { value: 'alex@example.com' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Recibir un código' }))
+    expect(
+      await screen.findByRole('heading', { name: 'Código de verificación' }),
+    ).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Código de seis cifras'), {
+      target: { value: '246810' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Verificar código' }))
+
+    expect(
+      await screen.findByRole('heading', { name: 'Hola, Álex' }),
+    ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    expect(screen.getByLabelText('Nombre visible')).toHaveValue(
+      'Álex Romero Vidal',
+    )
+    expect(screen.getByRole('button', { name: /Gundam/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(screen.getByRole('button', { name: 'Pauper' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+  })
+
+  it('keeps the profile visible when closing the session fails', async () => {
+    authenticationApiMocks.signOutCurrentUser.mockRejectedValue(
+      new ClientApiError(500, 'SIGN_OUT_FAILED', 'Session unavailable'),
+    )
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'No se ha podido cerrar la sesión. Inténtalo de nuevo.',
+    )
+    expect(currentUserHookMocks.refresh).not.toHaveBeenCalled()
+    expect(screen.getByRole('heading', { name: 'Perfil' })).toBeInTheDocument()
   })
 
   it('lets a manager maintain configurable community options', () => {

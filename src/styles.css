@@ -3484,6 +3484,48 @@ a {
   cursor: not-allowed;
 }
 
+.account-session {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #e5e0da;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 0.8rem 2rem rgb(47 31 53 / 6%);
+}
+
+.account-session span {
+  color: #875595;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.account-session h2 {
+  margin: 0.2rem 0 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.35rem;
+}
+
+.account-session p {
+  margin: 0.35rem 0 0;
+  color: #766e78;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.account-session p[role='alert'] {
+  color: #9b433c;
+  font-weight: 700;
+}
+
+.account-session__action:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .role-options {
   display: grid;
   gap: 0.7rem;
@@ -10154,6 +10196,11 @@ a {
   .account-preferences__actions {
     display: flex;
     justify-content: flex-end;
+  }
+
+  .account-session {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
   }
 
   .role-option {

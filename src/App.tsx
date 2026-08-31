@@ -1,5 +1,6 @@
 import { AppHeader } from './components/AppHeader'
 import { AppNavigation } from './components/AppNavigation'
+import { signOutCurrentUser } from './api/authentication'
 import { updateCurrentMembership } from './api/currentUser'
 import type { DemoRole } from './app/demoRoles'
 import { getDemoDataSummary } from './data/demoData'
@@ -302,6 +303,11 @@ export function App() {
             onRoleChange={setActiveRole}
             onReset={resetDemo}
             onOpenSettings={() => navigate('perfil', 'view=configuracion')}
+            onSignOut={async () => {
+              await signOutCurrentUser()
+              await currentUser.refresh()
+              navigate('acceso')
+            }}
             onSaveAccount={async (input) => {
               await updateCurrentMembership({
                 communityId: data.community.id,
