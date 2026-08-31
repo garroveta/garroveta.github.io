@@ -149,9 +149,8 @@ export function SettingsPage({
         />
       ) : activeSection === 'members' ? (
         <MemberManagementPanel
-          data={data}
-          managerId={managerId}
-          onDataChange={onDataChange}
+          communityId={data.community.id}
+          tags={data.tags}
         />
       ) : activeSection === 'invitations' ? (
         <InvitationManagementPanel communityId={data.community.id} />

@@ -13,6 +13,7 @@ import { demoData } from './data/demoData'
 import { createLocalDemoRepository } from './data/demoRepository'
 import { ClientApiError } from './api/client'
 import type { CurrentUser } from './api/currentUser'
+import type { ManagedCommunityMember } from './api/managerMembers'
 
 const registrationApiMocks = vi.hoisted(() => ({
   redeemInvitation: vi.fn(),
@@ -23,6 +24,10 @@ const registrationApiMocks = vi.hoisted(() => ({
 const managerInvitationApiMocks = vi.hoisted(() => ({
   createCommunityInvitation: vi.fn(),
   listCommunityInvitations: vi.fn(),
+}))
+const managerMemberApiMocks = vi.hoisted(() => ({
+  listCommunityMembers: vi.fn(),
+  updateCommunityMember: vi.fn(),
 }))
 const currentUserHookMocks = vi.hoisted(() => ({
   current: null as unknown,
@@ -37,6 +42,7 @@ const authenticationApiMocks = vi.hoisted(() => ({
 
 vi.mock('./api/registration', () => registrationApiMocks)
 vi.mock('./api/managerInvitations', () => managerInvitationApiMocks)
+vi.mock('./api/managerMembers', () => managerMemberApiMocks)
 vi.mock('./api/currentUser', () => currentUserApiMocks)
 vi.mock('./api/authentication', () => authenticationApiMocks)
 vi.mock('./hooks/useCurrentUser', async () => {
@@ -192,6 +198,64 @@ describe('App', () => {
         usedAt: null,
       },
     })
+    let managedMembers: ManagedCommunityMember[] = [
+      {
+        displayName: 'Lucas Muntaner',
+        email: 'lucas@example.com',
+        favoriteGameIds: ['game-mtg'],
+        id: 'member-lucas',
+        joinedAt: '2026-08-31T18:00:00.000Z',
+        role: 'player',
+        status: 'pending',
+        tagIds: ['tag-pauper'],
+      },
+      {
+        displayName: 'Tomás',
+        email: 'tomas@example.com',
+        favoriteGameIds: ['game-mtg'],
+        id: 'member-tomas',
+        joinedAt: '2026-01-01T10:00:00.000Z',
+        role: 'manager',
+        status: 'approved',
+        tagIds: ['tag-commander'],
+      },
+      {
+        displayName: 'Marta Soler',
+        email: 'marta@example.com',
+        favoriteGameIds: ['game-mtg'],
+        id: 'member-marta',
+        joinedAt: '2026-02-01T10:00:00.000Z',
+        role: 'player',
+        status: 'approved',
+        tagIds: ['tag-draft'],
+      },
+    ]
+    managerMemberApiMocks.listCommunityMembers.mockImplementation(() =>
+      Promise.resolve({
+        currentMemberId: 'member-tomas',
+        members: managedMembers,
+      }),
+    )
+    managerMemberApiMocks.updateCommunityMember.mockImplementation(
+      (
+        _communityId: string,
+        memberId: string,
+        input: Partial<ManagedCommunityMember>,
+      ) => {
+        const currentMember = managedMembers.find(({ id }) => id === memberId)
+
+        if (!currentMember) {
+          return Promise.reject(new Error('Unknown member'))
+        }
+
+        const updatedMember = { ...currentMember, ...input }
+        managedMembers = managedMembers.map((member) =>
+          member.id === memberId ? updatedMember : member,
+        )
+
+        return Promise.resolve({ member: updatedMember })
+      },
+    )
   })
 
   afterEach(() => {
@@ -627,7 +691,7 @@ describe('App', () => {
     )
   })
 
-  it('lets the manager approve members and manage their permissions', () => {
+  it('loads and manages the real community members for the manager', async () => {
     authenticateAsManager()
     render(<App />)
 
@@ -635,21 +699,35 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
     fireEvent.click(screen.getByRole('tab', { name: 'Miembros' }))
+    await screen.findByText('Lucas Muntaner')
+
+    expect(managerMemberApiMocks.listCommunityMembers).toHaveBeenCalledWith(
+      'community-crc-delorean',
+      expect.any(AbortSignal),
+    )
     fireEvent.change(screen.getByLabelText('Buscar miembros'), {
-      target: { value: 'Lucas Muntaner' },
+      target: { value: 'lucas@example.com' },
     })
 
     const pendingMember = screen.getByText('Lucas Muntaner').closest('article')
     expect(pendingMember).toBeTruthy()
+    expect(
+      within(pendingMember as HTMLElement).getByText(
+        'lucas@example.com · Pendiente',
+      ),
+    ).toBeInTheDocument()
     fireEvent.click(
       within(pendingMember as HTMLElement).getByRole('button', {
         name: 'Aceptar',
       }),
     )
-    const approvedMember = screen.getByText('Lucas Muntaner').closest('article')
-    expect(
-      within(approvedMember as HTMLElement).getByText('Jugador · Activo'),
-    ).toBeInTheDocument()
+    await waitFor(() =>
+      expect(managerMemberApiMocks.updateCommunityMember).toHaveBeenCalledWith(
+        'community-crc-delorean',
+        'member-lucas',
+        { status: 'approved' },
+      ),
+    )
 
     fireEvent.change(screen.getByLabelText('Buscar miembros'), {
       target: { value: 'Marta Soler' },
@@ -660,23 +738,36 @@ describe('App', () => {
       within(marta as HTMLElement).getByLabelText('Rol de Marta Soler'),
       { target: { value: 'moderator' } },
     )
+    await waitFor(() =>
+      expect(managerMemberApiMocks.updateCommunityMember).toHaveBeenCalledWith(
+        'community-crc-delorean',
+        'member-marta',
+        { role: 'moderator' },
+      ),
+    )
     fireEvent.click(within(marta as HTMLElement).getByText(/^Etiquetas/))
     fireEvent.click(
       within(marta as HTMLElement).getByRole('checkbox', { name: 'Pauper' }),
     )
-    fireEvent.click(
-      within(marta as HTMLElement).getByRole('button', { name: 'Suspender' }),
+    await waitFor(() =>
+      expect(managerMemberApiMocks.updateCommunityMember).toHaveBeenCalledWith(
+        'community-crc-delorean',
+        'member-marta',
+        { tagIds: ['tag-draft', 'tag-pauper'] },
+      ),
     )
-
-    expect(
-      createLocalDemoRepository(window.localStorage)
-        .load()
-        .members.find(({ id }) => id === 'member-marta'),
-    ).toMatchObject({
-      role: 'moderator',
-      status: 'suspended',
-      tagIds: expect.arrayContaining(['tag-pauper']),
-    })
+    fireEvent.click(
+      within(marta as HTMLElement).getByRole('button', {
+        name: 'Suspender a Marta Soler',
+      }),
+    )
+    await waitFor(() =>
+      expect(managerMemberApiMocks.updateCommunityMember).toHaveBeenCalledWith(
+        'community-crc-delorean',
+        'member-marta',
+        { status: 'suspended' },
+      ),
+    )
   })
 
   it('lets the manager create, share, edit, pin and delete publications', async () => {

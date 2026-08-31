@@ -17,6 +17,12 @@ export type ManagedCommunityMembers = {
   members: ManagedCommunityMember[]
 }
 
+export type UpdateCommunityMemberInput = {
+  role?: CommunityRole
+  status?: 'approved' | 'suspended'
+  tagIds?: string[]
+}
+
 export function listCommunityMembers(
   communityId: string,
   signal?: AbortSignal,
@@ -24,5 +30,19 @@ export function listCommunityMembers(
   return apiRequest<ManagedCommunityMembers>(
     `/api/communities/${encodeURIComponent(communityId)}/members`,
     { signal },
+  )
+}
+
+export function updateCommunityMember(
+  communityId: string,
+  memberId: string,
+  input: UpdateCommunityMemberInput,
+) {
+  return apiRequest<{ member: ManagedCommunityMember }>(
+    `/api/communities/${encodeURIComponent(communityId)}/members/${encodeURIComponent(memberId)}`,
+    {
+      body: JSON.stringify(input),
+      method: 'PATCH',
+    },
   )
 }

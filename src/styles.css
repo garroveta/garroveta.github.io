@@ -1724,6 +1724,35 @@ a {
   background: #faf7fb;
 }
 
+.member-management-state {
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  padding: 1.5rem 1rem;
+  border-top: 1px solid #e5dfe7;
+  color: #847987;
+  background: #faf7fb;
+  text-align: center;
+}
+
+.member-management-state strong {
+  color: #443948;
+  font-size: 0.78rem;
+}
+
+.member-management-state span {
+  font-size: 0.68rem;
+}
+
+.member-management-action-error {
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid #e5c9c6;
+  color: #985348;
+  background: #fff4f2;
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
 .member-search {
   display: flex;
   min-width: 0;
