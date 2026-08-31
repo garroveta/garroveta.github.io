@@ -2,6 +2,7 @@ import { type AuthEnv } from './auth'
 import { apiError, jsonResponse } from './http'
 import { handleCurrentUserRequest } from './current-user'
 import { handleInvitationApiRequest, matchInvitationRoute } from './invitations'
+import { handleMemberApiRequest, matchMemberRoute } from './members'
 
 export interface ApiRequestContext {
   context: ExecutionContext
@@ -45,6 +46,19 @@ export function handleApiRequest({
         request,
       },
       invitationRoute,
+    )
+  }
+
+  const memberRoute = matchMemberRoute(requestUrl.pathname)
+
+  if (memberRoute) {
+    return handleMemberApiRequest(
+      {
+        context,
+        env,
+        request,
+      },
+      memberRoute,
     )
   }
 
