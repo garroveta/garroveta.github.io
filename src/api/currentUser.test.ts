@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { getCurrentUser } from './currentUser'
+import { getCurrentUser, updateCurrentMembership } from './currentUser'
 
 describe('current user API', () => {
   afterEach(() => {
@@ -33,6 +33,46 @@ describe('current user API', () => {
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining('/api/me'),
       expect.objectContaining({ credentials: 'include' }),
+    )
+  })
+
+  it('updates the profile and preferences of the current membership', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          membership: {
+            communityId: 'community-crc-delorean',
+            displayName: 'Marina Valverde',
+            favoriteGameIds: ['game-mtg'],
+            id: 'member-marina',
+            tagIds: ['tag-pauper'],
+          },
+        }),
+        {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        },
+      ),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const input = {
+      communityId: 'community-crc-delorean',
+      displayName: 'Marina Valverde',
+      favoriteGameIds: ['game-mtg'],
+      tagIds: ['tag-pauper'],
+    }
+
+    await expect(updateCurrentMembership(input)).resolves.toMatchObject({
+      membership: { displayName: 'Marina Valverde' },
+    })
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/api/me'),
+      expect.objectContaining({
+        body: JSON.stringify(input),
+        credentials: 'include',
+        method: 'PATCH',
+      }),
     )
   })
 })

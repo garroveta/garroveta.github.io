@@ -1,15 +1,12 @@
 import { Check, RotateCcw, Settings2 } from 'lucide-react'
-import type { CSSProperties } from 'react'
 
 import {
   demoRoleOptions,
   getDemoRoleOption,
   type DemoRole,
 } from '../app/demoRoles'
+import { AccountPreferencesForm } from '../components/AccountPreferencesForm'
 import { DemoDataSummary } from '../components/DemoDataSummary'
-import { isCommunityOptionActive } from '../data/communityOptions'
-import { toggleFavoriteGame } from '../data/memberPreferences'
-import type { DemoDataUpdater } from '../data/demoRepository'
 import type {
   CommunityMember,
   DemoDataSet,
@@ -18,39 +15,39 @@ import type {
 
 type ProfilePageProps = {
   activeRole: DemoRole
+  accountEmail: string
   data: DemoDataSet
   currentMember: CommunityMember
   dataSummary: DemoDataSummaryValue
   onRoleChange: (role: DemoRole) => void
-  onDataChange: (updater: DemoDataUpdater) => void
   onReset: () => void
   onOpenSettings: () => void
+  onSaveAccount: (input: {
+    displayName: string
+    favoriteGameIds: string[]
+    tagIds: string[]
+  }) => Promise<void>
 }
 
 export function ProfilePage({
   activeRole,
+  accountEmail,
   data,
   currentMember,
   dataSummary,
   onRoleChange,
-  onDataChange,
   onReset,
   onOpenSettings,
+  onSaveAccount,
 }: ProfilePageProps) {
   const currentRole = getDemoRoleOption(activeRole)
-  const activeGames = data.games.filter(isCommunityOptionActive)
-  const favoriteGameCount = activeGames.filter(({ id }) =>
-    currentMember.favoriteGameIds.includes(id),
-  ).length
 
   return (
     <div className="page">
       <header className="page-heading">
-        <span className="page-eyebrow">Cuenta de demostración</span>
+        <span className="page-eyebrow">Tu cuenta</span>
         <h1>Perfil</h1>
-        <p>
-          Cambia de vista para explorar el prototipo con cada tipo de usuario.
-        </p>
+        <p>Actualiza tus datos y elige qué juegos y grupos quieres seguir.</p>
       </header>
 
       <section className="profile-summary" aria-labelledby="profile-name">
@@ -58,7 +55,7 @@ export function ProfilePage({
           {currentMember.initials}
         </span>
         <div className="profile-summary__identity">
-          <span>Perfil activo</span>
+          <span>Cuenta conectada</span>
           <h2 id="profile-name">{currentMember.displayName}</h2>
           <p>Miembro validado · {data.community.name}</p>
         </div>
@@ -67,6 +64,16 @@ export function ProfilePage({
           {currentRole.label}
         </span>
       </section>
+
+      <AccountPreferencesForm
+        displayName={currentMember.displayName}
+        email={accountEmail}
+        favoriteGameIds={currentMember.favoriteGameIds}
+        games={data.games}
+        onSave={onSaveAccount}
+        tagIds={currentMember.tagIds}
+        tags={data.tags}
+      />
 
       <DemoDataSummary community={data.community} summary={dataSummary} />
 
@@ -92,52 +99,6 @@ export function ProfilePage({
           </button>
         </section>
       ) : null}
-
-      <section className="game-preferences" aria-labelledby="favorite-games">
-        <div className="section-heading">
-          <div>
-            <span>Tu agenda</span>
-            <h2 id="favorite-games">Mis juegos</h2>
-          </div>
-          <p>{favoriteGameCount} seleccionados</p>
-        </div>
-        <p>
-          Elige los juegos que quieres seguir. Garroveta usará esta selección
-          para destacar tu próximo evento.
-        </p>
-
-        <div className="favorite-game-options">
-          {activeGames.map((game) => {
-            const isFavorite = currentMember.favoriteGameIds.includes(game.id)
-
-            return (
-              <button
-                type="button"
-                key={game.id}
-                aria-pressed={isFavorite}
-                onClick={() =>
-                  onDataChange((data) =>
-                    toggleFavoriteGame(data, currentMember.id, game.id),
-                  )
-                }
-              >
-                <span
-                  className="favorite-game-color"
-                  style={{ '--game-color': game.color } as CSSProperties}
-                  aria-hidden="true"
-                />
-                <span>
-                  <strong>{game.shortName}</strong>
-                  <small>{game.name}</small>
-                </span>
-                <span className="favorite-game-check" aria-hidden="true">
-                  {isFavorite ? <Check size={16} strokeWidth={3} /> : null}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      </section>
 
       <section className="role-section" aria-labelledby="role-title">
         <div className="section-heading">

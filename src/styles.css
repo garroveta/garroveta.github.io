@@ -3418,81 +3418,70 @@ a {
   margin-top: 2rem;
 }
 
-.game-preferences {
-  margin-top: 2rem;
+.account-preferences {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #dfd6e2;
+  border-radius: 1.2rem;
+  background: #fff;
+  box-shadow: 0 0.75rem 2rem rgb(51 43 55 / 5%);
 }
 
-.game-preferences > p {
-  max-width: 38rem;
-  margin: -0.25rem 0 0.9rem;
-  color: #777079;
-  font-size: 0.82rem;
-  line-height: 1.5;
-}
-
-.favorite-game-options {
+.account-preferences__form {
   display: grid;
+  gap: 1.15rem;
+  margin-top: 1rem;
+}
+
+.account-identity-fields {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.account-identity-fields .form-field > small {
+  color: #857c87;
+  font-size: 0.66rem;
+  line-height: 1.4;
+}
+
+.account-identity-fields input[readonly] {
+  color: #736b75;
+  background: #f3f0f3;
+}
+
+.account-preferences__feedback {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.account-preferences__feedback--success {
+  color: #356753;
+  background: #eaf4ef;
+}
+
+.account-preferences__feedback--error {
+  color: #8f4741;
+  background: #faefed;
+}
+
+.account-preferences__actions {
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
   gap: 0.55rem;
 }
 
-.favorite-game-options > button {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.7rem;
-  min-height: 4rem;
-  padding: 0.7rem;
-  border: 1px solid #e4dfd9;
-  border-radius: 0.9rem;
-  color: #2d2830;
-  background: #fff;
-  text-align: left;
-  cursor: pointer;
+.account-preferences__actions > button {
+  min-width: 0;
 }
 
-.favorite-game-options > button[aria-pressed='true'] {
-  border-color: #9a74a8;
-  background: #fcf9fd;
-}
-
-.favorite-game-options > button:focus-visible {
-  outline: 3px solid rgb(124 86 137 / 35%);
-  outline-offset: 2px;
-}
-
-.favorite-game-color {
-  width: 0.8rem;
-  height: 2.4rem;
-  border-radius: 999px;
-  background: var(--game-color);
-}
-
-.favorite-game-options button > span:nth-child(2) {
-  display: grid;
-  gap: 0.15rem;
-}
-
-.favorite-game-options strong {
-  font-size: 0.85rem;
-}
-
-.favorite-game-options small {
-  color: #857c87;
-  font-size: 0.7rem;
-}
-
-.favorite-game-check {
-  display: grid;
-  width: 1.65rem;
-  height: 1.65rem;
-  place-items: center;
-  border-radius: 50%;
-  color: #fff;
-  background: #6a3b7c;
-}
-
-.favorite-game-options button:not([aria-pressed='true']) .favorite-game-check {
-  background: #eeeae5;
+.account-preferences__actions .secondary-button:disabled {
+  color: #98909a;
+  background: #f1eef1;
+  cursor: not-allowed;
 }
 
 .role-options {
@@ -10157,8 +10146,14 @@ a {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .favorite-game-options {
+  .account-identity-fields {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .account-preferences__actions {
+    display: flex;
+    justify-content: flex-end;
   }
 
   .role-option {

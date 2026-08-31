@@ -9,15 +9,26 @@ vi.mock('./authorization', () => ({
 }))
 
 function createContext({
+  body,
   memberships = [],
   method = 'GET',
+  updatedMembership = null,
 }: {
+  body?: unknown
   memberships?: unknown[]
   method?: string
+  updatedMembership?: unknown
 } = {}) {
   const all = vi.fn().mockResolvedValue({ results: memberships })
-  const bind = vi.fn().mockReturnValue({ all })
+  const first = vi.fn().mockResolvedValue(updatedMembership)
+  const bind = vi.fn().mockReturnValue({ all, first })
   const prepare = vi.fn().mockReturnValue({ bind })
+  const requestInit: RequestInit = { method }
+
+  if (body !== undefined) {
+    requestInit.body = JSON.stringify(body)
+    requestInit.headers = { 'Content-Type': 'application/json' }
+  }
 
   return {
     all,
@@ -25,8 +36,9 @@ function createContext({
     context: {
       context: {} as ExecutionContext,
       env: { DB: { prepare } as unknown as D1Database } as AuthEnv,
-      request: new Request('https://api.garroveta.es/api/me', { method }),
+      request: new Request('https://api.garroveta.es/api/me', requestInit),
     },
+    first,
     prepare,
   }
 }
@@ -113,13 +125,92 @@ describe('Current user API', () => {
     })
   })
 
+  it('updates the approved membership profile and preferences', async () => {
+    const { bind, context } = createContext({
+      body: {
+        communityId: 'community-crc-delorean',
+        displayName: '  Tomás Garau  ',
+        favoriteGameIds: ['game-mtg', 'game-one-piece', 'game-mtg'],
+        tagIds: ['tag-pauper', 'tag-commander'],
+      },
+      method: 'PATCH',
+      updatedMembership: {
+        community_id: 'community-crc-delorean',
+        display_name: 'Tomás Garau',
+        favorite_game_ids: '["game-mtg","game-one-piece"]',
+        id: 'member-manager',
+        tag_ids: '["tag-pauper","tag-commander"]',
+      },
+    })
+
+    const response = await handleCurrentUserRequest(context)
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({
+      membership: {
+        communityId: 'community-crc-delorean',
+        displayName: 'Tomás Garau',
+        favoriteGameIds: ['game-mtg', 'game-one-piece'],
+        id: 'member-manager',
+        tagIds: ['tag-pauper', 'tag-commander'],
+      },
+    })
+    expect(bind).toHaveBeenCalledWith(
+      'Tomás Garau',
+      '["game-mtg","game-one-piece"]',
+      '["tag-pauper","tag-commander"]',
+      expect.any(String),
+      'community-crc-delorean',
+      'user-manager',
+    )
+  })
+
+  it('rejects invalid profile updates before accessing D1', async () => {
+    const { context, prepare } = createContext({
+      body: {
+        communityId: 'community-crc-delorean',
+        displayName: '   ',
+        favoriteGameIds: ['game-mtg'],
+        tagIds: [],
+      },
+      method: 'PATCH',
+    })
+
+    const response = await handleCurrentUserRequest(context)
+
+    expect(response.status).toBe(400)
+    expect(prepare).not.toHaveBeenCalled()
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: 'profile_invalid' },
+    })
+  })
+
+  it('does not update a missing or non-approved membership', async () => {
+    const { context } = createContext({
+      body: {
+        communityId: 'community-crc-delorean',
+        displayName: 'Tomás',
+        favoriteGameIds: ['game-mtg'],
+        tagIds: [],
+      },
+      method: 'PATCH',
+    })
+
+    const response = await handleCurrentUserRequest(context)
+
+    expect(response.status).toBe(403)
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: 'membership_access_required' },
+    })
+  })
+
   it('rejects unsupported methods before reading the session', async () => {
     const { context } = createContext({ method: 'POST' })
 
     const response = await handleCurrentUserRequest(context)
 
     expect(response.status).toBe(405)
-    expect(response.headers.get('Allow')).toBe('GET')
+    expect(response.headers.get('Allow')).toBe('GET, PATCH')
     expect(getAuthenticatedUser).not.toHaveBeenCalled()
   })
 })

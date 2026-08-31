@@ -1,5 +1,6 @@
 import { AppHeader } from './components/AppHeader'
 import { AppNavigation } from './components/AppNavigation'
+import { updateCurrentMembership } from './api/currentUser'
 import type { DemoRole } from './app/demoRoles'
 import { getDemoDataSummary } from './data/demoData'
 import type { DemoDataSet } from './domain/types'
@@ -45,6 +46,16 @@ function getPublishingMember(data: DemoDataSet, activeRole: DemoRole) {
   )
 }
 
+function getMemberInitials(displayName: string) {
+  const words = displayName.trim().split(/\s+/).filter(Boolean)
+
+  return words
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join('')
+    .toLocaleUpperCase('es')
+}
+
 export function App() {
   const { activeRoute, routeQuery, navigate } = useHashRoute()
   const { activeRole, setActiveRole, resetRole } = useDemoRole()
@@ -64,6 +75,18 @@ export function App() {
         : 'jugador'
     : null
   const effectiveRole = authenticatedRole ?? activeRole
+  const connectedMember = approvedMembership
+    ? {
+        ...currentMember,
+        displayName: approvedMembership.displayName,
+        favoriteGameIds: approvedMembership.favoriteGameIds,
+        initials: getMemberInitials(approvedMembership.displayName),
+        joinedAt: approvedMembership.joinedAt,
+        role: approvedMembership.role,
+        status: approvedMembership.status,
+        tagIds: approvedMembership.tagIds,
+      }
+    : currentMember
   const publishingMember = getPublishingMember(data, effectiveRole)
   const dataSummary = getDemoDataSummary(data)
   const cardRouteParams = new URLSearchParams(routeQuery)
@@ -138,11 +161,23 @@ export function App() {
     )
   }
 
+  const authenticatedUserData = currentUser.data
+
+  if (!authenticatedUserData) {
+    return (
+      <CommunityAccessPage
+        community={data.community}
+        state="error"
+        onAction={() => void currentUser.refresh()}
+      />
+    )
+  }
+
   if (!currentMembership) {
     return (
       <CommunityAccessPage
         community={data.community}
-        email={currentUser.data?.user.email}
+        email={authenticatedUserData.user.email}
         state="missing"
       />
     )
@@ -152,7 +187,7 @@ export function App() {
     return (
       <CommunityAccessPage
         community={data.community}
-        email={currentUser.data?.user.email}
+        email={authenticatedUserData.user.email}
         state="pending"
       />
     )
@@ -162,7 +197,7 @@ export function App() {
     return (
       <CommunityAccessPage
         community={data.community}
-        email={currentUser.data?.user.email}
+        email={authenticatedUserData.user.email}
         state="suspended"
       />
     )
@@ -188,7 +223,7 @@ export function App() {
           <HomePage
             activeRole={effectiveRole}
             data={data}
-            currentMember={currentMember}
+            currentMember={connectedMember}
             publishingMember={publishingMember}
             onNavigate={navigate}
           />
@@ -196,7 +231,7 @@ export function App() {
           <EventsPage
             activeRole={effectiveRole}
             data={data}
-            currentMember={currentMember}
+            currentMember={connectedMember}
             publishingMember={publishingMember}
             onDataChange={updateData}
             onNavigate={navigate}
@@ -215,7 +250,7 @@ export function App() {
         ) : activeRoute === 'cartas' && sharedCardsMemberId ? (
           <SharedCardsPage
             data={data}
-            currentMember={currentMember}
+            currentMember={connectedMember}
             sellerId={sharedCardsMemberId}
             initialSetCode={cardRouteParams.get('set') ?? undefined}
             initialLanguage={cardRouteParams.get('lang') ?? undefined}
@@ -226,7 +261,7 @@ export function App() {
         ) : activeRoute === 'cartas' ? (
           <CardsPage
             data={data}
-            currentMember={currentMember}
+            currentMember={connectedMember}
             initialView={
               cardRouteParams.get('view') === 'market' ? 'market' : undefined
             }
@@ -236,7 +271,7 @@ export function App() {
           <NewsPage
             activeRole={effectiveRole}
             data={data}
-            currentMember={currentMember}
+            currentMember={connectedMember}
             initialPostId={newsRouteParams.get('post') ?? undefined}
             onManagePublications={() =>
               navigate('perfil', 'view=configuracion&section=communications')
@@ -260,13 +295,20 @@ export function App() {
         ) : activeRoute === 'perfil' ? (
           <ProfilePage
             activeRole={effectiveRole}
+            accountEmail={authenticatedUserData.user.email}
             data={data}
-            currentMember={currentMember}
+            currentMember={connectedMember}
             dataSummary={dataSummary}
             onRoleChange={setActiveRole}
-            onDataChange={updateData}
             onReset={resetDemo}
             onOpenSettings={() => navigate('perfil', 'view=configuracion')}
+            onSaveAccount={async (input) => {
+              await updateCurrentMembership({
+                communityId: data.community.id,
+                ...input,
+              })
+              await currentUser.refresh()
+            }}
           />
         ) : (
           <PlaceholderPage route={activeRoute} onNavigate={navigate} />

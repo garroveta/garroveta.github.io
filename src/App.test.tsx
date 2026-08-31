@@ -12,6 +12,7 @@ import { reserveMarketplaceListing } from './data/cardLifecycle'
 import { demoData } from './data/demoData'
 import { createLocalDemoRepository } from './data/demoRepository'
 import { ClientApiError } from './api/client'
+import type { CurrentUser } from './api/currentUser'
 
 const registrationApiMocks = vi.hoisted(() => ({
   redeemInvitation: vi.fn(),
@@ -27,9 +28,13 @@ const currentUserHookMocks = vi.hoisted(() => ({
   current: null as unknown,
   refresh: vi.fn(),
 }))
+const currentUserApiMocks = vi.hoisted(() => ({
+  updateCurrentMembership: vi.fn(),
+}))
 
 vi.mock('./api/registration', () => registrationApiMocks)
 vi.mock('./api/managerInvitations', () => managerInvitationApiMocks)
+vi.mock('./api/currentUser', () => currentUserApiMocks)
 vi.mock('./hooks/useCurrentUser', async () => {
   const { useState } = await vi.importActual<typeof import('react')>('react')
 
@@ -58,7 +63,7 @@ const validInvitationToken = 'a'.repeat(43)
 function buildCurrentUser(
   role: 'manager' | 'moderator' | 'player' = 'player',
   status: 'approved' | 'pending' | 'suspended' = 'approved',
-) {
+): CurrentUser {
   const identity =
     role === 'manager'
       ? { displayName: 'Tomás', id: 'tomas' }
@@ -76,12 +81,12 @@ function buildCurrentUser(
           slug: 'crc-delorean',
         },
         displayName: identity.displayName,
-        favoriteGameIds: ['game-mtg'],
+        favoriteGameIds: ['game-mtg', 'game-one-piece'],
         id: `member-${identity.id}`,
         joinedAt: '2026-01-01T10:00:00.000Z',
         role,
         status,
-        tagIds: [],
+        tagIds: ['tag-commander', 'tag-intercambios'],
       },
     ],
     user: {
@@ -123,6 +128,9 @@ describe('App', () => {
       status: 'authenticated',
     }
     currentUserHookMocks.refresh.mockResolvedValue(currentUser)
+    currentUserApiMocks.updateCurrentMembership.mockResolvedValue({
+      membership: currentUser.memberships[0],
+    })
     registrationApiMocks.validateInvitation.mockResolvedValue({
       community: { city: 'Inca', name: 'CRC Delorean' },
       expiresAt: '2026-09-27T12:00:00.000Z',
@@ -871,23 +879,56 @@ describe('App', () => {
     expect(screen.getByText('1 programados')).toBeInTheDocument()
   })
 
-  it('saves the player favorite games from the profile', () => {
+  it('saves account data and preferences together from the profile', async () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
 
-    const onePieceButton = screen.getByRole('button', { name: /One Piece/ })
+    expect(screen.getByLabelText('Correo electrónico')).toHaveValue(
+      'alex@example.com',
+    )
+    expect(screen.getByLabelText('Correo electrónico')).toHaveAttribute(
+      'readonly',
+    )
+
+    const nameInput = screen.getByLabelText('Nombre visible')
     const gundamButton = screen.getByRole('button', { name: /Gundam/ })
+    const pauperButton = screen.getByRole('button', { name: 'Pauper' })
 
-    expect(onePieceButton).toHaveAttribute('aria-pressed', 'true')
+    expect(nameInput).toHaveValue('Álex Romero')
     expect(gundamButton).toHaveAttribute('aria-pressed', 'false')
+    expect(pauperButton).toHaveAttribute('aria-pressed', 'false')
 
-    fireEvent.click(onePieceButton)
+    fireEvent.change(nameInput, { target: { value: 'Álex Romero Vidal' } })
     fireEvent.click(gundamButton)
+    fireEvent.click(pauperButton)
 
-    expect(onePieceButton).toHaveAttribute('aria-pressed', 'false')
-    expect(gundamButton).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByText('2 seleccionados')).toBeInTheDocument()
+    const updatedUser = buildCurrentUser()
+    updatedUser.memberships[0] = {
+      ...updatedUser.memberships[0],
+      displayName: 'Álex Romero Vidal',
+      favoriteGameIds: ['game-mtg', 'game-one-piece', 'game-gundam'],
+      tagIds: ['tag-commander', 'tag-intercambios', 'tag-pauper'],
+    }
+    currentUserHookMocks.refresh.mockResolvedValue(updatedUser)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+
+    await waitFor(() =>
+      expect(currentUserApiMocks.updateCurrentMembership).toHaveBeenCalledWith({
+        communityId: 'community-crc-delorean',
+        displayName: 'Álex Romero Vidal',
+        favoriteGameIds: ['game-mtg', 'game-one-piece', 'game-gundam'],
+        tagIds: ['tag-commander', 'tag-intercambios', 'tag-pauper'],
+      }),
+    )
+    expect(currentUserHookMocks.refresh).toHaveBeenCalled()
+    expect(
+      await screen.findByText('Cuenta y preferencias actualizadas.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Álex Romero Vidal' }),
+    ).toBeInTheDocument()
   })
 
   it('lets a manager maintain configurable community options', () => {

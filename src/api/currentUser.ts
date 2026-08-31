@@ -26,6 +26,27 @@ export type CurrentUser = {
   }
 }
 
+export type UpdateCurrentMembershipInput = {
+  communityId: string
+  displayName: string
+  favoriteGameIds: string[]
+  tagIds: string[]
+}
+
+export type UpdatedCurrentMembership = Pick<
+  CurrentMembership,
+  'displayName' | 'favoriteGameIds' | 'id' | 'tagIds'
+> & {
+  communityId: string
+}
+
 export function getCurrentUser(signal?: AbortSignal) {
   return apiRequest<CurrentUser>('/api/me', { signal })
+}
+
+export function updateCurrentMembership(input: UpdateCurrentMembershipInput) {
+  return apiRequest<{ membership: UpdatedCurrentMembership }>('/api/me', {
+    body: JSON.stringify(input),
+    method: 'PATCH',
+  })
 }
