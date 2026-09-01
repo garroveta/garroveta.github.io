@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { getApprovedManagerMembership } from './authorization'
+import {
+  getApprovedManagerMembership,
+  getApprovedMembership,
+} from './authorization'
 
 interface D1Mock {
   bind: ReturnType<typeof vi.fn>
@@ -63,5 +66,26 @@ describe('Worker manager authorization', () => {
         'user-player',
       ),
     ).resolves.toBeNull()
+  })
+})
+
+describe('Worker member authorization', () => {
+  it('maps any approved community role', async () => {
+    const d1 = createD1Mock({
+      community_id: 'community-crc-delorean',
+      display_name: 'Marina',
+      id: 'member-player',
+      role: 'player',
+      status: 'approved',
+      user_id: 'user-player',
+    })
+
+    await expect(
+      getApprovedMembership(d1.db, 'community-crc-delorean', 'user-player'),
+    ).resolves.toMatchObject({
+      id: 'member-player',
+      role: 'player',
+      status: 'approved',
+    })
   })
 })

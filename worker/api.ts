@@ -3,6 +3,7 @@ import { apiError, jsonResponse } from './http'
 import { handleCurrentUserRequest } from './current-user'
 import { handleInvitationApiRequest, matchInvitationRoute } from './invitations'
 import { handleMemberApiRequest, matchMemberRoute } from './members'
+import { handleEventApiRequest, matchEventRoute } from './events'
 
 export interface ApiRequestContext {
   context: ExecutionContext
@@ -59,6 +60,19 @@ export function handleApiRequest({
         request,
       },
       memberRoute,
+    )
+  }
+
+  const eventRoute = matchEventRoute(requestUrl.pathname)
+
+  if (eventRoute) {
+    return handleEventApiRequest(
+      {
+        context,
+        env,
+        request,
+      },
+      eventRoute,
     )
   }
 

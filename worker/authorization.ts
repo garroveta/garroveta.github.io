@@ -22,8 +22,22 @@ export interface ManagerMembership {
   status: 'approved'
 }
 
+export interface ApprovedMembership {
+  id: string
+  communityId: string
+  userId: string
+  displayName: string
+  role: 'manager' | 'moderator' | 'player'
+  status: 'approved'
+}
+
 export interface ManagerAuthorization {
   membership: ManagerMembership
+  user: AuthenticatedUser
+}
+
+export interface MemberAuthorization {
+  membership: ApprovedMembership
   user: AuthenticatedUser
 }
 
@@ -37,12 +51,31 @@ export type ManagerAuthorizationResult =
       response: Response
     }
 
+export type MemberAuthorizationResult =
+  | {
+      authorized: true
+      value: MemberAuthorization
+    }
+  | {
+      authorized: false
+      response: Response
+    }
+
 interface ManagerMembershipRow {
   id: string
   community_id: string
   user_id: string
   display_name: string
   role: 'manager'
+  status: 'approved'
+}
+
+interface ApprovedMembershipRow {
+  id: string
+  community_id: string
+  user_id: string
+  display_name: string
+  role: 'manager' | 'moderator' | 'player'
   status: 'approved'
 }
 
@@ -102,6 +135,86 @@ export async function getApprovedManagerMembership(
     displayName: membership.display_name,
     role: membership.role,
     status: membership.status,
+  }
+}
+
+export async function getApprovedMembership(
+  db: D1Database,
+  communityId: string,
+  userId: string,
+): Promise<ApprovedMembership | null> {
+  const membership = await db
+    .prepare(
+      `select
+        id,
+        community_id,
+        user_id,
+        display_name,
+        role,
+        status
+      from community_member
+      where community_id = ?
+        and user_id = ?
+        and status = 'approved'
+      limit 1`,
+    )
+    .bind(communityId, userId)
+    .first<ApprovedMembershipRow>()
+
+  if (!membership) {
+    return null
+  }
+
+  return {
+    id: membership.id,
+    communityId: membership.community_id,
+    userId: membership.user_id,
+    displayName: membership.display_name,
+    role: membership.role,
+    status: membership.status,
+  }
+}
+
+export async function authorizeApprovedMember(
+  requestContext: RequestContext,
+  communityId: string,
+): Promise<MemberAuthorizationResult> {
+  const user = await getAuthenticatedUser(requestContext)
+
+  if (!user) {
+    return {
+      authorized: false,
+      response: apiError(
+        401,
+        'authentication_required',
+        'Authentication is required.',
+      ),
+    }
+  }
+
+  const membership = await getApprovedMembership(
+    requestContext.env.DB,
+    communityId,
+    user.id,
+  )
+
+  if (!membership) {
+    return {
+      authorized: false,
+      response: apiError(
+        403,
+        'membership_access_required',
+        'Approved community access is required.',
+      ),
+    }
+  }
+
+  return {
+    authorized: true,
+    value: {
+      membership,
+      user,
+    },
   }
 }
 
