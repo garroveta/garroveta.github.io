@@ -27,6 +27,13 @@ type MemberManagementPanelProps = {
   tags: CommunityTag[]
 }
 
+type SensitiveMemberAction = {
+  confirmLabel: string
+  input: UpdateCommunityMemberInput
+  memberId: string
+  message: string
+}
+
 const roleLabels: Record<CommunityRole, string> = {
   player: 'Jugador',
   moderator: 'Moderador',
@@ -72,6 +79,8 @@ export function MemberManagementPanel({
   const [filter, setFilter] = useState<MemberFilter>('all')
   const [showAll, setShowAll] = useState(false)
   const [pendingRejectId, setPendingRejectId] = useState<string>()
+  const [sensitiveAction, setSensitiveAction] =
+    useState<SensitiveMemberAction>()
   const [savingMemberId, setSavingMemberId] = useState<string>()
   const [actionError, setActionError] = useState('')
   const activeTags = tags.filter(({ isActive }) => isActive !== false)
@@ -173,6 +182,37 @@ export function MemberManagementPanel({
     } finally {
       setSavingMemberId(undefined)
     }
+  }
+
+  const requestRoleChange = (
+    member: ManagedCommunityMember,
+    role: CommunityRole,
+  ) => {
+    if (role === member.role) {
+      return
+    }
+
+    if (role === 'manager') {
+      setSensitiveAction({
+        confirmLabel: 'Confirmar promoción',
+        input: { role },
+        memberId: member.id,
+        message: `¿Dar permisos de gerente a ${member.displayName}? Tendrá acceso a toda la configuración.`,
+      })
+      return
+    }
+
+    if (member.role === 'manager') {
+      setSensitiveAction({
+        confirmLabel: 'Confirmar cambio de rol',
+        input: { role },
+        memberId: member.id,
+        message: `¿Retirar los permisos de gerente de ${member.displayName}?`,
+      })
+      return
+    }
+
+    void saveMember(member.id, { role })
   }
 
   return (
@@ -332,9 +372,10 @@ export function MemberManagementPanel({
                           value={member.role}
                           disabled={isCurrentManager || isSaving}
                           onChange={(event) =>
-                            void saveMember(member.id, {
-                              role: event.target.value as CommunityRole,
-                            })
+                            requestRoleChange(
+                              member,
+                              event.target.value as CommunityRole,
+                            )
                           }
                         >
                           <option value="player">Jugador</option>
@@ -394,13 +435,46 @@ export function MemberManagementPanel({
                           disabled={isCurrentManager || isSaving}
                           aria-label={`Suspender a ${member.displayName}`}
                           onClick={() =>
-                            void saveMember(member.id, { status: 'suspended' })
+                            setSensitiveAction({
+                              confirmLabel: 'Confirmar suspensión',
+                              input: { status: 'suspended' },
+                              memberId: member.id,
+                              message: `¿Suspender a ${member.displayName}? Perderá el acceso a la comunidad hasta que se reactive su cuenta.`,
+                            })
                           }
                         >
                           <Ban aria-hidden="true" size={16} />
                           <span>Suspender</span>
                         </button>
                       )}
+
+                      {sensitiveAction?.memberId === member.id ? (
+                        <div className="member-sensitive-confirmation">
+                          <span>{sensitiveAction.message}</span>
+                          <div>
+                            <button
+                              type="button"
+                              disabled={isSaving}
+                              onClick={() => {
+                                void saveMember(
+                                  member.id,
+                                  sensitiveAction.input,
+                                )
+                                setSensitiveAction(undefined)
+                              }}
+                            >
+                              {sensitiveAction.confirmLabel}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isSaving}
+                              onClick={() => setSensitiveAction(undefined)}
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
                     </>
                   )}
                 </article>

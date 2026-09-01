@@ -756,9 +756,72 @@ describe('App', () => {
         { tagIds: ['tag-draft', 'tag-pauper'] },
       ),
     )
+
+    fireEvent.change(
+      within(marta as HTMLElement).getByLabelText('Rol de Marta Soler'),
+      { target: { value: 'manager' } },
+    )
+    expect(
+      within(marta as HTMLElement).getByText(
+        /¿Dar permisos de gerente a Marta Soler\?/,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      managerMemberApiMocks.updateCommunityMember,
+    ).not.toHaveBeenCalledWith('community-crc-delorean', 'member-marta', {
+      role: 'manager',
+    })
+    fireEvent.click(
+      within(marta as HTMLElement).getByRole('button', {
+        name: 'Confirmar promoción',
+      }),
+    )
+    await waitFor(() =>
+      expect(managerMemberApiMocks.updateCommunityMember).toHaveBeenCalledWith(
+        'community-crc-delorean',
+        'member-marta',
+        { role: 'manager' },
+      ),
+    )
+
+    fireEvent.change(
+      within(marta as HTMLElement).getByLabelText('Rol de Marta Soler'),
+      { target: { value: 'moderator' } },
+    )
+    expect(
+      within(marta as HTMLElement).getByText(
+        '¿Retirar los permisos de gerente de Marta Soler?',
+      ),
+    ).toBeInTheDocument()
+    fireEvent.click(
+      within(marta as HTMLElement).getByRole('button', {
+        name: 'Confirmar cambio de rol',
+      }),
+    )
+    await waitFor(() =>
+      expect(managerMemberApiMocks.updateCommunityMember).toHaveBeenCalledWith(
+        'community-crc-delorean',
+        'member-marta',
+        { role: 'moderator' },
+      ),
+    )
+
     fireEvent.click(
       within(marta as HTMLElement).getByRole('button', {
         name: 'Suspender a Marta Soler',
+      }),
+    )
+    expect(
+      within(marta as HTMLElement).getByText(/¿Suspender a Marta Soler\?/),
+    ).toBeInTheDocument()
+    expect(
+      managerMemberApiMocks.updateCommunityMember,
+    ).not.toHaveBeenCalledWith('community-crc-delorean', 'member-marta', {
+      status: 'suspended',
+    })
+    fireEvent.click(
+      within(marta as HTMLElement).getByRole('button', {
+        name: 'Confirmar suspensión',
       }),
     )
     await waitFor(() =>

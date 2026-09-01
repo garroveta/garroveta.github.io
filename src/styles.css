@@ -2044,6 +2044,41 @@ a {
   cursor: pointer;
 }
 
+.member-sensitive-confirmation {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 0.45rem;
+  padding: 0.6rem;
+  border: 1px solid #e5c9c6;
+  border-radius: 0.65rem;
+  color: #74443e;
+  background: #fff4f2;
+  font-size: 0.66rem;
+  font-weight: 750;
+}
+
+.member-sensitive-confirmation > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.member-sensitive-confirmation button {
+  min-height: 1.9rem;
+  padding: 0 0.55rem;
+  border: 1px solid #dfbeb9;
+  border-radius: 0.5rem;
+  color: #74443e;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.member-sensitive-confirmation button:first-child {
+  color: #fff;
+  background: #985348;
+}
+
 .member-management-empty {
   display: grid;
   place-items: center;
