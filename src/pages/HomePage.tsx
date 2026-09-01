@@ -14,8 +14,12 @@ import {
   UserPlus,
   UsersRound,
 } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 
+import {
+  listCommunityMembers,
+  type ManagedCommunityMember,
+} from '../api/managerMembers'
 import type { DemoRole } from '../app/demoRoles'
 import type { AppRoute } from '../app/navigation'
 import {
@@ -178,7 +182,7 @@ function ManagerMetric({
 }: {
   icon: ReactNode
   label: string
-  value: number
+  value: ReactNode
   detail: string
 }) {
   return (
@@ -271,8 +275,49 @@ function ManagerHome({
 }) {
   const dashboard = getManagerDashboard(data)
   const firstName = manager.displayName.split(' ')[0]
+  const [managedMembers, setManagedMembers] = useState<
+    ManagedCommunityMember[] | null
+  >(null)
+  const [memberLoadFailed, setMemberLoadFailed] = useState(false)
+  const pendingMembers =
+    managedMembers?.filter(({ status }) => status === 'pending') ?? []
+  const pendingMemberValue = memberLoadFailed
+    ? '—'
+    : managedMembers
+      ? pendingMembers.length
+      : '…'
   const attentionCount =
-    dashboard.pendingMembers.length + dashboard.attentionEvents.length
+    pendingMembers.length + dashboard.attentionEvents.length
+
+  useEffect(() => {
+    const controller = new AbortController()
+    let isActive = true
+
+    void listCommunityMembers(data.community.id, controller.signal)
+      .then(({ members }) => {
+        if (!isActive) {
+          return
+        }
+
+        setManagedMembers(members)
+        setMemberLoadFailed(false)
+      })
+      .catch((error: unknown) => {
+        if (
+          !isActive ||
+          (error instanceof DOMException && error.name === 'AbortError')
+        ) {
+          return
+        }
+
+        setMemberLoadFailed(true)
+      })
+
+    return () => {
+      isActive = false
+      controller.abort()
+    }
+  }, [data.community.id])
 
   return (
     <div className="page manager-dashboard">
@@ -295,8 +340,8 @@ function ManagerHome({
         <ManagerMetric
           icon={<UserPlus size={18} />}
           label="Solicitudes pendientes"
-          value={dashboard.pendingMembers.length}
-          detail="Nuevos miembros"
+          value={pendingMemberValue}
+          detail={memberLoadFailed ? 'No disponible' : 'Nuevos miembros'}
         />
         <ManagerMetric
           icon={<UsersRound size={18} />}
@@ -343,20 +388,20 @@ function ManagerHome({
           <h2>Por revisar</h2>
           {attentionCount > 0 ? (
             <div className="manager-alert-list">
-              {dashboard.pendingMembers.length > 0 ? (
+              {pendingMembers.length > 0 ? (
                 <article>
                   <strong>
-                    {dashboard.pendingMembers.length}{' '}
-                    {dashboard.pendingMembers.length === 1
+                    {pendingMembers.length}{' '}
+                    {pendingMembers.length === 1
                       ? 'solicitud de acceso'
                       : 'solicitudes de acceso'}
                   </strong>
                   <p>
-                    {dashboard.pendingMembers
+                    {pendingMembers
                       .slice(0, 2)
                       .map(({ displayName }) => displayName)
                       .join(', ')}
-                    {dashboard.pendingMembers.length > 2 ? '…' : ''}
+                    {pendingMembers.length > 2 ? '…' : ''}
                   </p>
                 </article>
               ) : null}
@@ -377,15 +422,15 @@ function ManagerHome({
             </p>
           )}
           <DashboardLink
-            route={dashboard.pendingMembers.length > 0 ? 'perfil' : 'eventos'}
+            route={pendingMembers.length > 0 ? 'perfil' : 'eventos'}
             query={
-              dashboard.pendingMembers.length > 0
+              pendingMembers.length > 0
                 ? 'view=configuracion&section=members'
                 : undefined
             }
             onNavigate={onNavigate}
           >
-            {dashboard.pendingMembers.length > 0
+            {pendingMembers.length > 0
               ? 'Revisar solicitudes'
               : 'Revisar participantes'}
           </DashboardLink>

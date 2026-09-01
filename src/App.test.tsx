@@ -1544,7 +1544,7 @@ describe('App', () => {
     },
   )
 
-  it('shows the operational dashboard in manager mode', () => {
+  it('shows the operational dashboard with real pending members', async () => {
     authenticateAsManager()
     render(<App />)
 
@@ -1561,8 +1561,12 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Acciones rápidas' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('1 solicitud de acceso')).toBeInTheDocument()
+    expect(await screen.findByText('1 solicitud de acceso')).toBeInTheDocument()
     expect(screen.getByText('Lucas Muntaner')).toBeInTheDocument()
+    expect(managerMemberApiMocks.listCommunityMembers).toHaveBeenCalledWith(
+      'community-crc-delorean',
+      expect.any(AbortSignal),
+    )
     expect(
       screen.getByText('3 personas en lista de espera.'),
     ).toBeInTheDocument()
