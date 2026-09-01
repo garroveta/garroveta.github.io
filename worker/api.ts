@@ -4,6 +4,10 @@ import { handleCurrentUserRequest } from './current-user'
 import { handleInvitationApiRequest, matchInvitationRoute } from './invitations'
 import { handleMemberApiRequest, matchMemberRoute } from './members'
 import { handleEventApiRequest, matchEventRoute } from './events'
+import {
+  handleEventRegistrationApiRequest,
+  matchEventRegistrationRoute,
+} from './event-registrations'
 
 export interface ApiRequestContext {
   context: ExecutionContext
@@ -60,6 +64,21 @@ export function handleApiRequest({
         request,
       },
       memberRoute,
+    )
+  }
+
+  const eventRegistrationRoute = matchEventRegistrationRoute(
+    requestUrl.pathname,
+  )
+
+  if (eventRegistrationRoute) {
+    return handleEventRegistrationApiRequest(
+      {
+        context,
+        env,
+        request,
+      },
+      eventRegistrationRoute,
     )
   }
 

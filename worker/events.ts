@@ -5,6 +5,7 @@ import {
   type ApprovedMembership,
 } from './authorization'
 import { ApiRequestError, apiError, jsonResponse, readJsonBody } from './http'
+import { getEventRegistrationSummary } from './event-registrations'
 
 const RESOURCE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$/
 const EVENT_TYPES = [
@@ -50,6 +51,16 @@ interface CommunityEventRow {
   title: string
   type: EventType
   waitlist_enabled: number
+  confirmed_count?: number
+  waitlisted_count?: number
+}
+
+interface EventRegistrationRow {
+  event_id: string
+  id: string
+  member_id: string
+  registered_at: string
+  status: 'confirmed' | 'waitlisted'
 }
 
 interface CommunityEventInput {
@@ -364,8 +375,8 @@ function toEvent(event: CommunityEventRow) {
     listedInAgenda: event.listed_in_agenda === 1,
     registrationEnabled: event.registration_enabled === 1,
     registrationSummary: {
-      confirmed: 0,
-      waitlisted: 0,
+      confirmed: Number(event.confirmed_count ?? 0),
+      waitlisted: Number(event.waitlisted_count ?? 0),
     },
     startsAt: event.starts_at,
     status: event.status,
@@ -434,7 +445,17 @@ async function listEvents(
       capacity,
       status,
       tag_ids,
-      created_by_member_id
+      created_by_member_id,
+      (
+        select count(*)
+        from event_registration
+        where event_id = community_event.id and status = 'confirmed'
+      ) as confirmed_count,
+      (
+        select count(*)
+        from event_registration
+        where event_id = community_event.id and status = 'waitlisted'
+      ) as waitlisted_count
     from community_event
     where community_id = ? ${visibilityFilter}
     order by starts_at asc, id asc
@@ -443,7 +464,27 @@ async function listEvents(
     .bind(communityId)
     .all<CommunityEventRow>()
 
-  return jsonResponse({ events: results.map(toEvent) })
+  const { results: registrations } = await requestContext.env.DB.prepare(
+    `select id, event_id, member_id, status, registered_at
+    from event_registration
+    where community_id = ?
+      and member_id = ?
+      and status in ('confirmed', 'waitlisted')
+    order by registered_at asc, id asc`,
+  )
+    .bind(communityId, membership.id)
+    .all<EventRegistrationRow>()
+
+  return jsonResponse({
+    events: results.map(toEvent),
+    registrations: registrations.map((registration) => ({
+      eventId: registration.event_id,
+      id: registration.id,
+      memberId: registration.member_id,
+      registeredAt: registration.registered_at,
+      status: registration.status,
+    })),
+  })
 }
 
 async function createEvent(
@@ -549,7 +590,24 @@ async function updateEvent(
         capacity = ?,
         tag_ids = ?,
         updated_at = ?
-    where community_id = ? and id = ?
+    where community_id = ?
+      and id = ?
+      and (
+        not exists (
+          select 1
+          from event_registration
+          where event_id = community_event.id
+            and status in ('confirmed', 'waitlisted')
+        )
+        or (
+          ? = 1
+          and (
+            select count(*)
+            from event_registration
+            where event_id = community_event.id and status = 'confirmed'
+          ) <= ?
+        )
+      )
     returning *`,
   )
     .bind(
@@ -571,10 +629,26 @@ async function updateEvent(
       new Date().toISOString(),
       communityId,
       eventId,
+      Number(input.registrationEnabled),
+      input.capacity,
     )
     .first<CommunityEventRow>()
 
   if (!updatedEvent) {
+    const existingEvent = await requestContext.env.DB.prepare(
+      `select id from community_event where community_id = ? and id = ? limit 1`,
+    )
+      .bind(communityId, eventId)
+      .first<{ id: string }>()
+
+    if (existingEvent) {
+      return apiError(
+        409,
+        'event_registration_conflict',
+        'Active registrations must fit the updated registration settings.',
+      )
+    }
+
     return apiError(404, 'event_not_found', 'Community event not found.')
   }
 
@@ -587,7 +661,17 @@ async function updateEvent(
     }),
   )
 
-  return jsonResponse({ event: toEvent(updatedEvent) })
+  const registrationSummary = await getEventRegistrationSummary(
+    requestContext.env.DB,
+    eventId,
+  )
+
+  return jsonResponse({
+    event: {
+      ...toEvent(updatedEvent),
+      registrationSummary,
+    },
+  })
 }
 
 async function deleteEvent(

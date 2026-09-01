@@ -94,11 +94,13 @@ const managerAuthorization = {
 }
 
 function createContext({
+  allResults,
   body,
   firstResults = [],
   method = 'GET',
   rows = [],
 }: {
+  allResults?: unknown[][]
   body?: unknown
   firstResults?: unknown[]
   method?: string
@@ -110,10 +112,15 @@ function createContext({
     first: ReturnType<typeof vi.fn>
   }> = []
   const pendingFirstResults = [...firstResults]
+  const pendingAllResults = allResults ? [...allResults] : [rows]
   const prepare = vi.fn((query: string) => {
     void query
     const statement = {
-      all: vi.fn().mockResolvedValue({ results: rows }),
+      all: vi
+        .fn()
+        .mockImplementation(() =>
+          Promise.resolve({ results: pendingAllResults.shift() ?? [] }),
+        ),
       bind: vi.fn(),
       first: vi.fn().mockResolvedValue(pendingFirstResults.shift() ?? null),
     }
@@ -167,7 +174,9 @@ describe('Community event API', () => {
   })
 
   it('lists all events for a manager and maps stored values', async () => {
-    const { context, statements } = createContext({ rows: [persistedEvent] })
+    const { context, statements } = createContext({
+      allResults: [[persistedEvent], []],
+    })
 
     const response = await handleEventApiRequest(context, collectionRoute)
 
@@ -181,6 +190,7 @@ describe('Community event API', () => {
           tagIds: ['tag-standard'],
         }),
       ],
+      registrations: [],
     })
     expect(statements[0]?.bind).toHaveBeenCalledWith('community-crc-delorean')
   })
@@ -252,6 +262,26 @@ describe('Community event API', () => {
     const deleted = await handleEventApiRequest(deletion.context, eventRoute)
     await expect(deleted.json()).resolves.toEqual({
       deletedEventId: 'event-standard',
+    })
+  })
+
+  it('does not disable registration while active registrations exist', async () => {
+    const update = createContext({
+      body: {
+        ...eventInput,
+        capacity: 0,
+        registrationEnabled: false,
+        waitlistEnabled: false,
+      },
+      firstResults: [null, { id: 'event-standard' }],
+      method: 'PATCH',
+    })
+
+    const response = await handleEventApiRequest(update.context, eventRoute)
+
+    expect(response.status).toBe(409)
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: 'event_registration_conflict' },
     })
   })
 
