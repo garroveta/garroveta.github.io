@@ -411,6 +411,14 @@ export const demoData = {
       color: '#7f3540',
     },
     {
+      id: 'game-age-of-sigmar',
+      communityId,
+      name: 'Warhammer: Age of Sigmar',
+      shortName: 'Age of Sigmar',
+      category: 'miniatures',
+      color: '#8a7a3f',
+    },
+    {
       id: 'game-general',
       communityId,
       name: 'Actividad general',
