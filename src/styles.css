@@ -4334,6 +4334,61 @@ a {
   line-height: 1.35;
 }
 
+.event-composer__error,
+.event-operation-error {
+  margin: 0;
+  color: #8a4743;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.event-data-state {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  margin-top: 1.5rem;
+  padding: 1.5rem 1rem;
+  border: 1px solid #ded5e1;
+  border-radius: 1.2rem;
+  color: #6b397c;
+  background: #fff;
+  text-align: center;
+  box-shadow: 0 0.8rem 2.2rem rgb(51 43 55 / 7%);
+}
+
+.event-data-state h2,
+.event-data-state p {
+  margin: 0;
+}
+
+.event-data-state h2 {
+  color: #302933;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.event-data-state p {
+  color: #756c78;
+  font-size: 0.78rem;
+}
+
+.event-data-state .primary-button {
+  margin-top: 0.45rem;
+}
+
+.event-local-registration-note {
+  margin: 1rem 0 0;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid #e7d7b7;
+  border-radius: 0.85rem;
+  color: #765b2e;
+  background: #fff8e8;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
 .event-composer__heading > button {
   display: grid;
   width: 2.5rem;

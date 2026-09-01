@@ -12,8 +12,10 @@ import { reserveMarketplaceListing } from './data/cardLifecycle'
 import { demoData } from './data/demoData'
 import { createLocalDemoRepository } from './data/demoRepository'
 import { ClientApiError } from './api/client'
+import type { CommunityEventWriteInput } from './api/communityEvents'
 import type { CurrentUser } from './api/currentUser'
 import type { ManagedCommunityMember } from './api/managerMembers'
+import type { CommunityEventsStatus } from './hooks/useCommunityEvents'
 
 const registrationApiMocks = vi.hoisted(() => ({
   redeemInvitation: vi.fn(),
@@ -39,12 +41,25 @@ const currentUserApiMocks = vi.hoisted(() => ({
 const authenticationApiMocks = vi.hoisted(() => ({
   signOutCurrentUser: vi.fn(),
 }))
+const communityEventApiMocks = vi.hoisted(() => ({
+  createCommunityEvent: vi.fn(),
+  deletePersistedCommunityEvent: vi.fn(),
+  updatePersistedCommunityEvent: vi.fn(),
+}))
+const communityEventsHookMocks = vi.hoisted(() => ({
+  reload: vi.fn(),
+  status: 'ready' as CommunityEventsStatus,
+}))
 
 vi.mock('./api/registration', () => registrationApiMocks)
 vi.mock('./api/managerInvitations', () => managerInvitationApiMocks)
 vi.mock('./api/managerMembers', () => managerMemberApiMocks)
 vi.mock('./api/currentUser', () => currentUserApiMocks)
 vi.mock('./api/authentication', () => authenticationApiMocks)
+vi.mock('./api/communityEvents', () => communityEventApiMocks)
+vi.mock('./hooks/useCommunityEvents', () => ({
+  useCommunityEvents: () => communityEventsHookMocks,
+}))
 vi.mock('./hooks/useCurrentUser', async () => {
   const { useState } = await vi.importActual<typeof import('react')>('react')
 
@@ -132,6 +147,7 @@ describe('App', () => {
     window.localStorage.clear()
     window.sessionStorage.clear()
     vi.clearAllMocks()
+    communityEventsHookMocks.status = 'ready'
     const currentUser = buildCurrentUser()
     currentUserHookMocks.current = {
       data: currentUser,
@@ -142,6 +158,41 @@ describe('App', () => {
       membership: currentUser.memberships[0],
     })
     authenticationApiMocks.signOutCurrentUser.mockResolvedValue(undefined)
+    communityEventApiMocks.createCommunityEvent.mockImplementation(
+      (_communityId: string, input: CommunityEventWriteInput) =>
+        Promise.resolve({
+          event: {
+            ...input,
+            capacity: input.registrationEnabled ? input.capacity : 0,
+            communityId: 'community-crc-delorean',
+            createdByMemberId: 'member-tomas',
+            id: `event-persisted-${input.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+            registrationSummary: { confirmed: 0, waitlisted: 0 },
+            status: 'scheduled',
+          },
+        }),
+    )
+    communityEventApiMocks.updatePersistedCommunityEvent.mockImplementation(
+      (
+        _communityId: string,
+        eventId: string,
+        input: CommunityEventWriteInput,
+      ) =>
+        Promise.resolve({
+          event: {
+            ...input,
+            communityId: 'community-crc-delorean',
+            createdByMemberId: 'member-tomas',
+            id: eventId,
+            registrationSummary: { confirmed: 0, waitlisted: 0 },
+            status: 'scheduled',
+          },
+        }),
+    )
+    communityEventApiMocks.deletePersistedCommunityEvent.mockImplementation(
+      (_communityId: string, eventId: string) =>
+        Promise.resolve({ deletedEventId: eventId }),
+    )
     registrationApiMocks.validateInvitation.mockResolvedValue({
       community: { city: 'Inca', name: 'CRC Delorean' },
       expiresAt: '2026-09-27T12:00:00.000Z',
@@ -289,6 +340,30 @@ describe('App', () => {
       0,
     )
     expect(screen.getByRole('link', { name: /Perfil/ })).toBeInTheDocument()
+  })
+
+  it('does not expose demo events while the persisted agenda is loading', () => {
+    communityEventsHookMocks.status = 'loading'
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
+
+    expect(
+      screen.getByRole('heading', { name: 'Cargando la agenda…' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Presentación: The Hobbit' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('lets a member retry the persisted agenda after a loading error', () => {
+    communityEventsHookMocks.status = 'error'
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
+
+    expect(communityEventsHookMocks.reload).toHaveBeenCalledOnce()
   })
 
   it('uses an approved authenticated membership role', async () => {
@@ -1960,7 +2035,7 @@ describe('App', () => {
     })
   })
 
-  it('lets a manager publish a multi-game event', () => {
+  it('lets a manager publish a multi-game event', async () => {
     authenticateAsManager()
     render(<App />)
 
@@ -1985,8 +2060,16 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Publicar evento' }))
 
     expect(
-      screen.getByText('El evento ya aparece en la agenda.'),
+      await screen.findByText('El evento ya aparece en la agenda.'),
     ).toBeInTheDocument()
+    expect(communityEventApiMocks.createCommunityEvent).toHaveBeenCalledWith(
+      'community-crc-delorean',
+      expect.objectContaining({
+        gameId: 'game-one-piece',
+        title: 'Liga One Piece',
+        type: 'league',
+      }),
+    )
     expect(
       screen.getAllByRole('heading', { name: 'Liga One Piece' })[0],
     ).toBeInTheDocument()
@@ -2053,7 +2136,7 @@ describe('App', () => {
     ).toBe('cancelled')
   })
 
-  it('lets a manager edit, manage registrations and delete events', () => {
+  it('lets a manager edit, manage registrations and delete events', async () => {
     authenticateAsManager()
     render(<App />)
 
@@ -2085,7 +2168,18 @@ describe('App', () => {
       target: { value: 'Presentación: The Hobbit · tarde' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
-    expect(screen.getByText('Los cambios se han guardado.')).toBeInTheDocument()
+    expect(
+      await screen.findByText('Los cambios se han guardado.'),
+    ).toBeInTheDocument()
+    expect(
+      communityEventApiMocks.updatePersistedCommunityEvent,
+    ).toHaveBeenCalledWith(
+      'community-crc-delorean',
+      'event-presentation-hobbit',
+      expect.objectContaining({
+        title: 'Presentación: The Hobbit · tarde',
+      }),
+    )
 
     const updatedRow = screen
       .getByRole('heading', { name: 'Presentación: The Hobbit · tarde' })
@@ -2100,14 +2194,22 @@ describe('App', () => {
         name: 'Confirmar',
       }),
     )
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('heading', {
+          name: 'Presentación: The Hobbit · tarde',
+        }),
+      ).not.toBeInTheDocument(),
+    )
     expect(
-      screen.queryByRole('heading', {
-        name: 'Presentación: The Hobbit · tarde',
-      }),
-    ).not.toBeInTheDocument()
+      communityEventApiMocks.deletePersistedCommunityEvent,
+    ).toHaveBeenCalledWith(
+      'community-crc-delorean',
+      'event-presentation-hobbit',
+    )
   })
 
-  it('duplicates an event one week later without its registrations', () => {
+  it('duplicates an event one week later without its registrations', async () => {
     authenticateAsManager()
     render(<App />)
 
@@ -2134,7 +2236,16 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Crear copia' }))
 
-    expect(screen.getByText('La copia ya aparece en la agenda.')).toBeVisible()
+    expect(
+      await screen.findByText('La copia ya aparece en la agenda.'),
+    ).toBeVisible()
+    expect(communityEventApiMocks.createCommunityEvent).toHaveBeenCalledWith(
+      'community-crc-delorean',
+      expect.objectContaining({
+        startsAt: '2026-08-15T17:00:00+02:00',
+        title: 'Presentación: The Hobbit',
+      }),
+    )
     const savedData = createLocalDemoRepository(window.localStorage).load()
     const copies = savedData.events.filter(
       ({ title }) => title === 'Presentación: The Hobbit',

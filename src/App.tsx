@@ -1,3 +1,11 @@
+import { useCallback } from 'react'
+
+import {
+  createCommunityEvent,
+  deletePersistedCommunityEvent,
+  updatePersistedCommunityEvent,
+  type CommunityEventWriteInput,
+} from './api/communityEvents'
 import { AppHeader } from './components/AppHeader'
 import { AppNavigation } from './components/AppNavigation'
 import { signOutCurrentUser } from './api/authentication'
@@ -6,6 +14,7 @@ import type { DemoRole } from './app/demoRoles'
 import { getDemoDataSummary } from './data/demoData'
 import type { DemoDataSet } from './domain/types'
 import { useDemoData } from './hooks/useDemoData'
+import { useCommunityEvents } from './hooks/useCommunityEvents'
 import { useDemoRole } from './hooks/useDemoRole'
 import { useHashRoute } from './hooks/useHashRoute'
 import { useCurrentUser } from './hooks/useCurrentUser'
@@ -68,6 +77,21 @@ export function App() {
   )
   const approvedMembership =
     currentMembership?.status === 'approved' ? currentMembership : undefined
+  const replaceCommunityEvents = useCallback(
+    (events: DemoDataSet['events']) => {
+      updateData((currentData) => ({ ...currentData, events }))
+    },
+    [updateData],
+  )
+  const communityEvents = useCommunityEvents({
+    communityId: data.community.id,
+    enabled: Boolean(approvedMembership),
+    onLoaded: replaceCommunityEvents,
+  })
+  const agendaData =
+    approvedMembership && communityEvents.status !== 'ready'
+      ? { ...data, events: [] }
+      : data
   const authenticatedRole: DemoRole | null = approvedMembership
     ? approvedMembership.role === 'manager'
       ? 'gerente'
@@ -223,7 +247,7 @@ export function App() {
         {activeRoute === 'inicio' ? (
           <HomePage
             activeRole={effectiveRole}
-            data={data}
+            data={agendaData}
             currentMember={connectedMember}
             publishingMember={publishingMember}
             onNavigate={navigate}
@@ -231,11 +255,50 @@ export function App() {
         ) : activeRoute === 'eventos' ? (
           <EventsPage
             activeRole={effectiveRole}
-            data={data}
+            data={agendaData}
             currentMember={connectedMember}
             publishingMember={publishingMember}
+            eventPersistenceStatus={communityEvents.status}
             onDataChange={updateData}
+            onCreateEvent={async (input) => {
+              const { event } = await createCommunityEvent(
+                data.community.id,
+                input,
+              )
+              updateData((currentData) => ({
+                ...currentData,
+                events: [...currentData.events, event],
+              }))
+            }}
+            onDeleteEvent={async (eventId) => {
+              await deletePersistedCommunityEvent(data.community.id, eventId)
+              updateData((currentData) => ({
+                ...currentData,
+                events: currentData.events.filter(({ id }) => id !== eventId),
+                registrations: currentData.registrations.filter(
+                  ({ eventId: registrationEventId }) =>
+                    registrationEventId !== eventId,
+                ),
+                eventStandings: currentData.eventStandings.filter(
+                  ({ eventId: standingEventId }) => standingEventId !== eventId,
+                ),
+              }))
+            }}
             onNavigate={navigate}
+            onReloadEvents={communityEvents.reload}
+            onUpdateEvent={async (eventId, input: CommunityEventWriteInput) => {
+              const { event } = await updatePersistedCommunityEvent(
+                data.community.id,
+                eventId,
+                input,
+              )
+              updateData((currentData) => ({
+                ...currentData,
+                events: currentData.events.map((candidate) =>
+                  candidate.id === event.id ? event : candidate,
+                ),
+              }))
+            }}
             initialManagerAction={
               eventRouteParams.get('action') === 'new' ? 'new' : undefined
             }
