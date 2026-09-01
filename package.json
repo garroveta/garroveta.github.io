@@ -10,6 +10,8 @@
     "cf:types": "wrangler types worker/env.d.ts",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "deploy:worker": "npm run check && npm run build && wrangler deploy",
+    "deploy:worker:dry-run": "npm run check && npm run build && wrangler deploy --dry-run",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings 0",

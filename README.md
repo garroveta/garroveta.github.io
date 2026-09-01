@@ -144,6 +144,24 @@ npm run build
 npm run preview
 ```
 
+## Déploiement du Worker
+
+Le plugin Cloudflare pour Vite produit le bundle Worker dans `dist`. Il faut
+donc toujours reconstruire l'application avant de lancer Wrangler. Les
+commandes suivantes enchaînent automatiquement les contrôles, la compilation
+et Wrangler dans le bon ordre :
+
+```bash
+# Vérification complète sans publication
+npm run deploy:worker:dry-run
+
+# Déploiement du Worker en production
+npm run deploy:worker
+```
+
+Ne pas lancer directement `wrangler deploy` ou `npx wrangler deploy` : ces
+commandes peuvent réutiliser un bundle `dist` obsolète.
+
 ## Questions ouvertes
 
 Les décisions qui restent à prendre sont regroupées dans

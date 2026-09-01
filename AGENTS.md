@@ -63,6 +63,7 @@ Avant chaque commit :
 
 - Utiliser des messages de commit courts et explicites avec un préfixe comme `feat:`, `fix:`, `refactor:` ou `test:`.
 - Ne pas réécrire ou supprimer l’historique Git sans autorisation explicite.
+- Déployer le Worker uniquement avec `npm run deploy:worker` et valider avec `npm run deploy:worker:dry-run` ; ne jamais appeler directement `wrangler deploy`, qui peut réutiliser un bundle Vite obsolète.
 
 ## Maintenance de ces instructions
 
