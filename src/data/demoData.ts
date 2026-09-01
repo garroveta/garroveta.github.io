@@ -410,6 +410,14 @@ export const demoData = {
       category: 'role_playing_game',
       color: '#7f3540',
     },
+    {
+      id: 'game-general',
+      communityId,
+      name: 'Actividad general',
+      shortName: 'General',
+      category: 'miniatures',
+      color: '#6b6b6b',
+    },
   ],
   competitionFormats: [
     {
@@ -467,6 +475,13 @@ export const demoData = {
       name: 'Commander Two-Headed Giant',
       shortName: '2HG Commander',
       color: '#4c527f',
+    },
+    {
+      id: 'format-mtg-premodern',
+      gameId: 'game-mtg',
+      name: 'Premodern',
+      shortName: 'Premodern',
+      color: '#5c4a33',
     },
     {
       id: 'format-one-piece-constructed',

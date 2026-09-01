@@ -65,8 +65,10 @@ function EventRankingCard({
       </span>
       <strong>{item.event.title}</strong>
       <span className="result-card__meta">
-        {eventDateFormatter.format(new Date(item.event.endsAt))} ·{' '}
-        {item.standing.entries.length} jugadores
+        {eventDateFormatter.format(
+          new Date(item.event.endsAt ?? item.event.startsAt),
+        )}{' '}
+        · {item.standing.entries.length} jugadores
       </span>
       <span className="result-card__action">
         Ver clasificación
@@ -261,7 +263,9 @@ function EventRankingDetail({
         <div className="event-ranking-detail__summary">
           <span>
             <CalendarDays aria-hidden="true" size={16} />
-            {eventDateFormatter.format(new Date(item.event.endsAt))}
+            {eventDateFormatter.format(
+              new Date(item.event.endsAt ?? item.event.startsAt),
+            )}
           </span>
           <span>
             <UsersRound aria-hidden="true" size={16} />

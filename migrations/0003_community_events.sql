@@ -11,7 +11,7 @@ create table "community_event" (
   "description" text not null,
   "image_uri" text,
   "starts_at" text not null,
-  "ends_at" text not null,
+  "ends_at" text,
   "listed_in_agenda" integer not null default 1
     check ("listed_in_agenda" in (0, 1)),
   "counts_for_community_ranking" integer not null default 0
@@ -39,7 +39,7 @@ create table "community_event" (
   check (length(trim("title")) between 1 and 120),
   check (length(trim("description")) between 1 and 2000),
   check ("image_uri" is null or length("image_uri") <= 2000),
-  check ("ends_at" > "starts_at"),
+  check ("ends_at" is null or "ends_at" > "starts_at"),
   check (
     ("registration_enabled" = 0 and "capacity" = 0 and "waitlist_enabled" = 0)
     or ("registration_enabled" = 1 and "capacity" between 1 and 500)

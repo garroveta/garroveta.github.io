@@ -139,7 +139,7 @@ export type CommunityEvent = {
   description: string
   imageUri?: string
   startsAt: ISODateTime
-  endsAt: ISODateTime
+  endsAt?: ISODateTime
   registrationEnabled?: boolean
   waitlistEnabled?: boolean
   capacity: number

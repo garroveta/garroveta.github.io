@@ -72,8 +72,8 @@ export function getLatestEventStandings(
     .filter(({ event }) => event.status === 'completed')
     .sort(
       (first, second) =>
-        new Date(second.event.endsAt).getTime() -
-        new Date(first.event.endsAt).getTime(),
+        new Date(second.event.endsAt ?? second.event.startsAt).getTime() -
+        new Date(first.event.endsAt ?? first.event.startsAt).getTime(),
     )
 }
 
@@ -101,7 +101,9 @@ export function getCommunityLeaderboard(
   >()
 
   for (const item of getLatestEventStandings(data)) {
-    const eventTimestamp = new Date(item.event.endsAt).getTime()
+    const eventTimestamp = new Date(
+      item.event.endsAt ?? item.event.startsAt,
+    ).getTime()
     const matchesFilters =
       item.event.countsForCommunityRanking === true &&
       item.game.id === filters.gameId &&
@@ -126,7 +128,7 @@ export function getCommunityLeaderboard(
         eventWins: 0,
         podiums: 0,
         bestRank: Number.POSITIVE_INFINITY,
-        latestResultAt: item.event.endsAt,
+        latestResultAt: item.event.endsAt ?? item.event.startsAt,
       }
 
       totals.set(entry.memberId, {
@@ -137,9 +139,9 @@ export function getCommunityLeaderboard(
         podiums: current.podiums + Number(entry.rank <= 3),
         bestRank: Math.min(current.bestRank, entry.rank),
         latestResultAt:
-          new Date(item.event.endsAt).getTime() >
+          new Date(item.event.endsAt ?? item.event.startsAt).getTime() >
           new Date(current.latestResultAt).getTime()
-            ? item.event.endsAt
+            ? (item.event.endsAt ?? item.event.startsAt)
             : current.latestResultAt,
       })
     }

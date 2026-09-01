@@ -23,18 +23,16 @@ import { useEffect, useRef, useState } from 'react'
 
 import type { DemoRole } from '../app/demoRoles'
 import type { AppRoute } from '../app/navigation'
+import type { CommunityEventWriteInput } from '../api/communityEvents'
 import { EventLinkImportPanel } from '../components/EventLinkImportPanel'
 import { isCommunityOptionActive } from '../data/communityOptions'
 import {
   cancelEventRegistration,
-  deleteCommunityEvent,
   leaveEventWaitlist,
-  publishCommunityEvent,
   registerForEvent,
   registerMemberForEventByManager,
   removeEventParticipant,
   setEventAttendance,
-  updateCommunityEvent,
 } from '../data/eventMutations'
 import {
   filterEventAgenda,
@@ -44,6 +42,7 @@ import {
   type EventListItem,
 } from '../data/eventSelectors'
 import type { DemoDataUpdater } from '../data/demoRepository'
+import type { CommunityEventsStatus } from '../hooks/useCommunityEvents'
 import {
   EVENT_TYPE_LABELS,
   getRegistrationRule,
@@ -60,8 +59,16 @@ type EventsPageProps = {
   data: DemoDataSet
   currentMember: CommunityMember
   publishingMember: CommunityMember
+  eventPersistenceStatus: CommunityEventsStatus
   onDataChange: (updater: DemoDataUpdater) => void
+  onCreateEvent: (input: CommunityEventWriteInput) => Promise<void>
+  onDeleteEvent: (eventId: string) => Promise<void>
   onNavigate: (route: AppRoute, query?: string) => void
+  onReloadEvents: () => void
+  onUpdateEvent: (
+    eventId: string,
+    input: CommunityEventWriteInput,
+  ) => Promise<void>
   initialManagerAction?: 'new'
 }
 
@@ -168,17 +175,15 @@ function EventComposer({
   data,
   eventToDuplicate,
   eventToEdit,
-  publishingMember,
   onClose,
-  onDataChange,
+  onSave,
   onPublished,
 }: {
   data: DemoDataSet
   eventToDuplicate?: CommunityEvent
   eventToEdit?: CommunityEvent
-  publishingMember: CommunityMember
   onClose: () => void
-  onDataChange: (updater: DemoDataUpdater) => void
+  onSave: (input: CommunityEventWriteInput) => Promise<void>
   onPublished: () => void
 }) {
   const sourceEvent = eventToEdit ?? eventToDuplicate
@@ -215,7 +220,7 @@ function EventComposer({
     sourceEvent ? madridTimePart(sourceEvent.startsAt) : '17:00',
   )
   const [endsAt, setEndsAt] = useState(
-    sourceEvent ? madridTimePart(sourceEvent.endsAt) : '21:00',
+    sourceEvent?.endsAt ? madridTimePart(sourceEvent.endsAt) : '21:00',
   )
   const initialRegistrationRule = getRegistrationRule(
     data.registrationSettings,
@@ -238,6 +243,8 @@ function EventComposer({
     sourceEvent?.countsForCommunityRanking ?? false,
   )
   const [tagIds, setTagIds] = useState<string[]>(sourceEvent?.tagIds ?? [])
+  const [saveError, setSaveError] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
   const availableFormats = data.competitionFormats.filter(
     (format) =>
       format.gameId === gameId &&
@@ -253,39 +260,41 @@ function EventComposer({
       isCommunityOptionActive(tag) || eventToEdit?.tagIds.includes(tag.id),
   )
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const endDate = endsAt <= startsAt ? nextCalendarDate(date) : date
+    const input = {
+      gameId,
+      formatId: gameId === 'game-mtg' ? formatId : undefined,
+      competitionEventKindId:
+        gameId === 'game-mtg' ? competitionEventKindId : undefined,
+      type,
+      title,
+      description,
+      imageUri,
+      startsAt: buildMadridIso(date, startsAt),
+      endsAt: buildMadridIso(endDate, endsAt),
+      listedInAgenda,
+      countsForCommunityRanking,
+      registrationEnabled,
+      waitlistEnabled,
+      capacity: Number(capacity),
+      tagIds,
+    }
 
-    onDataChange((currentData) => {
-      const input = {
-        createdByMemberId: publishingMember.id,
-        gameId,
-        formatId: gameId === 'game-mtg' ? formatId : undefined,
-        competitionEventKindId:
-          gameId === 'game-mtg' ? competitionEventKindId : undefined,
-        type,
-        title,
-        description,
-        imageUri,
-        startsAt: buildMadridIso(date, startsAt),
-        endsAt: buildMadridIso(endDate, endsAt),
-        listedInAgenda,
-        countsForCommunityRanking,
-        registrationEnabled,
-        waitlistEnabled,
-        capacity: Number(capacity),
-        tagIds,
-      }
+    setSaveError('')
+    setIsSaving(true)
 
-      return eventToEdit
-        ? updateCommunityEvent(currentData, {
-            ...input,
-            eventId: eventToEdit.id,
-          })
-        : publishCommunityEvent(currentData, input)
-    })
-    onPublished()
+    try {
+      await onSave(input)
+      onPublished()
+    } catch {
+      setSaveError(
+        'No se ha podido guardar el evento. Comprueba los datos e inténtalo de nuevo.',
+      )
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const toggleTag = (tagId: string) => {
@@ -580,16 +589,24 @@ function EventComposer({
         </div>
       </fieldset>
 
+      {saveError ? (
+        <p className="event-composer__error" role="alert">
+          {saveError}
+        </p>
+      ) : null}
+
       <div className="composer-actions">
         <button className="secondary-button" type="button" onClick={onClose}>
           Cancelar
         </button>
-        <button className="primary-button" type="submit">
-          {eventToEdit
-            ? 'Guardar cambios'
-            : eventToDuplicate
-              ? 'Crear copia'
-              : 'Publicar evento'}
+        <button className="primary-button" type="submit" disabled={isSaving}>
+          {isSaving
+            ? 'Guardando…'
+            : eventToEdit
+              ? 'Guardar cambios'
+              : eventToDuplicate
+                ? 'Crear copia'
+                : 'Publicar evento'}
         </button>
       </div>
     </form>
@@ -879,7 +896,7 @@ function EventDetail({
 }) {
   const [actionMessage, setActionMessage] = useState('')
   const startsAt = new Date(item.event.startsAt)
-  const endsAt = new Date(item.event.endsAt)
+  const endsAt = item.event.endsAt ? new Date(item.event.endsAt) : undefined
   const canRegister =
     item.event.registrationEnabled === true &&
     item.event.status !== 'completed' &&
@@ -945,7 +962,9 @@ function EventDetail({
               Horario
             </dt>
             <dd>
-              {timeFormatter.format(startsAt)}–{timeFormatter.format(endsAt)}
+              {endsAt
+                ? `${timeFormatter.format(startsAt)}–${timeFormatter.format(endsAt)}`
+                : `${timeFormatter.format(startsAt)} · hora de fin por confirmar`}
             </dd>
           </div>
           <div>
@@ -1370,13 +1389,31 @@ function ManagerEventRow({
   )
 }
 
+function EventsPageHeading() {
+  return (
+    <header className="page-heading">
+      <span className="page-eyebrow">Agenda de la comunidad</span>
+      <h1>Eventos</h1>
+      <p>
+        Consulta las próximas citas, las plazas disponibles y el estado de tu
+        inscripción.
+      </p>
+    </header>
+  )
+}
+
 export function EventsPage({
   activeRole,
   data,
   currentMember,
   publishingMember,
+  eventPersistenceStatus,
   onDataChange,
+  onCreateEvent,
+  onDeleteEvent,
   onNavigate,
+  onReloadEvents,
+  onUpdateEvent,
   initialManagerAction,
 }: EventsPageProps) {
   const [selectedEventId, setSelectedEventId] = useState<string>()
@@ -1395,6 +1432,7 @@ export function EventsPage({
   const [managedImportEventId, setManagedImportEventId] = useState<string>()
   const [pendingDeleteEventId, setPendingDeleteEventId] = useState<string>()
   const [publicationMessage, setPublicationMessage] = useState('')
+  const [operationError, setOperationError] = useState('')
   const [importedStandingId, setImportedStandingId] = useState<string>()
   const participantPanelRef = useRef<HTMLDivElement>(null)
   const importPanelRef = useRef<HTMLDivElement>(null)
@@ -1473,15 +1511,58 @@ export function EventsPage({
     setPendingDeleteEventId(undefined)
   }
 
-  const deleteEvent = (eventId: string) => {
+  const deleteEvent = async (eventId: string) => {
     const eventTitle = data.events.find(({ id }) => id === eventId)?.title
-    onDataChange((currentData) =>
-      deleteCommunityEvent(currentData, eventId, publishingMember.id),
+    setOperationError('')
+
+    try {
+      await onDeleteEvent(eventId)
+      closeManagerPanels()
+      setImportedStandingId(undefined)
+      setPublicationMessage(
+        eventTitle ? `« ${eventTitle} » se ha eliminado.` : 'Evento eliminado.',
+      )
+    } catch {
+      setPendingDeleteEventId(undefined)
+      setOperationError(
+        'No se ha podido eliminar el evento. Inténtalo de nuevo.',
+      )
+    }
+  }
+
+  if (
+    eventPersistenceStatus === 'idle' ||
+    eventPersistenceStatus === 'loading'
+  ) {
+    return (
+      <div className="page">
+        <EventsPageHeading />
+        <section className="event-data-state" aria-live="polite">
+          <CalendarDays aria-hidden="true" size={24} />
+          <h2>Cargando la agenda…</h2>
+          <p>Estamos consultando los eventos de la comunidad.</p>
+        </section>
+      </div>
     )
-    closeManagerPanels()
-    setImportedStandingId(undefined)
-    setPublicationMessage(
-      eventTitle ? `« ${eventTitle} » se ha eliminado.` : 'Evento eliminado.',
+  }
+
+  if (eventPersistenceStatus === 'error') {
+    return (
+      <div className="page">
+        <EventsPageHeading />
+        <section className="event-data-state" role="alert">
+          <RotateCcw aria-hidden="true" size={24} />
+          <h2>No se ha podido cargar la agenda</h2>
+          <p>Comprueba tu conexión y vuelve a intentarlo.</p>
+          <button
+            className="primary-button"
+            type="button"
+            onClick={onReloadEvents}
+          >
+            Reintentar
+          </button>
+        </section>
+      </div>
     )
   }
 
@@ -1500,14 +1581,12 @@ export function EventsPage({
 
   return (
     <div className="page">
-      <header className="page-heading">
-        <span className="page-eyebrow">Agenda de la comunidad</span>
-        <h1>Eventos</h1>
-        <p>
-          Consulta las próximas citas, las plazas disponibles y el estado de tu
-          inscripción.
-        </p>
-      </header>
+      <EventsPageHeading />
+
+      <p className="event-local-registration-note" role="note">
+        En esta etapa, la agenda se guarda en la comunidad. Las inscripciones
+        siguen siendo una simulación local en este navegador.
+      </p>
 
       {activeRole === 'gerente' ? (
         <section
@@ -1540,9 +1619,12 @@ export function EventsPage({
               data={data}
               eventToDuplicate={duplicatingEvent}
               eventToEdit={editingEvent}
-              publishingMember={publishingMember}
               onClose={closeManagerPanels}
-              onDataChange={onDataChange}
+              onSave={(input) =>
+                editingEvent
+                  ? onUpdateEvent(editingEvent.id, input)
+                  : onCreateEvent(input)
+              }
               onPublished={() => {
                 closeManagerPanels()
                 setImportedStandingId(undefined)
@@ -1632,6 +1714,11 @@ export function EventsPage({
                 </button>
               ) : null}
             </div>
+          ) : null}
+          {operationError ? (
+            <p className="event-operation-error" role="alert">
+              {operationError}
+            </p>
           ) : null}
           {managedParticipantEvent ? (
             <div

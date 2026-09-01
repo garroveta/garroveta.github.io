@@ -12,7 +12,7 @@ export type CommunityEventInput = {
   description: string
   imageUri?: string
   startsAt: string
-  endsAt: string
+  endsAt?: string
   listedInAgenda?: boolean
   countsForCommunityRanking?: boolean
   registrationEnabled: boolean
@@ -66,7 +66,7 @@ export function publishCommunityEvent(
   const description = input.description.trim()
   const imageUri = input.imageUri?.trim() || undefined
   const startsAt = new Date(input.startsAt)
-  const endsAt = new Date(input.endsAt)
+  const endsAt = input.endsAt ? new Date(input.endsAt) : undefined
   const registrationEnabled =
     input.gameId === 'game-mtg' && input.registrationEnabled
   const waitlistEnabled = registrationEnabled && input.waitlistEnabled !== false
@@ -86,8 +86,8 @@ export function publishCommunityEvent(
     !title ||
     !description ||
     Number.isNaN(startsAt.getTime()) ||
-    Number.isNaN(endsAt.getTime()) ||
-    endsAt <= startsAt ||
+    (endsAt && Number.isNaN(endsAt.getTime())) ||
+    (endsAt && endsAt <= startsAt) ||
     (registrationEnabled && capacity < 1)
   ) {
     return data
@@ -155,7 +155,7 @@ export function updateCommunityEvent(
   const description = input.description.trim()
   const imageUri = input.imageUri?.trim() || undefined
   const startsAt = new Date(input.startsAt)
-  const endsAt = new Date(input.endsAt)
+  const endsAt = input.endsAt ? new Date(input.endsAt) : undefined
   const registrationEnabled =
     input.gameId === 'game-mtg' && input.registrationEnabled
   const waitlistEnabled = registrationEnabled && input.waitlistEnabled !== false
@@ -182,8 +182,8 @@ export function updateCommunityEvent(
     !title ||
     !description ||
     Number.isNaN(startsAt.getTime()) ||
-    Number.isNaN(endsAt.getTime()) ||
-    endsAt <= startsAt ||
+    (endsAt && Number.isNaN(endsAt.getTime())) ||
+    (endsAt && endsAt <= startsAt) ||
     (registrationEnabled && (capacity < 1 || capacity < currentConfirmed))
   ) {
     return data

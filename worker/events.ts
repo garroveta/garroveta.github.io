@@ -37,7 +37,7 @@ interface CommunityEventRow {
   counts_for_community_ranking: number
   created_by_member_id: string
   description: string
-  ends_at: string
+  ends_at: string | null
   format_id: string | null
   game_id: string
   id: string
@@ -57,7 +57,7 @@ interface CommunityEventInput {
   competitionEventKindId?: string
   countsForCommunityRanking: boolean
   description: string
-  endsAt: string
+  endsAt?: string
   formatId?: string
   gameId: string
   imageUri?: string
@@ -154,6 +154,14 @@ function parseDateTime(value: unknown, fieldName: string) {
   }
 
   return date.toISOString()
+}
+
+function parseOptionalDateTime(value: unknown, fieldName: string) {
+  if (value === undefined || value === null || value === '') {
+    return undefined
+  }
+
+  return parseDateTime(value, fieldName)
 }
 
 function parseImageUri(value: unknown) {
@@ -272,9 +280,9 @@ function parseEventInput(value: unknown): CommunityEventInput {
   }
 
   const startsAt = parseDateTime(value.startsAt, 'startsAt')
-  const endsAt = parseDateTime(value.endsAt, 'endsAt')
+  const endsAt = parseOptionalDateTime(value.endsAt, 'endsAt')
 
-  if (endsAt <= startsAt) {
+  if (endsAt !== undefined && endsAt <= startsAt) {
     throw new ApiRequestError(
       400,
       'event_invalid',
@@ -348,7 +356,7 @@ function toEvent(event: CommunityEventRow) {
     countsForCommunityRanking: event.counts_for_community_ranking === 1,
     createdByMemberId: event.created_by_member_id,
     description: event.description,
-    endsAt: event.ends_at,
+    endsAt: event.ends_at ?? undefined,
     formatId: event.format_id ?? undefined,
     gameId: event.game_id,
     id: event.id,
@@ -485,7 +493,7 @@ async function createEvent(
       input.description,
       input.imageUri ?? null,
       input.startsAt,
-      input.endsAt,
+      input.endsAt ?? null,
       Number(input.listedInAgenda),
       Number(input.countsForCommunityRanking),
       Number(input.registrationEnabled),
@@ -553,7 +561,7 @@ async function updateEvent(
       input.description,
       input.imageUri ?? null,
       input.startsAt,
-      input.endsAt,
+      input.endsAt ?? null,
       Number(input.listedInAgenda),
       Number(input.countsForCommunityRanking),
       Number(input.registrationEnabled),
