@@ -1,9 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  cancelPersistedEventRegistration,
   createCommunityEvent,
   deletePersistedCommunityEvent,
   listCommunityEvents,
+  listPersistedEventRegistrations,
+  registerForPersistedEvent,
+  removePersistedEventRegistration,
   updatePersistedCommunityEvent,
   type CommunityEventWriteInput,
 } from './communityEvents'
@@ -38,15 +42,50 @@ describe('community event API', () => {
   afterEach(() => vi.unstubAllGlobals())
 
   it('lists persisted events for the authenticated community member', async () => {
-    const fetchMock = mockJsonResponse({ events: [] })
+    const fetchMock = mockJsonResponse({ events: [], registrations: [] })
     vi.stubGlobal('fetch', fetchMock)
 
     await expect(
       listCommunityEvents('community-crc-delorean'),
-    ).resolves.toEqual({ events: [] })
+    ).resolves.toEqual({ events: [], registrations: [] })
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining('/api/communities/community-crc-delorean/events'),
       expect.objectContaining({ credentials: 'include' }),
+    )
+  })
+
+  it('uses the shared registration endpoints for players and managers', async () => {
+    const fetchMock = mockJsonResponse({ registrations: [] })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await registerForPersistedEvent('community-crc-delorean', 'event-id')
+    await cancelPersistedEventRegistration('community-crc-delorean', 'event-id')
+    await listPersistedEventRegistrations('community-crc-delorean', 'event-id')
+    await removePersistedEventRegistration(
+      'community-crc-delorean',
+      'event-id',
+      'member-id',
+    )
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      expect.stringMatching(/\/events\/event-id\/registrations$/),
+      expect.objectContaining({ method: 'POST' }),
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      expect.stringMatching(/\/events\/event-id\/registrations\/me$/),
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      expect.stringMatching(/\/events\/event-id\/registrations$/),
+      expect.objectContaining({ credentials: 'include' }),
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      4,
+      expect.stringMatching(/\/events\/event-id\/registrations\/member-id$/),
+      expect.objectContaining({ method: 'DELETE' }),
     )
   })
 

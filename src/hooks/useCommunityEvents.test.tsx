@@ -15,7 +15,10 @@ describe('useCommunityEvents', () => {
   it('loads persisted events for an approved community member', async () => {
     const events = demoData.events.slice(0, 2)
     const onLoaded = vi.fn()
-    vi.mocked(listCommunityEvents).mockResolvedValue({ events })
+    vi.mocked(listCommunityEvents).mockResolvedValue({
+      events,
+      registrations: [],
+    })
 
     const { result } = renderHook(() =>
       useCommunityEvents({
@@ -27,7 +30,7 @@ describe('useCommunityEvents', () => {
 
     expect(result.current.status).toBe('loading')
     await waitFor(() => expect(result.current.status).toBe('ready'))
-    expect(onLoaded).toHaveBeenCalledWith(events)
+    expect(onLoaded).toHaveBeenCalledWith(events, [])
     expect(listCommunityEvents).toHaveBeenCalledWith(
       demoData.community.id,
       expect.any(AbortSignal),
@@ -38,7 +41,7 @@ describe('useCommunityEvents', () => {
     const onLoaded = vi.fn()
     vi.mocked(listCommunityEvents)
       .mockRejectedValueOnce(new Error('Offline'))
-      .mockResolvedValueOnce({ events: [] })
+      .mockResolvedValueOnce({ events: [], registrations: [] })
 
     const { result } = renderHook(() =>
       useCommunityEvents({
@@ -53,7 +56,7 @@ describe('useCommunityEvents', () => {
     await waitFor(() => expect(result.current.status).toBe('ready'))
 
     expect(listCommunityEvents).toHaveBeenCalledTimes(2)
-    expect(onLoaded).toHaveBeenCalledWith([])
+    expect(onLoaded).toHaveBeenCalledWith([], [])
   })
 
   it('does not load events without an approved membership', () => {

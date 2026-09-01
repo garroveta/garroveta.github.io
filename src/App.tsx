@@ -1,8 +1,12 @@
 import { useCallback } from 'react'
 
 import {
+  cancelPersistedEventRegistration,
   createCommunityEvent,
   deletePersistedCommunityEvent,
+  listPersistedEventRegistrations,
+  registerForPersistedEvent,
+  removePersistedEventRegistration,
   updatePersistedCommunityEvent,
   type CommunityEventWriteInput,
 } from './api/communityEvents'
@@ -78,8 +82,18 @@ export function App() {
   const approvedMembership =
     currentMembership?.status === 'approved' ? currentMembership : undefined
   const replaceCommunityEvents = useCallback(
-    (events: DemoDataSet['events']) => {
-      updateData((currentData) => ({ ...currentData, events }))
+    (
+      events: DemoDataSet['events'],
+      registrations: DemoDataSet['registrations'],
+    ) => {
+      updateData((currentData) => ({
+        ...currentData,
+        events,
+        registrations: registrations.map((registration) => ({
+          ...registration,
+          memberId: currentData.currentMemberId,
+        })),
+      }))
     },
     [updateData],
   )
@@ -88,6 +102,11 @@ export function App() {
     enabled: Boolean(approvedMembership),
     onLoaded: replaceCommunityEvents,
   })
+  const listEventParticipants = useCallback(
+    (eventId: string) =>
+      listPersistedEventRegistrations(data.community.id, eventId),
+    [data.community.id],
+  )
   const agendaData =
     approvedMembership && communityEvents.status !== 'ready'
       ? { ...data, events: [] }
@@ -286,6 +305,78 @@ export function App() {
             }}
             onNavigate={navigate}
             onReloadEvents={communityEvents.reload}
+            onCancelRegistration={async (eventId) => {
+              const result = await cancelPersistedEventRegistration(
+                data.community.id,
+                eventId,
+              )
+              updateData((currentData) => ({
+                ...currentData,
+                events: currentData.events.map((event) =>
+                  event.id === eventId
+                    ? {
+                        ...event,
+                        registrationSummary: result.registrationSummary,
+                      }
+                    : event,
+                ),
+                registrations: currentData.registrations.filter(
+                  (registration) =>
+                    registration.eventId !== eventId ||
+                    registration.memberId !== currentData.currentMemberId,
+                ),
+              }))
+            }}
+            onListParticipants={listEventParticipants}
+            onRegister={async (eventId) => {
+              const result = await registerForPersistedEvent(
+                data.community.id,
+                eventId,
+              )
+              const visibleRegistration = {
+                ...result.registration,
+                memberId: data.currentMemberId,
+              }
+              updateData((currentData) => ({
+                ...currentData,
+                events: currentData.events.map((event) =>
+                  event.id === eventId
+                    ? {
+                        ...event,
+                        registrationSummary: result.registrationSummary,
+                      }
+                    : event,
+                ),
+                registrations: [
+                  ...currentData.registrations.filter(
+                    (registration) =>
+                      registration.eventId !== eventId ||
+                      registration.memberId !== currentData.currentMemberId,
+                  ),
+                  visibleRegistration,
+                ],
+              }))
+
+              return visibleRegistration
+            }}
+            onRemoveParticipant={async (eventId, memberId) => {
+              const result = await removePersistedEventRegistration(
+                data.community.id,
+                eventId,
+                memberId,
+              )
+              updateData((currentData) => ({
+                ...currentData,
+                events: currentData.events.map((event) =>
+                  event.id === eventId
+                    ? {
+                        ...event,
+                        registrationSummary: result.registrationSummary,
+                      }
+                    : event,
+                ),
+              }))
+            }}
             onUpdateEvent={async (eventId, input: CommunityEventWriteInput) => {
               const { event } = await updatePersistedCommunityEvent(
                 data.community.id,

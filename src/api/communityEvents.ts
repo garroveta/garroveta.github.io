@@ -1,6 +1,10 @@
 import { apiRequest } from './client'
 import type { CommunityEventInput } from '../data/eventMutations'
-import type { CommunityEvent } from '../domain/types'
+import type {
+  CommunityEvent,
+  EventRegistration,
+  EventRegistrationSummary,
+} from '../domain/types'
 
 export type CommunityEventWriteInput = Omit<
   CommunityEventInput,
@@ -15,10 +19,66 @@ function eventPath(communityId: string, eventId: string) {
   return `${eventCollectionPath(communityId)}/${encodeURIComponent(eventId)}`
 }
 
+function eventRegistrationPath(communityId: string, eventId: string) {
+  return `${eventPath(communityId, eventId)}/registrations`
+}
+
+export type ManagedEventRegistration = EventRegistration & {
+  displayName: string
+  initials: string
+  status: 'confirmed' | 'waitlisted'
+  waitlistPosition?: number
+}
+
+export type EventRegistrationMutation = {
+  registrationSummary: EventRegistrationSummary
+}
+
 export function listCommunityEvents(communityId: string, signal?: AbortSignal) {
-  return apiRequest<{ events: CommunityEvent[] }>(
-    eventCollectionPath(communityId),
-    { signal },
+  return apiRequest<{
+    events: CommunityEvent[]
+    registrations: EventRegistration[]
+  }>(eventCollectionPath(communityId), { signal })
+}
+
+export function registerForPersistedEvent(
+  communityId: string,
+  eventId: string,
+) {
+  return apiRequest<
+    EventRegistrationMutation & { registration: EventRegistration }
+  >(eventRegistrationPath(communityId, eventId), { method: 'POST' })
+}
+
+export function cancelPersistedEventRegistration(
+  communityId: string,
+  eventId: string,
+) {
+  return apiRequest<EventRegistrationMutation & { cancelledMemberId: string }>(
+    `${eventRegistrationPath(communityId, eventId)}/me`,
+    {
+      method: 'DELETE',
+    },
+  )
+}
+
+export function listPersistedEventRegistrations(
+  communityId: string,
+  eventId: string,
+) {
+  return apiRequest<{ registrations: ManagedEventRegistration[] }>(
+    eventRegistrationPath(communityId, eventId),
+  )
+}
+
+export function removePersistedEventRegistration(
+  communityId: string,
+  eventId: string,
+  memberId: string,
+) {
+  return apiRequest<EventRegistrationMutation & { cancelledMemberId: string }>(
+    `${eventRegistrationPath(communityId, eventId)}/${encodeURIComponent(memberId)}`,
+    { method: 'DELETE' },
   )
 }
 

@@ -42,8 +42,12 @@ const authenticationApiMocks = vi.hoisted(() => ({
   signOutCurrentUser: vi.fn(),
 }))
 const communityEventApiMocks = vi.hoisted(() => ({
+  cancelPersistedEventRegistration: vi.fn(),
   createCommunityEvent: vi.fn(),
   deletePersistedCommunityEvent: vi.fn(),
+  listPersistedEventRegistrations: vi.fn(),
+  registerForPersistedEvent: vi.fn(),
+  removePersistedEventRegistration: vi.fn(),
   updatePersistedCommunityEvent: vi.fn(),
 }))
 const communityEventsHookMocks = vi.hoisted(() => ({
@@ -193,6 +197,52 @@ describe('App', () => {
       (_communityId: string, eventId: string) =>
         Promise.resolve({ deletedEventId: eventId }),
     )
+    communityEventApiMocks.registerForPersistedEvent.mockImplementation(
+      (_communityId: string, eventId: string) =>
+        Promise.resolve({
+          registration: {
+            eventId,
+            id: `registration-${eventId}`,
+            memberId: 'member-alex',
+            registeredAt: '2026-09-01T10:00:00.000Z',
+            status:
+              eventId === 'event-presentation-hobbit'
+                ? ('waitlisted' as const)
+                : ('confirmed' as const),
+          },
+          registrationSummary:
+            eventId === 'event-presentation-hobbit'
+              ? { confirmed: 30, waitlisted: 3 }
+              : { confirmed: 7, waitlisted: 0 },
+        }),
+    )
+    communityEventApiMocks.cancelPersistedEventRegistration.mockImplementation(
+      (_communityId: string, eventId: string) =>
+        Promise.resolve({
+          cancelledMemberId: 'member-alex',
+          registrationSummary:
+            eventId === 'event-presentation-hobbit'
+              ? { confirmed: 30, waitlisted: 2 }
+              : { confirmed: 6, waitlisted: 0 },
+        }),
+    )
+    communityEventApiMocks.listPersistedEventRegistrations.mockResolvedValue({
+      registrations: [
+        {
+          displayName: 'Sergio Gil',
+          eventId: 'event-mtg-draft-express',
+          id: 'registration-sergio-draft-express',
+          initials: 'SG',
+          memberId: 'member-sergio',
+          registeredAt: '2026-07-24T21:15:00+02:00',
+          status: 'confirmed',
+        },
+      ],
+    })
+    communityEventApiMocks.removePersistedEventRegistration.mockResolvedValue({
+      cancelledMemberId: 'member-sergio',
+      registrationSummary: { confirmed: 3, waitlisted: 0 },
+    })
     registrationApiMocks.validateInvitation.mockResolvedValue({
       community: { city: 'Inca', name: 'CRC Delorean' },
       expiresAt: '2026-09-27T12:00:00.000Z',
@@ -1822,7 +1872,7 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
-  it('registers for an available event and cancels the registration', () => {
+  it('registers for an available event and cancels the registration', async () => {
     render(<App />)
 
     fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
@@ -1837,8 +1887,13 @@ describe('App', () => {
     )
     fireEvent.click(screen.getByRole('button', { name: 'Inscribirme' }))
 
-    expect(screen.getByText('Tu plaza está confirmada.')).toBeInTheDocument()
+    expect(
+      await screen.findByText('Tu plaza está confirmada.'),
+    ).toBeInTheDocument()
     expect(screen.getByText('7/8 confirmadas')).toBeInTheDocument()
+    expect(
+      communityEventApiMocks.registerForPersistedEvent,
+    ).toHaveBeenCalledWith('community-crc-delorean', 'event-mtg-draft-night')
     expect(
       screen.getByRole('button', { name: 'Cancelar inscripción' }),
     ).toBeInTheDocument()
@@ -1848,12 +1903,15 @@ describe('App', () => {
     )
 
     expect(
-      screen.getByText('Tu inscripción se ha cancelado.'),
+      await screen.findByText('Tu inscripción se ha cancelado.'),
     ).toBeInTheDocument()
     expect(screen.getByText('6/8 confirmadas')).toBeInTheDocument()
+    expect(
+      communityEventApiMocks.cancelPersistedEventRegistration,
+    ).toHaveBeenCalledWith('community-crc-delorean', 'event-mtg-draft-night')
   })
 
-  it('leaves and rejoins the waitlist of a full event', () => {
+  it('leaves and rejoins the waitlist of a full event', async () => {
     render(<App />)
 
     fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
@@ -1871,7 +1929,7 @@ describe('App', () => {
     )
 
     expect(
-      screen.getByText('Has salido de la lista de espera.'),
+      await screen.findByText('Has salido de la lista de espera.'),
     ).toBeInTheDocument()
     expect(
       screen.getByText('2 personas en lista de espera'),
@@ -1884,11 +1942,17 @@ describe('App', () => {
     )
 
     expect(
-      screen.getByText('Te has unido a la lista de espera.'),
+      await screen.findByText('Te has unido a la lista de espera.'),
     ).toBeInTheDocument()
     expect(
       screen.getByText('3 personas en lista de espera'),
     ).toBeInTheDocument()
+    expect(
+      communityEventApiMocks.registerForPersistedEvent,
+    ).toHaveBeenCalledWith(
+      'community-crc-delorean',
+      'event-presentation-hobbit',
+    )
   })
 
   it('browses the news feed and opens a publication', () => {
@@ -2085,7 +2149,22 @@ describe('App', () => {
     })
   })
 
-  it('lets a manager record attendance and release a participant place', () => {
+  it('lets a manager inspect registrations and release a participant place', async () => {
+    communityEventApiMocks.listPersistedEventRegistrations
+      .mockResolvedValueOnce({
+        registrations: [
+          {
+            displayName: 'Sergio Gil',
+            eventId: 'event-mtg-draft-express',
+            id: 'registration-sergio-draft-express',
+            initials: 'SG',
+            memberId: 'member-sergio',
+            registeredAt: '2026-07-24T21:15:00+02:00',
+            status: 'confirmed',
+          },
+        ],
+      })
+      .mockResolvedValueOnce({ registrations: [] })
     authenticateAsManager()
     render(<App />)
 
@@ -2104,21 +2183,14 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Participantes' }),
     ).toBeInTheDocument()
-    const sergioParticipant = screen.getByText('Sergio Gil').closest('article')
-    fireEvent.click(
-      within(sergioParticipant as HTMLElement).getByRole('button', {
+    const sergioParticipant = (await screen.findByText('Sergio Gil')).closest(
+      'article',
+    )
+    expect(
+      within(sergioParticipant as HTMLElement).queryByRole('button', {
         name: 'Registrar asistencia',
       }),
-    )
-
-    expect(
-      within(sergioParticipant as HTMLElement).getByText('Presente'),
-    ).toBeInTheDocument()
-    expect(
-      within(sergioParticipant as HTMLElement).getByRole('button', {
-        name: 'Anular asistencia',
-      }),
-    ).toBeInTheDocument()
+    ).not.toBeInTheDocument()
 
     fireEvent.click(
       within(sergioParticipant as HTMLElement).getByRole('button', {
@@ -2126,17 +2198,17 @@ describe('App', () => {
       }),
     )
 
-    expect(sergioParticipant).not.toBeInTheDocument()
+    await waitFor(() => expect(sergioParticipant).not.toBeInTheDocument())
     expect(
-      createLocalDemoRepository(window.localStorage)
-        .load()
-        .registrations.find(
-          ({ id }) => id === 'registration-sergio-draft-express',
-        )?.status,
-    ).toBe('cancelled')
+      communityEventApiMocks.removePersistedEventRegistration,
+    ).toHaveBeenCalledWith(
+      'community-crc-delorean',
+      'event-mtg-draft-express',
+      'member-sergio',
+    )
   })
 
-  it('lets a manager edit, manage registrations and delete events', async () => {
+  it('lets a manager edit, inspect registrations and delete events', async () => {
     authenticateAsManager()
     render(<App />)
 
@@ -2152,11 +2224,7 @@ describe('App', () => {
         name: /Inscripciones/,
       }),
     )
-    fireEvent.change(screen.getByLabelText('Añadir una inscripción'), {
-      target: { value: 'member-biel' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Añadir' }))
-    expect(screen.getByText('Biel Ferrer')).toBeInTheDocument()
+    expect(await screen.findByText('Sergio Gil')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }))
     fireEvent.click(

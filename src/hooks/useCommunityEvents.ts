@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { listCommunityEvents } from '../api/communityEvents'
-import type { CommunityEvent } from '../domain/types'
+import type { CommunityEvent, EventRegistration } from '../domain/types'
 
 export type CommunityEventsStatus = 'idle' | 'loading' | 'ready' | 'error'
 
 type UseCommunityEventsOptions = {
   communityId: string
   enabled: boolean
-  onLoaded: (events: CommunityEvent[]) => void
+  onLoaded: (
+    events: CommunityEvent[],
+    registrations: EventRegistration[],
+  ) => void
 }
 
 export function useCommunityEvents({
@@ -30,12 +33,12 @@ export function useCommunityEvents({
     let isCurrentRequest = true
 
     void listCommunityEvents(communityId, controller.signal)
-      .then(({ events }) => {
+      .then(({ events, registrations }) => {
         if (!isCurrentRequest) {
           return
         }
 
-        onLoaded(events)
+        onLoaded(events, registrations)
         setStatus('ready')
       })
       .catch(() => {
