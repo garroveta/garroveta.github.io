@@ -8,6 +8,10 @@ import {
   handleEventRegistrationApiRequest,
   matchEventRegistrationRoute,
 } from './event-registrations'
+import {
+  handleCommunicationApiRequest,
+  matchCommunicationRoute,
+} from './communications'
 
 export interface ApiRequestContext {
   context: ExecutionContext
@@ -64,6 +68,19 @@ export function handleApiRequest({
         request,
       },
       memberRoute,
+    )
+  }
+
+  const communicationRoute = matchCommunicationRoute(requestUrl.pathname)
+
+  if (communicationRoute) {
+    return handleCommunicationApiRequest(
+      {
+        context,
+        env,
+        request,
+      },
+      communicationRoute,
     )
   }
 
