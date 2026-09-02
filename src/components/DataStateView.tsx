@@ -59,7 +59,11 @@ export function DataStateView({
         {description ? <p>{description}</p> : null}
       </div>
       {showRetry ? (
-        <button className="secondary-button" type="button" onClick={onRetry}>
+        <button
+          className={variant === 'page' ? 'primary-button' : 'secondary-button'}
+          type="button"
+          onClick={onRetry}
+        >
           {retryLabel}
         </button>
       ) : null}

@@ -22,6 +22,7 @@ export function useCommunityEvents({
   const [status, setStatus] = useState<CommunityEventsStatus>(
     enabled ? 'loading' : 'idle',
   )
+  const [error, setError] = useState<unknown>(null)
   const [reloadRevision, setReloadRevision] = useState(0)
 
   useEffect(() => {
@@ -41,8 +42,9 @@ export function useCommunityEvents({
         onLoaded(events, registrations)
         setStatus('ready')
       })
-      .catch(() => {
+      .catch((requestError: unknown) => {
         if (isCurrentRequest && !controller.signal.aborted) {
+          setError(requestError)
           setStatus('error')
         }
       })
@@ -59,6 +61,7 @@ export function useCommunityEvents({
   }, [])
 
   return {
+    error,
     reload,
     status:
       enabled && status === 'idle' ? 'loading' : enabled ? status : 'idle',

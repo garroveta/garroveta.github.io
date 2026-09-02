@@ -9,7 +9,6 @@ import {
   ListChecks,
   MapPin,
   Plus,
-  RotateCcw,
   Rows3,
   Trash2,
   UserMinus,
@@ -26,6 +25,7 @@ import type {
   CommunityEventWriteInput,
   ManagedEventRegistration,
 } from '../api/communityEvents'
+import { DataStateView } from '../components/DataStateView'
 import { EventLinkImportPanel } from '../components/EventLinkImportPanel'
 import { isCommunityOptionActive } from '../data/communityOptions'
 import {
@@ -54,6 +54,7 @@ type EventsPageProps = {
   currentMember: CommunityMember
   publishingMember: CommunityMember
   eventPersistenceStatus: CommunityEventsStatus
+  eventPersistenceError: unknown
   onDataChange: (updater: DemoDataUpdater) => void
   onCreateEvent: (input: CommunityEventWriteInput) => Promise<void>
   onDeleteEvent: (eventId: string) => Promise<void>
@@ -1061,6 +1062,7 @@ function EventParticipantManager({
     [],
   )
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [loadError, setLoadError] = useState<unknown>(null)
   const [pendingMemberId, setPendingMemberId] = useState<string>()
   const [operationError, setOperationError] = useState('')
   const registered = participants.filter(({ status }) => status === 'confirmed')
@@ -1077,7 +1079,8 @@ function EventParticipantManager({
       const response = await onListParticipants(eventId)
       setParticipants(response.registrations)
       setStatus('ready')
-    } catch {
+    } catch (error) {
+      setLoadError(error)
       setStatus('error')
     }
   }
@@ -1092,8 +1095,9 @@ function EventParticipantManager({
           setStatus('ready')
         }
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (isCurrentRequest) {
+          setLoadError(error)
           setStatus('error')
         }
       })
@@ -1134,17 +1138,18 @@ function EventParticipantManager({
       </div>
 
       {status === 'loading' ? (
-        <p className="participant-demo-note" aria-live="polite">
-          Cargando las inscripciones…
-        </p>
+        <DataStateView
+          status="loading"
+          loadingTitle="Cargando las inscripciones…"
+        />
       ) : null}
       {status === 'error' ? (
-        <div className="participant-demo-note" role="alert">
-          <p>No se han podido cargar las inscripciones.</p>
-          <button type="button" onClick={() => void loadParticipants()}>
-            Reintentar
-          </button>
-        </div>
+        <DataStateView
+          status="error"
+          loadingTitle="Cargando las inscripciones…"
+          error={loadError}
+          onRetry={() => void loadParticipants()}
+        />
       ) : null}
 
       <div className="participant-group">
@@ -1385,6 +1390,7 @@ export function EventsPage({
   currentMember,
   publishingMember,
   eventPersistenceStatus,
+  eventPersistenceError,
   onDataChange,
   onCreateEvent,
   onDeleteEvent,
@@ -1518,11 +1524,12 @@ export function EventsPage({
     return (
       <div className="page">
         <EventsPageHeading />
-        <section className="event-data-state" aria-live="polite">
-          <CalendarDays aria-hidden="true" size={24} />
-          <h2>Cargando la agenda…</h2>
-          <p>Estamos consultando los eventos de la comunidad.</p>
-        </section>
+        <DataStateView
+          variant="page"
+          status="loading"
+          loadingTitle="Cargando la agenda…"
+          loadingDescription="Estamos consultando los eventos de la comunidad."
+        />
       </div>
     )
   }
@@ -1531,18 +1538,13 @@ export function EventsPage({
     return (
       <div className="page">
         <EventsPageHeading />
-        <section className="event-data-state" role="alert">
-          <RotateCcw aria-hidden="true" size={24} />
-          <h2>No se ha podido cargar la agenda</h2>
-          <p>Comprueba tu conexión y vuelve a intentarlo.</p>
-          <button
-            className="primary-button"
-            type="button"
-            onClick={onReloadEvents}
-          >
-            Reintentar
-          </button>
-        </section>
+        <DataStateView
+          variant="page"
+          status="error"
+          loadingTitle="Cargando la agenda…"
+          error={eventPersistenceError}
+          onRetry={onReloadEvents}
+        />
       </div>
     )
   }

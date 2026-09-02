@@ -4,7 +4,6 @@ import {
   ChevronRight,
   Megaphone,
   Pin,
-  RotateCcw,
   Settings2,
   Tags,
 } from 'lucide-react'
@@ -12,6 +11,7 @@ import type { CSSProperties } from 'react'
 import { useState } from 'react'
 
 import type { DemoRole } from '../app/demoRoles'
+import { DataStateView } from '../components/DataStateView'
 import {
   getNewsById,
   getNewsFeed,
@@ -27,6 +27,7 @@ import type { CommunityCommunicationsStatus } from '../hooks/useCommunityCommuni
 type NewsPageProps = {
   activeRole: DemoRole
   communicationPersistenceStatus: CommunityCommunicationsStatus
+  communicationPersistenceError: unknown
   data: DemoDataSet
   currentMember: CommunityMember
   initialPostId?: string
@@ -172,6 +173,7 @@ function NewsDetail({
 export function NewsPage({
   activeRole,
   communicationPersistenceStatus,
+  communicationPersistenceError,
   data,
   currentMember,
   initialPostId,
@@ -212,11 +214,12 @@ export function NewsPage({
           </span>
           <h1>Noticias</h1>
         </header>
-        <section className="event-data-state" aria-live="polite">
-          <BellRing aria-hidden="true" size={24} />
-          <h2>Cargando las publicaciones…</h2>
-          <p>Estamos consultando las noticias de la comunidad.</p>
-        </section>
+        <DataStateView
+          variant="page"
+          status="loading"
+          loadingTitle="Cargando las publicaciones…"
+          loadingDescription="Estamos consultando las noticias de la comunidad."
+        />
       </div>
     )
   }
@@ -231,18 +234,13 @@ export function NewsPage({
           </span>
           <h1>Noticias</h1>
         </header>
-        <section className="event-data-state" role="alert">
-          <RotateCcw aria-hidden="true" size={24} />
-          <h2>No se han podido cargar las publicaciones</h2>
-          <p>Comprueba tu conexión y vuelve a intentarlo.</p>
-          <button
-            className="primary-button"
-            type="button"
-            onClick={onReloadCommunications}
-          >
-            Reintentar
-          </button>
-        </section>
+        <DataStateView
+          variant="page"
+          status="error"
+          loadingTitle="Cargando las publicaciones…"
+          error={communicationPersistenceError}
+          onRetry={onReloadCommunications}
+        />
       </div>
     )
   }

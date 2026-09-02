@@ -300,6 +300,7 @@ export function App() {
             currentMember={connectedMember}
             publishingMember={publishingMember}
             eventPersistenceStatus={communityEvents.status}
+            eventPersistenceError={communityEvents.error}
             onDataChange={updateData}
             onCreateEvent={async (input) => {
               const { event } = await createCommunityEvent(
@@ -450,6 +451,7 @@ export function App() {
             data={communicationData}
             currentMember={connectedMember}
             communicationPersistenceStatus={communityCommunications.status}
+            communicationPersistenceError={communityCommunications.error}
             initialPostId={newsRouteParams.get('post') ?? undefined}
             onManagePublications={() =>
               navigate('perfil', 'view=configuracion&section=communications')
@@ -460,6 +462,7 @@ export function App() {
           <SettingsPage
             data={communicationData}
             communicationPersistenceStatus={communityCommunications.status}
+            communicationPersistenceError={communityCommunications.error}
             managerId={publishingMember.id}
             initialSection={
               isSettingsSection(requestedSettingsSection)

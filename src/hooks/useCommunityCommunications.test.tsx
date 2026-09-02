@@ -53,8 +53,9 @@ describe('useCommunityCommunications', () => {
 
   it('exposes an error and reloads the feed on demand', async () => {
     const onLoaded = vi.fn()
+    const requestError = new Error('Offline')
     vi.mocked(listCommunityCommunications)
-      .mockRejectedValueOnce(new Error('Offline'))
+      .mockRejectedValueOnce(requestError)
       .mockResolvedValueOnce({ communications: [communication] })
 
     const { result } = renderHook(() =>
@@ -66,6 +67,7 @@ describe('useCommunityCommunications', () => {
     )
 
     await waitFor(() => expect(result.current.status).toBe('error'))
+    expect(result.current.error).toBe(requestError)
     act(() => result.current.reload())
     await waitFor(() => expect(result.current.status).toBe('ready'))
 

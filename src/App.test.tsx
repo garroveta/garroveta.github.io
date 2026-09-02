@@ -2131,9 +2131,7 @@ describe('App', () => {
     fireEvent.click(screen.getAllByRole('link', { name: /Noticias/ }).at(-1)!)
 
     expect(
-      screen.getByRole('heading', {
-        name: 'No se han podido cargar las publicaciones',
-      }),
+      screen.getByRole('heading', { name: 'Ha ocurrido un error' }),
     ).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
     expect(communityCommunicationsHookMocks.reload).toHaveBeenCalledOnce()

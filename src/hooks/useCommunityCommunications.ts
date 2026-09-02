@@ -22,6 +22,7 @@ export function useCommunityCommunications({
   const [status, setStatus] = useState<CommunityCommunicationsStatus>(
     enabled ? 'loading' : 'idle',
   )
+  const [error, setError] = useState<unknown>(null)
   const [reloadRevision, setReloadRevision] = useState(0)
 
   useEffect(() => {
@@ -41,8 +42,9 @@ export function useCommunityCommunications({
         onLoaded(communications)
         setStatus('ready')
       })
-      .catch(() => {
+      .catch((requestError: unknown) => {
         if (isCurrentRequest && !controller.signal.aborted) {
+          setError(requestError)
           setStatus('error')
         }
       })
@@ -63,6 +65,7 @@ export function useCommunityCommunications({
   }, [enabled])
 
   return {
+    error,
     reload,
     status:
       enabled && status === 'idle' ? 'loading' : enabled ? status : 'idle',

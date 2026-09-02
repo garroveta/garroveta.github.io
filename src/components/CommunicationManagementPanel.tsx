@@ -8,7 +8,6 @@ import {
   Pin,
   PinOff,
   Plus,
-  RotateCcw,
   Search,
   Trash2,
   X,
@@ -27,12 +26,14 @@ import { formatNewsPostForWhatsApp } from '../data/newsSharing'
 import type { DemoDataSet, NewsPost, NewsPostType } from '../domain/types'
 import type { CommunityCommunicationsStatus } from '../hooks/useCommunityCommunications'
 import { isCommunityOptionActive } from '../data/communityOptions'
+import { DataStateView } from './DataStateView'
 
 type CommunicationManagementPanelProps = {
   data: DemoDataSet
   onDataChange: (updater: DemoDataUpdater) => void
   onReload: () => void
   onViewPost: (postId: string) => void
+  persistenceError: unknown
   persistenceStatus: CommunityCommunicationsStatus
 }
 
@@ -254,6 +255,7 @@ export function CommunicationManagementPanel({
   onDataChange,
   onReload,
   onViewPost,
+  persistenceError,
   persistenceStatus,
 }: CommunicationManagementPanelProps) {
   const [query, setQuery] = useState('')
@@ -398,11 +400,11 @@ export function CommunicationManagementPanel({
         aria-labelledby="communication-management-title"
       >
         <CommunicationManagementHeading />
-        <section className="event-data-state" aria-live="polite">
-          <Megaphone aria-hidden="true" size={24} />
-          <h3>Cargando las publicaciones…</h3>
-          <p>Estamos consultando las comunicaciones de la comunidad.</p>
-        </section>
+        <DataStateView
+          status="loading"
+          loadingTitle="Cargando las publicaciones…"
+          loadingDescription="Estamos consultando las comunicaciones de la comunidad."
+        />
       </section>
     )
   }
@@ -414,14 +416,12 @@ export function CommunicationManagementPanel({
         aria-labelledby="communication-management-title"
       >
         <CommunicationManagementHeading />
-        <section className="event-data-state" role="alert">
-          <RotateCcw aria-hidden="true" size={24} />
-          <h3>No se han podido cargar las publicaciones</h3>
-          <p>Comprueba tu conexión y vuelve a intentarlo.</p>
-          <button className="primary-button" type="button" onClick={onReload}>
-            Reintentar
-          </button>
-        </section>
+        <DataStateView
+          status="error"
+          loadingTitle="Cargando las publicaciones…"
+          error={persistenceError}
+          onRetry={onReload}
+        />
       </section>
     )
   }

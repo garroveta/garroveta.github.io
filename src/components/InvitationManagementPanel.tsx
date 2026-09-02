@@ -8,7 +8,6 @@ import {
   Link2,
   Plus,
   QrCode,
-  RefreshCw,
   X,
 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
@@ -22,6 +21,7 @@ import {
   type ManagerInvitationStatus,
 } from '../api/managerInvitations'
 import { ClientApiError } from '../api/client'
+import { DataStateView } from './DataStateView'
 import { ManagerOtpLogin } from './ManagerOtpLogin'
 
 type InvitationManagementPanelProps = {
@@ -70,6 +70,7 @@ export function InvitationManagementPanel({
     | 'manager-access-required'
     | 'ready'
   >('loading')
+  const [loadError, setLoadError] = useState<unknown>(null)
   const [reloadKey, setReloadKey] = useState(0)
   const counts = useMemo(
     () =>
@@ -101,6 +102,7 @@ export function InvitationManagementPanel({
         } else if (error instanceof ClientApiError && error.status === 403) {
           setLoadState('manager-access-required')
         } else {
+          setLoadError(error)
           setLoadState('error')
         }
       })
@@ -186,10 +188,7 @@ export function InvitationManagementPanel({
       </div>
 
       {loadState === 'loading' ? (
-        <div className="invitation-management-state" aria-live="polite">
-          <RefreshCw aria-hidden="true" size={20} />
-          <strong>Cargando invitaciones…</strong>
-        </div>
+        <DataStateView status="loading" loadingTitle="Cargando invitaciones…" />
       ) : loadState === 'authentication-required' ||
         loadState === 'manager-access-required' ? (
         <ManagerOtpLogin
@@ -201,16 +200,12 @@ export function InvitationManagementPanel({
           onAuthenticated={retry}
         />
       ) : loadState === 'error' ? (
-        <div className="invitation-management-state" role="alert">
-          <CircleSlash2 aria-hidden="true" size={20} />
-          <div>
-            <strong>No se han podido cargar las invitaciones</strong>
-            <p>Comprueba la conexión y vuelve a intentarlo.</p>
-          </div>
-          <button className="secondary-button" type="button" onClick={retry}>
-            Reintentar
-          </button>
-        </div>
+        <DataStateView
+          status="error"
+          loadingTitle="Cargando invitaciones…"
+          error={loadError}
+          onRetry={retry}
+        />
       ) : (
         <>
           <div className="invitation-creation-toolbar">

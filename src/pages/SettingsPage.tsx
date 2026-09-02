@@ -24,6 +24,7 @@ import type { SettingsSection } from './settingsSections'
 
 type SettingsPageProps = {
   communicationPersistenceStatus: CommunityCommunicationsStatus
+  communicationPersistenceError: unknown
   data: DemoDataSet
   managerId: string
   initialSection?: SettingsSection
@@ -35,6 +36,7 @@ type SettingsPageProps = {
 
 export function SettingsPage({
   communicationPersistenceStatus,
+  communicationPersistenceError,
   data,
   managerId,
   initialSection,
@@ -166,6 +168,7 @@ export function SettingsPage({
           onReload={onReloadCommunications}
           onViewPost={onViewNewsPost}
           persistenceStatus={communicationPersistenceStatus}
+          persistenceError={communicationPersistenceError}
         />
       ) : (
         <RankingSettingsPanel

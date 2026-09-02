@@ -1296,7 +1296,6 @@ a {
   background: #fff;
 }
 
-.invitation-management-state,
 .invitation-management-empty {
   display: grid;
   justify-items: center;
@@ -1308,27 +1307,16 @@ a {
   text-align: center;
 }
 
-.invitation-management-state > div {
-  min-width: 0;
-}
-
-.invitation-management-state strong,
 .invitation-management-empty strong {
   color: #3f3443;
   font-size: 0.82rem;
 }
 
-.invitation-management-state p,
 .invitation-management-empty p {
   margin: 0.15rem 0 0;
   color: #807683;
   font-size: 0.7rem;
   line-height: 1.45;
-}
-
-.invitation-management-state .secondary-button {
-  min-height: 2.35rem;
-  margin-top: 0.35rem;
 }
 
 .manager-authentication-panel {
@@ -4323,41 +4311,6 @@ a {
   line-height: 1.4;
 }
 
-.event-data-state {
-  display: grid;
-  justify-items: center;
-  gap: 0.45rem;
-  margin-top: 1.5rem;
-  padding: 1.5rem 1rem;
-  border: 1px solid #ded5e1;
-  border-radius: 1.2rem;
-  color: #6b397c;
-  background: #fff;
-  text-align: center;
-  box-shadow: 0 0.8rem 2.2rem rgb(51 43 55 / 7%);
-}
-
-.event-data-state h2,
-.event-data-state p {
-  margin: 0;
-}
-
-.event-data-state h2 {
-  color: #302933;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 1.25rem;
-  font-weight: 500;
-}
-
-.event-data-state p {
-  color: #756c78;
-  font-size: 0.78rem;
-}
-
-.event-data-state .primary-button {
-  margin-top: 0.45rem;
-}
-
 .data-state-view {
   display: grid;
   justify-items: center;
@@ -4415,6 +4368,10 @@ a {
 .data-state-view .secondary-button {
   min-height: 2.35rem;
   margin-top: 0.35rem;
+}
+
+.data-state-view .primary-button {
+  margin-top: 0.45rem;
 }
 
 .event-local-registration-note {
@@ -5055,16 +5012,6 @@ a {
 .participant-add select,
 .participant-add button {
   min-height: 2.4rem;
-}
-
-.participant-demo-note {
-  margin: 0 0 1rem;
-  padding: 0.7rem 0.8rem;
-  border-radius: 0.75rem;
-  color: #746b77;
-  background: #f6f2f7;
-  font-size: 0.72rem;
-  line-height: 1.5;
 }
 
 .participant-group + .participant-group {

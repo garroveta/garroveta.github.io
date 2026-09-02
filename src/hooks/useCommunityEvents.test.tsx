@@ -39,8 +39,9 @@ describe('useCommunityEvents', () => {
 
   it('exposes an error and retries the agenda request', async () => {
     const onLoaded = vi.fn()
+    const requestError = new Error('Offline')
     vi.mocked(listCommunityEvents)
-      .mockRejectedValueOnce(new Error('Offline'))
+      .mockRejectedValueOnce(requestError)
       .mockResolvedValueOnce({ events: [], registrations: [] })
 
     const { result } = renderHook(() =>
@@ -52,6 +53,7 @@ describe('useCommunityEvents', () => {
     )
 
     await waitFor(() => expect(result.current.status).toBe('error'))
+    expect(result.current.error).toBe(requestError)
     act(() => result.current.reload())
     await waitFor(() => expect(result.current.status).toBe('ready'))
 
