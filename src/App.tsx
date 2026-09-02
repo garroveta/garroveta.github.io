@@ -19,6 +19,7 @@ import { getDemoDataSummary } from './data/demoData'
 import type { DemoDataSet } from './domain/types'
 import { useDemoData } from './hooks/useDemoData'
 import { useCommunityEvents } from './hooks/useCommunityEvents'
+import { useCommunityCommunications } from './hooks/useCommunityCommunications'
 import { useDemoRole } from './hooks/useDemoRole'
 import { useHashRoute } from './hooks/useHashRoute'
 import { useCurrentUser } from './hooks/useCurrentUser'
@@ -102,6 +103,20 @@ export function App() {
     enabled: Boolean(approvedMembership),
     onLoaded: replaceCommunityEvents,
   })
+  const replaceCommunityCommunications = useCallback(
+    (communications: DemoDataSet['newsPosts']) => {
+      updateData((currentData) => ({
+        ...currentData,
+        newsPosts: communications,
+      }))
+    },
+    [updateData],
+  )
+  const communityCommunications = useCommunityCommunications({
+    communityId: data.community.id,
+    enabled: Boolean(approvedMembership),
+    onLoaded: replaceCommunityCommunications,
+  })
   const listEventParticipants = useCallback(
     (eventId: string) =>
       listPersistedEventRegistrations(data.community.id, eventId),
@@ -110,6 +125,10 @@ export function App() {
   const agendaData =
     approvedMembership && communityEvents.status !== 'ready'
       ? { ...data, events: [] }
+      : data
+  const communicationData =
+    approvedMembership && communityCommunications.status !== 'ready'
+      ? { ...data, newsPosts: [] }
       : data
   const authenticatedRole: DemoRole | null = approvedMembership
     ? approvedMembership.role === 'manager'
@@ -266,7 +285,10 @@ export function App() {
         {activeRoute === 'inicio' ? (
           <HomePage
             activeRole={effectiveRole}
-            data={agendaData}
+            data={{
+              ...agendaData,
+              newsPosts: communicationData.newsPosts,
+            }}
             currentMember={connectedMember}
             publishingMember={publishingMember}
             onNavigate={navigate}
@@ -425,16 +447,19 @@ export function App() {
         ) : activeRoute === 'noticias' ? (
           <NewsPage
             activeRole={effectiveRole}
-            data={data}
+            data={communicationData}
             currentMember={connectedMember}
+            communicationPersistenceStatus={communityCommunications.status}
             initialPostId={newsRouteParams.get('post') ?? undefined}
             onManagePublications={() =>
               navigate('perfil', 'view=configuracion&section=communications')
             }
+            onReloadCommunications={communityCommunications.reload}
           />
         ) : isSettingsView ? (
           <SettingsPage
-            data={data}
+            data={communicationData}
+            communicationPersistenceStatus={communityCommunications.status}
             managerId={publishingMember.id}
             initialSection={
               isSettingsSection(requestedSettingsSection)
@@ -443,6 +468,7 @@ export function App() {
             }
             onDataChange={updateData}
             onBack={() => navigate('perfil')}
+            onReloadCommunications={communityCommunications.reload}
             onViewNewsPost={(postId) =>
               navigate('noticias', `post=${encodeURIComponent(postId)}`)
             }

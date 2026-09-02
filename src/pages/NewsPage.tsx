@@ -4,6 +4,7 @@ import {
   ChevronRight,
   Megaphone,
   Pin,
+  RotateCcw,
   Settings2,
   Tags,
 } from 'lucide-react'
@@ -21,13 +22,16 @@ import type {
   DemoDataSet,
   NewsPostType,
 } from '../domain/types'
+import type { CommunityCommunicationsStatus } from '../hooks/useCommunityCommunications'
 
 type NewsPageProps = {
   activeRole: DemoRole
+  communicationPersistenceStatus: CommunityCommunicationsStatus
   data: DemoDataSet
   currentMember: CommunityMember
   initialPostId?: string
   onManagePublications: () => void
+  onReloadCommunications: () => void
 }
 
 const newsTypeLabels: Record<NewsPostType, string> = {
@@ -167,10 +171,12 @@ function NewsDetail({
 
 export function NewsPage({
   activeRole,
+  communicationPersistenceStatus,
   data,
   currentMember,
   initialPostId,
   onManagePublications,
+  onReloadCommunications,
 }: NewsPageProps) {
   const [selectedPostId, setSelectedPostId] = useState<string | undefined>(
     initialPostId,
@@ -192,6 +198,54 @@ export function NewsPage({
   const selectedPost = selectedPostId
     ? getNewsById(data, selectedPostId)
     : undefined
+
+  if (
+    communicationPersistenceStatus === 'idle' ||
+    communicationPersistenceStatus === 'loading'
+  ) {
+    return (
+      <div className="page">
+        <header className="page-heading">
+          <span className="page-eyebrow">
+            <BellRing aria-hidden="true" size={14} />
+            {data.community.name}
+          </span>
+          <h1>Noticias</h1>
+        </header>
+        <section className="event-data-state" aria-live="polite">
+          <BellRing aria-hidden="true" size={24} />
+          <h2>Cargando las publicaciones…</h2>
+          <p>Estamos consultando las noticias de la comunidad.</p>
+        </section>
+      </div>
+    )
+  }
+
+  if (communicationPersistenceStatus === 'error') {
+    return (
+      <div className="page">
+        <header className="page-heading">
+          <span className="page-eyebrow">
+            <BellRing aria-hidden="true" size={14} />
+            {data.community.name}
+          </span>
+          <h1>Noticias</h1>
+        </header>
+        <section className="event-data-state" role="alert">
+          <RotateCcw aria-hidden="true" size={24} />
+          <h2>No se han podido cargar las publicaciones</h2>
+          <p>Comprueba tu conexión y vuelve a intentarlo.</p>
+          <button
+            className="primary-button"
+            type="button"
+            onClick={onReloadCommunications}
+          >
+            Reintentar
+          </button>
+        </section>
+      </div>
+    )
+  }
 
   if (selectedPost) {
     return (

@@ -8,6 +8,7 @@ import {
   Pin,
   PinOff,
   Plus,
+  RotateCcw,
   Search,
   Trash2,
   X,
@@ -24,12 +25,15 @@ import {
 import type { DemoDataUpdater } from '../data/demoRepository'
 import { formatNewsPostForWhatsApp } from '../data/newsSharing'
 import type { DemoDataSet, NewsPost, NewsPostType } from '../domain/types'
+import type { CommunityCommunicationsStatus } from '../hooks/useCommunityCommunications'
 import { isCommunityOptionActive } from '../data/communityOptions'
 
 type CommunicationManagementPanelProps = {
   data: DemoDataSet
   onDataChange: (updater: DemoDataUpdater) => void
+  onReload: () => void
   onViewPost: (postId: string) => void
+  persistenceStatus: CommunityCommunicationsStatus
 }
 
 const typeLabels: Record<NewsPostType, string> = {
@@ -221,10 +225,36 @@ function CommunicationEditor({
   )
 }
 
+function CommunicationManagementHeading({ onNew }: { onNew?: () => void }) {
+  return (
+    <div className="configuration-panel-heading communication-management-heading">
+      <span aria-hidden="true">
+        <Megaphone size={20} />
+      </span>
+      <div>
+        <span>Información de la tienda</span>
+        <h2 id="communication-management-title">Publicaciones</h2>
+        <p>
+          Publica avisos segmentados y mantén actualizada la información visible
+          para la comunidad.
+        </p>
+      </div>
+      {onNew ? (
+        <button className="primary-button" type="button" onClick={onNew}>
+          <Plus aria-hidden="true" size={16} />
+          Nueva
+        </button>
+      ) : null}
+    </div>
+  )
+}
+
 export function CommunicationManagementPanel({
   data,
   onDataChange,
+  onReload,
   onViewPost,
+  persistenceStatus,
 }: CommunicationManagementPanelProps) {
   const [query, setQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<'all' | NewsPostType>('all')
@@ -361,36 +391,53 @@ export function CommunicationManagementPanel({
     }
   }
 
+  if (persistenceStatus === 'idle' || persistenceStatus === 'loading') {
+    return (
+      <section
+        className="communication-management-panel"
+        aria-labelledby="communication-management-title"
+      >
+        <CommunicationManagementHeading />
+        <section className="event-data-state" aria-live="polite">
+          <Megaphone aria-hidden="true" size={24} />
+          <h3>Cargando las publicaciones…</h3>
+          <p>Estamos consultando las comunicaciones de la comunidad.</p>
+        </section>
+      </section>
+    )
+  }
+
+  if (persistenceStatus === 'error') {
+    return (
+      <section
+        className="communication-management-panel"
+        aria-labelledby="communication-management-title"
+      >
+        <CommunicationManagementHeading />
+        <section className="event-data-state" role="alert">
+          <RotateCcw aria-hidden="true" size={24} />
+          <h3>No se han podido cargar las publicaciones</h3>
+          <p>Comprueba tu conexión y vuelve a intentarlo.</p>
+          <button className="primary-button" type="button" onClick={onReload}>
+            Reintentar
+          </button>
+        </section>
+      </section>
+    )
+  }
+
   return (
     <section
       className="communication-management-panel"
       aria-labelledby="communication-management-title"
     >
-      <div className="configuration-panel-heading communication-management-heading">
-        <span aria-hidden="true">
-          <Megaphone size={20} />
-        </span>
-        <div>
-          <span>Información de la tienda</span>
-          <h2 id="communication-management-title">Publicaciones</h2>
-          <p>
-            Publica avisos segmentados y mantén actualizada la información
-            visible para la comunidad.
-          </p>
-        </div>
-        <button
-          className="primary-button"
-          type="button"
-          onClick={() => {
-            setActionMessage('')
-            setSavedPublication(undefined)
-            setEditorMode('new')
-          }}
-        >
-          <Plus aria-hidden="true" size={16} />
-          Nueva
-        </button>
-      </div>
+      <CommunicationManagementHeading
+        onNew={() => {
+          setActionMessage('')
+          setSavedPublication(undefined)
+          setEditorMode('new')
+        }}
+      />
 
       {editorMode !== 'closed' ? (
         <CommunicationEditor

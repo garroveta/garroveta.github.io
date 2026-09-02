@@ -19,23 +19,28 @@ import { RankingSettingsPanel } from '../components/RankingSettingsPanel'
 import { RegistrationSettingsPanel } from '../components/RegistrationSettingsPanel'
 import type { DemoDataUpdater } from '../data/demoRepository'
 import type { DemoDataSet } from '../domain/types'
+import type { CommunityCommunicationsStatus } from '../hooks/useCommunityCommunications'
 import type { SettingsSection } from './settingsSections'
 
 type SettingsPageProps = {
+  communicationPersistenceStatus: CommunityCommunicationsStatus
   data: DemoDataSet
   managerId: string
   initialSection?: SettingsSection
   onDataChange: (updater: DemoDataUpdater) => void
   onBack: () => void
+  onReloadCommunications: () => void
   onViewNewsPost: (postId: string) => void
 }
 
 export function SettingsPage({
+  communicationPersistenceStatus,
   data,
   managerId,
   initialSection,
   onDataChange,
   onBack,
+  onReloadCommunications,
   onViewNewsPost,
 }: SettingsPageProps) {
   const [activeSection, setActiveSection] = useState<SettingsSection>(
@@ -158,7 +163,9 @@ export function SettingsPage({
         <CommunicationManagementPanel
           data={data}
           onDataChange={onDataChange}
+          onReload={onReloadCommunications}
           onViewPost={onViewNewsPost}
+          persistenceStatus={communicationPersistenceStatus}
         />
       ) : (
         <RankingSettingsPanel

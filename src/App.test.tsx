@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -12,7 +13,11 @@ import { reserveMarketplaceListing } from './data/cardLifecycle'
 import { demoData } from './data/demoData'
 import { createLocalDemoRepository } from './data/demoRepository'
 import { ClientApiError } from './api/client'
-import type { CommunityCommunicationWriteInput } from './api/communityCommunications'
+import type {
+  CommunityCommunication,
+  CommunityCommunicationWriteInput,
+} from './api/communityCommunications'
+import type { CommunityCommunicationsStatus } from './hooks/useCommunityCommunications'
 import type { CommunityEventWriteInput } from './api/communityEvents'
 import type { CurrentUser } from './api/currentUser'
 import type { ManagedCommunityMember } from './api/managerMembers'
@@ -60,6 +65,11 @@ const communityEventsHookMocks = vi.hoisted(() => ({
   reload: vi.fn(),
   status: 'ready' as CommunityEventsStatus,
 }))
+const communityCommunicationsHookMocks = vi.hoisted(() => ({
+  invoke: vi.fn(),
+  reload: vi.fn(),
+  status: 'ready' as CommunityCommunicationsStatus,
+}))
 
 vi.mock('./api/registration', () => registrationApiMocks)
 vi.mock('./api/managerInvitations', () => managerInvitationApiMocks)
@@ -70,6 +80,12 @@ vi.mock('./api/communityEvents', () => communityEventApiMocks)
 vi.mock('./api/communityCommunications', () => communityCommunicationApiMocks)
 vi.mock('./hooks/useCommunityEvents', () => ({
   useCommunityEvents: () => communityEventsHookMocks,
+}))
+vi.mock('./hooks/useCommunityCommunications', () => ({
+  useCommunityCommunications: (options: unknown) => {
+    communityCommunicationsHookMocks.invoke(options)
+    return communityCommunicationsHookMocks
+  },
 }))
 vi.mock('./hooks/useCurrentUser', async () => {
   const { useState } = await vi.importActual<typeof import('react')>('react')
@@ -159,6 +175,7 @@ describe('App', () => {
     window.sessionStorage.clear()
     vi.clearAllMocks()
     communityEventsHookMocks.status = 'ready'
+    communityCommunicationsHookMocks.status = 'ready'
     const currentUser = buildCurrentUser()
     currentUserHookMocks.current = {
       data: currentUser,
@@ -2066,6 +2083,60 @@ describe('App', () => {
     expect(
       screen.getByRole('button', { name: 'Volver a las noticias' }),
     ).toBeInTheDocument()
+  })
+
+  it('replaces prototype news with persisted community communications', () => {
+    render(<App />)
+
+    const hookOptions = communityCommunicationsHookMocks.invoke.mock.calls.at(
+      -1,
+    )?.[0] as {
+      communityId: string
+      enabled: boolean
+      onLoaded: (communications: CommunityCommunication[]) => void
+    }
+    const persistedCommunication: CommunityCommunication = {
+      authorDisplayName: 'Tomás',
+      authorMemberId: 'member-tomas',
+      communityId: 'community-crc-delorean',
+      content: 'Contenido guardado en la base de datos.',
+      excerpt: 'Resumen guardado en la base de datos.',
+      id: 'communication-persisted',
+      pinned: true,
+      publishedAt: '2026-09-02T10:00:00.000Z',
+      tagIds: [],
+      title: 'Aviso persistido',
+      type: 'news',
+    }
+
+    expect(hookOptions).toMatchObject({
+      communityId: 'community-crc-delorean',
+      enabled: true,
+    })
+    act(() => hookOptions.onLoaded([persistedCommunication]))
+    fireEvent.click(screen.getAllByRole('link', { name: /Noticias/ }).at(-1)!)
+
+    expect(
+      screen.getByRole('heading', { name: 'Aviso persistido' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Nuevo horario de verano' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('offers to retry when persisted communications cannot be loaded', () => {
+    communityCommunicationsHookMocks.status = 'error'
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Noticias/ }).at(-1)!)
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'No se han podido cargar las publicaciones',
+      }),
+    ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
+    expect(communityCommunicationsHookMocks.reload).toHaveBeenCalledOnce()
   })
 
   it('switches between personalized news and tag filters', () => {
