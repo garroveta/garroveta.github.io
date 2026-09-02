@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
-import { ClientApiError } from '../api/client'
 import { sendSignInOtp, verifySignInOtp } from '../api/registration'
+import { describeOtpError } from '../api/otpErrorPresentation'
 
 const OTP_EXPIRATION_SECONDS = 10 * 60
 const OTP_MAX_ATTEMPTS = 3
@@ -50,11 +50,7 @@ export function useEmailOtp() {
     try {
       await sendSignInOtp(email.trim())
     } catch (error) {
-      setRequestError(
-        error instanceof ClientApiError && error.status === 429
-          ? 'Se han solicitado demasiados códigos. Inténtalo de nuevo más tarde.'
-          : 'No se ha podido enviar el código. Comprueba el correo e inténtalo de nuevo.',
-      )
+      setRequestError(describeOtpError(error, 'request').message)
       setIsSubmitting(false)
       return false
     }
@@ -87,15 +83,15 @@ export function useEmailOtp() {
       await verifySignInOtp(email.trim(), otp)
       return true
     } catch (error) {
-      const code = error instanceof ClientApiError ? error.code : ''
+      const presentation = describeOtpError(error, 'verify')
 
-      if (code === 'TOO_MANY_ATTEMPTS') {
+      if (presentation.kind === 'rate_limited') {
         setOtpAttempts(OTP_MAX_ATTEMPTS)
-        setOtpError('Has agotado los tres intentos. Solicita un código nuevo.')
-      } else if (code === 'OTP_EXPIRED') {
+        setOtpError(presentation.message)
+      } else if (presentation.kind === 'expired') {
         setOtpSentAt(Date.now() - OTP_EXPIRATION_SECONDS * 1000)
-        setOtpError('El código ha caducado. Solicita uno nuevo.')
-      } else if (code === 'INVALID_OTP') {
+        setOtpError(presentation.message)
+      } else if (presentation.kind === 'invalid') {
         const nextAttempts = Math.min(OTP_MAX_ATTEMPTS, otpAttempts + 1)
         setOtpAttempts(nextAttempts)
         setOtpError(
@@ -104,7 +100,7 @@ export function useEmailOtp() {
             : `Código incorrecto. Te quedan ${OTP_MAX_ATTEMPTS - nextAttempts} intentos.`,
         )
       } else {
-        setOtpError('No se ha podido verificar el código. Inténtalo de nuevo.')
+        setOtpError(presentation.message)
       }
 
       return false

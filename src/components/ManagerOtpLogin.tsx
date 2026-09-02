@@ -2,30 +2,13 @@ import { KeyRound, Mail } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 
 import { sendSignInOtp, verifySignInOtp } from '../api/authentication'
-import { ClientApiError } from '../api/client'
+import { describeOtpError } from '../api/otpErrorPresentation'
 
 export type ManagerOtpLoginKind = 'access_denied' | 'session_expired'
 
 export type ManagerOtpLoginProps = {
   kind: ManagerOtpLoginKind
   onAuthenticated: () => void
-}
-
-function getAuthenticationError(error: unknown) {
-  if (error instanceof ClientApiError) {
-    if (
-      error.code.toLowerCase().includes('otp') ||
-      error.code.toLowerCase().includes('verification')
-    ) {
-      return 'El código no es válido o ha caducado.'
-    }
-
-    if (error.status === 429) {
-      return 'Has realizado demasiados intentos. Espera antes de continuar.'
-    }
-  }
-
-  return 'No se ha podido completar el acceso. Vuelve a intentarlo.'
 }
 
 export function ManagerOtpLogin({
@@ -48,7 +31,7 @@ export function ManagerOtpLogin({
       await sendSignInOtp(email.trim())
       setStep('otp')
     } catch (error) {
-      setErrorMessage(getAuthenticationError(error))
+      setErrorMessage(describeOtpError(error, 'request').message)
     } finally {
       setIsSubmitting(false)
     }
@@ -63,7 +46,7 @@ export function ManagerOtpLogin({
       await verifySignInOtp(email.trim(), otp)
       onAuthenticated()
     } catch (error) {
-      setErrorMessage(getAuthenticationError(error))
+      setErrorMessage(describeOtpError(error, 'verify').message)
     } finally {
       setIsSubmitting(false)
     }

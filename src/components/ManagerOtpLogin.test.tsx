@@ -82,7 +82,28 @@ describe('ManagerOtpLogin', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Verificar código' }))
 
     expect(
-      await screen.findByText('El código no es válido o ha caducado.'),
+      await screen.findByText(
+        'El código no es válido. Comprueba las seis cifras.',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('identifies a network failure while requesting a code', async () => {
+    authenticationApiMocks.sendSignInOtp.mockRejectedValue(
+      new ClientApiError(0, 'network_error', 'Offline'),
+    )
+
+    render(<ManagerOtpLogin kind="session_expired" onAuthenticated={vi.fn()} />)
+
+    fireEvent.change(screen.getByLabelText('Correo electrónico'), {
+      target: { value: 'tomas@example.com' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Recibir código' }))
+
+    expect(
+      await screen.findByText(
+        'No hemos podido conectar con el servidor. Comprueba tu conexión a internet.',
+      ),
     ).toBeInTheDocument()
   })
 })
