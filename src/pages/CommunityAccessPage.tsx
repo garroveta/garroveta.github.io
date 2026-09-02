@@ -2,11 +2,15 @@ import {
   Ban,
   CircleAlert,
   Clock3,
+  KeyRound,
   LoaderCircle,
   LogIn,
+  ShieldAlert,
   UserRoundCheck,
+  WifiOff,
 } from 'lucide-react'
 
+import { describeApiError, type ApiErrorKind } from '../api/errorPresentation'
 import { PublicAccessShell } from '../components/PublicAccessShell'
 import type { Community } from '../domain/types'
 
@@ -16,12 +20,27 @@ type CommunityAccessState =
 type CommunityAccessPageProps = {
   community: Community
   email?: string
+  error?: unknown
   onAction?: () => void
   state: CommunityAccessState
 }
 
+const errorEyebrowByKind: Record<ApiErrorKind, string> = {
+  access_denied: 'Acceso restringido',
+  network: 'Sin conexión',
+  session_expired: 'Sesión caducada',
+  unknown: 'Problema inesperado',
+}
+
+const errorIconByKind: Record<ApiErrorKind, typeof Clock3> = {
+  access_denied: ShieldAlert,
+  network: WifiOff,
+  session_expired: KeyRound,
+  unknown: CircleAlert,
+}
+
 const accessContent: Record<
-  CommunityAccessState,
+  Exclude<CommunityAccessState, 'error'>,
   {
     actionLabel?: string
     description: string
@@ -36,14 +55,6 @@ const accessContent: Record<
     eyebrow: 'Acceso confirmado',
     icon: UserRoundCheck,
     title: 'Ya puedes entrar',
-  },
-  error: {
-    actionLabel: 'Volver a intentarlo',
-    description:
-      'No hemos podido comprobar tu sesión. Revisa tu conexión e inténtalo de nuevo.',
-    eyebrow: 'Problema de conexión',
-    icon: CircleAlert,
-    title: 'No podemos verificar tu acceso',
   },
   loading: {
     description: 'Estamos comprobando tu sesión y tu acceso a la comunidad.',
@@ -77,10 +88,24 @@ const accessContent: Record<
 export function CommunityAccessPage({
   community,
   email,
+  error,
   onAction,
   state,
 }: CommunityAccessPageProps) {
-  const content = accessContent[state]
+  const content =
+    state === 'error'
+      ? (() => {
+          const presentation = describeApiError(error)
+
+          return {
+            actionLabel: 'Volver a intentarlo',
+            description: presentation.description,
+            eyebrow: errorEyebrowByKind[presentation.kind],
+            icon: errorIconByKind[presentation.kind],
+            title: presentation.title,
+          }
+        })()
+      : accessContent[state]
   const Icon = content.icon
 
   return (

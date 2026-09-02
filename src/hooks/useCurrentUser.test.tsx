@@ -107,4 +107,14 @@ describe('useCurrentUser', () => {
     expect(result.current.status).toBe('unauthenticated')
     expect(result.current.data).toBeNull()
   })
+
+  it('exposes the underlying error for an unexpected failure', async () => {
+    const requestError = new ClientApiError(0, 'network_error', 'Offline')
+    vi.mocked(getCurrentUser).mockRejectedValueOnce(requestError)
+    const { result } = renderHook(() => useCurrentUser())
+
+    await waitFor(() => expect(result.current.status).toBe('error'))
+    const state = result.current
+    expect(state.status === 'error' && state.error).toBe(requestError)
+  })
 })

@@ -4,7 +4,11 @@ import { ClientApiError } from '../api/client'
 import { getCurrentUser, type CurrentUser } from '../api/currentUser'
 
 type CurrentUserState =
-  | { data: null; status: 'error' | 'loading' | 'unauthenticated' }
+  | {
+      data: null
+      error?: unknown
+      status: 'error' | 'loading' | 'unauthenticated'
+    }
   | { data: CurrentUser; status: 'authenticated' }
 
 export const CURRENT_USER_REFRESH_INTERVAL_MS = 5 * 60 * 1000
@@ -38,12 +42,13 @@ export function useCurrentUser() {
           return null
         }
 
+        const isUnauthenticated =
+          error instanceof ClientApiError && error.status === 401
+
         setState({
           data: null,
-          status:
-            error instanceof ClientApiError && error.status === 401
-              ? 'unauthenticated'
-              : 'error',
+          error: isUnauthenticated ? undefined : error,
+          status: isUnauthenticated ? 'unauthenticated' : 'error',
         })
         return null
       })

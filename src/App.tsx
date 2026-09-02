@@ -203,6 +203,7 @@ export function App() {
     return (
       <CommunityAccessPage
         community={data.community}
+        error={currentUser.error}
         state="error"
         onAction={() => void currentUser.refresh()}
       />
