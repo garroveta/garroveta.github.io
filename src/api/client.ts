@@ -58,11 +58,26 @@ export async function apiRequest<T>(
     headers.set('Content-Type', 'application/json')
   }
 
-  const response = await fetch(getApiUrl(pathname), {
-    ...init,
-    credentials: 'include',
-    headers,
-  })
+  let response: Response
+
+  try {
+    response = await fetch(getApiUrl(pathname), {
+      ...init,
+      credentials: 'include',
+      headers,
+    })
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw error
+    }
+
+    throw new ClientApiError(
+      0,
+      'network_error',
+      'No se ha podido conectar con el servidor. Comprueba tu conexión a internet.',
+    )
+  }
+
   const body: unknown = await response.json().catch(() => null)
 
   if (!response.ok) {
