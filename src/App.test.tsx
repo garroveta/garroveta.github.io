@@ -1600,6 +1600,65 @@ describe('App', () => {
     ).toBeNull()
   })
 
+  it('keeps the invitation and profile choices when the session expires before activation', async () => {
+    registrationApiMocks.redeemInvitation.mockRejectedValueOnce(
+      new ClientApiError(401, 'unauthorized', 'Session expired'),
+    )
+    window.location.hash = `#registro?invite=${validInvitationToken}`
+    render(<App />)
+
+    fireEvent.change(await screen.findByLabelText('Correo electrónico'), {
+      target: { value: 'pep@example.com' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Recibir un código' }))
+    fireEvent.change(await screen.findByLabelText('Código de seis cifras'), {
+      target: { value: '246810' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Verificar código' }))
+
+    fireEvent.change(await screen.findByLabelText('Nombre visible'), {
+      target: { value: 'Pep Peralta Isern' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'MTG' }))
+    fireEvent.click(screen.getByLabelText(/Acepto las normas/))
+    fireEvent.click(screen.getByRole('button', { name: 'Completar perfil' }))
+
+    expect(
+      await screen.findByText(
+        /Tu sesión ha caducado antes de activar el acceso/,
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText('Correo electrónico')).toHaveValue(
+      'pep@example.com',
+    )
+    expect(
+      window.sessionStorage.getItem('garroveta.registration.invitation'),
+    ).toBe(validInvitationToken)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Recibir un código' }))
+    fireEvent.change(await screen.findByLabelText('Código de seis cifras'), {
+      target: { value: '246810' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Verificar código' }))
+
+    expect(await screen.findByLabelText('Nombre visible')).toHaveValue(
+      'Pep Peralta Isern',
+    )
+    expect(screen.getByRole('button', { name: 'MTG' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(screen.getByLabelText(/Acepto las normas/)).toBeChecked()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Completar perfil' }))
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Ya puedes entrar en CRC Delorean',
+      }),
+    ).toBeInTheDocument()
+    expect(registrationApiMocks.redeemInvitation).toHaveBeenCalledTimes(2)
+  })
+
   it('lets an existing member open a session with email and OTP', async () => {
     const currentUser = buildCurrentUser()
     currentUserHookMocks.current = {

@@ -62,6 +62,7 @@ export function RegistrationPage({
   } | null>(null)
   const emailOtp = useEmailOtp()
   const [requestError, setRequestError] = useState('')
+  const [sessionRecoveryMessage, setSessionRecoveryMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [displayName, setDisplayName] = useState('')
   const [acceptedRules, setAcceptedRules] = useState(false)
@@ -141,8 +142,18 @@ export function RegistrationPage({
         tagIds: selectedTagIds,
       })
       window.sessionStorage.removeItem(INVITATION_SESSION_KEY)
+      setSessionRecoveryMessage('')
       setStep('complete')
     } catch (error) {
+      if (error instanceof ClientApiError && error.status === 401) {
+        emailOtp.changeEmail()
+        setSessionRecoveryMessage(
+          'Tu sesión ha caducado antes de activar el acceso. Solicita un nuevo código para continuar.',
+        )
+        setStep('access')
+        return
+      }
+
       const code = error instanceof ClientApiError ? error.code : ''
       const invitationErrors: Record<string, string> = {
         already_member: 'Ya perteneces a esta comunidad.',
@@ -342,23 +353,42 @@ export function RegistrationPage({
         </ol>
 
         {step === 'access' || step === 'verification' ? (
-          <EmailOtpForm
-            accessDescription="Introduce el correo que recibió la invitación de la comunidad."
-            accessTitle="Acceso al piloto"
-            approvalNote={
-              <>
-                <strong>Comunidad privada</strong>
-                Esta invitación permite solicitar acceso a{' '}
-                {invitedCommunity?.name ?? community.name}
-                {invitedCommunity?.city ? `, ${invitedCommunity.city}` : ''}. El
-                código se enviará al correo que indiques.
-              </>
-            }
-            flow={emailOtp}
-            stage={step}
-            onStageChange={setStep}
-            onVerified={() => setStep('profile')}
-          />
+          <>
+            {sessionRecoveryMessage ? (
+              <div
+                className="registration-approval-note registration-session-recovery"
+                role="alert"
+              >
+                <ShieldCheck aria-hidden="true" size={20} />
+                <p>
+                  <strong>Vuelve a verificar tu correo</strong>
+                  {sessionRecoveryMessage}
+                </p>
+              </div>
+            ) : null}
+            <EmailOtpForm
+              accessDescription="Introduce el correo que recibió la invitación de la comunidad."
+              accessTitle="Acceso al piloto"
+              approvalNote={
+                <>
+                  <strong>Comunidad privada</strong>
+                  Esta invitación permite solicitar acceso a{' '}
+                  {invitedCommunity?.name ?? community.name}
+                  {invitedCommunity?.city ? `, ${invitedCommunity.city}` : ''}.
+                  El código se enviará al correo que indiques.
+                </>
+              }
+              flow={emailOtp}
+              stage={step}
+              onStageChange={(nextStep) => {
+                if (nextStep === 'verification') {
+                  setSessionRecoveryMessage('')
+                }
+                setStep(nextStep)
+              }}
+              onVerified={() => setStep('profile')}
+            />
+          </>
         ) : (
           <form
             aria-busy={isSubmitting}

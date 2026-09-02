@@ -2944,6 +2944,11 @@ a {
   font-size: 0.8rem;
 }
 
+.registration-session-recovery {
+  max-width: 40rem;
+  margin: 0 auto 1rem;
+}
+
 .registration-pending {
   display: grid;
   justify-items: start;
