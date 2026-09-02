@@ -7,7 +7,7 @@ import type {
 
 export type NewsListItem = {
   post: NewsPost
-  author: CommunityMember
+  author: Pick<CommunityMember, 'displayName'>
   tags: CommunityTag[]
 }
 
@@ -21,14 +21,19 @@ function createNewsListItem(
   post: NewsPost,
 ): NewsListItem | undefined {
   const author = data.members.find(({ id }) => id === post.authorMemberId)
+  const visibleAuthor =
+    author ??
+    (post.authorDisplayName
+      ? { displayName: post.authorDisplayName }
+      : undefined)
 
-  if (!author) {
+  if (!visibleAuthor) {
     return undefined
   }
 
   return {
     post,
-    author,
+    author: visibleAuthor,
     tags: post.tagIds.flatMap((tagId) => {
       const tag = data.tags.find(({ id }) => id === tagId)
       return tag ? [tag] : []

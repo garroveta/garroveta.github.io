@@ -12,6 +12,7 @@ import { reserveMarketplaceListing } from './data/cardLifecycle'
 import { demoData } from './data/demoData'
 import { createLocalDemoRepository } from './data/demoRepository'
 import { ClientApiError } from './api/client'
+import type { CommunityCommunicationWriteInput } from './api/communityCommunications'
 import type { CommunityEventWriteInput } from './api/communityEvents'
 import type { CurrentUser } from './api/currentUser'
 import type { ManagedCommunityMember } from './api/managerMembers'
@@ -50,6 +51,11 @@ const communityEventApiMocks = vi.hoisted(() => ({
   removePersistedEventRegistration: vi.fn(),
   updatePersistedCommunityEvent: vi.fn(),
 }))
+const communityCommunicationApiMocks = vi.hoisted(() => ({
+  createCommunityCommunication: vi.fn(),
+  deleteCommunityCommunication: vi.fn(),
+  updateCommunityCommunication: vi.fn(),
+}))
 const communityEventsHookMocks = vi.hoisted(() => ({
   reload: vi.fn(),
   status: 'ready' as CommunityEventsStatus,
@@ -61,6 +67,7 @@ vi.mock('./api/managerMembers', () => managerMemberApiMocks)
 vi.mock('./api/currentUser', () => currentUserApiMocks)
 vi.mock('./api/authentication', () => authenticationApiMocks)
 vi.mock('./api/communityEvents', () => communityEventApiMocks)
+vi.mock('./api/communityCommunications', () => communityCommunicationApiMocks)
 vi.mock('./hooks/useCommunityEvents', () => ({
   useCommunityEvents: () => communityEventsHookMocks,
 }))
@@ -162,6 +169,40 @@ describe('App', () => {
       membership: currentUser.memberships[0],
     })
     authenticationApiMocks.signOutCurrentUser.mockResolvedValue(undefined)
+    communityCommunicationApiMocks.createCommunityCommunication.mockImplementation(
+      (_communityId: string, input: CommunityCommunicationWriteInput) =>
+        Promise.resolve({
+          communication: {
+            ...input,
+            authorDisplayName: 'Tomás',
+            authorMemberId: 'member-tomas',
+            communityId: 'community-crc-delorean',
+            id: `communication-${input.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+            publishedAt: '2026-09-02T10:00:00.000Z',
+          },
+        }),
+    )
+    communityCommunicationApiMocks.updateCommunityCommunication.mockImplementation(
+      (
+        _communityId: string,
+        communicationId: string,
+        input: CommunityCommunicationWriteInput,
+      ) =>
+        Promise.resolve({
+          communication: {
+            ...input,
+            authorDisplayName: 'Tomás',
+            authorMemberId: 'member-tomas',
+            communityId: 'community-crc-delorean',
+            id: communicationId,
+            publishedAt: '2026-09-02T10:00:00.000Z',
+          },
+        }),
+    )
+    communityCommunicationApiMocks.deleteCommunityCommunication.mockImplementation(
+      (_communityId: string, communicationId: string) =>
+        Promise.resolve({ deletedCommunicationId: communicationId }),
+    )
     communityEventApiMocks.createCommunityEvent.mockImplementation(
       (_communityId: string, input: CommunityEventWriteInput) =>
         Promise.resolve({
@@ -988,7 +1029,18 @@ describe('App', () => {
     )
     fireEvent.click(screen.getByRole('button', { name: 'Publicar' }))
 
-    expect(screen.getByText('Publicación guardada.')).toBeInTheDocument()
+    expect(await screen.findByText('Publicación guardada.')).toBeInTheDocument()
+    expect(
+      communityCommunicationApiMocks.createCommunityCommunication,
+    ).toHaveBeenCalledWith(
+      'community-crc-delorean',
+      expect.objectContaining({
+        pinned: true,
+        tagIds: ['tag-pauper'],
+        title: 'Cambio de horario',
+        type: 'urgent',
+      }),
+    )
     expect(
       screen.getByRole('button', { name: 'Copiar para WhatsApp' }),
     ).toBeInTheDocument()
@@ -1028,7 +1080,20 @@ describe('App', () => {
       target: { value: 'Horario actualizado' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
-    expect(screen.getByText('Publicación actualizada.')).toBeInTheDocument()
+    expect(
+      await screen.findByText('Publicación actualizada.'),
+    ).toBeInTheDocument()
+    expect(
+      communityCommunicationApiMocks.updateCommunityCommunication,
+    ).toHaveBeenNthCalledWith(
+      1,
+      'community-crc-delorean',
+      'communication-cambio-de-horario',
+      expect.objectContaining({
+        pinned: true,
+        title: 'Horario actualizado',
+      }),
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }))
 
     const updatedRow = screen
@@ -1039,6 +1104,17 @@ describe('App', () => {
       within(updatedRow as HTMLElement).getByRole('button', {
         name: 'Desfijar Horario actualizado',
       }),
+    )
+    expect(
+      await screen.findByText('Comunicación desfijada.'),
+    ).toBeInTheDocument()
+    expect(
+      communityCommunicationApiMocks.updateCommunityCommunication,
+    ).toHaveBeenNthCalledWith(
+      2,
+      'community-crc-delorean',
+      'communication-cambio-de-horario',
+      expect.objectContaining({ pinned: false, title: 'Horario actualizado' }),
     )
     fireEvent.click(
       within(updatedRow as HTMLElement).getByRole('button', {
@@ -1051,12 +1127,22 @@ describe('App', () => {
       }),
     )
 
-    expect(screen.queryByText('Horario actualizado')).not.toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.queryByText('Horario actualizado')).not.toBeInTheDocument(),
+    )
     expect(
-      createLocalDemoRepository(window.localStorage)
-        .load()
-        .newsPosts.some(({ title }) => title === 'Horario actualizado'),
-    ).toBe(false)
+      communityCommunicationApiMocks.deleteCommunityCommunication,
+    ).toHaveBeenCalledWith(
+      'community-crc-delorean',
+      'communication-cambio-de-horario',
+    )
+    await waitFor(() =>
+      expect(
+        createLocalDemoRepository(window.localStorage)
+          .load()
+          .newsPosts.some(({ title }) => title === 'Horario actualizado'),
+      ).toBe(false),
+    )
   })
 
   it('opens an event detail and returns to the agenda', () => {
@@ -2039,7 +2125,7 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
-  it('centralizes publication management and opens a saved news item', () => {
+  it('centralizes publication management and opens a saved news item', async () => {
     authenticateAsManager()
     render(<App />)
 
@@ -2080,6 +2166,7 @@ describe('App', () => {
     )
     fireEvent.click(screen.getByRole('button', { name: 'Publicar' }))
 
+    expect(await screen.findByText('Publicación guardada.')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Ver la publicación' }))
     expect(
       screen.getByRole('heading', { name: 'Cambio de sala' }),

@@ -157,7 +157,6 @@ export function SettingsPage({
       ) : activeSection === 'communications' ? (
         <CommunicationManagementPanel
           data={data}
-          managerId={managerId}
           onDataChange={onDataChange}
           onViewPost={onViewNewsPost}
         />

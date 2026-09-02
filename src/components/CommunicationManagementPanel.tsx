@@ -15,21 +15,19 @@ import {
 import type { FormEvent } from 'react'
 import { useMemo, useState } from 'react'
 
-import type { DemoDataUpdater } from '../data/demoRepository'
 import {
-  createNewsPostId,
-  deleteNewsPost,
-  publishNewsPost,
-  setNewsPostPinned,
-  updateNewsPost,
-} from '../data/newsMutations'
+  createCommunityCommunication,
+  deleteCommunityCommunication,
+  updateCommunityCommunication,
+  type CommunityCommunicationWriteInput,
+} from '../api/communityCommunications'
+import type { DemoDataUpdater } from '../data/demoRepository'
 import { formatNewsPostForWhatsApp } from '../data/newsSharing'
 import type { DemoDataSet, NewsPost, NewsPostType } from '../domain/types'
 import { isCommunityOptionActive } from '../data/communityOptions'
 
 type CommunicationManagementPanelProps = {
   data: DemoDataSet
-  managerId: string
   onDataChange: (updater: DemoDataUpdater) => void
   onViewPost: (postId: string) => void
 }
@@ -74,15 +72,14 @@ async function copyText(text: string) {
 
 function CommunicationEditor({
   data,
-  managerId,
   post,
   onClose,
-  onDataChange,
-  onSaved,
-}: Omit<CommunicationManagementPanelProps, 'onViewPost'> & {
+  onSave,
+}: {
+  data: DemoDataSet
   post?: NewsPost
   onClose: () => void
-  onSaved: (postId: string, message: string) => void
+  onSave: (input: CommunityCommunicationWriteInput) => Promise<void>
 }) {
   const [type, setType] = useState<NewsPostType>(post?.type ?? 'news')
   const [title, setTitle] = useState(post?.title ?? '')
@@ -90,6 +87,8 @@ function CommunicationEditor({
   const [content, setContent] = useState(post?.content ?? '')
   const [tagIds, setTagIds] = useState<string[]>(post?.tagIds ?? [])
   const [pinned, setPinned] = useState(post?.pinned ?? false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const activeTags = data.tags.filter(isCommunityOptionActive)
 
   const toggleTag = (tagId: string) => {
@@ -100,23 +99,20 @@ function CommunicationEditor({
     )
   }
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const input = { type, title, excerpt, content, tagIds, pinned }
-    const savedPostId = post?.id ?? createNewsPostId(data, title)
+    setIsSaving(true)
+    setSaveError('')
 
-    onDataChange((currentData) =>
-      post
-        ? updateNewsPost(currentData, post.id, managerId, input)
-        : publishNewsPost(currentData, {
-            ...input,
-            authorMemberId: managerId,
-          }),
-    )
-    onSaved(
-      savedPostId,
-      post ? 'Publicación actualizada.' : 'Publicación guardada.',
-    )
+    try {
+      await onSave({ type, title, excerpt, content, tagIds, pinned })
+    } catch {
+      setSaveError(
+        'No se ha podido guardar la publicación. Inténtalo de nuevo.',
+      )
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -204,20 +200,29 @@ function CommunicationEditor({
       </label>
 
       <div className="communication-editor__actions">
-        <button className="secondary-button" type="button" onClick={onClose}>
+        <button
+          className="secondary-button"
+          type="button"
+          disabled={isSaving}
+          onClick={onClose}
+        >
           Cancelar
         </button>
-        <button className="primary-button" type="submit">
-          {post ? 'Guardar cambios' : 'Publicar'}
+        <button className="primary-button" type="submit" disabled={isSaving}>
+          {isSaving ? 'Guardando…' : post ? 'Guardar cambios' : 'Publicar'}
         </button>
       </div>
+      {saveError ? (
+        <p className="action-message" role="alert">
+          {saveError}
+        </p>
+      ) : null}
     </form>
   )
 }
 
 export function CommunicationManagementPanel({
   data,
-  managerId,
   onDataChange,
   onViewPost,
 }: CommunicationManagementPanelProps) {
@@ -229,6 +234,7 @@ export function CommunicationManagementPanel({
   const [pendingDeleteId, setPendingDeleteId] = useState<string>()
   const [copiedPostId, setCopiedPostId] = useState<string>()
   const [actionMessage, setActionMessage] = useState('')
+  const [savingPostId, setSavingPostId] = useState<string>()
   const [savedPublication, setSavedPublication] = useState<{
     postId: string
     message: string
@@ -273,6 +279,87 @@ export function CommunicationManagementPanel({
   const savedPost = savedPublication
     ? data.newsPosts.find(({ id }) => id === savedPublication.postId)
     : undefined
+  const storeCommunication = (communication: NewsPost) => {
+    onDataChange((currentData) => ({
+      ...currentData,
+      newsPosts: currentData.newsPosts.some(({ id }) => id === communication.id)
+        ? currentData.newsPosts.map((candidate) =>
+            candidate.id === communication.id ? communication : candidate,
+          )
+        : [...currentData.newsPosts, communication],
+    }))
+  }
+
+  const saveCommunication = async (
+    post: NewsPost | undefined,
+    input: CommunityCommunicationWriteInput,
+  ) => {
+    const { communication } = post
+      ? await updateCommunityCommunication(data.community.id, post.id, input)
+      : await createCommunityCommunication(data.community.id, input)
+
+    storeCommunication(communication)
+    handleSaved(
+      communication.id,
+      post ? 'Publicación actualizada.' : 'Publicación guardada.',
+    )
+  }
+
+  const togglePinned = async (post: NewsPost) => {
+    setActionMessage('')
+    setSavingPostId(post.id)
+
+    try {
+      const { communication } = await updateCommunityCommunication(
+        data.community.id,
+        post.id,
+        {
+          content: post.content,
+          excerpt: post.excerpt,
+          pinned: !post.pinned,
+          tagIds: post.tagIds,
+          title: post.title,
+          type: post.type,
+        },
+      )
+      storeCommunication(communication)
+      setActionMessage(
+        communication.pinned
+          ? 'Comunicación fijada.'
+          : 'Comunicación desfijada.',
+      )
+    } catch {
+      setActionMessage(
+        'No se ha podido cambiar la prioridad de la comunicación.',
+      )
+    } finally {
+      setSavingPostId(undefined)
+    }
+  }
+
+  const removeCommunication = async (post: NewsPost) => {
+    setActionMessage('')
+    setSavingPostId(post.id)
+
+    try {
+      const { deletedCommunicationId } = await deleteCommunityCommunication(
+        data.community.id,
+        post.id,
+      )
+      onDataChange((currentData) => ({
+        ...currentData,
+        newsPosts: currentData.newsPosts.filter(
+          ({ id }) => id !== deletedCommunicationId,
+        ),
+      }))
+      setPendingDeleteId(undefined)
+      setActionMessage('Comunicación eliminada.')
+    } catch {
+      setActionMessage('No se ha podido eliminar la comunicación.')
+    } finally {
+      setSavingPostId(undefined)
+    }
+  }
 
   return (
     <section
@@ -309,11 +396,9 @@ export function CommunicationManagementPanel({
         <CommunicationEditor
           key={editorMode}
           data={data}
-          managerId={managerId}
           post={editedPost}
           onClose={closeEditor}
-          onDataChange={onDataChange}
-          onSaved={handleSaved}
+          onSave={(input) => saveCommunication(editedPost, input)}
         />
       ) : null}
 
@@ -498,22 +583,14 @@ export function CommunicationManagementPanel({
                 </button>
                 <button
                   type="button"
+                  disabled={savingPostId === post.id}
                   aria-label={
                     post.pinned
                       ? `Desfijar ${post.title}`
                       : `Fijar ${post.title}`
                   }
                   title={post.pinned ? 'Desfijar' : 'Fijar'}
-                  onClick={() =>
-                    onDataChange((currentData) =>
-                      setNewsPostPinned(
-                        currentData,
-                        post.id,
-                        managerId,
-                        !post.pinned,
-                      ),
-                    )
-                  }
+                  onClick={() => void togglePinned(post)}
                 >
                   {post.pinned ? (
                     <PinOff aria-hidden="true" size={16} />
@@ -536,6 +613,7 @@ export function CommunicationManagementPanel({
                 <button
                   className="managed-communication-row__delete"
                   type="button"
+                  disabled={savingPostId === post.id}
                   aria-label={`Eliminar ${post.title}`}
                   title="Eliminar"
                   onClick={() => setPendingDeleteId(post.id)}
@@ -549,18 +627,14 @@ export function CommunicationManagementPanel({
                   <span>¿Eliminar esta comunicación?</span>
                   <button
                     type="button"
-                    onClick={() => {
-                      onDataChange((currentData) =>
-                        deleteNewsPost(currentData, post.id, managerId),
-                      )
-                      setPendingDeleteId(undefined)
-                      setActionMessage('Comunicación eliminada.')
-                    }}
+                    disabled={savingPostId === post.id}
+                    onClick={() => void removeCommunication(post)}
                   >
-                    Confirmar
+                    {savingPostId === post.id ? 'Eliminando…' : 'Confirmar'}
                   </button>
                   <button
                     type="button"
+                    disabled={savingPostId === post.id}
                     onClick={() => setPendingDeleteId(undefined)}
                   >
                     Cancelar

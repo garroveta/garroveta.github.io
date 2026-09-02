@@ -190,6 +190,7 @@ export type NewsPost = {
   id: EntityId
   communityId: EntityId
   authorMemberId: EntityId
+  authorDisplayName?: string
   type: NewsPostType
   title: string
   excerpt: string
