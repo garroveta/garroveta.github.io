@@ -19,6 +19,7 @@ import {
 } from '../api/managerMembers'
 import { ClientApiError } from '../api/client'
 import type { CommunityRole, CommunityTag } from '../domain/types'
+import { DataStateView } from './DataStateView'
 
 type MemberFilter = 'all' | ManagedCommunityMember['status']
 
@@ -75,6 +76,8 @@ export function MemberManagementPanel({
   const [loadStatus, setLoadStatus] = useState<'error' | 'loading' | 'success'>(
     'loading',
   )
+  const [loadError, setLoadError] = useState<unknown>(null)
+  const [reloadKey, setReloadKey] = useState(0)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<MemberFilter>('all')
   const [showAll, setShowAll] = useState(false)
@@ -107,6 +110,7 @@ export function MemberManagementPanel({
           return
         }
 
+        setLoadError(error)
         setLoadStatus('error')
       })
 
@@ -114,7 +118,12 @@ export function MemberManagementPanel({
       isActive = false
       controller.abort()
     }
-  }, [communityId])
+  }, [communityId, reloadKey])
+
+  const retryLoad = () => {
+    setLoadStatus('loading')
+    setReloadKey((key) => key + 1)
+  }
 
   const memberCounts = {
     all: members.length,
@@ -235,15 +244,18 @@ export function MemberManagementPanel({
       </div>
 
       {loadStatus === 'loading' ? (
-        <div className="member-management-state" aria-live="polite">
-          <strong>Cargando miembros…</strong>
-          <span>Consultando los perfiles de la comunidad.</span>
-        </div>
+        <DataStateView
+          status="loading"
+          loadingTitle="Cargando miembros…"
+          loadingDescription="Consultando los perfiles de la comunidad."
+        />
       ) : loadStatus === 'error' ? (
-        <div className="member-management-state" role="alert">
-          <strong>No se han podido cargar los miembros.</strong>
-          <span>Comprueba la conexión y vuelve a abrir esta sección.</span>
-        </div>
+        <DataStateView
+          status="error"
+          loadingTitle="Cargando miembros…"
+          error={loadError}
+          onRetry={retryLoad}
+        />
       ) : (
         <>
           <div className="member-management-toolbar">

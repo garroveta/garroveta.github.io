@@ -1724,26 +1724,6 @@ a {
   background: #faf7fb;
 }
 
-.member-management-state {
-  display: grid;
-  justify-items: center;
-  gap: 0.25rem;
-  padding: 1.5rem 1rem;
-  border-top: 1px solid #e5dfe7;
-  color: #847987;
-  background: #faf7fb;
-  text-align: center;
-}
-
-.member-management-state strong {
-  color: #443948;
-  font-size: 0.78rem;
-}
-
-.member-management-state span {
-  font-size: 0.68rem;
-}
-
 .member-management-action-error {
   padding: 0.65rem 0.9rem;
   border-bottom: 1px solid #e5c9c6;
@@ -4376,6 +4356,65 @@ a {
 
 .event-data-state .primary-button {
   margin-top: 0.45rem;
+}
+
+.data-state-view {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  text-align: center;
+}
+
+.data-state-view--panel {
+  padding: 1.5rem 1rem;
+  border-top: 1px solid #e5dfe7;
+  color: #756b78;
+  background: #faf7fb;
+}
+
+.data-state-view--page {
+  margin-top: 1.5rem;
+  padding: 1.5rem 1rem;
+  border: 1px solid #ded5e1;
+  border-radius: 1.2rem;
+  color: #6b397c;
+  background: #fff;
+  box-shadow: 0 0.8rem 2.2rem rgb(51 43 55 / 7%);
+}
+
+.data-state-view__icon {
+  display: inline-flex;
+}
+
+.data-state-view--panel .data-state-view__copy strong {
+  color: #3f3443;
+  font-size: 0.82rem;
+}
+
+.data-state-view--page .data-state-view__copy h2 {
+  margin: 0;
+  color: #302933;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.data-state-view__copy p {
+  margin: 0.15rem 0 0;
+  color: #807683;
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.data-state-view--page .data-state-view__copy p {
+  margin-top: 0;
+  color: #756c78;
+  font-size: 0.78rem;
+}
+
+.data-state-view .secondary-button {
+  min-height: 2.35rem;
+  margin-top: 0.35rem;
 }
 
 .event-local-registration-note {
