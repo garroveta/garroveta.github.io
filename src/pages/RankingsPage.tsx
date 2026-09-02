@@ -257,7 +257,7 @@ function EventRankingDetail({
           <div className="ranking-context">
             <span>{item.game.shortName}</span>
             <span>{item.format.shortName}</span>
-            <span>{item.eventKind.shortName}</span>
+            {item.eventKind ? <span>{item.eventKind.shortName}</span> : null}
           </div>
         </div>
         <div className="event-ranking-detail__summary">
@@ -422,7 +422,7 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
   const rankingTitle = [
     selectedGame?.shortName,
     selectedFormat?.shortName ?? 'Todos los formatos',
-    selectedEventKind?.shortName ?? 'Todos los eventos',
+    selectedEventKind?.shortName ?? 'Todas las series',
   ]
     .filter(Boolean)
     .join(' · ')
@@ -444,7 +444,7 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
           <span className="ranking-filter-summary__value">
             {selectedGame?.shortName} ·{' '}
             {selectedFormat?.shortName ?? 'Todos los formatos'} ·{' '}
-            {selectedEventKind?.shortName ?? 'Todos los eventos'} · {months}{' '}
+            {selectedEventKind?.shortName ?? 'Todas las series'} · {months}{' '}
             meses · {limit === 'all' ? 'Todos' : `Top ${limit}`}
           </span>
           <span className="ranking-filter-summary__action">
@@ -483,12 +483,12 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
               </select>
             </label>
             <label className="form-field">
-              <span>Tipo de evento</span>
+              <span>Serie</span>
               <select
                 value={eventKindId}
                 onChange={(event) => setEventKindId(event.target.value)}
               >
-                <option value="">Todos los eventos</option>
+                <option value="">Todas las series</option>
                 {data.competitionEventKinds.map((eventKind) => (
                   <option key={eventKind.id} value={eventKind.id}>
                     {eventKind.shortName}

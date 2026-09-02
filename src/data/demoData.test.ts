@@ -9,6 +9,15 @@ function expectUniqueIds(items: Array<{ id: string }>) {
 }
 
 describe('demoData', () => {
+  it('separates formats, activities, series and audience tags', () => {
+    expect(
+      demoData.competitionEventKinds.map(({ shortName }) => shortName),
+    ).not.toContain('Torneo')
+    expect(new Set(demoData.tags.map(({ kind }) => kind))).toEqual(
+      new Set(['interest', 'communication']),
+    )
+  })
+
   it('uses Standard for the demo results while keeping Pauper available', () => {
     const mtgFormats = demoData.competitionFormats
       .filter(({ gameId }) => gameId === 'game-mtg')

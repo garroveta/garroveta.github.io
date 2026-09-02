@@ -20,6 +20,7 @@ describe('event registration mutations', () => {
     const updatedData = publishCommunityEvent(demoData, {
       createdByMemberId: 'member-lucia',
       gameId: 'game-one-piece',
+      formatId: 'format-one-piece-constructed',
       type: 'tournament',
       title: '  Torneo de prueba  ',
       description: '  Evento para probar el formulario.  ',
@@ -36,6 +37,7 @@ describe('event registration mutations', () => {
     expect(updatedData.events.at(-1)).toMatchObject({
       id: 'event-torneo-de-prueba',
       gameId: 'game-one-piece',
+      formatId: 'format-one-piece-constructed',
       title: 'Torneo de prueba',
       description: 'Evento para probar el formulario.',
       imageUri: 'https://example.com/cartel.jpg',
@@ -49,6 +51,29 @@ describe('event registration mutations', () => {
     })
     expect(updatedData.events).toHaveLength(originalEventCount + 1)
     expect(demoData.events).toHaveLength(originalEventCount)
+  })
+
+  it('keeps the series optional for an MTG event', () => {
+    const updatedData = publishCommunityEvent(demoData, {
+      createdByMemberId: 'member-lucia',
+      gameId: 'game-mtg',
+      formatId: 'format-mtg-standard',
+      type: 'tournament',
+      title: 'Torneo Standard sin serie',
+      description: 'Actividad competitiva fuera de una serie recurrente.',
+      startsAt: '2026-08-16T17:00:00+02:00',
+      endsAt: '2026-08-16T21:00:00+02:00',
+      registrationEnabled: false,
+      capacity: 0,
+      tagIds: [],
+    })
+
+    expect(updatedData.events.at(-1)).toMatchObject({
+      title: 'Torneo Standard sin serie',
+      type: 'tournament',
+      formatId: 'format-mtg-standard',
+      competitionEventKindId: undefined,
+    })
   })
 
   it('does not offer deactivated options to new events', () => {

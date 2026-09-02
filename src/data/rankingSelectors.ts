@@ -18,7 +18,7 @@ export type ResolvedEventStanding = {
   event: CommunityEvent
   game: CommunityGame
   format: CompetitionFormat
-  eventKind: CompetitionEventKind
+  eventKind?: CompetitionEventKind
 }
 
 export type RankingFilters = {
@@ -56,7 +56,7 @@ function resolveStanding(
       )
     : undefined
 
-  return event && game && format && eventKind
+  return event && game && format
     ? { standing, event, game, format, eventKind }
     : undefined
 }
@@ -109,7 +109,7 @@ export function getCommunityLeaderboard(
       item.game.id === filters.gameId &&
       (!filters.formatId || item.format.id === filters.formatId) &&
       (!filters.competitionEventKindId ||
-        item.eventKind.id === filters.competitionEventKindId) &&
+        item.eventKind?.id === filters.competitionEventKindId) &&
       eventTimestamp >= cutoffTimestamp &&
       eventTimestamp <= referenceTimestamp
 

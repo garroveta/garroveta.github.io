@@ -82,7 +82,6 @@ export function publishCommunityEvent(
     (Boolean(format) && format?.gameId !== game.id) ||
     (Boolean(input.competitionEventKindId) && !eventKind) ||
     (Boolean(eventKind) && !isCommunityOptionActive(eventKind!)) ||
-    (game.id === 'game-mtg' && (format?.gameId !== game.id || !eventKind)) ||
     !title ||
     !description ||
     Number.isNaN(startsAt.getTime()) ||
@@ -178,7 +177,6 @@ export function updateCommunityEvent(
     (Boolean(eventKind) &&
       !isCommunityOptionActive(eventKind!) &&
       eventKind?.id !== event.competitionEventKindId) ||
-    (game.id === 'game-mtg' && (format?.gameId !== game.id || !eventKind)) ||
     !title ||
     !description ||
     Number.isNaN(startsAt.getTime()) ||

@@ -38,7 +38,7 @@ export type CommunityTag = {
   id: EntityId
   communityId: EntityId
   name: string
-  kind: 'format' | 'interest' | 'communication'
+  kind: 'interest' | 'communication'
   color: string
   isActive?: boolean
 }

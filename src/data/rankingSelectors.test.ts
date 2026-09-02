@@ -32,6 +32,33 @@ describe('rankingSelectors', () => {
     ])
   })
 
+  it('keeps a result in the ranking when its event has no series', () => {
+    const data = structuredClone(demoData)
+    const latestEvent = data.events.find(
+      ({ id }) => id === 'event-result-win-a-box-standard-2026-08-02',
+    )!
+    latestEvent.competitionEventKindId = undefined
+
+    expect(getLatestEventStandings(data)[0]).toMatchObject({
+      event: { id: latestEvent.id },
+      eventKind: undefined,
+    })
+    expect(
+      getCommunityLeaderboard(
+        data,
+        {
+          gameId: 'game-mtg',
+          formatId: 'format-mtg-standard',
+          months: 6,
+        },
+        RANKING_REFERENCE_TIME,
+      )[0],
+    ).toMatchObject({
+      member: { displayName: 'Carla Pons Alcover' },
+      points: 47,
+    })
+  })
+
   it('builds a six-month MTG Standard ranking across all event kinds', () => {
     const ranking = getCommunityLeaderboard(
       demoData,

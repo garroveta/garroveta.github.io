@@ -116,6 +116,36 @@ describe('local demo repository', () => {
     ).toMatchObject({ status: 'suspended' })
   })
 
+  it('normalizes legacy format tags and tournament series from version 24', () => {
+    const previouslySavedData = structuredClone(demoData)
+    previouslySavedData.tags[0].kind = 'format' as 'interest'
+    previouslySavedData.competitionEventKinds.push({
+      id: 'event-kind-tournament',
+      name: 'Torneo',
+      shortName: 'Torneo',
+    })
+    previouslySavedData.events[0].competitionEventKindId =
+      'event-kind-tournament'
+    window.localStorage.setItem(
+      DEMO_STORAGE_KEY,
+      JSON.stringify({
+        version: 24,
+        savedAt: '2026-08-31T10:00:00.000Z',
+        data: previouslySavedData,
+      }),
+    )
+
+    const loaded = createLocalDemoRepository(window.localStorage).load()
+
+    expect(loaded.tags[0].kind).toBe('interest')
+    expect(
+      loaded.competitionEventKinds.some(
+        ({ id }) => id === 'event-kind-tournament',
+      ),
+    ).toBe(false)
+    expect(loaded.events[0].competitionEventKindId).toBeUndefined()
+  })
+
   it('falls back to seed data when storage is corrupted', () => {
     window.localStorage.setItem(DEMO_STORAGE_KEY, '{not-valid-json')
 

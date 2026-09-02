@@ -63,7 +63,7 @@ describe('community options', () => {
         section: 'tags',
         name: 'Legacy',
         color: '#333333',
-        tagKind: 'format',
+        tagKind: 'interest',
       },
     )
 

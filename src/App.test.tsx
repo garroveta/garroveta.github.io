@@ -628,7 +628,7 @@ describe('App', () => {
 
     expect(
       screen.getByRole('heading', {
-        name: 'MTG · Todos los formatos · Todos los eventos',
+        name: 'MTG · Todos los formatos · Todas las series',
       }),
     ).toBeInTheDocument()
     expect(screen.getByLabelText('Formato')).toHaveValue('')
@@ -647,7 +647,7 @@ describe('App', () => {
       within(rankingTable).getByText('Carla Pons Alcover'),
     ).toBeInTheDocument()
 
-    fireEvent.change(screen.getByLabelText('Tipo de evento'), {
+    fireEvent.change(screen.getByLabelText('Serie'), {
       target: { value: 'event-kind-fnm' },
     })
 
@@ -1458,12 +1458,10 @@ describe('App', () => {
     ).toHaveLength(4)
     fireEvent.click(
       within(optionManager as HTMLElement).getByRole('tab', {
-        name: /Tipos de evento/,
+        name: /Series/,
       }),
     )
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Añadir tipo de evento' }),
-    )
+    fireEvent.click(screen.getByRole('button', { name: 'Añadir serie' }))
     fireEvent.change(screen.getByLabelText('Nombre'), {
       target: { value: 'Regional Qualifier' },
     })

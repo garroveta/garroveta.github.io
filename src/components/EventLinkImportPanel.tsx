@@ -65,9 +65,6 @@ export function EventLinkImportPanel({
   const hasCompetitionMetadata = Boolean(
     data.competitionFormats.some(
       ({ id, gameId }) => id === event.formatId && gameId === event.gameId,
-    ) &&
-    data.competitionEventKinds.some(
-      ({ id }) => id === event.competitionEventKindId,
     ),
   )
   const linkedCount = memberIdsByRow.filter(Boolean).length
@@ -163,9 +160,8 @@ export function EventLinkImportPanel({
         <div className="eventlink-import__messages eventlink-import__messages--error">
           <AlertTriangle aria-hidden="true" size={18} />
           <p>
-            Modifica primero el evento para indicar su formato MTG y su tipo
-            competitivo. Estos datos son necesarios para mostrar el resultado y
-            actualizar el ranking.
+            Modifica primero el evento para indicar su formato MTG. Este dato es
+            necesario para mostrar el resultado y actualizar el ranking.
           </p>
         </div>
       ) : null}

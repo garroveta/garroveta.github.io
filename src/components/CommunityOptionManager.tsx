@@ -57,8 +57,8 @@ const sectionLabels: Record<
   games: { label: 'Juegos', singular: 'juego' },
   competitionFormats: { label: 'Formatos', singular: 'formato' },
   competitionEventKinds: {
-    label: 'Tipos de evento',
-    singular: 'tipo de evento',
+    label: 'Series',
+    singular: 'serie',
   },
   tags: { label: 'Etiquetas', singular: 'etiqueta' },
 }
@@ -72,7 +72,6 @@ const categoryLabels: Record<GameCategory, string> = {
 }
 
 const tagKindLabels: Record<CommunityTag['kind'], string> = {
-  format: 'Formato',
   interest: 'Interés',
   communication: 'Comunicación',
 }
@@ -402,7 +401,8 @@ export function CommunityOptionManager({
         ) : null}
       </div>
       <p className="community-options__intro">
-        Modifica, desactiva o cambia el orden sin perder el historial.
+        Configura juegos, formatos, series y etiquetas sin perder el historial.
+        El tipo de actividad se gestiona por separado en cada evento.
       </p>
 
       <div

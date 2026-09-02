@@ -4,7 +4,7 @@ import { DEFAULT_COMMUNITY_REGISTRATION_SETTINGS } from './registrationSettings'
 import type { DemoDataSet } from '../domain/types'
 
 export const DEMO_STORAGE_KEY = 'mtg-community:demo-data'
-export const DEMO_STORAGE_VERSION = 24
+export const DEMO_STORAGE_VERSION = 25
 
 type DemoStorageEnvelope = {
   version: number
@@ -86,6 +86,27 @@ function applySeedPrototypeEnhancements(data: DemoDataSet): DemoDataSet {
   }
 }
 
+function normalizeCommunityTaxonomy(data: DemoDataSet): DemoDataSet {
+  return {
+    ...data,
+    competitionEventKinds: data.competitionEventKinds.filter(
+      ({ id }) => id !== 'event-kind-tournament',
+    ),
+    tags: data.tags.map((tag) => ({
+      ...tag,
+      kind:
+        (tag.kind as string) === 'format' ? ('interest' as const) : tag.kind,
+    })),
+    events: data.events.map((event) => ({
+      ...event,
+      competitionEventKindId:
+        event.competitionEventKindId === 'event-kind-tournament'
+          ? undefined
+          : event.competitionEventKindId,
+    })),
+  }
+}
+
 function parseStoredData(rawValue: string): DemoDataSet | null {
   try {
     const envelope: unknown = JSON.parse(rawValue)
@@ -104,7 +125,9 @@ function parseStoredData(rawValue: string): DemoDataSet | null {
       }
 
       return isDemoDataSet(migratedData)
-        ? applySeedPrototypeEnhancements(structuredClone(migratedData))
+        ? applySeedPrototypeEnhancements(
+            normalizeCommunityTaxonomy(structuredClone(migratedData)),
+          )
         : null
     }
 
@@ -120,12 +143,22 @@ function parseStoredData(rawValue: string): DemoDataSet | null {
       }
 
       return isDemoDataSet(migratedData)
-        ? applySeedPrototypeEnhancements(structuredClone(migratedData))
+        ? applySeedPrototypeEnhancements(
+            normalizeCommunityTaxonomy(structuredClone(migratedData)),
+          )
         : null
     }
 
     if (envelope.version === 23 && isDemoDataSet(envelope.data)) {
-      return applySeedPrototypeEnhancements(structuredClone(envelope.data))
+      return applySeedPrototypeEnhancements(
+        normalizeCommunityTaxonomy(structuredClone(envelope.data)),
+      )
+    }
+
+    if (envelope.version === 24 && isDemoDataSet(envelope.data)) {
+      return applySeedPrototypeEnhancements(
+        normalizeCommunityTaxonomy(structuredClone(envelope.data)),
+      )
     }
 
     if (
@@ -135,7 +168,9 @@ function parseStoredData(rawValue: string): DemoDataSet | null {
       return null
     }
 
-    return applySeedPrototypeEnhancements(structuredClone(envelope.data))
+    return applySeedPrototypeEnhancements(
+      normalizeCommunityTaxonomy(structuredClone(envelope.data)),
+    )
   } catch {
     return null
   }

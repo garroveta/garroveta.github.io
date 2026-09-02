@@ -202,9 +202,7 @@ function EventComposer({
         )?.id ?? ''),
   )
   const [competitionEventKindId, setCompetitionEventKindId] = useState(
-    sourceEvent
-      ? (sourceEvent.competitionEventKindId ?? '')
-      : (data.competitionEventKinds.find(isCommunityOptionActive)?.id ?? ''),
+    sourceEvent?.competitionEventKindId ?? '',
   )
   const [type, setType] = useState<EventType>(sourceEvent?.type ?? 'tournament')
   const [title, setTitle] = useState(sourceEvent?.title ?? '')
@@ -266,9 +264,8 @@ function EventComposer({
     const endDate = endsAt <= startsAt ? nextCalendarDate(date) : date
     const input = {
       gameId,
-      formatId: gameId === 'game-mtg' ? formatId : undefined,
-      competitionEventKindId:
-        gameId === 'game-mtg' ? competitionEventKindId : undefined,
+      formatId: formatId || undefined,
+      competitionEventKindId: competitionEventKindId || undefined,
       type,
       title,
       description,
@@ -397,18 +394,15 @@ function EventComposer({
         </label>
       </div>
 
-      {gameId === 'game-mtg' ? (
-        <div className="event-composer__grid">
+      <div className="event-composer__grid">
+        {availableFormats.length > 0 || formatId ? (
           <label className="form-field">
-            <span>Formato MTG</span>
+            <span>Formato</span>
             <select
               value={formatId}
               onChange={(event) => setFormatId(event.target.value)}
-              required
             >
-              <option disabled value="">
-                Seleccionar formato
-              </option>
+              <option value="">Sin formato</option>
               {availableFormats.map((format) => (
                 <option key={format.id} value={format.id}>
                   {format.name}
@@ -416,27 +410,23 @@ function EventComposer({
               ))}
             </select>
           </label>
-          <label className="form-field">
-            <span>Tipo de evento competitivo</span>
-            <select
-              value={competitionEventKindId}
-              onChange={(event) =>
-                setCompetitionEventKindId(event.target.value)
-              }
-              required
-            >
-              <option disabled value="">
-                Seleccionar tipo
+        ) : null}
+
+        <label className="form-field">
+          <span>Serie o programa (opcional)</span>
+          <select
+            value={competitionEventKindId}
+            onChange={(event) => setCompetitionEventKindId(event.target.value)}
+          >
+            <option value="">Sin serie</option>
+            {availableEventKinds.map((eventKind) => (
+              <option key={eventKind.id} value={eventKind.id}>
+                {eventKind.name}
               </option>
-              {availableEventKinds.map((eventKind) => (
-                <option key={eventKind.id} value={eventKind.id}>
-                  {eventKind.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      ) : null}
+            ))}
+          </select>
+        </label>
+      </div>
 
       <label className="form-field">
         <span>Título</span>
@@ -575,7 +565,10 @@ function EventComposer({
 
       <fieldset className="composer-tags">
         <legend>Etiquetas opcionales</legend>
-        <p>Ayudan a los jugadores a identificar el formato y el público.</p>
+        <p>
+          Sirven para segmentar el público o añadir contexto; no sustituyen al
+          juego, al formato, a la actividad ni a la serie.
+        </p>
         <div>
           {availableTags.map((tag) => (
             <label key={tag.id}>
