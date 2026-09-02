@@ -10,6 +10,7 @@ import {
   type InvitationStatus,
 } from '../api/registration'
 import { ClientApiError } from '../api/client'
+import { describeApiError } from '../api/errorPresentation'
 import { isCommunityOptionActive } from '../data/communityOptions'
 import type { Community, CommunityGame, CommunityTag } from '../domain/types'
 import { useEmailOtp } from '../hooks/useEmailOtp'
@@ -54,6 +55,7 @@ export function RegistrationPage({
           : 'invalid'
         : 'missing',
   )
+  const [invitationError, setInvitationError] = useState<unknown>(null)
   const [invitedCommunity, setInvitedCommunity] = useState<{
     city?: string
     name?: string
@@ -94,6 +96,7 @@ export function RegistrationPage({
 
     void validateInvitation(invite, controller.signal)
       .then((validation) => {
+        setInvitationError(null)
         setInvitedCommunity(validation.community ?? null)
         setInvitationState(validation.status)
 
@@ -106,6 +109,7 @@ export function RegistrationPage({
           return
         }
 
+        setInvitationError(error)
         setInvitationState('error')
       })
 
@@ -195,14 +199,9 @@ export function RegistrationPage({
 
   if (invitationState !== 'active') {
     const invitationMessages: Record<
-      Exclude<InvitationViewState, 'active' | 'loading'>,
+      Exclude<InvitationViewState, 'active' | 'error' | 'loading'>,
       { description: string; title: string }
     > = {
-      error: {
-        description:
-          'No hemos podido comprobar el enlace. Revisa tu conexión y vuelve a intentarlo.',
-        title: 'No se ha podido verificar la invitación',
-      },
       expired: {
         description:
           'Este enlace ha caducado. Pide una nueva invitación al gerente o a un moderador.',
@@ -229,7 +228,14 @@ export function RegistrationPage({
         title: 'Invitación ya utilizada',
       },
     }
-    const message = invitationMessages[invitationState]
+    const errorPresentation =
+      invitationState === 'error'
+        ? describeApiError(invitationError)
+        : undefined
+    const message =
+      invitationState === 'error'
+        ? errorPresentation!
+        : invitationMessages[invitationState]
 
     return (
       <PublicAccessShell badge="Acceso por invitación" community={community}>
@@ -241,11 +247,12 @@ export function RegistrationPage({
             <span className="page-eyebrow">Acceso al piloto</span>
             <h1>{message.title}</h1>
             <p>{message.description}</p>
-            {invitationState === 'error' ? (
+            {invitationState === 'error' && errorPresentation?.canRetry ? (
               <button
                 className="primary-button"
                 type="button"
                 onClick={() => {
+                  setInvitationError(null)
                   setInvitationState('loading')
                   setInvitationRetry((retry) => retry + 1)
                 }}

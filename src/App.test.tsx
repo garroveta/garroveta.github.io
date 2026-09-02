@@ -1789,6 +1789,32 @@ describe('App', () => {
     expect(registrationApiMocks.validateInvitation).not.toHaveBeenCalled()
   })
 
+  it('identifies a network failure while validating an invitation and retries', async () => {
+    registrationApiMocks.validateInvitation.mockRejectedValueOnce(
+      new ClientApiError(
+        0,
+        'network_error',
+        'No se ha podido conectar con el servidor.',
+      ),
+    )
+    window.location.hash = `#registro?invite=${validInvitationToken}`
+    render(<App />)
+
+    expect(
+      await screen.findByRole('heading', { name: 'Sin conexión' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/Comprueba tu conexión a internet/),
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Volver a intentarlo' }))
+
+    expect(
+      await screen.findByRole('heading', { name: 'Únete a la comunidad' }),
+    ).toBeInTheDocument()
+    expect(registrationApiMocks.validateInvitation).toHaveBeenCalledTimes(2)
+  })
+
   it('blocks an expired invitation before requesting an OTP', async () => {
     registrationApiMocks.validateInvitation.mockResolvedValueOnce({
       community: { city: 'Inca', name: 'CRC Delorean' },
