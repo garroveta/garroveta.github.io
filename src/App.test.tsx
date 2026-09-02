@@ -22,6 +22,8 @@ import type { CommunityEventWriteInput } from './api/communityEvents'
 import type { CurrentUser } from './api/currentUser'
 import type { ManagedCommunityMember } from './api/managerMembers'
 import type { CommunityEventsStatus } from './hooks/useCommunityEvents'
+import type { CommunitySettingsStatus } from './hooks/useCommunitySettings'
+import type { CommunitySettingsInput } from './data/communitySettings'
 
 const registrationApiMocks = vi.hoisted(() => ({
   redeemInvitation: vi.fn(),
@@ -61,6 +63,9 @@ const communityCommunicationApiMocks = vi.hoisted(() => ({
   deleteCommunityCommunication: vi.fn(),
   updateCommunityCommunication: vi.fn(),
 }))
+const communitySettingsApiMocks = vi.hoisted(() => ({
+  saveCommunitySettings: vi.fn(),
+}))
 const communityEventsHookMocks = vi.hoisted(() => ({
   reload: vi.fn(),
   status: 'ready' as CommunityEventsStatus,
@@ -70,6 +75,10 @@ const communityCommunicationsHookMocks = vi.hoisted(() => ({
   reload: vi.fn(),
   status: 'ready' as CommunityCommunicationsStatus,
 }))
+const communitySettingsHookMocks = vi.hoisted(() => ({
+  reload: vi.fn(),
+  status: 'ready' as CommunitySettingsStatus,
+}))
 
 vi.mock('./api/registration', () => registrationApiMocks)
 vi.mock('./api/managerInvitations', () => managerInvitationApiMocks)
@@ -78,6 +87,7 @@ vi.mock('./api/currentUser', () => currentUserApiMocks)
 vi.mock('./api/authentication', () => authenticationApiMocks)
 vi.mock('./api/communityEvents', () => communityEventApiMocks)
 vi.mock('./api/communityCommunications', () => communityCommunicationApiMocks)
+vi.mock('./api/communitySettings', () => communitySettingsApiMocks)
 vi.mock('./hooks/useCommunityEvents', () => ({
   useCommunityEvents: () => communityEventsHookMocks,
 }))
@@ -86,6 +96,9 @@ vi.mock('./hooks/useCommunityCommunications', () => ({
     communityCommunicationsHookMocks.invoke(options)
     return communityCommunicationsHookMocks
   },
+}))
+vi.mock('./hooks/useCommunitySettings', () => ({
+  useCommunitySettings: () => communitySettingsHookMocks,
 }))
 vi.mock('./hooks/useCurrentUser', async () => {
   const { useState } = await vi.importActual<typeof import('react')>('react')
@@ -176,6 +189,7 @@ describe('App', () => {
     vi.clearAllMocks()
     communityEventsHookMocks.status = 'ready'
     communityCommunicationsHookMocks.status = 'ready'
+    communitySettingsHookMocks.status = 'ready'
     const currentUser = buildCurrentUser()
     currentUserHookMocks.current = {
       data: currentUser,
@@ -186,6 +200,15 @@ describe('App', () => {
       membership: currentUser.memberships[0],
     })
     authenticationApiMocks.signOutCurrentUser.mockResolvedValue(undefined)
+    communitySettingsApiMocks.saveCommunitySettings.mockImplementation(
+      (_communityId: string, input: CommunitySettingsInput) =>
+        Promise.resolve({
+          community: {
+            id: 'community-crc-delorean',
+            ...input,
+          },
+        }),
+    )
     communityCommunicationApiMocks.createCommunityCommunication.mockImplementation(
       (_communityId: string, input: CommunityCommunicationWriteInput) =>
         Promise.resolve({
@@ -807,7 +830,7 @@ describe('App', () => {
     })
   })
 
-  it('lets the manager configure community identity and opening hours', () => {
+  it('lets the manager persist community identity and opening hours', async () => {
     authenticateAsManager()
     render(<App />)
 
@@ -846,7 +869,22 @@ describe('App', () => {
     )
     fireEvent.click(screen.getByRole('button', { name: 'Guardar información' }))
 
-    expect(screen.getByText('Información guardada.')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(
+        screen.getByText('Información guardada en la comunidad.'),
+      ).toBeInTheDocument(),
+    )
+    expect(
+      communitySettingsApiMocks.saveCommunitySettings,
+    ).toHaveBeenCalledWith(
+      'community-crc-delorean',
+      expect.objectContaining({
+        name: 'CRC Delorean Inca',
+        city: 'Palma',
+        address: 'Carrer Major, 12',
+        contactEmail: 'hola@delorean.example',
+      }),
+    )
     expect(screen.getByText('CRC Delorean Inca · Palma')).toBeInTheDocument()
     expect(
       createLocalDemoRepository(window.localStorage).load().community,

@@ -5,16 +5,13 @@ import {
   COMMUNITY_WEEKDAYS,
   COMMUNITY_WEEKDAY_LABELS,
   isCommunitySettingsValid,
-  updateCommunitySettings,
   type CommunitySettingsInput,
 } from '../data/communitySettings'
-import type { DemoDataUpdater } from '../data/demoRepository'
 import type { DemoDataSet, OpeningHours, Weekday } from '../domain/types'
 
 type CommunitySettingsPanelProps = {
   data: DemoDataSet
-  managerId: string
-  onDataChange: (updater: DemoDataUpdater) => void
+  onSave: (input: CommunitySettingsInput) => Promise<void>
 }
 
 function getOrderedOpeningHours(openingHours: OpeningHours[]) {
@@ -25,8 +22,7 @@ function getOrderedOpeningHours(openingHours: OpeningHours[]) {
 
 export function CommunitySettingsPanel({
   data,
-  managerId,
-  onDataChange,
+  onSave,
 }: CommunitySettingsPanelProps) {
   const [settings, setSettings] = useState<CommunitySettingsInput>({
     name: data.community.name,
@@ -40,9 +36,9 @@ export function CommunitySettingsPanel({
     logoUrl: data.community.logoUrl ?? '',
     openingHours: getOrderedOpeningHours(data.community.openingHours),
   })
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'invalid'>(
-    'idle',
-  )
+  const [saveStatus, setSaveStatus] = useState<
+    'idle' | 'saving' | 'saved' | 'invalid' | 'error'
+  >('idle')
 
   function updateDay(day: Weekday, updates: Partial<OpeningHours>) {
     setSaveStatus('idle')
@@ -76,7 +72,7 @@ export function CommunitySettingsPanel({
     }))
   }
 
-  function saveSettings(event: FormEvent<HTMLFormElement>) {
+  async function saveSettings(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     if (!isCommunitySettingsValid(settings)) {
@@ -84,10 +80,14 @@ export function CommunitySettingsPanel({
       return
     }
 
-    onDataChange((currentData) =>
-      updateCommunitySettings(currentData, managerId, settings),
-    )
-    setSaveStatus('saved')
+    setSaveStatus('saving')
+
+    try {
+      await onSave(settings)
+      setSaveStatus('saved')
+    } catch {
+      setSaveStatus('error')
+    }
   }
 
   return (
@@ -308,14 +308,22 @@ export function CommunitySettingsPanel({
         <div className="community-settings-actions">
           <span aria-live="polite">
             {saveStatus === 'saved'
-              ? 'Información guardada.'
+              ? 'Información guardada en la comunidad.'
               : saveStatus === 'invalid'
                 ? 'Revisa la identidad, los contactos, las URL y los horarios.'
-                : ''}
+                : saveStatus === 'error'
+                  ? 'No se ha podido guardar la información. Inténtalo de nuevo.'
+                  : saveStatus === 'saving'
+                    ? 'Guardando información…'
+                    : ''}
           </span>
-          <button className="primary-button" type="submit">
+          <button
+            className="primary-button"
+            type="submit"
+            disabled={saveStatus === 'saving'}
+          >
             <Save aria-hidden="true" size={16} />
-            Guardar información
+            {saveStatus === 'saving' ? 'Guardando…' : 'Guardar información'}
           </button>
         </div>
       </form>

@@ -14,12 +14,17 @@ import { AppHeader } from './components/AppHeader'
 import { AppNavigation } from './components/AppNavigation'
 import { signOutCurrentUser } from './api/authentication'
 import { updateCurrentMembership } from './api/currentUser'
+import {
+  saveCommunitySettings,
+  type PersistedCommunitySettings,
+} from './api/communitySettings'
 import type { DemoRole } from './app/demoRoles'
 import { getDemoDataSummary } from './data/demoData'
 import type { DemoDataSet } from './domain/types'
 import { useDemoData } from './hooks/useDemoData'
 import { useCommunityEvents } from './hooks/useCommunityEvents'
 import { useCommunityCommunications } from './hooks/useCommunityCommunications'
+import { useCommunitySettings } from './hooks/useCommunitySettings'
 import { useDemoRole } from './hooks/useDemoRole'
 import { useHashRoute } from './hooks/useHashRoute'
 import { useCurrentUser } from './hooks/useCurrentUser'
@@ -116,6 +121,23 @@ export function App() {
     communityId: data.community.id,
     enabled: Boolean(approvedMembership),
     onLoaded: replaceCommunityCommunications,
+  })
+  const replaceCommunitySettings = useCallback(
+    (community: PersistedCommunitySettings) => {
+      updateData((currentData) => ({
+        ...currentData,
+        community: {
+          ...currentData.community,
+          ...community,
+        },
+      }))
+    },
+    [updateData],
+  )
+  const communitySettings = useCommunitySettings({
+    communityId: data.community.id,
+    enabled: Boolean(approvedMembership),
+    onLoaded: replaceCommunitySettings,
   })
   const listEventParticipants = useCallback(
     (eventId: string) =>
@@ -464,6 +486,8 @@ export function App() {
             data={communicationData}
             communicationPersistenceStatus={communityCommunications.status}
             communicationPersistenceError={communityCommunications.error}
+            communitySettingsError={communitySettings.error}
+            communitySettingsStatus={communitySettings.status}
             managerId={publishingMember.id}
             initialSection={
               isSettingsSection(requestedSettingsSection)
@@ -473,6 +497,14 @@ export function App() {
             onDataChange={updateData}
             onBack={() => navigate('perfil')}
             onReloadCommunications={communityCommunications.reload}
+            onReloadCommunitySettings={communitySettings.reload}
+            onSaveCommunitySettings={async (input) => {
+              const { community } = await saveCommunitySettings(
+                data.community.id,
+                input,
+              )
+              replaceCommunitySettings(community)
+            }}
             onViewNewsPost={(postId) =>
               navigate('noticias', `post=${encodeURIComponent(postId)}`)
             }

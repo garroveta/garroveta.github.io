@@ -20,29 +20,40 @@ import { RegistrationSettingsPanel } from '../components/RegistrationSettingsPan
 import type { DemoDataUpdater } from '../data/demoRepository'
 import type { DemoDataSet } from '../domain/types'
 import type { CommunityCommunicationsStatus } from '../hooks/useCommunityCommunications'
+import type { CommunitySettingsStatus } from '../hooks/useCommunitySettings'
+import type { CommunitySettingsInput } from '../data/communitySettings'
+import { DataStateView } from '../components/DataStateView'
 import type { SettingsSection } from './settingsSections'
 
 type SettingsPageProps = {
   communicationPersistenceStatus: CommunityCommunicationsStatus
   communicationPersistenceError: unknown
+  communitySettingsError: unknown
+  communitySettingsStatus: CommunitySettingsStatus
   data: DemoDataSet
   managerId: string
   initialSection?: SettingsSection
   onDataChange: (updater: DemoDataUpdater) => void
   onBack: () => void
   onReloadCommunications: () => void
+  onReloadCommunitySettings: () => void
+  onSaveCommunitySettings: (input: CommunitySettingsInput) => Promise<void>
   onViewNewsPost: (postId: string) => void
 }
 
 export function SettingsPage({
   communicationPersistenceStatus,
   communicationPersistenceError,
+  communitySettingsError,
+  communitySettingsStatus,
   data,
   managerId,
   initialSection,
   onDataChange,
   onBack,
   onReloadCommunications,
+  onReloadCommunitySettings,
+  onSaveCommunitySettings,
   onViewNewsPost,
 }: SettingsPageProps) {
   const [activeSection, setActiveSection] = useState<SettingsSection>(
@@ -137,11 +148,22 @@ export function SettingsPage({
       </div>
 
       {activeSection === 'community' ? (
-        <CommunitySettingsPanel
-          data={data}
-          managerId={managerId}
-          onDataChange={onDataChange}
-        />
+        communitySettingsStatus === 'ready' ? (
+          <CommunitySettingsPanel
+            data={data}
+            onSave={onSaveCommunitySettings}
+          />
+        ) : (
+          <section className="community-settings-panel">
+            <DataStateView
+              error={communitySettingsError}
+              loadingDescription="Estamos recuperando la identidad, los contactos y los horarios."
+              loadingTitle="Cargando la comunidad"
+              onRetry={onReloadCommunitySettings}
+              status={communitySettingsStatus === 'error' ? 'error' : 'loading'}
+            />
+          </section>
+        )
       ) : activeSection === 'options' ? (
         <CommunityOptionManager
           data={data}
