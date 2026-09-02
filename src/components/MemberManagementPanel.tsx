@@ -18,8 +18,10 @@ import {
   type UpdateCommunityMemberInput,
 } from '../api/managerMembers'
 import { ClientApiError } from '../api/client'
+import { describeApiError } from '../api/errorPresentation'
 import type { CommunityRole, CommunityTag } from '../domain/types'
 import { DataStateView } from './DataStateView'
+import { ManagerOtpLogin } from './ManagerOtpLogin'
 
 type MemberFilter = 'all' | ManagedCommunityMember['status']
 
@@ -187,7 +189,14 @@ export function MemberManagementPanel({
         ),
       )
     } catch (error) {
-      setActionError(getMemberActionError(error))
+      const { kind } = describeApiError(error)
+
+      if (kind === 'session_expired' || kind === 'access_denied') {
+        setLoadError(error)
+        setLoadStatus('error')
+      } else {
+        setActionError(getMemberActionError(error))
+      }
     } finally {
       setSavingMemberId(undefined)
     }
@@ -224,6 +233,11 @@ export function MemberManagementPanel({
     void saveMember(member.id, { role })
   }
 
+  const loadErrorKind =
+    loadStatus === 'error' ? describeApiError(loadError).kind : null
+  const requiresReauthentication =
+    loadErrorKind === 'session_expired' || loadErrorKind === 'access_denied'
+
   return (
     <section
       className="member-management-panel"
@@ -248,6 +262,11 @@ export function MemberManagementPanel({
           status="loading"
           loadingTitle="Cargando miembros…"
           loadingDescription="Consultando los perfiles de la comunidad."
+        />
+      ) : requiresReauthentication ? (
+        <ManagerOtpLogin
+          kind={loadErrorKind as 'access_denied' | 'session_expired'}
+          onAuthenticated={retryLoad}
         />
       ) : loadStatus === 'error' ? (
         <DataStateView
