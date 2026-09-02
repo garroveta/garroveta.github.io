@@ -12,6 +12,10 @@ import {
   handleCommunicationApiRequest,
   matchCommunicationRoute,
 } from './communications'
+import {
+  handleCommunitySettingsApiRequest,
+  matchCommunitySettingsRoute,
+} from './community-settings'
 
 export interface ApiRequestContext {
   context: ExecutionContext
@@ -68,6 +72,21 @@ export function handleApiRequest({
         request,
       },
       memberRoute,
+    )
+  }
+
+  const communitySettingsRoute = matchCommunitySettingsRoute(
+    requestUrl.pathname,
+  )
+
+  if (communitySettingsRoute) {
+    return handleCommunitySettingsApiRequest(
+      {
+        context,
+        env,
+        request,
+      },
+      communitySettingsRoute,
     )
   }
 
