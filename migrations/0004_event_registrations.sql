@@ -22,7 +22,7 @@ create index "event_registration_member_idx"
 create trigger "promote_event_waitlist_after_cancellation"
 after update of "status" on "event_registration"
 when old."status" = 'confirmed' and new."status" = 'cancelled'
-begin
+BEGIN
   update "event_registration"
   set "status" = 'confirmed',
       "updated_at" = new."updated_at"
