@@ -25,6 +25,13 @@ import {
   reorderCommunityReferentials,
   updateCommunityReferential,
 } from './api/communityReferentials'
+import {
+  activateCommunityRankingSeason,
+  closeCommunityRankingSeason,
+  createCommunityRankingSeason,
+  deleteCommunityRankingSeason,
+  updateCommunityRankingSeasonPoints,
+} from './api/rankingSeasons'
 import type { DemoRole } from './app/demoRoles'
 import { getDemoDataSummary } from './data/demoData'
 import {
@@ -41,6 +48,7 @@ import { useCommunityCommunications } from './hooks/useCommunityCommunications'
 import { useCommunitySettings } from './hooks/useCommunitySettings'
 import { useCommunityReferentials } from './hooks/useCommunityReferentials'
 import { useCommunityRegistrationSettings } from './hooks/useCommunityRegistrationSettings'
+import { useRankingSeasons } from './hooks/useRankingSeasons'
 import { useDemoRole } from './hooks/useDemoRole'
 import { useHashRoute } from './hooks/useHashRoute'
 import { useCurrentUser } from './hooks/useCurrentUser'
@@ -182,6 +190,17 @@ export function App() {
     enabled: Boolean(approvedMembership),
     onLoaded: replaceRegistrationSettings,
   })
+  const replaceRankingSeasons = useCallback(
+    (rankingSeasons: DemoDataSet['rankingSeasons']) => {
+      updateData((currentData) => ({ ...currentData, rankingSeasons }))
+    },
+    [updateData],
+  )
+  const rankingSeasons = useRankingSeasons({
+    communityId: data.community.id,
+    enabled: Boolean(approvedMembership),
+    onLoaded: replaceRankingSeasons,
+  })
   const listEventParticipants = useCallback(
     (eventId: string) =>
       listPersistedEventRegistrations(data.community.id, eventId),
@@ -194,6 +213,10 @@ export function App() {
   const communicationData =
     approvedMembership && communityCommunications.status !== 'ready'
       ? { ...data, newsPosts: [] }
+      : data
+  const rankingData =
+    approvedMembership && rankingSeasons.status !== 'ready'
+      ? { ...data, rankingSeasons: [] }
       : data
   const authenticatedRole: DemoRole | null = approvedMembership
     ? approvedMembership.role === 'manager'
@@ -485,7 +508,7 @@ export function App() {
           />
         ) : activeRoute === 'ranking' ? (
           <RankingsPage
-            data={data}
+            data={rankingData}
             initialStandingId={rankingRouteParams.get('standing') ?? undefined}
             initialView={
               rankingRouteParams.get('view') === 'events' ? 'events' : undefined
@@ -535,7 +558,8 @@ export function App() {
             communityReferentialsStatus={communityReferentials.status}
             registrationSettingsError={communityRegistrationSettings.error}
             registrationSettingsStatus={communityRegistrationSettings.status}
-            managerId={publishingMember.id}
+            rankingSeasonsError={rankingSeasons.error}
+            rankingSeasonsStatus={rankingSeasons.status}
             initialSection={
               isSettingsSection(requestedSettingsSection)
                 ? requestedSettingsSection
@@ -547,6 +571,63 @@ export function App() {
             onReloadCommunitySettings={communitySettings.reload}
             onReloadCommunityReferentials={communityReferentials.reload}
             onReloadRegistrationSettings={communityRegistrationSettings.reload}
+            onReloadRankingSeasons={rankingSeasons.reload}
+            onActivateRankingSeason={async (seasonId) => {
+              const { season } = await activateCommunityRankingSeason(
+                data.community.id,
+                seasonId,
+              )
+              updateData((currentData) => ({
+                ...currentData,
+                rankingSeasons: currentData.rankingSeasons.map((candidate) =>
+                  candidate.id === season.id ? season : candidate,
+                ),
+              }))
+            }}
+            onCloseRankingSeason={async (seasonId) => {
+              const { season } = await closeCommunityRankingSeason(
+                data.community.id,
+                seasonId,
+              )
+              updateData((currentData) => ({
+                ...currentData,
+                rankingSeasons: currentData.rankingSeasons.map((candidate) =>
+                  candidate.id === season.id ? season : candidate,
+                ),
+              }))
+            }}
+            onCreateRankingSeason={async (input) => {
+              const { season } = await createCommunityRankingSeason(
+                data.community.id,
+                input,
+              )
+              updateData((currentData) => ({
+                ...currentData,
+                rankingSeasons: [...currentData.rankingSeasons, season],
+              }))
+            }}
+            onDeleteRankingSeason={async (seasonId) => {
+              await deleteCommunityRankingSeason(data.community.id, seasonId)
+              updateData((currentData) => ({
+                ...currentData,
+                rankingSeasons: currentData.rankingSeasons.filter(
+                  ({ id }) => id !== seasonId,
+                ),
+              }))
+            }}
+            onSaveRankingSeasonPoints={async (seasonId, points) => {
+              const { season } = await updateCommunityRankingSeasonPoints(
+                data.community.id,
+                seasonId,
+                points,
+              )
+              updateData((currentData) => ({
+                ...currentData,
+                rankingSeasons: currentData.rankingSeasons.map((candidate) =>
+                  candidate.id === season.id ? season : candidate,
+                ),
+              }))
+            }}
             onCreateCommunityOption={async (input) => {
               const { option } = await createCommunityReferential(
                 data.community.id,

@@ -28,7 +28,12 @@ import type {
 } from '../data/communityOptions'
 import type { CommunityReferentialsStatus } from '../hooks/useCommunityReferentials'
 import type { CommunityRegistrationSettingsStatus } from '../hooks/useCommunityRegistrationSettings'
-import type { CommunityRegistrationSettings } from '../domain/types'
+import type { RankingSeasonsStatus } from '../hooks/useRankingSeasons'
+import type {
+  CommunityRegistrationSettings,
+  CommunityRankingPoints,
+} from '../domain/types'
+import type { RankingSeasonWriteInput } from '../api/rankingSeasons'
 import { DataStateView } from '../components/DataStateView'
 import type { SettingsSection } from './settingsSections'
 
@@ -41,8 +46,9 @@ type SettingsPageProps = {
   communityReferentialsStatus: CommunityReferentialsStatus
   registrationSettingsError: unknown
   registrationSettingsStatus: CommunityRegistrationSettingsStatus
+  rankingSeasonsError: unknown
+  rankingSeasonsStatus: RankingSeasonsStatus
   data: DemoDataSet
-  managerId: string
   initialSection?: SettingsSection
   onDataChange: (updater: DemoDataUpdater) => void
   onBack: () => void
@@ -50,6 +56,15 @@ type SettingsPageProps = {
   onReloadCommunitySettings: () => void
   onReloadCommunityReferentials: () => void
   onReloadRegistrationSettings: () => void
+  onReloadRankingSeasons: () => void
+  onActivateRankingSeason: (seasonId: string) => Promise<void>
+  onCloseRankingSeason: (seasonId: string) => Promise<void>
+  onCreateRankingSeason: (input: RankingSeasonWriteInput) => Promise<void>
+  onDeleteRankingSeason: (seasonId: string) => Promise<void>
+  onSaveRankingSeasonPoints: (
+    seasonId: string,
+    points: CommunityRankingPoints,
+  ) => Promise<void>
   onCreateCommunityOption: (input: CommunityOptionInput) => Promise<void>
   onDeleteCommunityOption: (
     section: CommunityOptionSection,
@@ -80,8 +95,9 @@ export function SettingsPage({
   communityReferentialsStatus,
   registrationSettingsError,
   registrationSettingsStatus,
+  rankingSeasonsError,
+  rankingSeasonsStatus,
   data,
-  managerId,
   initialSection,
   onDataChange,
   onBack,
@@ -89,6 +105,12 @@ export function SettingsPage({
   onReloadCommunitySettings,
   onReloadCommunityReferentials,
   onReloadRegistrationSettings,
+  onReloadRankingSeasons,
+  onActivateRankingSeason,
+  onCloseRankingSeason,
+  onCreateRankingSeason,
+  onDeleteRankingSeason,
+  onSaveRankingSeasonPoints,
   onCreateCommunityOption,
   onDeleteCommunityOption,
   onReorderCommunityOptions,
@@ -254,8 +276,15 @@ export function SettingsPage({
       ) : (
         <RankingSettingsPanel
           data={data}
-          managerId={managerId}
+          onActivateSeason={onActivateRankingSeason}
+          onCloseSeason={onCloseRankingSeason}
+          onCreateSeason={onCreateRankingSeason}
           onDataChange={onDataChange}
+          onDeleteSeason={onDeleteRankingSeason}
+          onReloadSeasons={onReloadRankingSeasons}
+          onSaveSeasonPoints={onSaveRankingSeasonPoints}
+          seasonsError={rankingSeasonsError}
+          seasonsStatus={rankingSeasonsStatus}
         />
       )}
     </div>

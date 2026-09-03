@@ -31,6 +31,7 @@ import type {
   CommunityOptionSection,
 } from './data/communityOptions'
 import type { CommunityReferentialsStatus } from './hooks/useCommunityReferentials'
+import type { RankingSeasonsStatus } from './hooks/useRankingSeasons'
 
 const registrationApiMocks = vi.hoisted(() => ({
   redeemInvitation: vi.fn(),
@@ -76,6 +77,13 @@ const communitySettingsApiMocks = vi.hoisted(() => ({
 const communityRegistrationSettingsApiMocks = vi.hoisted(() => ({
   saveCommunityRegistrationSettings: vi.fn(),
 }))
+const rankingSeasonsApiMocks = vi.hoisted(() => ({
+  activateCommunityRankingSeason: vi.fn(),
+  closeCommunityRankingSeason: vi.fn(),
+  createCommunityRankingSeason: vi.fn(),
+  deleteCommunityRankingSeason: vi.fn(),
+  updateCommunityRankingSeasonPoints: vi.fn(),
+}))
 const communityReferentialsApiMocks = vi.hoisted(() => ({
   createCommunityReferential: vi.fn(),
   deleteCommunityReferential: vi.fn(),
@@ -103,6 +111,10 @@ const communityRegistrationSettingsHookMocks = vi.hoisted(() => ({
   reload: vi.fn(),
   status: 'ready' as CommunitySettingsStatus,
 }))
+const rankingSeasonsHookMocks = vi.hoisted(() => ({
+  reload: vi.fn(),
+  status: 'ready' as RankingSeasonsStatus,
+}))
 
 vi.mock('./api/registration', () => registrationApiMocks)
 vi.mock('./api/managerInvitations', () => managerInvitationApiMocks)
@@ -117,6 +129,7 @@ vi.mock(
   () => communityRegistrationSettingsApiMocks,
 )
 vi.mock('./api/communityReferentials', () => communityReferentialsApiMocks)
+vi.mock('./api/rankingSeasons', () => rankingSeasonsApiMocks)
 vi.mock('./hooks/useCommunityEvents', () => ({
   useCommunityEvents: () => communityEventsHookMocks,
 }))
@@ -135,6 +148,9 @@ vi.mock('./hooks/useCommunityReferentials', () => ({
 vi.mock('./hooks/useCommunityRegistrationSettings', () => ({
   useCommunityRegistrationSettings: () =>
     communityRegistrationSettingsHookMocks,
+}))
+vi.mock('./hooks/useRankingSeasons', () => ({
+  useRankingSeasons: () => rankingSeasonsHookMocks,
 }))
 vi.mock('./hooks/useCurrentUser', async () => {
   const { useState } = await vi.importActual<typeof import('react')>('react')
@@ -275,6 +291,7 @@ describe('App', () => {
     communitySettingsHookMocks.status = 'ready'
     communityReferentialsHookMocks.status = 'ready'
     communityRegistrationSettingsHookMocks.status = 'ready'
+    rankingSeasonsHookMocks.status = 'ready'
     const currentUser = buildCurrentUser()
     currentUserHookMocks.current = {
       data: currentUser,
@@ -789,8 +806,19 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
-  it('lets the manager configure the community ranking barometer', () => {
+  it('lets the manager configure the community ranking barometer', async () => {
     authenticateAsManager()
+    const activeSeason = demoData.rankingSeasons.find(
+      ({ status }) => status === 'active',
+    )!
+    rankingSeasonsApiMocks.updateCommunityRankingSeasonPoints.mockResolvedValue(
+      {
+        season: {
+          ...activeSeason,
+          points: { ...activeSeason.points, first: 12 },
+        },
+      },
+    )
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -809,11 +837,19 @@ describe('App', () => {
       screen.getByRole('button', { name: 'Guardar configuración' }),
     )
 
-    expect(screen.getByText('Configuración guardada.')).toBeInTheDocument()
+    expect(
+      await screen.findByText('Configuración guardada.'),
+    ).toBeInTheDocument()
+    expect(
+      rankingSeasonsApiMocks.updateCommunityRankingSeasonPoints,
+    ).toHaveBeenCalledWith(
+      'community-crc-delorean',
+      activeSeason.id,
+      expect.objectContaining({ first: 12 }),
+    )
     expect(
       createLocalDemoRepository(window.localStorage).load().rankingSettings,
     ).toMatchObject({
-      points: { first: 12 },
       defaultLimit: 'all',
     })
     expect(

@@ -24,6 +24,10 @@ import {
   handleRegistrationSettingsApiRequest,
   matchRegistrationSettingsRoute,
 } from './registration-settings'
+import {
+  handleRankingSeasonApiRequest,
+  matchRankingSeasonRoute,
+} from './ranking-seasons'
 
 export interface ApiRequestContext {
   context: ExecutionContext
@@ -164,6 +168,19 @@ export function handleApiRequest({
         request,
       },
       eventRoute,
+    )
+  }
+
+  const rankingSeasonRoute = matchRankingSeasonRoute(requestUrl.pathname)
+
+  if (rankingSeasonRoute) {
+    return handleRankingSeasonApiRequest(
+      {
+        context,
+        env,
+        request,
+      },
+      rankingSeasonRoute,
     )
   }
 
