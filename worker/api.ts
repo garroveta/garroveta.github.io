@@ -28,6 +28,10 @@ import {
   handleRankingSeasonApiRequest,
   matchRankingSeasonRoute,
 } from './ranking-seasons'
+import {
+  handleEventStandingApiRequest,
+  matchEventStandingRoute,
+} from './event-standings'
 
 export interface ApiRequestContext {
   context: ExecutionContext
@@ -181,6 +185,19 @@ export function handleApiRequest({
         request,
       },
       rankingSeasonRoute,
+    )
+  }
+
+  const eventStandingRoute = matchEventStandingRoute(requestUrl.pathname)
+
+  if (eventStandingRoute) {
+    return handleEventStandingApiRequest(
+      {
+        context,
+        env,
+        request,
+      },
+      eventStandingRoute,
     )
   }
 

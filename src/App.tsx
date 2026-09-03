@@ -32,6 +32,7 @@ import {
   deleteCommunityRankingSeason,
   updateCommunityRankingSeasonPoints,
 } from './api/rankingSeasons'
+import { saveCommunityEventStanding } from './api/eventStandings'
 import type { DemoRole } from './app/demoRoles'
 import { getDemoDataSummary } from './data/demoData'
 import {
@@ -49,6 +50,7 @@ import { useCommunitySettings } from './hooks/useCommunitySettings'
 import { useCommunityReferentials } from './hooks/useCommunityReferentials'
 import { useCommunityRegistrationSettings } from './hooks/useCommunityRegistrationSettings'
 import { useRankingSeasons } from './hooks/useRankingSeasons'
+import { useEventStandings } from './hooks/useEventStandings'
 import { useDemoRole } from './hooks/useDemoRole'
 import { useHashRoute } from './hooks/useHashRoute'
 import { useCurrentUser } from './hooks/useCurrentUser'
@@ -201,22 +203,46 @@ export function App() {
     enabled: Boolean(approvedMembership),
     onLoaded: replaceRankingSeasons,
   })
+  const replaceEventStandings = useCallback(
+    (eventStandings: DemoDataSet['eventStandings']) => {
+      updateData((currentData) => ({ ...currentData, eventStandings }))
+    },
+    [updateData],
+  )
+  const eventStandings = useEventStandings({
+    communityId: data.community.id,
+    enabled: Boolean(approvedMembership),
+    onLoaded: replaceEventStandings,
+  })
   const listEventParticipants = useCallback(
     (eventId: string) =>
       listPersistedEventRegistrations(data.community.id, eventId),
     [data.community.id],
   )
   const agendaData =
-    approvedMembership && communityEvents.status !== 'ready'
-      ? { ...data, events: [] }
+    approvedMembership &&
+    (communityEvents.status !== 'ready' || eventStandings.status !== 'ready')
+      ? {
+          ...data,
+          events: communityEvents.status === 'ready' ? data.events : [],
+          eventStandings:
+            eventStandings.status === 'ready' ? data.eventStandings : [],
+        }
       : data
   const communicationData =
     approvedMembership && communityCommunications.status !== 'ready'
       ? { ...data, newsPosts: [] }
       : data
   const rankingData =
-    approvedMembership && rankingSeasons.status !== 'ready'
-      ? { ...data, rankingSeasons: [] }
+    approvedMembership &&
+    (rankingSeasons.status !== 'ready' || eventStandings.status !== 'ready')
+      ? {
+          ...data,
+          rankingSeasons:
+            rankingSeasons.status === 'ready' ? data.rankingSeasons : [],
+          eventStandings:
+            eventStandings.status === 'ready' ? data.eventStandings : [],
+        }
       : data
   const authenticatedRole: DemoRole | null = approvedMembership
     ? approvedMembership.role === 'manager'
@@ -387,10 +413,8 @@ export function App() {
             activeRole={effectiveRole}
             data={agendaData}
             currentMember={connectedMember}
-            publishingMember={publishingMember}
             eventPersistenceStatus={communityEvents.status}
             eventPersistenceError={communityEvents.error}
-            onDataChange={updateData}
             onCreateEvent={async (input) => {
               const { event } = await createCommunityEvent(
                 data.community.id,
@@ -488,6 +512,35 @@ export function App() {
                     : event,
                 ),
               }))
+            }}
+            onSaveEventStanding={async (eventId, input) => {
+              const { standing } = await saveCommunityEventStanding(
+                data.community.id,
+                eventId,
+                input,
+              )
+              updateData((currentData) => ({
+                ...currentData,
+                events: currentData.events.map((event) =>
+                  event.id === eventId
+                    ? {
+                        ...event,
+                        countsForCommunityRanking:
+                          input.countsForCommunityRanking,
+                        status: 'completed' as const,
+                      }
+                    : event,
+                ),
+                eventStandings: currentData.eventStandings.some(
+                  ({ eventId: standingEventId }) => standingEventId === eventId,
+                )
+                  ? currentData.eventStandings.map((candidate) =>
+                      candidate.eventId === eventId ? standing : candidate,
+                    )
+                  : [...currentData.eventStandings, standing],
+              }))
+
+              return standing
             }}
             onUpdateEvent={async (eventId, input: CommunityEventWriteInput) => {
               const { event } = await updatePersistedCommunityEvent(

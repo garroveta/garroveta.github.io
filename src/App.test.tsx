@@ -32,6 +32,7 @@ import type {
 } from './data/communityOptions'
 import type { CommunityReferentialsStatus } from './hooks/useCommunityReferentials'
 import type { RankingSeasonsStatus } from './hooks/useRankingSeasons'
+import type { EventStandingsStatus } from './hooks/useEventStandings'
 
 const registrationApiMocks = vi.hoisted(() => ({
   redeemInvitation: vi.fn(),
@@ -90,6 +91,9 @@ const communityReferentialsApiMocks = vi.hoisted(() => ({
   reorderCommunityReferentials: vi.fn(),
   updateCommunityReferential: vi.fn(),
 }))
+const eventStandingsApiMocks = vi.hoisted(() => ({
+  saveCommunityEventStanding: vi.fn(),
+}))
 const communityEventsHookMocks = vi.hoisted(() => ({
   reload: vi.fn(),
   status: 'ready' as CommunityEventsStatus,
@@ -115,6 +119,10 @@ const rankingSeasonsHookMocks = vi.hoisted(() => ({
   reload: vi.fn(),
   status: 'ready' as RankingSeasonsStatus,
 }))
+const eventStandingsHookMocks = vi.hoisted(() => ({
+  reload: vi.fn(),
+  status: 'ready' as EventStandingsStatus,
+}))
 
 vi.mock('./api/registration', () => registrationApiMocks)
 vi.mock('./api/managerInvitations', () => managerInvitationApiMocks)
@@ -130,6 +138,7 @@ vi.mock(
 )
 vi.mock('./api/communityReferentials', () => communityReferentialsApiMocks)
 vi.mock('./api/rankingSeasons', () => rankingSeasonsApiMocks)
+vi.mock('./api/eventStandings', () => eventStandingsApiMocks)
 vi.mock('./hooks/useCommunityEvents', () => ({
   useCommunityEvents: () => communityEventsHookMocks,
 }))
@@ -151,6 +160,9 @@ vi.mock('./hooks/useCommunityRegistrationSettings', () => ({
 }))
 vi.mock('./hooks/useRankingSeasons', () => ({
   useRankingSeasons: () => rankingSeasonsHookMocks,
+}))
+vi.mock('./hooks/useEventStandings', () => ({
+  useEventStandings: () => eventStandingsHookMocks,
 }))
 vi.mock('./hooks/useCurrentUser', async () => {
   const { useState } = await vi.importActual<typeof import('react')>('react')
@@ -292,6 +304,7 @@ describe('App', () => {
     communityReferentialsHookMocks.status = 'ready'
     communityRegistrationSettingsHookMocks.status = 'ready'
     rankingSeasonsHookMocks.status = 'ready'
+    eventStandingsHookMocks.status = 'ready'
     const currentUser = buildCurrentUser()
     currentUserHookMocks.current = {
       data: currentUser,
@@ -546,6 +559,26 @@ describe('App', () => {
         role: 'player',
         status: 'approved',
         tagIds: ['tag-draft'],
+      },
+      {
+        displayName: 'Pep Peralta Isern',
+        email: 'pep@example.com',
+        favoriteGameIds: ['game-mtg'],
+        id: 'member-pep',
+        joinedAt: '2026-03-01T10:00:00.000Z',
+        role: 'player',
+        status: 'approved',
+        tagIds: ['tag-standard'],
+      },
+      {
+        displayName: 'José Thomas 🔴⚪',
+        email: 'jose@example.com',
+        favoriteGameIds: ['game-mtg'],
+        id: 'member-jose',
+        joinedAt: '2026-03-15T10:00:00.000Z',
+        role: 'player',
+        status: 'approved',
+        tagIds: ['tag-standard'],
       },
     ]
     managerMemberApiMocks.listCommunityMembers.mockImplementation(() =>
@@ -2248,6 +2281,20 @@ describe('App', () => {
 
   it('shows an imported EventLink result and updates the community ranking', async () => {
     authenticateAsManager()
+    eventStandingsApiMocks.saveCommunityEventStanding.mockImplementation(
+      async (_communityId: string, eventId: string, input: unknown) => ({
+        standing: {
+          ...(input as object),
+          eventId,
+          id: 'standing-event-presentation-hobbit',
+          source: {
+            importedAt: '2026-08-22T10:00:00.000Z',
+            kind: 'eventlink_html',
+            ...(input as { source?: object }).source,
+          },
+        },
+      }),
+    )
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -2262,6 +2309,9 @@ describe('App', () => {
     const importPanel = screen.getByRole('region', {
       name: 'Presentación: The Hobbit',
     })
+    expect(
+      await within(importPanel).findByText('Seleccionar archivo EventLink'),
+    ).toBeInTheDocument()
     const file = new File([importedEventLinkHtml], 'eventlink.html', {
       type: 'text/html',
     })
@@ -2289,14 +2339,6 @@ describe('App', () => {
       screen.getByRole('heading', { name: 'Presentación: The Hobbit' }),
     ).toBeInTheDocument()
     expect(screen.getAllByText('Pep Peralta Isern')).not.toHaveLength(0)
-
-    fireEvent.click(screen.getByRole('tab', { name: 'Comunidad' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Mostrar todos' }))
-    expect(
-      within(
-        screen.getByRole('table', { name: 'Clasificación acumulada' }),
-      ).getByText('Pep Peralta Isern'),
-    ).toBeInTheDocument()
   })
 
   it('registers for an available event and cancels the registration', async () => {

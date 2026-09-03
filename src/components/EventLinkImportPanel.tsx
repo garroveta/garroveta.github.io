@@ -7,18 +7,25 @@ import {
   UsersRound,
   X,
 } from 'lucide-react'
-import { useMemo, useState, type ChangeEvent, type DragEvent } from 'react'
-
-import { parseEventLinkHtml } from '../data/eventLinkImport'
 import {
-  matchEventLinkMembers,
-  saveEventLinkStanding,
-} from '../data/eventStandingImport'
-import type { DemoDataUpdater } from '../data/demoRepository'
+  useEffect,
+  useMemo,
+  useState,
+  type ChangeEvent,
+  type DragEvent,
+} from 'react'
+
+import type { EventStandingWriteInput } from '../api/eventStandings'
+import {
+  listCommunityMembers,
+  type ManagedCommunityMember,
+} from '../api/managerMembers'
+import { parseEventLinkHtml } from '../data/eventLinkImport'
+import { matchEventLinkMembers } from '../data/eventStandingImport'
 import type {
   CommunityEvent,
-  CommunityMember,
   DemoDataSet,
+  EventStanding,
 } from '../domain/types'
 
 const MAX_EVENTLINK_FILE_SIZE = 5 * 1024 * 1024
@@ -26,19 +33,20 @@ const MAX_EVENTLINK_FILE_SIZE = 5 * 1024 * 1024
 type EventLinkImportPanelProps = {
   data: DemoDataSet
   event: CommunityEvent
-  manager: CommunityMember
   onClose: () => void
-  onDataChange: (updater: DemoDataUpdater) => void
   onImported: (message: string, standingId: string) => void
+  onSaveStanding: (
+    eventId: string,
+    input: EventStandingWriteInput,
+  ) => Promise<EventStanding>
 }
 
 export function EventLinkImportPanel({
   data,
   event,
-  manager,
   onClose,
-  onDataChange,
   onImported,
+  onSaveStanding,
 }: EventLinkImportPanelProps) {
   const [fileName, setFileName] = useState('')
   const [parsedStanding, setParsedStanding] =
@@ -50,14 +58,39 @@ export function EventLinkImportPanel({
   const [countsForRanking, setCountsForRanking] = useState(
     event.countsForCommunityRanking ?? true,
   )
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
+  const [members, setMembers] = useState<ManagedCommunityMember[]>([])
+  const [membersStatus, setMembersStatus] = useState<
+    'error' | 'loading' | 'ready'
+  >('loading')
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    listCommunityMembers(data.community.id, controller.signal)
+      .then((result) => {
+        setMembers(result.members)
+        setMembersStatus('ready')
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) {
+          setMembersStatus('error')
+          console.error('No se ha podido cargar la lista de miembros', error)
+        }
+      })
+
+    return () => controller.abort()
+  }, [data.community.id])
+
   const approvedMembers = useMemo(
     () =>
-      data.members
+      members
         .filter(({ status }) => status === 'approved')
         .sort((first, second) =>
           first.displayName.localeCompare(second.displayName, 'es'),
         ),
-    [data.members],
+    [members],
   )
   const existingStanding = data.eventStandings.find(
     ({ eventId }) => eventId === event.id,
@@ -69,6 +102,7 @@ export function EventLinkImportPanel({
   )
   const linkedCount = memberIdsByRow.filter(Boolean).length
   const assignedMemberIds = new Set(memberIdsByRow.filter(Boolean))
+  const canImport = hasCompetitionMetadata && membersStatus === 'ready'
 
   const readFile = async (file?: File) => {
     setErrors([])
@@ -97,7 +131,7 @@ export function EventLinkImportPanel({
       return
     }
 
-    const matches = matchEventLinkMembers(result.standing.rows, data.members)
+    const matches = matchEventLinkMembers(result.standing.rows, members)
     setParsedStanding(result.standing)
     setMemberIdsByRow(matches.map(({ memberId }) => memberId))
   }
@@ -112,26 +146,40 @@ export function EventLinkImportPanel({
     void readFile(dropEvent.dataTransfer.files[0])
   }
 
-  const importStanding = () => {
-    if (!parsedStanding || !hasCompetitionMetadata) {
+  const importStanding = async () => {
+    if (!parsedStanding || !canImport) {
       return
     }
 
-    onDataChange((currentData) =>
-      saveEventLinkStanding(currentData, {
-        eventId: event.id,
-        managerId: manager.id,
-        parsedStanding,
-        memberIdsByRow,
+    setSaveError('')
+    setIsSaving(true)
+
+    try {
+      const standing = await onSaveStanding(event.id, {
         countsForCommunityRanking: countsForRanking,
-      }),
-    )
-    onImported(
-      existingStanding
-        ? 'La clasificación EventLink se ha sustituido.'
-        : 'La clasificación EventLink se ha importado.',
-      existingStanding?.id ?? `standing-${event.id}`,
-    )
+        entries: parsedStanding.rows.map((row, index) => ({
+          ...row,
+          memberId: memberIdsByRow[index],
+        })),
+        source: {
+          externalEventId: parsedStanding.externalEventId,
+          roundNumber: parsedStanding.roundNumber,
+          storeId: parsedStanding.storeId,
+        },
+      })
+      onImported(
+        existingStanding
+          ? 'La clasificación EventLink se ha sustituido.'
+          : 'La clasificación EventLink se ha importado.',
+        standing.id,
+      )
+    } catch {
+      setSaveError(
+        'No se ha podido guardar la clasificación. Inténtalo de nuevo.',
+      )
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -166,17 +214,31 @@ export function EventLinkImportPanel({
         </div>
       ) : null}
 
+      {membersStatus === 'error' ? (
+        <div className="eventlink-import__messages eventlink-import__messages--error">
+          <AlertTriangle aria-hidden="true" size={18} />
+          <p>
+            No se ha podido cargar la lista de miembros. Cierra e inténtalo de
+            nuevo.
+          </p>
+        </div>
+      ) : null}
+
       <label
         className="eventlink-dropzone"
         onDragOver={(dragEvent) => dragEvent.preventDefault()}
         onDrop={handleDrop}
       >
         <FileUp aria-hidden="true" size={24} />
-        <strong>{fileName || 'Seleccionar archivo EventLink'}</strong>
+        <strong>
+          {membersStatus === 'loading'
+            ? 'Cargando miembros…'
+            : fileName || 'Seleccionar archivo EventLink'}
+        </strong>
         <span>HTML · máximo 5 MB</span>
         <input
           accept=".html,.htm,text/html"
-          disabled={!hasCompetitionMetadata}
+          disabled={!canImport}
           type="file"
           onChange={handleFileChange}
         />
@@ -327,20 +389,28 @@ export function EventLinkImportPanel({
             </span>
           </label>
 
+          {saveError ? (
+            <p className="registration-error" role="alert">
+              {saveError}
+            </p>
+          ) : null}
+
           <div className="eventlink-import__actions">
-            <button type="button" onClick={onClose}>
+            <button type="button" disabled={isSaving} onClick={onClose}>
               Cancelar
             </button>
             <button
               className="primary-button"
-              disabled={!hasCompetitionMetadata}
+              disabled={!canImport || isSaving}
               type="button"
-              onClick={importStanding}
+              onClick={() => void importStanding()}
             >
               <UsersRound aria-hidden="true" size={17} />
-              {existingStanding
-                ? 'Sustituir clasificación'
-                : 'Importar clasificación'}
+              {isSaving
+                ? 'Guardando…'
+                : existingStanding
+                  ? 'Sustituir clasificación'
+                  : 'Importar clasificación'}
             </button>
           </div>
         </>

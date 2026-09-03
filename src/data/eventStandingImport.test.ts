@@ -4,7 +4,6 @@ import type { ParsedEventLinkStanding } from './eventLinkImport'
 import {
   matchEventLinkMembers,
   normalizeEventLinkPlayerName,
-  saveEventLinkStanding,
 } from './eventStandingImport'
 import { demoData } from './demoData'
 
@@ -94,117 +93,5 @@ describe('EventLink member matching', () => {
       memberId: undefined,
       suggestedMemberIds: ['member-sergio', 'member-sergio-duplicate'],
     })
-  })
-})
-
-describe('EventLink standing mutations', () => {
-  it('lets the manager save imported results and their provenance', () => {
-    const updated = saveEventLinkStanding(demoData, {
-      eventId: 'event-presentation-hobbit',
-      managerId: 'member-lucia',
-      parsedStanding,
-      memberIdsByRow: ['member-sergio', undefined],
-      countsForCommunityRanking: true,
-      importedAt: '2026-08-22T10:00:00+02:00',
-    })
-
-    expect(
-      updated.events.find(({ id }) => id === 'event-presentation-hobbit'),
-    ).toMatchObject({
-      status: 'completed',
-      countsForCommunityRanking: true,
-      registrationSummary: { confirmed: 30, waitlisted: 3 },
-    })
-    expect(
-      updated.eventStandings.find(
-        ({ eventId }) => eventId === 'event-presentation-hobbit',
-      ),
-    ).toMatchObject({
-      entries: [
-        { displayName: 'Sergio Gil', memberId: 'member-sergio' },
-        { displayName: 'Invitado Nuevo', memberId: undefined },
-      ],
-      source: {
-        kind: 'eventlink_html',
-        storeId: '18452',
-        externalEventId: '11620006',
-        roundNumber: 5,
-        importedAt: '2026-08-22T10:00:00+02:00',
-      },
-    })
-  })
-
-  it('replaces an existing standing instead of appending a duplicate', () => {
-    const eventId = 'event-result-win-a-box-standard-2026-08-02'
-    const previousCount = demoData.eventStandings.length
-    const previousStanding = demoData.eventStandings.find(
-      (standing) => standing.eventId === eventId,
-    )!
-    const updated = saveEventLinkStanding(demoData, {
-      eventId,
-      managerId: 'member-lucia',
-      parsedStanding,
-      memberIdsByRow: ['member-sergio', undefined],
-      countsForCommunityRanking: true,
-    })
-
-    expect(updated.eventStandings).toHaveLength(previousCount)
-    expect(
-      updated.eventStandings.find((standing) => standing.eventId === eventId),
-    ).toMatchObject({
-      id: previousStanding.id,
-      entries: [
-        { displayName: 'Sergio Gil' },
-        { displayName: 'Invitado Nuevo' },
-      ],
-    })
-  })
-
-  it('rejects unauthorized managers and duplicate member assignments', () => {
-    const baseInput = {
-      eventId: 'event-presentation-hobbit',
-      parsedStanding,
-      countsForCommunityRanking: true,
-    }
-
-    expect(
-      saveEventLinkStanding(demoData, {
-        ...baseInput,
-        managerId: 'member-alex',
-        memberIdsByRow: ['member-sergio', undefined],
-      }),
-    ).toBe(demoData)
-    expect(
-      saveEventLinkStanding(demoData, {
-        ...baseInput,
-        managerId: 'member-lucia',
-        memberIdsByRow: ['member-sergio', 'member-sergio'],
-      }),
-    ).toBe(demoData)
-  })
-
-  it('rejects imports when the MTG event has no competitive metadata', () => {
-    const dataWithoutMetadata = {
-      ...demoData,
-      events: demoData.events.map((event) =>
-        event.id === 'event-presentation-hobbit'
-          ? {
-              ...event,
-              formatId: undefined,
-              competitionEventKindId: undefined,
-            }
-          : event,
-      ),
-    }
-
-    expect(
-      saveEventLinkStanding(dataWithoutMetadata, {
-        eventId: 'event-presentation-hobbit',
-        managerId: 'member-lucia',
-        parsedStanding,
-        memberIdsByRow: ['member-sergio', undefined],
-        countsForCommunityRanking: true,
-      }),
-    ).toBe(dataWithoutMetadata)
   })
 })

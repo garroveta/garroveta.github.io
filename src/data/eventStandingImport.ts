@@ -1,12 +1,5 @@
-import type {
-  CommunityMember,
-  DemoDataSet,
-  EventStandingEntry,
-} from '../domain/types'
-import type {
-  EventLinkStandingRow,
-  ParsedEventLinkStanding,
-} from './eventLinkImport'
+import type { CommunityMember } from '../domain/types'
+import type { EventLinkStandingRow } from './eventLinkImport'
 
 export type EventLinkMemberMatch = {
   rowIndex: number
@@ -16,14 +9,10 @@ export type EventLinkMemberMatch = {
   memberId?: string
 }
 
-export type SaveEventLinkStandingInput = {
-  eventId: string
-  managerId: string
-  parsedStanding: ParsedEventLinkStanding
-  memberIdsByRow: Array<string | undefined>
-  countsForCommunityRanking: boolean
-  importedAt?: string
-}
+export type EventLinkMatchableMember = Pick<
+  CommunityMember,
+  'displayName' | 'id' | 'status'
+>
 
 export function normalizeEventLinkPlayerName(value: string) {
   return value
@@ -37,10 +26,10 @@ export function normalizeEventLinkPlayerName(value: string) {
 
 export function matchEventLinkMembers(
   rows: EventLinkStandingRow[],
-  members: CommunityMember[],
+  members: EventLinkMatchableMember[],
 ): EventLinkMemberMatch[] {
   const approvedMembers = members.filter(({ status }) => status === 'approved')
-  const membersByName = new Map<string, CommunityMember[]>()
+  const membersByName = new Map<string, EventLinkMatchableMember[]>()
 
   for (const member of approvedMembers) {
     const normalizedName = normalizeEventLinkPlayerName(member.displayName)
@@ -66,86 +55,4 @@ export function matchEventLinkMembers(
       memberId: matches.length === 1 ? matches[0].id : undefined,
     }
   })
-}
-
-function buildStandingEntry(
-  row: EventLinkStandingRow,
-  memberId?: string,
-): EventStandingEntry {
-  return {
-    ...row,
-    memberId,
-  }
-}
-
-export function saveEventLinkStanding(
-  data: DemoDataSet,
-  input: SaveEventLinkStandingInput,
-): DemoDataSet {
-  const manager = data.members.find(
-    ({ id, role, status }) =>
-      id === input.managerId && role === 'manager' && status === 'approved',
-  )
-  const event = data.events.find(({ id }) => id === input.eventId)
-  const format = event?.formatId
-    ? data.competitionFormats.find(({ id }) => id === event.formatId)
-    : undefined
-  const validMembers = new Set(
-    data.members
-      .filter(({ status }) => status === 'approved')
-      .map(({ id }) => id),
-  )
-  const assignedMemberIds = input.memberIdsByRow.filter(
-    (memberId): memberId is string => Boolean(memberId),
-  )
-
-  if (
-    !manager ||
-    !event ||
-    event.gameId !== 'game-mtg' ||
-    format?.gameId !== event.gameId ||
-    input.parsedStanding.rows.length === 0 ||
-    input.memberIdsByRow.length !== input.parsedStanding.rows.length ||
-    assignedMemberIds.some((memberId) => !validMembers.has(memberId)) ||
-    new Set(assignedMemberIds).size !== assignedMemberIds.length
-  ) {
-    return data
-  }
-
-  const existingStanding = data.eventStandings.find(
-    ({ eventId }) => eventId === event.id,
-  )
-  const importedAt = input.importedAt ?? new Date().toISOString()
-  const standing = {
-    id: existingStanding?.id ?? `standing-${event.id}`,
-    eventId: event.id,
-    entries: input.parsedStanding.rows.map((row, index) =>
-      buildStandingEntry(row, input.memberIdsByRow[index]),
-    ),
-    source: {
-      kind: 'eventlink_html' as const,
-      storeId: input.parsedStanding.storeId,
-      externalEventId: input.parsedStanding.externalEventId,
-      roundNumber: input.parsedStanding.roundNumber,
-      importedAt,
-    },
-  }
-
-  return {
-    ...data,
-    events: data.events.map((candidate) =>
-      candidate.id === event.id
-        ? {
-            ...candidate,
-            status: 'completed' as const,
-            countsForCommunityRanking: input.countsForCommunityRanking,
-          }
-        : candidate,
-    ),
-    eventStandings: existingStanding
-      ? data.eventStandings.map((candidate) =>
-          candidate.eventId === event.id ? standing : candidate,
-        )
-      : [...data.eventStandings, standing],
-  }
 }

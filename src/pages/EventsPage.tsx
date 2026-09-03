@@ -25,6 +25,7 @@ import type {
   CommunityEventWriteInput,
   ManagedEventRegistration,
 } from '../api/communityEvents'
+import type { EventStandingWriteInput } from '../api/eventStandings'
 import { DataStateView } from '../components/DataStateView'
 import { EventLinkImportPanel } from '../components/EventLinkImportPanel'
 import { isCommunityOptionActive } from '../data/communityOptions'
@@ -34,7 +35,6 @@ import {
   getEventById,
   type EventListItem,
 } from '../data/eventSelectors'
-import type { DemoDataUpdater } from '../data/demoRepository'
 import type { CommunityEventsStatus } from '../hooks/useCommunityEvents'
 import {
   EVENT_TYPE_LABELS,
@@ -45,6 +45,7 @@ import type {
   CommunityMember,
   DemoDataSet,
   EventRegistration,
+  EventStanding,
   EventType,
 } from '../domain/types'
 
@@ -52,10 +53,8 @@ type EventsPageProps = {
   activeRole: DemoRole
   data: DemoDataSet
   currentMember: CommunityMember
-  publishingMember: CommunityMember
   eventPersistenceStatus: CommunityEventsStatus
   eventPersistenceError: unknown
-  onDataChange: (updater: DemoDataUpdater) => void
   onCreateEvent: (input: CommunityEventWriteInput) => Promise<void>
   onDeleteEvent: (eventId: string) => Promise<void>
   onNavigate: (route: AppRoute, query?: string) => void
@@ -66,6 +65,10 @@ type EventsPageProps = {
   ) => Promise<{ registrations: ManagedEventRegistration[] }>
   onRegister: (eventId: string) => Promise<EventRegistration>
   onRemoveParticipant: (eventId: string, memberId: string) => Promise<void>
+  onSaveEventStanding: (
+    eventId: string,
+    input: EventStandingWriteInput,
+  ) => Promise<EventStanding>
   onUpdateEvent: (
     eventId: string,
     input: CommunityEventWriteInput,
@@ -1381,10 +1384,8 @@ export function EventsPage({
   activeRole,
   data,
   currentMember,
-  publishingMember,
   eventPersistenceStatus,
   eventPersistenceError,
-  onDataChange,
   onCreateEvent,
   onDeleteEvent,
   onNavigate,
@@ -1393,6 +1394,7 @@ export function EventsPage({
   onListParticipants,
   onRegister,
   onRemoveParticipant,
+  onSaveEventStanding,
   onUpdateEvent,
   initialManagerAction,
 }: EventsPageProps) {
@@ -1719,14 +1721,13 @@ export function EventsPage({
               <EventLinkImportPanel
                 data={data}
                 event={managedImportEvent.event}
-                manager={publishingMember}
                 onClose={() => setManagedImportEventId(undefined)}
-                onDataChange={onDataChange}
                 onImported={(message, standingId) => {
                   setManagedImportEventId(undefined)
                   setPublicationMessage(message)
                   setImportedStandingId(standingId)
                 }}
+                onSaveStanding={onSaveEventStanding}
               />
             </div>
           ) : null}
