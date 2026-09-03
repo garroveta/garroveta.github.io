@@ -390,9 +390,9 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
   const [gameId, setGameId] = useState('game-mtg')
   const [formatId, setFormatId] = useState('')
   const [eventKindId, setEventKindId] = useState('')
-  const seasons = [...data.rankingSeasons].sort((first, second) =>
-    second.startsOn.localeCompare(first.startsOn),
-  )
+  const seasons = data.rankingSeasons
+    .filter(({ status }) => status !== 'upcoming')
+    .sort((first, second) => second.startsOn.localeCompare(first.startsOn))
   const [seasonId, setSeasonId] = useState(
     seasons.find(({ status }) => status === 'active')?.id ??
       seasons[0]?.id ??

@@ -798,9 +798,10 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
     fireEvent.click(screen.getByRole('tab', { name: 'Ranking' }))
 
-    fireEvent.change(screen.getByLabelText('Puntos para 1.º'), {
-      target: { value: '12' },
-    })
+    fireEvent.change(
+      screen.getByLabelText('Temporada activa: puntos para 1.º'),
+      { target: { value: '12' } },
+    )
     fireEvent.change(screen.getByLabelText('Jugadores mostrados'), {
       target: { value: 'all' },
     })

@@ -9144,6 +9144,162 @@ a {
   line-height: 1.45;
 }
 
+.ranking-season-management {
+  margin: 0.9rem;
+  border: 1px solid #e5dfe7;
+  border-radius: 0.85rem;
+  background: #fff;
+}
+
+.ranking-season-management__heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.8rem 0.9rem;
+}
+
+.ranking-season-management__heading > span {
+  display: grid;
+  width: 2.2rem;
+  height: 2.2rem;
+  place-items: center;
+  border-radius: 0.7rem;
+  color: #6b2f80;
+  background: #f0e8f3;
+}
+
+.ranking-season-management__heading > div > span:first-child {
+  color: #7b5689;
+  font-size: 0.6rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ranking-season-management__heading h3 {
+  margin: 0.1rem 0 0;
+  color: #302735;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.ranking-season-form {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0.9rem;
+  border-top: 1px solid #e5dfe7;
+  background: #faf7fb;
+}
+
+.ranking-season-form__fields {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.ranking-season-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.ranking-season-list {
+  border-top: 1px solid #e5dfe7;
+}
+
+.ranking-season-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.4rem 0.65rem;
+  padding: 0.75rem 0.9rem;
+  border-bottom: 1px solid #eee8ef;
+}
+
+.ranking-season-row:last-child {
+  border-bottom: 0;
+}
+
+.ranking-season-row__identity {
+  min-width: 0;
+}
+
+.ranking-season-row__identity strong {
+  display: block;
+  overflow: hidden;
+  color: #342c37;
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ranking-season-row__identity span {
+  display: block;
+  margin-top: 0.15rem;
+  color: #877d89;
+  font-size: 0.62rem;
+}
+
+.ranking-season-status {
+  justify-self: start;
+  display: inline-flex;
+  min-height: 1.7rem;
+  align-items: center;
+  padding: 0 0.55rem;
+  border-radius: 999px;
+  color: #685b6c;
+  background: #f0ecf1;
+  font-size: 0.62rem;
+  font-weight: 850;
+}
+
+.ranking-season-status[data-status='active'] {
+  color: #2f6b59;
+  background: #e7f3ed;
+}
+
+.ranking-season-status[data-status='closed'] {
+  color: #685b6c;
+  background: #eee8ef;
+}
+
+.ranking-season-row__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.ranking-season-row__frozen-note {
+  color: #877d89;
+  font-size: 0.68rem;
+}
+
+.ranking-season-confirmation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  color: #504653;
+  font-size: 0.68rem;
+}
+
+.ranking-season-confirmation button {
+  min-height: 1.9rem;
+  padding: 0 0.65rem;
+  border: 1px solid #d9cddd;
+  border-radius: 0.6rem;
+  background: #fff;
+  font-size: 0.66rem;
+  font-weight: 750;
+}
+
+.ranking-season-confirmation button:first-of-type {
+  border-color: #b23a3a;
+  color: #b23a3a;
+}
+
 .ranking-settings-panel legend {
   margin-bottom: 0.65rem;
   color: #504653;
