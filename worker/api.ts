@@ -16,6 +16,10 @@ import {
   handleCommunitySettingsApiRequest,
   matchCommunitySettingsRoute,
 } from './community-settings'
+import {
+  handleReferentialApiRequest,
+  matchReferentialRoute,
+} from './community-referentials'
 
 export interface ApiRequestContext {
   context: ExecutionContext
@@ -72,6 +76,19 @@ export function handleApiRequest({
         request,
       },
       memberRoute,
+    )
+  }
+
+  const referentialRoute = matchReferentialRoute(requestUrl.pathname)
+
+  if (referentialRoute) {
+    return handleReferentialApiRequest(
+      {
+        context,
+        env,
+        request,
+      },
+      referentialRoute,
     )
   }
 
