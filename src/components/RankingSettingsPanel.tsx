@@ -19,7 +19,13 @@ export function RankingSettingsPanel({
   managerId,
   onDataChange,
 }: RankingSettingsPanelProps) {
-  const [settings, setSettings] = useState(data.rankingSettings)
+  const activeSeason = data.rankingSeasons.find(
+    ({ status }) => status === 'active',
+  )
+  const [settings, setSettings] = useState({
+    ...data.rankingSettings,
+    points: activeSeason?.points ?? data.rankingSettings.points,
+  })
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'invalid'>(
     'idle',
   )
@@ -59,11 +65,29 @@ export function RankingSettingsPanel({
         <div>
           <span>Competición comunitaria</span>
           <h2 id="ranking-settings-title">Configuración del ranking</h2>
-          <p>Define el barómetro y la vista inicial de la clasificación.</p>
+          <p>
+            Define el barómetro de la temporada activa y la vista inicial de la
+            clasificación.
+          </p>
         </div>
       </div>
 
       <form onSubmit={saveSettings}>
+        {activeSeason ? (
+          <div className="ranking-settings-season">
+            <span>Temporada activa</span>
+            <strong>{activeSeason.name}</strong>
+            <small>
+              Del {activeSeason.startsOn} al {activeSeason.endsOn}
+            </small>
+          </div>
+        ) : (
+          <p className="ranking-settings-season ranking-settings-season--empty">
+            No hay ninguna temporada activa. El barómetro no se aplicará a una
+            temporada hasta que se active una.
+          </p>
+        )}
+
         <fieldset>
           <legend>Puntos comunitarios por posición</legend>
           <div className="ranking-settings-points">
@@ -94,23 +118,6 @@ export function RankingSettingsPanel({
         </fieldset>
 
         <div className="ranking-settings-defaults">
-          <label className="form-field">
-            <span>Periodo por defecto</span>
-            <select
-              value={settings.defaultPeriodMonths}
-              onChange={(event) => {
-                setSaveStatus('idle')
-                setSettings((current) => ({
-                  ...current,
-                  defaultPeriodMonths: Number(event.target.value) as 3 | 6 | 12,
-                }))
-              }}
-            >
-              <option value="3">3 meses</option>
-              <option value="6">6 meses</option>
-              <option value="12">12 meses</option>
-            </select>
-          </label>
           <label className="form-field">
             <span>Jugadores mostrados</span>
             <select

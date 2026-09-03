@@ -5,7 +5,6 @@ import {
   getCommunityLeaderboard,
   getCommunityPoints,
   getLatestEventStandings,
-  RANKING_REFERENCE_TIME,
 } from './rankingSelectors'
 
 describe('rankingSelectors', () => {
@@ -44,31 +43,23 @@ describe('rankingSelectors', () => {
       eventKind: undefined,
     })
     expect(
-      getCommunityLeaderboard(
-        data,
-        {
-          gameId: 'game-mtg',
-          formatId: 'format-mtg-standard',
-          months: 6,
-        },
-        RANKING_REFERENCE_TIME,
-      )[0],
+      getCommunityLeaderboard(data, {
+        gameId: 'game-mtg',
+        formatId: 'format-mtg-standard',
+        seasonId: 'ranking-season-2026',
+      })[0],
     ).toMatchObject({
       member: { displayName: 'Carla Pons Alcover' },
       points: 47,
     })
   })
 
-  it('builds a six-month MTG Standard ranking across all event kinds', () => {
-    const ranking = getCommunityLeaderboard(
-      demoData,
-      {
-        gameId: 'game-mtg',
-        formatId: 'format-mtg-standard',
-        months: 6,
-      },
-      RANKING_REFERENCE_TIME,
-    )
+  it('builds the active-season MTG Standard ranking across all series', () => {
+    const ranking = getCommunityLeaderboard(demoData, {
+      gameId: 'game-mtg',
+      formatId: 'format-mtg-standard',
+      seasonId: 'ranking-season-2026',
+    })
 
     expect(
       ranking
@@ -87,46 +78,61 @@ describe('rankingSelectors', () => {
     )
   })
 
-  it('filters the cumulative ranking by FNM and rolling period', () => {
-    const sixMonths = getCommunityLeaderboard(
-      demoData,
-      {
-        gameId: 'game-mtg',
-        formatId: 'format-mtg-standard',
-        competitionEventKindId: 'event-kind-fnm',
-        months: 6,
-      },
-      RANKING_REFERENCE_TIME,
-    )
-    const twelveMonths = getCommunityLeaderboard(
-      demoData,
-      {
-        gameId: 'game-mtg',
-        formatId: 'format-mtg-standard',
-        competitionEventKindId: 'event-kind-fnm',
-        months: 12,
-      },
-      RANKING_REFERENCE_TIME,
-    )
+  it('keeps active and closed seasons separate', () => {
+    const activeSeason = getCommunityLeaderboard(demoData, {
+      gameId: 'game-mtg',
+      formatId: 'format-mtg-standard',
+      competitionEventKindId: 'event-kind-fnm',
+      seasonId: 'ranking-season-2026',
+    })
+    const closedSeason = getCommunityLeaderboard(demoData, {
+      gameId: 'game-mtg',
+      formatId: 'format-mtg-standard',
+      competitionEventKindId: 'event-kind-fnm',
+      seasonId: 'ranking-season-2025',
+    })
 
-    expect(sixMonths[0]).toMatchObject({ points: 38, eventsPlayed: 5 })
-    expect(twelveMonths[0].eventsPlayed).toBe(6)
+    expect(activeSeason[0]).toMatchObject({ points: 38, eventsPlayed: 5 })
+    expect(closedSeason[0]).toMatchObject({
+      member: { displayName: 'Biel Ferrer' },
+      points: 10,
+      eventsPlayed: 1,
+    })
   })
 
   it('keeps games separate', () => {
-    const onePieceRanking = getCommunityLeaderboard(
-      demoData,
-      {
-        gameId: 'game-one-piece',
-        months: 6,
-      },
-      RANKING_REFERENCE_TIME,
-    )
+    const onePieceRanking = getCommunityLeaderboard(demoData, {
+      gameId: 'game-one-piece',
+      seasonId: 'ranking-season-2026',
+    })
 
     expect(onePieceRanking[0]).toMatchObject({
       member: { displayName: 'Marc Vidal' },
       points: 10,
       eventWins: 1,
     })
+  })
+
+  it('does not add a late member to a closed season ranking', () => {
+    const data = structuredClone(demoData)
+    const lateMember = data.members.find(
+      ({ id }) => id === 'member-lucas-pending',
+    )!
+    lateMember.status = 'approved'
+    const closedStanding = data.eventStandings.find(
+      ({ id }) => id === 'standing-fnm-standard-2025-11-28',
+    )!
+    closedStanding.entries[0].memberId = lateMember.id
+    closedStanding.entries[0].displayName = lateMember.displayName
+
+    const ranking = getCommunityLeaderboard(data, {
+      gameId: 'game-mtg',
+      formatId: 'format-mtg-standard',
+      seasonId: 'ranking-season-2025',
+    })
+
+    expect(ranking.some(({ member }) => member.id === lateMember.id)).toBe(
+      false,
+    )
   })
 })

@@ -9112,6 +9112,38 @@ a {
   border: 0;
 }
 
+.ranking-settings-season {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.15rem 0.75rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.7rem;
+  background: #f5f0f7;
+  color: #504653;
+}
+
+.ranking-settings-season > span,
+.ranking-settings-season > small {
+  font-size: 0.68rem;
+}
+
+.ranking-settings-season > strong {
+  color: #6b2f80;
+  font-size: 0.78rem;
+}
+
+.ranking-settings-season > small {
+  grid-column: 1 / -1;
+  color: #817784;
+}
+
+.ranking-settings-season--empty {
+  display: block;
+  margin: 0;
+  line-height: 1.45;
+}
+
 .ranking-settings-panel legend {
   margin-bottom: 0.65rem;
   color: #504653;
@@ -9995,7 +10027,7 @@ a {
   }
 
   .ranking-select-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .ranking-choice-row {
@@ -10011,7 +10043,7 @@ a {
   }
 
   .ranking-settings-defaults {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .match-group-grid {
@@ -10401,7 +10433,7 @@ a {
   }
 
   .ranking-select-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .ranking-choice-row {

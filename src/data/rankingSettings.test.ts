@@ -7,7 +7,7 @@ import {
 } from './rankingSettings'
 
 describe('community ranking settings', () => {
-  it('lets the manager update the barometer and ranking defaults', () => {
+  it('updates the active-season barometer without changing a closed season', () => {
     const settings = {
       points: {
         first: 12,
@@ -21,8 +21,12 @@ describe('community ranking settings', () => {
       defaultPeriodMonths: 12 as const,
       defaultLimit: 'all' as const,
     }
+    const data = structuredClone(demoData)
+    const closedSeasonPoints = structuredClone(
+      data.rankingSeasons.find(({ status }) => status === 'closed')!.points,
+    )
     const updated = updateCommunityRankingSettings(
-      structuredClone(demoData),
+      data,
       'member-lucia',
       settings,
     )
@@ -31,6 +35,12 @@ describe('community ranking settings', () => {
     expect(getCommunityPoints(1, updated.rankingSettings)).toBe(12)
     expect(getCommunityPoints(8, updated.rankingSettings)).toBe(2)
     expect(getCommunityPoints(18, updated.rankingSettings)).toBe(1)
+    expect(
+      updated.rankingSeasons.find(({ status }) => status === 'active')?.points,
+    ).toEqual(settings.points)
+    expect(
+      updated.rankingSeasons.find(({ status }) => status === 'closed')?.points,
+    ).toEqual(closedSeasonPoints)
   })
 
   it('rejects players and incoherent point scales', () => {

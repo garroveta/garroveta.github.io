@@ -56,6 +56,7 @@ Avant chaque commit :
 - L’inscription utilise une invitation et un code OTP, sans mot de passe.
 - Le parcours d’inscription reste séparé du profil connecté.
 - Les inscriptions aux événements sont optionnelles et principalement réservées aux événements MTG.
+- Une saison de ranking clôturée est figée : une activation ultérieure de membre ne modifie ni ses participants éligibles ni son barème.
 - Les communications créées par le gérant alimentent la section Noticias.
 - Les données du prototype sont locales et couvrent plusieurs cas réalistes.
 

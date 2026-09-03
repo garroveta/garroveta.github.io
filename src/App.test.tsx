@@ -747,7 +747,7 @@ describe('App', () => {
 
     expect(
       screen.getByRole('heading', {
-        name: 'MTG · Todos los formatos · Todas las series',
+        name: 'MTG · Temporada 2026 · Todos los formatos · Todas las series',
       }),
     ).toBeInTheDocument()
     expect(screen.getByLabelText('Formato')).toHaveValue('')
@@ -772,7 +772,7 @@ describe('App', () => {
 
     expect(
       screen.getByRole('heading', {
-        name: 'MTG · Todos los formatos · FNM',
+        name: 'MTG · Temporada 2026 · Todos los formatos · FNM',
       }),
     ).toBeInTheDocument()
     expect(
@@ -801,9 +801,6 @@ describe('App', () => {
     fireEvent.change(screen.getByLabelText('Puntos para 1.º'), {
       target: { value: '12' },
     })
-    fireEvent.change(screen.getByLabelText('Periodo por defecto'), {
-      target: { value: '12' },
-    })
     fireEvent.change(screen.getByLabelText('Jugadores mostrados'), {
       target: { value: 'all' },
     })
@@ -816,9 +813,18 @@ describe('App', () => {
       createLocalDemoRepository(window.localStorage).load().rankingSettings,
     ).toMatchObject({
       points: { first: 12 },
-      defaultPeriodMonths: 12,
       defaultLimit: 'all',
     })
+    expect(
+      createLocalDemoRepository(window.localStorage)
+        .load()
+        .rankingSeasons.find(({ status }) => status === 'active')?.points.first,
+    ).toBe(12)
+    expect(
+      createLocalDemoRepository(window.localStorage)
+        .load()
+        .rankingSeasons.find(({ status }) => status === 'closed')?.points.first,
+    ).toBe(10)
 
     fireEvent.click(screen.getByRole('link', { name: 'Ranking' }))
     fireEvent.click(screen.getByRole('tab', { name: 'Últimos eventos' }))

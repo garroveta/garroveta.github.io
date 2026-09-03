@@ -8,10 +8,12 @@ import type {
   EventStanding,
 } from '../domain/types'
 import { getCommunityPoints } from './rankingSettings'
+import {
+  getEligibleRankingMemberIds,
+  getRankingSeasonForDate,
+} from './rankingSeasons'
 
 export { getCommunityPoints } from './rankingSettings'
-
-export const RANKING_REFERENCE_TIME = '2026-08-06T12:00:00+02:00'
 
 export type ResolvedEventStanding = {
   standing: EventStanding
@@ -25,7 +27,7 @@ export type RankingFilters = {
   gameId: string
   formatId?: string
   competitionEventKindId?: string
-  months: 3 | 6 | 12
+  seasonId: string
 }
 
 export type CommunityRankingPlayer = {
@@ -77,22 +79,20 @@ export function getLatestEventStandings(
     )
 }
 
-function subtractMonths(referenceTime: string, months: number) {
-  const cutoff = new Date(referenceTime)
-  cutoff.setUTCMonth(cutoff.getUTCMonth() - months)
-  return cutoff.getTime()
-}
-
 export function getCommunityLeaderboard(
   data: DemoDataSet,
   filters: RankingFilters,
-  referenceTime = new Date().toISOString(),
 ): CommunityRankingPlayer[] {
-  const referenceTimestamp = new Date(referenceTime).getTime()
-  const cutoffTimestamp = subtractMonths(referenceTime, filters.months)
-  const approvedMembers = new Map(
+  const season = data.rankingSeasons.find(({ id }) => id === filters.seasonId)
+
+  if (!season) {
+    return []
+  }
+
+  const eligibleMemberIds = getEligibleRankingMemberIds(season, data.members)
+  const eligibleMembers = new Map(
     data.members
-      .filter(({ status }) => status === 'approved')
+      .filter(({ id }) => eligibleMemberIds.has(id))
       .map((member) => [member.id, member]),
   )
   const totals = new Map<
@@ -101,24 +101,22 @@ export function getCommunityLeaderboard(
   >()
 
   for (const item of getLatestEventStandings(data)) {
-    const eventTimestamp = new Date(
-      item.event.endsAt ?? item.event.startsAt,
-    ).getTime()
+    const eventDate = item.event.endsAt ?? item.event.startsAt
     const matchesFilters =
       item.event.countsForCommunityRanking === true &&
+      getRankingSeasonForDate(data.rankingSeasons, eventDate)?.id ===
+        season.id &&
       item.game.id === filters.gameId &&
       (!filters.formatId || item.format.id === filters.formatId) &&
       (!filters.competitionEventKindId ||
-        item.eventKind?.id === filters.competitionEventKindId) &&
-      eventTimestamp >= cutoffTimestamp &&
-      eventTimestamp <= referenceTimestamp
+        item.eventKind?.id === filters.competitionEventKindId)
 
     if (!matchesFilters) {
       continue
     }
 
     for (const entry of item.standing.entries) {
-      if (!entry.memberId || !approvedMembers.has(entry.memberId)) {
+      if (!entry.memberId || !eligibleMembers.has(entry.memberId)) {
         continue
       }
 
@@ -132,8 +130,7 @@ export function getCommunityLeaderboard(
       }
 
       totals.set(entry.memberId, {
-        points:
-          current.points + getCommunityPoints(entry.rank, data.rankingSettings),
+        points: current.points + getCommunityPoints(entry.rank, season.points),
         eventsPlayed: current.eventsPlayed + 1,
         eventWins: current.eventWins + Number(entry.rank === 1),
         podiums: current.podiums + Number(entry.rank <= 3),
@@ -149,7 +146,7 @@ export function getCommunityLeaderboard(
 
   return [...totals.entries()]
     .flatMap(([memberId, result]) => {
-      const member = approvedMembers.get(memberId)
+      const member = eligibleMembers.get(memberId)
       return member ? [{ member, ...result }] : []
     })
     .sort(

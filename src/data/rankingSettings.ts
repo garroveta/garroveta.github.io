@@ -1,4 +1,8 @@
-import type { CommunityRankingSettings, DemoDataSet } from '../domain/types'
+import type {
+  CommunityRankingPoints,
+  CommunityRankingSettings,
+  DemoDataSet,
+} from '../domain/types'
 
 export type CommunityRankingSettingsInput = CommunityRankingSettings
 
@@ -46,23 +50,29 @@ export function isCommunityRankingSettingsValid(
 export function getCommunityPoints(rank: number): number
 export function getCommunityPoints(
   rank: number,
-  settings: CommunityRankingSettings,
+  settings: CommunityRankingSettings | CommunityRankingPoints,
 ): number
 export function getCommunityPoints(
   rank: number,
   settings:
-    CommunityRankingSettings | number = DEFAULT_COMMUNITY_RANKING_SETTINGS,
+    | CommunityRankingSettings
+    | CommunityRankingPoints
+    | number = DEFAULT_COMMUNITY_RANKING_SETTINGS,
 ) {
-  const resolvedSettings =
-    typeof settings === 'number' ? DEFAULT_COMMUNITY_RANKING_SETTINGS : settings
+  const resolvedPoints =
+    typeof settings === 'number'
+      ? DEFAULT_COMMUNITY_RANKING_SETTINGS.points
+      : 'points' in settings
+        ? settings.points
+        : settings
 
-  if (rank === 1) return resolvedSettings.points.first
-  if (rank === 2) return resolvedSettings.points.second
-  if (rank === 3) return resolvedSettings.points.third
-  if (rank === 4) return resolvedSettings.points.fourth
-  if (rank === 5) return resolvedSettings.points.fifth
-  if (rank <= 10) return resolvedSettings.points.sixthToTenth
-  return resolvedSettings.points.participation
+  if (rank === 1) return resolvedPoints.first
+  if (rank === 2) return resolvedPoints.second
+  if (rank === 3) return resolvedPoints.third
+  if (rank === 4) return resolvedPoints.fourth
+  if (rank === 5) return resolvedPoints.fifth
+  if (rank <= 10) return resolvedPoints.sixthToTenth
+  return resolvedPoints.participation
 }
 
 export function updateCommunityRankingSettings(
@@ -77,8 +87,13 @@ export function updateCommunityRankingSettings(
     return data
   }
 
+  const points = structuredClone(settings.points)
+
   return {
     ...data,
     rankingSettings: structuredClone(settings),
+    rankingSeasons: data.rankingSeasons.map((season) =>
+      season.status === 'active' ? { ...season, points } : season,
+    ),
   }
 }

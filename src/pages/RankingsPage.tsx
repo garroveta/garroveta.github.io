@@ -13,12 +13,12 @@ import { useMemo, useRef, useState, type RefObject } from 'react'
 import {
   getCommunityLeaderboard,
   getLatestEventStandings,
-  type RankingFilters,
   type ResolvedEventStanding,
 } from '../data/rankingSelectors'
 import { getCommunityPoints } from '../data/rankingSettings'
+import { getRankingSeasonForDate } from '../data/rankingSeasons'
 import type {
-  CommunityRankingSettings,
+  CommunityRankingPoints,
   DemoDataSet,
   EventStandingEntry,
 } from '../domain/types'
@@ -85,7 +85,7 @@ function MobileEventStandingList({
 }: {
   entries: EventStandingEntry[]
   eventTitle: string
-  rankingSettings: CommunityRankingSettings
+  rankingSettings: CommunityRankingPoints
 }) {
   const [expandedEntries, setExpandedEntries] = useState<Set<number>>(
     () => new Set(),
@@ -241,7 +241,7 @@ function EventRankingDetail({
   sectionRef,
 }: {
   item: ResolvedEventStanding
-  rankingSettings: CommunityRankingSettings
+  rankingSettings: CommunityRankingPoints
   sectionRef: RefObject<HTMLElement | null>
 }) {
   return (
@@ -390,8 +390,13 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
   const [gameId, setGameId] = useState('game-mtg')
   const [formatId, setFormatId] = useState('')
   const [eventKindId, setEventKindId] = useState('')
-  const [months, setMonths] = useState<RankingFilters['months']>(
-    data.rankingSettings.defaultPeriodMonths,
+  const seasons = [...data.rankingSeasons].sort((first, second) =>
+    second.startsOn.localeCompare(first.startsOn),
+  )
+  const [seasonId, setSeasonId] = useState(
+    seasons.find(({ status }) => status === 'active')?.id ??
+      seasons[0]?.id ??
+      '',
   )
   const [limit, setLimit] = useState<10 | 'all'>(
     data.rankingSettings.defaultLimit,
@@ -408,10 +413,11 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
         gameId,
         formatId: formatId || undefined,
         competitionEventKindId: eventKindId || undefined,
-        months,
+        seasonId,
       }),
-    [data, eventKindId, formatId, gameId, months],
+    [data, eventKindId, formatId, gameId, seasonId],
   )
+  const selectedSeason = seasons.find(({ id }) => id === seasonId)
   const selectedGame = data.games.find(({ id }) => id === gameId)
   const selectedFormat = data.competitionFormats.find(
     ({ id }) => id === formatId,
@@ -421,6 +427,7 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
   )
   const rankingTitle = [
     selectedGame?.shortName,
+    selectedSeason?.name,
     selectedFormat?.shortName ?? 'Todos los formatos',
     selectedEventKind?.shortName ?? 'Todas las series',
   ]
@@ -444,8 +451,9 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
           <span className="ranking-filter-summary__value">
             {selectedGame?.shortName} ·{' '}
             {selectedFormat?.shortName ?? 'Todos los formatos'} ·{' '}
-            {selectedEventKind?.shortName ?? 'Todas las series'} · {months}{' '}
-            meses · {limit === 'all' ? 'Todos' : `Top ${limit}`}
+            {selectedEventKind?.shortName ?? 'Todas las series'} ·{' '}
+            {selectedSeason?.name ?? 'Sin temporada'} ·{' '}
+            {limit === 'all' ? 'Todos' : `Top ${limit}`}
           </span>
           <span className="ranking-filter-summary__action">
             Modificar
@@ -455,6 +463,20 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
 
         <div className="ranking-filter-panel__content">
           <div className="ranking-select-grid">
+            <label className="form-field">
+              <span>Temporada</span>
+              <select
+                value={seasonId}
+                onChange={(event) => setSeasonId(event.target.value)}
+              >
+                {seasons.map((season) => (
+                  <option key={season.id} value={season.id}>
+                    {season.name}
+                    {season.status === 'active' ? ' · Activa' : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
             <label className="form-field">
               <span>Juego</span>
               <select
@@ -499,24 +521,6 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
           </div>
 
           <div className="ranking-choice-row">
-            <div>
-              <span>Periodo</span>
-              <div
-                className="ranking-segmented"
-                aria-label="Periodo del ranking"
-              >
-                {([3, 6, 12] as const).map((period) => (
-                  <button
-                    key={period}
-                    type="button"
-                    aria-pressed={months === period}
-                    onClick={() => setMonths(period)}
-                  >
-                    {period} meses
-                  </button>
-                ))}
-              </div>
-            </div>
             <div>
               <span>Clasificación</span>
               <div
@@ -711,6 +715,15 @@ export function RankingsPage({
   const selectedStanding =
     standings.find(({ standing }) => standing.id === selectedStandingId) ??
     standings[0]
+  const selectedStandingSeason = selectedStanding
+    ? getRankingSeasonForDate(
+        data.rankingSeasons,
+        selectedStanding.event.endsAt ?? selectedStanding.event.startsAt,
+      )
+    : undefined
+  const activeSeason =
+    data.rankingSeasons.find(({ status }) => status === 'active') ??
+    data.rankingSeasons[0]
 
   return (
     <div className="page rankings-page">
@@ -755,7 +768,9 @@ export function RankingsPage({
           {selectedStanding ? (
             <EventRankingDetail
               item={selectedStanding}
-              rankingSettings={data.rankingSettings}
+              rankingSettings={
+                selectedStandingSeason?.points ?? data.rankingSettings.points
+              }
               sectionRef={rankingDetailRef}
             />
           ) : null}
@@ -798,10 +813,9 @@ export function RankingsPage({
           <strong>Un barómetro simple para empezar</strong>
           <p>
             Los puntos oficiales siguen visibles en cada evento. Garroveta
-            atribuye por separado entre {data.rankingSettings.points.first}{' '}
-            puntos al primer puesto y{' '}
-            {data.rankingSettings.points.participation}{' '}
-            {data.rankingSettings.points.participation === 1
+            atribuye por separado entre {activeSeason?.points.first ?? 0} puntos
+            al primer puesto y {activeSeason?.points.participation ?? 0}{' '}
+            {(activeSeason?.points.participation ?? 0) === 1
               ? 'punto'
               : 'puntos'}{' '}
             de participación para construir esta clasificación comunitaria.
