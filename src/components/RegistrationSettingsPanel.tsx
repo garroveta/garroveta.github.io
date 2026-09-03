@@ -1,11 +1,9 @@
 import { Save, UsersRound } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 
-import type { DemoDataUpdater } from '../data/demoRepository'
 import {
   EVENT_TYPE_LABELS,
   isCommunityRegistrationSettingsValid,
-  updateCommunityRegistrationSettings,
 } from '../data/registrationSettings'
 import type {
   CommunityRegistrationSettings,
@@ -14,21 +12,19 @@ import type {
 
 type RegistrationSettingsPanelProps = {
   data: DemoDataSet
-  managerId: string
-  onDataChange: (updater: DemoDataUpdater) => void
+  onSave: (settings: CommunityRegistrationSettings) => Promise<void>
 }
 
 export function RegistrationSettingsPanel({
   data,
-  managerId,
-  onDataChange,
+  onSave,
 }: RegistrationSettingsPanelProps) {
   const [settings, setSettings] = useState<CommunityRegistrationSettings>(
     data.registrationSettings,
   )
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'invalid'>(
-    'idle',
-  )
+  const [saveStatus, setSaveStatus] = useState<
+    'idle' | 'saving' | 'saved' | 'invalid' | 'error'
+  >('idle')
 
   function updateRule(
     eventType: string,
@@ -43,7 +39,7 @@ export function RegistrationSettingsPanel({
     }))
   }
 
-  function saveSettings(event: FormEvent<HTMLFormElement>) {
+  async function saveSettings(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     if (!isCommunityRegistrationSettingsValid(settings)) {
@@ -51,10 +47,14 @@ export function RegistrationSettingsPanel({
       return
     }
 
-    onDataChange((currentData) =>
-      updateCommunityRegistrationSettings(currentData, managerId, settings),
-    )
-    setSaveStatus('saved')
+    setSaveStatus('saving')
+
+    try {
+      await onSave(settings)
+      setSaveStatus('saved')
+    } catch {
+      setSaveStatus('error')
+    }
   }
 
   return (
@@ -141,11 +141,17 @@ export function RegistrationSettingsPanel({
               ? 'Configuración guardada.'
               : saveStatus === 'invalid'
                 ? 'Revisa las capacidades configuradas.'
-                : ''}
+                : saveStatus === 'error'
+                  ? 'No se ha podido guardar. Inténtalo de nuevo.'
+                  : ''}
           </span>
-          <button className="primary-button" type="submit">
+          <button
+            className="primary-button"
+            disabled={saveStatus === 'saving'}
+            type="submit"
+          >
             <Save aria-hidden="true" size={16} />
-            Guardar configuración
+            {saveStatus === 'saving' ? 'Guardando…' : 'Guardar configuración'}
           </button>
         </div>
       </form>

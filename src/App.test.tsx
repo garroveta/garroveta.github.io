@@ -24,6 +24,7 @@ import type { ManagedCommunityMember } from './api/managerMembers'
 import type { CommunityEventsStatus } from './hooks/useCommunityEvents'
 import type { CommunitySettingsStatus } from './hooks/useCommunitySettings'
 import type { CommunitySettingsInput } from './data/communitySettings'
+import type { CommunityRegistrationSettings } from './domain/types'
 import type {
   CommunityOption,
   CommunityOptionInput,
@@ -72,6 +73,9 @@ const communityCommunicationApiMocks = vi.hoisted(() => ({
 const communitySettingsApiMocks = vi.hoisted(() => ({
   saveCommunitySettings: vi.fn(),
 }))
+const communityRegistrationSettingsApiMocks = vi.hoisted(() => ({
+  saveCommunityRegistrationSettings: vi.fn(),
+}))
 const communityReferentialsApiMocks = vi.hoisted(() => ({
   createCommunityReferential: vi.fn(),
   deleteCommunityReferential: vi.fn(),
@@ -95,6 +99,10 @@ const communityReferentialsHookMocks = vi.hoisted(() => ({
   reload: vi.fn(),
   status: 'ready' as CommunityReferentialsStatus,
 }))
+const communityRegistrationSettingsHookMocks = vi.hoisted(() => ({
+  reload: vi.fn(),
+  status: 'ready' as CommunitySettingsStatus,
+}))
 
 vi.mock('./api/registration', () => registrationApiMocks)
 vi.mock('./api/managerInvitations', () => managerInvitationApiMocks)
@@ -104,6 +112,10 @@ vi.mock('./api/authentication', () => authenticationApiMocks)
 vi.mock('./api/communityEvents', () => communityEventApiMocks)
 vi.mock('./api/communityCommunications', () => communityCommunicationApiMocks)
 vi.mock('./api/communitySettings', () => communitySettingsApiMocks)
+vi.mock(
+  './api/communityRegistrationSettings',
+  () => communityRegistrationSettingsApiMocks,
+)
 vi.mock('./api/communityReferentials', () => communityReferentialsApiMocks)
 vi.mock('./hooks/useCommunityEvents', () => ({
   useCommunityEvents: () => communityEventsHookMocks,
@@ -119,6 +131,10 @@ vi.mock('./hooks/useCommunitySettings', () => ({
 }))
 vi.mock('./hooks/useCommunityReferentials', () => ({
   useCommunityReferentials: () => communityReferentialsHookMocks,
+}))
+vi.mock('./hooks/useCommunityRegistrationSettings', () => ({
+  useCommunityRegistrationSettings: () =>
+    communityRegistrationSettingsHookMocks,
 }))
 vi.mock('./hooks/useCurrentUser', async () => {
   const { useState } = await vi.importActual<typeof import('react')>('react')
@@ -258,6 +274,7 @@ describe('App', () => {
     communityCommunicationsHookMocks.status = 'ready'
     communitySettingsHookMocks.status = 'ready'
     communityReferentialsHookMocks.status = 'ready'
+    communityRegistrationSettingsHookMocks.status = 'ready'
     const currentUser = buildCurrentUser()
     currentUserHookMocks.current = {
       data: currentUser,
@@ -276,6 +293,10 @@ describe('App', () => {
             ...input,
           },
         }),
+    )
+    communityRegistrationSettingsApiMocks.saveCommunityRegistrationSettings.mockImplementation(
+      (_communityId: string, input: CommunityRegistrationSettings) =>
+        Promise.resolve({ registrationSettings: input }),
     )
     communityReferentialsApiMocks.createCommunityReferential.mockImplementation(
       (_communityId: string, input: CommunityOptionInput) =>
@@ -806,7 +827,7 @@ describe('App', () => {
     ).not.toHaveLength(0)
   })
 
-  it('lets the manager configure registration defaults for new MTG events', () => {
+  it('lets the manager configure registration defaults for new MTG events', async () => {
     authenticateAsManager()
     render(<App />)
 
@@ -822,7 +843,19 @@ describe('App', () => {
       screen.getByRole('button', { name: 'Guardar configuración' }),
     )
 
-    expect(screen.getByText('Configuración guardada.')).toBeInTheDocument()
+    expect(
+      await screen.findByText('Configuración guardada.'),
+    ).toBeInTheDocument()
+    expect(
+      communityRegistrationSettingsApiMocks.saveCommunityRegistrationSettings,
+    ).toHaveBeenCalledWith(
+      'community-crc-delorean',
+      expect.objectContaining({
+        rules: expect.arrayContaining([
+          expect.objectContaining({ eventType: 'draft', defaultCapacity: 4 }),
+        ]),
+      }),
+    )
     expect(
       createLocalDemoRepository(window.localStorage)
         .load()

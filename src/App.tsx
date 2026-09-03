@@ -18,6 +18,7 @@ import {
   saveCommunitySettings,
   type PersistedCommunitySettings,
 } from './api/communitySettings'
+import { saveCommunityRegistrationSettings } from './api/communityRegistrationSettings'
 import {
   createCommunityReferential,
   deleteCommunityReferential,
@@ -39,6 +40,7 @@ import { useCommunityEvents } from './hooks/useCommunityEvents'
 import { useCommunityCommunications } from './hooks/useCommunityCommunications'
 import { useCommunitySettings } from './hooks/useCommunitySettings'
 import { useCommunityReferentials } from './hooks/useCommunityReferentials'
+import { useCommunityRegistrationSettings } from './hooks/useCommunityRegistrationSettings'
 import { useDemoRole } from './hooks/useDemoRole'
 import { useHashRoute } from './hooks/useHashRoute'
 import { useCurrentUser } from './hooks/useCurrentUser'
@@ -165,6 +167,20 @@ export function App() {
     communityId: data.community.id,
     enabled: Boolean(approvedMembership),
     onLoaded: replaceReferentials,
+  })
+  const replaceRegistrationSettings = useCallback(
+    (registrationSettings: DemoDataSet['registrationSettings']) => {
+      updateData((currentData) => ({
+        ...currentData,
+        registrationSettings,
+      }))
+    },
+    [updateData],
+  )
+  const communityRegistrationSettings = useCommunityRegistrationSettings({
+    communityId: data.community.id,
+    enabled: Boolean(approvedMembership),
+    onLoaded: replaceRegistrationSettings,
   })
   const listEventParticipants = useCallback(
     (eventId: string) =>
@@ -517,6 +533,8 @@ export function App() {
             communitySettingsStatus={communitySettings.status}
             communityReferentialsError={communityReferentials.error}
             communityReferentialsStatus={communityReferentials.status}
+            registrationSettingsError={communityRegistrationSettings.error}
+            registrationSettingsStatus={communityRegistrationSettings.status}
             managerId={publishingMember.id}
             initialSection={
               isSettingsSection(requestedSettingsSection)
@@ -528,6 +546,7 @@ export function App() {
             onReloadCommunications={communityCommunications.reload}
             onReloadCommunitySettings={communitySettings.reload}
             onReloadCommunityReferentials={communityReferentials.reload}
+            onReloadRegistrationSettings={communityRegistrationSettings.reload}
             onCreateCommunityOption={async (input) => {
               const { option } = await createCommunityReferential(
                 data.community.id,
@@ -567,6 +586,14 @@ export function App() {
                 input,
               )
               replaceCommunitySettings(community)
+            }}
+            onSaveRegistrationSettings={async (input) => {
+              const { registrationSettings } =
+                await saveCommunityRegistrationSettings(
+                  data.community.id,
+                  input,
+                )
+              replaceRegistrationSettings(registrationSettings)
             }}
             onUpdateCommunityOption={async (optionId, input, isActive) => {
               const { option } = await updateCommunityReferential(

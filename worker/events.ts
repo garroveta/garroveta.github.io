@@ -1,4 +1,6 @@
 import { type AuthEnv } from './auth'
+import { EVENT_TYPES } from '../src/domain/registrationSettings'
+import type { EventType } from '../src/domain/types'
 import {
   authorizeApprovedManager,
   authorizeApprovedMember,
@@ -8,17 +10,6 @@ import { ApiRequestError, apiError, jsonResponse, readJsonBody } from './http'
 import { getEventRegistrationSummary } from './event-registrations'
 
 const RESOURCE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$/
-const EVENT_TYPES = [
-  'tournament',
-  'league',
-  'draft',
-  'casual',
-  'workshop',
-  'launch',
-] as const
-
-type EventType = (typeof EVENT_TYPES)[number]
-
 interface EventRequestContext {
   context: ExecutionContext
   env: AuthEnv

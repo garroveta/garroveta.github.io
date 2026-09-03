@@ -20,6 +20,10 @@ import {
   handleReferentialApiRequest,
   matchReferentialRoute,
 } from './community-referentials'
+import {
+  handleRegistrationSettingsApiRequest,
+  matchRegistrationSettingsRoute,
+} from './registration-settings'
 
 export interface ApiRequestContext {
   context: ExecutionContext
@@ -104,6 +108,21 @@ export function handleApiRequest({
         request,
       },
       communitySettingsRoute,
+    )
+  }
+
+  const registrationSettingsRoute = matchRegistrationSettingsRoute(
+    requestUrl.pathname,
+  )
+
+  if (registrationSettingsRoute) {
+    return handleRegistrationSettingsApiRequest(
+      {
+        context,
+        env,
+        request,
+      },
+      registrationSettingsRoute,
     )
   }
 

@@ -27,6 +27,8 @@ import type {
   CommunityOptionSection,
 } from '../data/communityOptions'
 import type { CommunityReferentialsStatus } from '../hooks/useCommunityReferentials'
+import type { CommunityRegistrationSettingsStatus } from '../hooks/useCommunityRegistrationSettings'
+import type { CommunityRegistrationSettings } from '../domain/types'
 import { DataStateView } from '../components/DataStateView'
 import type { SettingsSection } from './settingsSections'
 
@@ -37,6 +39,8 @@ type SettingsPageProps = {
   communitySettingsStatus: CommunitySettingsStatus
   communityReferentialsError: unknown
   communityReferentialsStatus: CommunityReferentialsStatus
+  registrationSettingsError: unknown
+  registrationSettingsStatus: CommunityRegistrationSettingsStatus
   data: DemoDataSet
   managerId: string
   initialSection?: SettingsSection
@@ -45,6 +49,7 @@ type SettingsPageProps = {
   onReloadCommunications: () => void
   onReloadCommunitySettings: () => void
   onReloadCommunityReferentials: () => void
+  onReloadRegistrationSettings: () => void
   onCreateCommunityOption: (input: CommunityOptionInput) => Promise<void>
   onDeleteCommunityOption: (
     section: CommunityOptionSection,
@@ -55,6 +60,9 @@ type SettingsPageProps = {
     optionIds: string[],
   ) => Promise<void>
   onSaveCommunitySettings: (input: CommunitySettingsInput) => Promise<void>
+  onSaveRegistrationSettings: (
+    input: CommunityRegistrationSettings,
+  ) => Promise<void>
   onUpdateCommunityOption: (
     optionId: string,
     input: CommunityOptionInput,
@@ -70,6 +78,8 @@ export function SettingsPage({
   communitySettingsStatus,
   communityReferentialsError,
   communityReferentialsStatus,
+  registrationSettingsError,
+  registrationSettingsStatus,
   data,
   managerId,
   initialSection,
@@ -78,10 +88,12 @@ export function SettingsPage({
   onReloadCommunications,
   onReloadCommunitySettings,
   onReloadCommunityReferentials,
+  onReloadRegistrationSettings,
   onCreateCommunityOption,
   onDeleteCommunityOption,
   onReorderCommunityOptions,
   onSaveCommunitySettings,
+  onSaveRegistrationSettings,
   onUpdateCommunityOption,
   onViewNewsPost,
 }: SettingsPageProps) {
@@ -205,11 +217,24 @@ export function SettingsPage({
           onUpdate={onUpdateCommunityOption}
         />
       ) : activeSection === 'registrations' ? (
-        <RegistrationSettingsPanel
-          data={data}
-          managerId={managerId}
-          onDataChange={onDataChange}
-        />
+        registrationSettingsStatus === 'ready' ? (
+          <RegistrationSettingsPanel
+            data={data}
+            onSave={onSaveRegistrationSettings}
+          />
+        ) : (
+          <section className="registration-settings-panel">
+            <DataStateView
+              error={registrationSettingsError}
+              loadingDescription="Estamos recuperando las reglas por defecto de cada tipo de evento."
+              loadingTitle="Cargando las inscripciones"
+              onRetry={onReloadRegistrationSettings}
+              status={
+                registrationSettingsStatus === 'error' ? 'error' : 'loading'
+              }
+            />
+          </section>
+        )
       ) : activeSection === 'members' ? (
         <MemberManagementPanel
           communityId={data.community.id}
