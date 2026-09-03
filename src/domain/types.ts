@@ -71,19 +71,40 @@ export type CompetitionEventKind = {
   isActive?: boolean
 }
 
+export type CommunityRankingPoints = {
+  first: number
+  second: number
+  third: number
+  fourth: number
+  fifth: number
+  sixthToTenth: number
+  participation: number
+}
+
 export type CommunityRankingSettings = {
-  points: {
-    first: number
-    second: number
-    third: number
-    fourth: number
-    fifth: number
-    sixthToTenth: number
-    participation: number
-  }
+  points: CommunityRankingPoints
   defaultPeriodMonths: 3 | 6 | 12
   defaultLimit: 10 | 'all'
 }
+
+type CommunityRankingSeasonBase = {
+  id: EntityId
+  communityId: EntityId
+  name: string
+  startsOn: string
+  endsOn: string
+  points: CommunityRankingPoints
+}
+
+export type CommunityRankingSeason =
+  | (CommunityRankingSeasonBase & {
+      status: 'upcoming' | 'active'
+      eligibleMemberIds?: never
+    })
+  | (CommunityRankingSeasonBase & {
+      status: 'closed'
+      eligibleMemberIds: EntityId[]
+    })
 
 export type EventRegistrationRule = {
   eventType: EventType
@@ -299,6 +320,7 @@ export type DemoDataSet = {
   competitionFormats: CompetitionFormat[]
   competitionEventKinds: CompetitionEventKind[]
   rankingSettings: CommunityRankingSettings
+  rankingSeasons: CommunityRankingSeason[]
   registrationSettings: CommunityRegistrationSettings
   tags: CommunityTag[]
   members: CommunityMember[]

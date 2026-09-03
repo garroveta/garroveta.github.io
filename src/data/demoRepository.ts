@@ -4,7 +4,7 @@ import { DEFAULT_COMMUNITY_REGISTRATION_SETTINGS } from './registrationSettings'
 import type { DemoDataSet } from '../domain/types'
 
 export const DEMO_STORAGE_KEY = 'mtg-community:demo-data'
-export const DEMO_STORAGE_VERSION = 25
+export const DEMO_STORAGE_VERSION = 26
 
 type DemoStorageEnvelope = {
   version: number
@@ -45,6 +45,7 @@ function isDemoDataSet(value: unknown): value is DemoDataSet {
     Array.isArray(value.competitionFormats) &&
     Array.isArray(value.competitionEventKinds) &&
     isRecord(value.rankingSettings) &&
+    Array.isArray(value.rankingSeasons) &&
     isRecord(value.registrationSettings) &&
     Array.isArray(value.tags) &&
     Array.isArray(value.members) &&
@@ -119,6 +120,7 @@ function parseStoredData(rawValue: string): DemoDataSet | null {
       const migratedData = {
         ...envelope.data,
         rankingSettings: structuredClone(DEFAULT_COMMUNITY_RANKING_SETTINGS),
+        rankingSeasons: structuredClone(demoData.rankingSeasons),
         registrationSettings: structuredClone(
           DEFAULT_COMMUNITY_REGISTRATION_SETTINGS,
         ),
@@ -140,6 +142,7 @@ function parseStoredData(rawValue: string): DemoDataSet | null {
         registrationSettings: structuredClone(
           DEFAULT_COMMUNITY_REGISTRATION_SETTINGS,
         ),
+        rankingSeasons: structuredClone(demoData.rankingSeasons),
       }
 
       return isDemoDataSet(migratedData)
@@ -149,15 +152,33 @@ function parseStoredData(rawValue: string): DemoDataSet | null {
         : null
     }
 
-    if (envelope.version === 23 && isDemoDataSet(envelope.data)) {
+    if (envelope.version === 23) {
+      const migratedData = {
+        ...envelope.data,
+        rankingSeasons: structuredClone(demoData.rankingSeasons),
+      }
+
+      if (!isDemoDataSet(migratedData)) {
+        return null
+      }
+
       return applySeedPrototypeEnhancements(
-        normalizeCommunityTaxonomy(structuredClone(envelope.data)),
+        normalizeCommunityTaxonomy(structuredClone(migratedData)),
       )
     }
 
-    if (envelope.version === 24 && isDemoDataSet(envelope.data)) {
+    if (envelope.version === 24 || envelope.version === 25) {
+      const migratedData = {
+        ...envelope.data,
+        rankingSeasons: structuredClone(demoData.rankingSeasons),
+      }
+
+      if (!isDemoDataSet(migratedData)) {
+        return null
+      }
+
       return applySeedPrototypeEnhancements(
-        normalizeCommunityTaxonomy(structuredClone(envelope.data)),
+        normalizeCommunityTaxonomy(structuredClone(migratedData)),
       )
     }
 

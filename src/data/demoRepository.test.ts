@@ -146,6 +146,27 @@ describe('local demo repository', () => {
     expect(loaded.events[0].competitionEventKindId).toBeUndefined()
   })
 
+  it('adds ranking seasons to version 25 without losing local data', () => {
+    const previouslySavedData = structuredClone(
+      demoData,
+    ) as Partial<DemoDataSet>
+    previouslySavedData.community!.memberCount = 151
+    delete previouslySavedData.rankingSeasons
+    window.localStorage.setItem(
+      DEMO_STORAGE_KEY,
+      JSON.stringify({
+        version: 25,
+        savedAt: '2026-09-03T10:00:00.000Z',
+        data: previouslySavedData,
+      }),
+    )
+
+    const loaded = createLocalDemoRepository(window.localStorage).load()
+
+    expect(loaded.community.memberCount).toBe(151)
+    expect(loaded.rankingSeasons).toEqual(demoData.rankingSeasons)
+  })
+
   it('falls back to seed data when storage is corrupted', () => {
     window.localStorage.setItem(DEMO_STORAGE_KEY, '{not-valid-json')
 
