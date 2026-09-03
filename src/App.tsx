@@ -18,13 +18,27 @@ import {
   saveCommunitySettings,
   type PersistedCommunitySettings,
 } from './api/communitySettings'
+import {
+  createCommunityReferential,
+  deleteCommunityReferential,
+  reorderCommunityReferentials,
+  updateCommunityReferential,
+} from './api/communityReferentials'
 import type { DemoRole } from './app/demoRoles'
 import { getDemoDataSummary } from './data/demoData'
+import {
+  applyCommunityOptionOrder,
+  removeCommunityOption,
+  replaceCommunityReferentials,
+  upsertCommunityOption,
+  type CommunityReferentials,
+} from './data/communityOptions'
 import type { DemoDataSet } from './domain/types'
 import { useDemoData } from './hooks/useDemoData'
 import { useCommunityEvents } from './hooks/useCommunityEvents'
 import { useCommunityCommunications } from './hooks/useCommunityCommunications'
 import { useCommunitySettings } from './hooks/useCommunitySettings'
+import { useCommunityReferentials } from './hooks/useCommunityReferentials'
 import { useDemoRole } from './hooks/useDemoRole'
 import { useHashRoute } from './hooks/useHashRoute'
 import { useCurrentUser } from './hooks/useCurrentUser'
@@ -138,6 +152,19 @@ export function App() {
     communityId: data.community.id,
     enabled: Boolean(approvedMembership),
     onLoaded: replaceCommunitySettings,
+  })
+  const replaceReferentials = useCallback(
+    (referentials: CommunityReferentials) => {
+      updateData((currentData) =>
+        replaceCommunityReferentials(currentData, referentials),
+      )
+    },
+    [updateData],
+  )
+  const communityReferentials = useCommunityReferentials({
+    communityId: data.community.id,
+    enabled: Boolean(approvedMembership),
+    onLoaded: replaceReferentials,
   })
   const listEventParticipants = useCallback(
     (eventId: string) =>
@@ -488,6 +515,8 @@ export function App() {
             communicationPersistenceError={communityCommunications.error}
             communitySettingsError={communitySettings.error}
             communitySettingsStatus={communitySettings.status}
+            communityReferentialsError={communityReferentials.error}
+            communityReferentialsStatus={communityReferentials.status}
             managerId={publishingMember.id}
             initialSection={
               isSettingsSection(requestedSettingsSection)
@@ -498,12 +527,57 @@ export function App() {
             onBack={() => navigate('perfil')}
             onReloadCommunications={communityCommunications.reload}
             onReloadCommunitySettings={communitySettings.reload}
+            onReloadCommunityReferentials={communityReferentials.reload}
+            onCreateCommunityOption={async (input) => {
+              const { option } = await createCommunityReferential(
+                data.community.id,
+                input,
+              )
+              updateData((currentData) =>
+                upsertCommunityOption(currentData, input.section, option),
+              )
+            }}
+            onDeleteCommunityOption={async (section, optionId) => {
+              await deleteCommunityReferential(
+                data.community.id,
+                section,
+                optionId,
+              )
+              updateData((currentData) =>
+                removeCommunityOption(currentData, section, optionId),
+              )
+            }}
+            onReorderCommunityOptions={async (section, optionIds) => {
+              const result = await reorderCommunityReferentials(
+                data.community.id,
+                section,
+                optionIds,
+              )
+              updateData((currentData) =>
+                applyCommunityOptionOrder(
+                  currentData,
+                  section,
+                  result.optionIds,
+                ),
+              )
+            }}
             onSaveCommunitySettings={async (input) => {
               const { community } = await saveCommunitySettings(
                 data.community.id,
                 input,
               )
               replaceCommunitySettings(community)
+            }}
+            onUpdateCommunityOption={async (optionId, input, isActive) => {
+              const { option } = await updateCommunityReferential(
+                data.community.id,
+                optionId,
+                input,
+                isActive,
+              )
+              updateData((currentData) =>
+                upsertCommunityOption(currentData, input.section, option),
+              )
             }}
             onViewNewsPost={(postId) =>
               navigate('noticias', `post=${encodeURIComponent(postId)}`)

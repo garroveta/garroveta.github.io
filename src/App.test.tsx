@@ -24,6 +24,12 @@ import type { ManagedCommunityMember } from './api/managerMembers'
 import type { CommunityEventsStatus } from './hooks/useCommunityEvents'
 import type { CommunitySettingsStatus } from './hooks/useCommunitySettings'
 import type { CommunitySettingsInput } from './data/communitySettings'
+import type {
+  CommunityOption,
+  CommunityOptionInput,
+  CommunityOptionSection,
+} from './data/communityOptions'
+import type { CommunityReferentialsStatus } from './hooks/useCommunityReferentials'
 
 const registrationApiMocks = vi.hoisted(() => ({
   redeemInvitation: vi.fn(),
@@ -66,6 +72,12 @@ const communityCommunicationApiMocks = vi.hoisted(() => ({
 const communitySettingsApiMocks = vi.hoisted(() => ({
   saveCommunitySettings: vi.fn(),
 }))
+const communityReferentialsApiMocks = vi.hoisted(() => ({
+  createCommunityReferential: vi.fn(),
+  deleteCommunityReferential: vi.fn(),
+  reorderCommunityReferentials: vi.fn(),
+  updateCommunityReferential: vi.fn(),
+}))
 const communityEventsHookMocks = vi.hoisted(() => ({
   reload: vi.fn(),
   status: 'ready' as CommunityEventsStatus,
@@ -79,6 +91,10 @@ const communitySettingsHookMocks = vi.hoisted(() => ({
   reload: vi.fn(),
   status: 'ready' as CommunitySettingsStatus,
 }))
+const communityReferentialsHookMocks = vi.hoisted(() => ({
+  reload: vi.fn(),
+  status: 'ready' as CommunityReferentialsStatus,
+}))
 
 vi.mock('./api/registration', () => registrationApiMocks)
 vi.mock('./api/managerInvitations', () => managerInvitationApiMocks)
@@ -88,6 +104,7 @@ vi.mock('./api/authentication', () => authenticationApiMocks)
 vi.mock('./api/communityEvents', () => communityEventApiMocks)
 vi.mock('./api/communityCommunications', () => communityCommunicationApiMocks)
 vi.mock('./api/communitySettings', () => communitySettingsApiMocks)
+vi.mock('./api/communityReferentials', () => communityReferentialsApiMocks)
 vi.mock('./hooks/useCommunityEvents', () => ({
   useCommunityEvents: () => communityEventsHookMocks,
 }))
@@ -99,6 +116,9 @@ vi.mock('./hooks/useCommunityCommunications', () => ({
 }))
 vi.mock('./hooks/useCommunitySettings', () => ({
   useCommunitySettings: () => communitySettingsHookMocks,
+}))
+vi.mock('./hooks/useCommunityReferentials', () => ({
+  useCommunityReferentials: () => communityReferentialsHookMocks,
 }))
 vi.mock('./hooks/useCurrentUser', async () => {
   const { useState } = await vi.importActual<typeof import('react')>('react')
@@ -168,6 +188,53 @@ function authenticateAsManager() {
   currentUserHookMocks.refresh.mockResolvedValue(user)
 }
 
+function buildPersistedCommunityOption(
+  input: CommunityOptionInput,
+  id: string,
+  isActive = true,
+): CommunityOption {
+  if (input.section === 'games') {
+    return {
+      category: input.category ?? 'card_game',
+      color: input.color ?? '#6d3d7d',
+      communityId: 'community-crc-delorean',
+      id,
+      isActive,
+      name: input.name,
+      shortName: input.shortName ?? input.name,
+    }
+  }
+
+  if (input.section === 'competitionFormats') {
+    return {
+      color: input.color ?? '#6d3d7d',
+      gameId: input.gameId ?? 'game-mtg',
+      id,
+      isActive,
+      name: input.name,
+      shortName: input.shortName ?? input.name,
+    }
+  }
+
+  if (input.section === 'competitionEventKinds') {
+    return {
+      id,
+      isActive,
+      name: input.name,
+      shortName: input.shortName ?? input.name,
+    }
+  }
+
+  return {
+    color: input.color ?? '#6d3d7d',
+    communityId: 'community-crc-delorean',
+    id,
+    isActive,
+    kind: input.tagKind ?? 'interest',
+    name: input.name,
+  }
+}
+
 const importedEventLinkHtml = `
   <!-- saved from url=(0077)https://eventlink.wizards.com/stores/18452/events/11620006/rounds/3/standings -->
   <h1 class="event-page-header__title">Presentación: The Hobbit</h1>
@@ -190,6 +257,7 @@ describe('App', () => {
     communityEventsHookMocks.status = 'ready'
     communityCommunicationsHookMocks.status = 'ready'
     communitySettingsHookMocks.status = 'ready'
+    communityReferentialsHookMocks.status = 'ready'
     const currentUser = buildCurrentUser()
     currentUserHookMocks.current = {
       data: currentUser,
@@ -208,6 +276,36 @@ describe('App', () => {
             ...input,
           },
         }),
+    )
+    communityReferentialsApiMocks.createCommunityReferential.mockImplementation(
+      (_communityId: string, input: CommunityOptionInput) =>
+        Promise.resolve({
+          option: buildPersistedCommunityOption(
+            input,
+            `persisted-${input.section}-${input.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+          ),
+        }),
+    )
+    communityReferentialsApiMocks.updateCommunityReferential.mockImplementation(
+      (
+        _communityId: string,
+        optionId: string,
+        input: CommunityOptionInput,
+        isActive: boolean,
+      ) =>
+        Promise.resolve({
+          option: buildPersistedCommunityOption(input, optionId, isActive),
+        }),
+    )
+    communityReferentialsApiMocks.deleteCommunityReferential.mockResolvedValue(
+      null,
+    )
+    communityReferentialsApiMocks.reorderCommunityReferentials.mockImplementation(
+      (
+        _communityId: string,
+        _section: CommunityOptionSection,
+        optionIds: string[],
+      ) => Promise.resolve({ optionIds }),
     )
     communityCommunicationApiMocks.createCommunityCommunication.mockImplementation(
       (_communityId: string, input: CommunityCommunicationWriteInput) =>
@@ -1436,7 +1534,7 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'Perfil' })).toBeInTheDocument()
   })
 
-  it('lets a manager maintain configurable community options', () => {
+  it('lets a manager persist configurable community options', async () => {
     const scrollIntoView = vi.fn()
     Object.defineProperty(Element.prototype, 'scrollIntoView', {
       configurable: true,
@@ -1470,9 +1568,9 @@ describe('App', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
 
-    const createdOption = screen
-      .getByText('Regional Qualifier')
-      .closest('article')
+    const createdOption = (
+      await screen.findByText('Regional Qualifier')
+    ).closest('article')
     expect(createdOption).toBeTruthy()
     expect(
       within(createdOption as HTMLElement).getByRole('button', {
@@ -1499,31 +1597,35 @@ describe('App', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
 
-    const updatedOption = screen
-      .getByText('Regional Championship Qualifier')
-      .closest('article')
+    const updatedOption = (
+      await screen.findByText('Regional Championship Qualifier')
+    ).closest('article')
     fireEvent.click(
       within(updatedOption as HTMLElement).getByRole('button', {
         name: 'Desactivar Regional Championship Qualifier',
       }),
     )
-    expect(
-      within(updatedOption as HTMLElement).getByText('Desactivada'),
-    ).toBeInTheDocument()
+    await waitFor(() =>
+      expect(
+        within(updatedOption as HTMLElement).getByText('Desactivada'),
+      ).toBeInTheDocument(),
+    )
     fireEvent.click(
       within(updatedOption as HTMLElement).getByRole('button', {
         name: 'Subir Regional Championship Qualifier',
       }),
     )
 
-    expect(
-      createLocalDemoRepository(window.localStorage)
-        .load()
-        .competitionEventKinds.at(-2),
-    ).toMatchObject({
-      name: 'Regional Championship Qualifier',
-      isActive: false,
-    })
+    await waitFor(() =>
+      expect(
+        createLocalDemoRepository(window.localStorage)
+          .load()
+          .competitionEventKinds.at(-2),
+      ).toMatchObject({
+        name: 'Regional Championship Qualifier',
+        isActive: false,
+      }),
+    )
 
     fireEvent.click(
       within(updatedOption as HTMLElement).getByRole('button', {
@@ -1535,10 +1637,27 @@ describe('App', () => {
         name: 'Eliminar',
       }),
     )
-    expect(screen.queryByText('Regional Championship Qualifier')).toBeNull()
+    await waitFor(() =>
+      expect(screen.queryByText('Regional Championship Qualifier')).toBeNull(),
+    )
+    expect(
+      communityReferentialsApiMocks.createCommunityReferential,
+    ).toHaveBeenCalledWith(
+      'community-crc-delorean',
+      expect.objectContaining({
+        name: 'Regional Qualifier',
+        section: 'competitionEventKinds',
+      }),
+    )
+    expect(
+      communityReferentialsApiMocks.reorderCommunityReferentials,
+    ).toHaveBeenCalled()
+    expect(
+      communityReferentialsApiMocks.deleteCommunityReferential,
+    ).toHaveBeenCalled()
   })
 
-  it('keeps deactivated options in history but removes them from new forms', () => {
+  it('keeps deactivated options in history but removes them from new forms', async () => {
     authenticateAsManager()
     render(<App />)
 
@@ -1550,6 +1669,14 @@ describe('App', () => {
       screen.getByRole('button', {
         name: 'Desactivar One Piece Card Game',
       }),
+    )
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', {
+          name: 'Activar One Piece Card Game',
+        }),
+      ).toBeInTheDocument(),
     )
 
     fireEvent.click(screen.getByRole('link', { name: 'Eventos' }))

@@ -12,34 +12,37 @@ import type { CSSProperties, FormEvent } from 'react'
 import { useEffect, useRef, useState } from 'react'
 
 import {
-  addCommunityOption,
-  deleteCommunityOption,
   getCommunityOptionUsageCount,
   isCommunityOptionActive,
-  reorderCommunityOption,
-  setCommunityOptionActive,
-  updateCommunityOption,
+  type CommunityOption,
   type CommunityOptionInput,
   type CommunityOptionSection,
 } from '../data/communityOptions'
-import type { DemoDataUpdater } from '../data/demoRepository'
-import type {
-  CommunityGame,
-  CommunityTag,
-  CompetitionEventKind,
-  CompetitionFormat,
-  DemoDataSet,
-  GameCategory,
-} from '../domain/types'
+import { ClientApiError } from '../api/client'
+import { describeApiError } from '../api/errorPresentation'
+import { DataStateView } from './DataStateView'
+import type { CommunityTag, DemoDataSet, GameCategory } from '../domain/types'
+import type { CommunityReferentialsStatus } from '../hooks/useCommunityReferentials'
 
 interface CommunityOptionManagerProps {
   data: DemoDataSet
-  managerId: string
-  onDataChange: (updater: DemoDataUpdater) => void
+  persistenceError: unknown
+  persistenceStatus: CommunityReferentialsStatus
+  onCreate: (input: CommunityOptionInput) => Promise<void>
+  onDelete: (section: CommunityOptionSection, optionId: string) => Promise<void>
+  onReload: () => void
+  onReorder: (
+    section: CommunityOptionSection,
+    optionIds: string[],
+  ) => Promise<void>
+  onUpdate: (
+    optionId: string,
+    input: CommunityOptionInput,
+    isActive: boolean,
+  ) => Promise<void>
 }
 
-type ManagedOption =
-  CommunityGame | CompetitionFormat | CompetitionEventKind | CommunityTag
+type ManagedOption = CommunityOption
 
 interface OptionFormValues {
   name: string
@@ -155,27 +158,64 @@ function getFormValues(
   }
 }
 
+function getOptionInput(
+  section: CommunityOptionSection,
+  option: ManagedOption,
+): CommunityOptionInput {
+  const values = getFormValues(section, option)
+
+  return {
+    section,
+    name: values.name,
+    shortName: values.shortName,
+    color: values.color,
+    category: values.category,
+    gameId: values.gameId,
+    tagKind: values.tagKind,
+  }
+}
+
+function getMutationErrorMessage(error: unknown) {
+  if (error instanceof ClientApiError) {
+    if (error.code === 'community_referential_duplicate') {
+      return 'Ya existe una opción con este nombre en esta categoría.'
+    }
+
+    if (error.code === 'community_referential_in_use') {
+      return 'Esta opción ya se utiliza y debe desactivarse en lugar de eliminarse.'
+    }
+
+    if (error.code === 'community_referential_invalid') {
+      return 'Revisa los datos de la opción antes de volver a guardarla.'
+    }
+  }
+
+  return describeApiError(error).description
+}
+
 function OptionEditor({
   data,
   initialValues,
   isEditing,
   section,
+  isSaving,
   onCancel,
   onSubmit,
 }: {
   data: DemoDataSet
   initialValues: OptionFormValues
   isEditing: boolean
+  isSaving: boolean
   section: CommunityOptionSection
   onCancel: () => void
-  onSubmit: (input: CommunityOptionInput) => void
+  onSubmit: (input: CommunityOptionInput) => Promise<void>
 }) {
   const [values, setValues] = useState(initialValues)
   const labels = sectionLabels[section]
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    onSubmit({
+    void onSubmit({
       section,
       name: values.name,
       shortName: values.shortName,
@@ -217,18 +257,20 @@ function OptionEditor({
           />
         </label>
 
-        <label className="form-field">
-          <span>Nombre corto</span>
-          <input
-            value={values.shortName}
-            onChange={(event) =>
-              setValues((current) => ({
-                ...current,
-                shortName: event.target.value,
-              }))
-            }
-          />
-        </label>
+        {section !== 'tags' ? (
+          <label className="form-field">
+            <span>Nombre corto</span>
+            <input
+              value={values.shortName}
+              onChange={(event) =>
+                setValues((current) => ({
+                  ...current,
+                  shortName: event.target.value,
+                }))
+              }
+            />
+          </label>
+        ) : null}
 
         {section === 'games' ? (
           <label className="form-field">
@@ -318,12 +360,17 @@ function OptionEditor({
       </div>
 
       <div className="composer-actions">
-        <button className="secondary-button" type="button" onClick={onCancel}>
+        <button
+          className="secondary-button"
+          disabled={isSaving}
+          type="button"
+          onClick={onCancel}
+        >
           Cancelar
         </button>
-        <button className="primary-button" type="submit">
+        <button className="primary-button" disabled={isSaving} type="submit">
           <Save aria-hidden="true" size={16} />
-          Guardar
+          {isSaving ? 'Guardando…' : 'Guardar'}
         </button>
       </div>
     </form>
@@ -332,14 +379,21 @@ function OptionEditor({
 
 export function CommunityOptionManager({
   data,
-  managerId,
-  onDataChange,
+  persistenceError,
+  persistenceStatus,
+  onCreate,
+  onDelete,
+  onReload,
+  onReorder,
+  onUpdate,
 }: CommunityOptionManagerProps) {
   const [activeSection, setActiveSection] =
     useState<CommunityOptionSection>('games')
   const [editingOptionId, setEditingOptionId] = useState<string>()
   const [isAdding, setIsAdding] = useState(false)
   const [pendingDeleteId, setPendingDeleteId] = useState<string>()
+  const [pendingMutation, setPendingMutation] = useState<string>()
+  const [mutationError, setMutationError] = useState<unknown>(null)
   const editorRef = useRef<HTMLDivElement>(null)
   const options = getOptions(data, activeSection)
   const editingOption = options.find(({ id }) => id === editingOptionId)
@@ -367,13 +421,49 @@ export function CommunityOptionManager({
     closeEditor()
   }
 
-  function saveOption(input: CommunityOptionInput) {
-    onDataChange((currentData) =>
-      editingOptionId
-        ? updateCommunityOption(currentData, managerId, editingOptionId, input)
-        : addCommunityOption(currentData, managerId, input),
+  async function runMutation(key: string, mutation: () => Promise<void>) {
+    setPendingMutation(key)
+    setMutationError(null)
+
+    try {
+      await mutation()
+      return true
+    } catch (error) {
+      setMutationError(error)
+      return false
+    } finally {
+      setPendingMutation(undefined)
+    }
+  }
+
+  async function saveOption(input: CommunityOptionInput) {
+    const saved = await runMutation('save', () =>
+      editingOptionId && editingOption
+        ? onUpdate(
+            editingOptionId,
+            input,
+            isCommunityOptionActive(editingOption),
+          )
+        : onCreate(input),
     )
-    closeEditor()
+
+    if (saved) {
+      closeEditor()
+    }
+  }
+
+  if (persistenceStatus !== 'ready') {
+    return (
+      <section className="community-options">
+        <DataStateView
+          error={persistenceError}
+          loadingDescription="Estamos recuperando los juegos, formatos, series y etiquetas."
+          loadingTitle="Cargando las opciones"
+          onRetry={onReload}
+          status={persistenceStatus === 'error' ? 'error' : 'loading'}
+        />
+      </section>
+    )
   }
 
   return (
@@ -405,6 +495,12 @@ export function CommunityOptionManager({
         El tipo de actividad se gestiona por separado en cada evento.
       </p>
 
+      {mutationError ? (
+        <p className="community-options__error" role="alert">
+          {getMutationErrorMessage(mutationError)}
+        </p>
+      ) : null}
+
       <div
         className="community-options__tabs"
         role="tablist"
@@ -430,6 +526,7 @@ export function CommunityOptionManager({
             data={data}
             initialValues={getFormValues(activeSection, editingOption)}
             isEditing={Boolean(editingOption)}
+            isSaving={pendingMutation === 'save'}
             key={`${activeSection}-${editingOption?.id ?? 'new'}`}
             section={activeSection}
             onCancel={closeEditor}
@@ -475,18 +572,17 @@ export function CommunityOptionManager({
                   type="button"
                   aria-label={`Subir ${option.name}`}
                   title="Subir"
-                  disabled={index === 0}
-                  onClick={() =>
-                    onDataChange((currentData) =>
-                      reorderCommunityOption(
-                        currentData,
-                        managerId,
-                        activeSection,
-                        option.id,
-                        'up',
-                      ),
+                  disabled={index === 0 || Boolean(pendingMutation)}
+                  onClick={() => {
+                    const optionIds = options.map(({ id }) => id)
+                    ;[optionIds[index - 1], optionIds[index]] = [
+                      optionIds[index],
+                      optionIds[index - 1],
+                    ]
+                    void runMutation(`reorder-${option.id}`, () =>
+                      onReorder(activeSection, optionIds),
                     )
-                  }
+                  }}
                 >
                   <ArrowUp aria-hidden="true" size={15} />
                 </button>
@@ -494,18 +590,19 @@ export function CommunityOptionManager({
                   type="button"
                   aria-label={`Bajar ${option.name}`}
                   title="Bajar"
-                  disabled={index === options.length - 1}
-                  onClick={() =>
-                    onDataChange((currentData) =>
-                      reorderCommunityOption(
-                        currentData,
-                        managerId,
-                        activeSection,
-                        option.id,
-                        'down',
-                      ),
-                    )
+                  disabled={
+                    index === options.length - 1 || Boolean(pendingMutation)
                   }
+                  onClick={() => {
+                    const optionIds = options.map(({ id }) => id)
+                    ;[optionIds[index], optionIds[index + 1]] = [
+                      optionIds[index + 1],
+                      optionIds[index],
+                    ]
+                    void runMutation(`reorder-${option.id}`, () =>
+                      onReorder(activeSection, optionIds),
+                    )
+                  }}
                 >
                   <ArrowDown aria-hidden="true" size={15} />
                 </button>
@@ -513,6 +610,7 @@ export function CommunityOptionManager({
                   type="button"
                   aria-label={`Modificar ${option.name}`}
                   title="Modificar"
+                  disabled={Boolean(pendingMutation)}
                   onClick={() => {
                     setIsAdding(false)
                     setPendingDeleteId(undefined)
@@ -525,13 +623,12 @@ export function CommunityOptionManager({
                   type="button"
                   aria-label={`${isActive ? 'Desactivar' : 'Activar'} ${option.name}`}
                   title={isActive ? 'Desactivar' : 'Activar'}
+                  disabled={Boolean(pendingMutation)}
                   onClick={() =>
-                    onDataChange((currentData) =>
-                      setCommunityOptionActive(
-                        currentData,
-                        managerId,
-                        activeSection,
+                    void runMutation(`active-${option.id}`, () =>
+                      onUpdate(
                         option.id,
+                        getOptionInput(activeSection, option),
                         !isActive,
                       ),
                     )
@@ -544,22 +641,22 @@ export function CommunityOptionManager({
                     <span className="community-option-row__delete-confirmation">
                       <button
                         type="button"
-                        onClick={() => {
-                          onDataChange((currentData) =>
-                            deleteCommunityOption(
-                              currentData,
-                              managerId,
-                              activeSection,
-                              option.id,
-                            ),
-                          )
-                          setPendingDeleteId(undefined)
-                        }}
+                        disabled={Boolean(pendingMutation)}
+                        onClick={() =>
+                          void runMutation(`delete-${option.id}`, () =>
+                            onDelete(activeSection, option.id),
+                          ).then((deleted) => {
+                            if (deleted) {
+                              setPendingDeleteId(undefined)
+                            }
+                          })
+                        }
                       >
                         Eliminar
                       </button>
                       <button
                         type="button"
+                        disabled={Boolean(pendingMutation)}
                         onClick={() => setPendingDeleteId(undefined)}
                       >
                         Cancelar
@@ -571,6 +668,7 @@ export function CommunityOptionManager({
                       type="button"
                       aria-label={`Eliminar definitivamente ${option.name}`}
                       title="Eliminar definitivamente"
+                      disabled={Boolean(pendingMutation)}
                       onClick={() => setPendingDeleteId(option.id)}
                     >
                       <Trash2 aria-hidden="true" size={15} />

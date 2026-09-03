@@ -20,9 +20,69 @@ export interface CommunityOptionInput {
   tagKind?: CommunityTag['kind']
 }
 
+export type CommunityOption =
+  CommunityGame | CompetitionFormat | CompetitionEventKind | CommunityTag
+
+export type CommunityReferentials = Pick<
+  DemoDataSet,
+  'games' | 'competitionFormats' | 'competitionEventKinds' | 'tags'
+>
+
 interface CommunityOptionReference {
   id: string
   isActive?: boolean
+}
+
+export function replaceCommunityReferentials(
+  data: DemoDataSet,
+  referentials: CommunityReferentials,
+): DemoDataSet {
+  return { ...data, ...referentials }
+}
+
+export function upsertCommunityOption(
+  data: DemoDataSet,
+  section: CommunityOptionSection,
+  option: CommunityOption,
+): DemoDataSet {
+  const options = data[section]
+  const nextOptions = options.some(({ id }) => id === option.id)
+    ? options.map((candidate) =>
+        candidate.id === option.id ? option : candidate,
+      )
+    : [...options, option]
+
+  return { ...data, [section]: nextOptions }
+}
+
+export function applyCommunityOptionOrder(
+  data: DemoDataSet,
+  section: CommunityOptionSection,
+  optionIds: string[],
+): DemoDataSet {
+  const optionsById = new Map(
+    data[section].map((option) => [option.id, option] as const),
+  )
+  const orderedOptions = optionIds.flatMap((optionId) => {
+    const option = optionsById.get(optionId)
+
+    return option ? [option] : []
+  })
+
+  return orderedOptions.length === data[section].length
+    ? { ...data, [section]: orderedOptions }
+    : data
+}
+
+export function removeCommunityOption(
+  data: DemoDataSet,
+  section: CommunityOptionSection,
+  optionId: string,
+): DemoDataSet {
+  return {
+    ...data,
+    [section]: data[section].filter(({ id }) => id !== optionId),
+  }
 }
 
 function isManager(data: DemoDataSet, memberId: string) {

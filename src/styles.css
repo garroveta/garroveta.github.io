@@ -3092,6 +3092,17 @@ a {
   line-height: 1.45;
 }
 
+.community-options__error {
+  margin: 0.75rem 0 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #e5c9c6;
+  border-radius: 0.7rem;
+  color: #985348;
+  background: #fff4f2;
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
 .community-options__tabs {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -3,11 +3,15 @@ import { describe, expect, it } from 'vitest'
 import { demoData } from './demoData'
 import {
   addCommunityOption,
+  applyCommunityOptionOrder,
   deleteCommunityOption,
   getCommunityOptionUsageCount,
+  removeCommunityOption,
+  replaceCommunityReferentials,
   reorderCommunityOption,
   setCommunityOptionActive,
   updateCommunityOption,
+  upsertCommunityOption,
 } from './communityOptions'
 
 const managerId = 'member-lucia'
@@ -89,5 +93,46 @@ describe('community options', () => {
 
     const deleted = deleteCommunityOption(data, managerId, 'tags', unusedTagId)
     expect(deleted.tags.some(({ id }) => id === unusedTagId)).toBe(false)
+  })
+
+  it('applies persisted referentials without replacing unrelated data', () => {
+    const data = structuredClone(demoData)
+    const persistedSeries = {
+      id: 'series-rcq',
+      isActive: true,
+      name: 'Regional Championship Qualifier',
+      shortName: 'RCQ',
+    }
+    const replaced = replaceCommunityReferentials(data, {
+      competitionEventKinds: [persistedSeries],
+      competitionFormats: data.competitionFormats,
+      games: data.games,
+      tags: data.tags,
+    })
+    const inserted = upsertCommunityOption(replaced, 'competitionEventKinds', {
+      ...persistedSeries,
+      id: 'series-store-championship',
+      name: 'Store Championship',
+      shortName: 'Store',
+    })
+    const reordered = applyCommunityOptionOrder(
+      inserted,
+      'competitionEventKinds',
+      ['series-store-championship', 'series-rcq'],
+    )
+    const removed = removeCommunityOption(
+      reordered,
+      'competitionEventKinds',
+      'series-rcq',
+    )
+
+    expect(replaced.events).toBe(data.events)
+    expect(reordered.competitionEventKinds.map(({ id }) => id)).toEqual([
+      'series-store-championship',
+      'series-rcq',
+    ])
+    expect(removed.competitionEventKinds).toEqual([
+      expect.objectContaining({ id: 'series-store-championship' }),
+    ])
   })
 })

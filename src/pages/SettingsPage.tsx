@@ -22,6 +22,11 @@ import type { DemoDataSet } from '../domain/types'
 import type { CommunityCommunicationsStatus } from '../hooks/useCommunityCommunications'
 import type { CommunitySettingsStatus } from '../hooks/useCommunitySettings'
 import type { CommunitySettingsInput } from '../data/communitySettings'
+import type {
+  CommunityOptionInput,
+  CommunityOptionSection,
+} from '../data/communityOptions'
+import type { CommunityReferentialsStatus } from '../hooks/useCommunityReferentials'
 import { DataStateView } from '../components/DataStateView'
 import type { SettingsSection } from './settingsSections'
 
@@ -30,6 +35,8 @@ type SettingsPageProps = {
   communicationPersistenceError: unknown
   communitySettingsError: unknown
   communitySettingsStatus: CommunitySettingsStatus
+  communityReferentialsError: unknown
+  communityReferentialsStatus: CommunityReferentialsStatus
   data: DemoDataSet
   managerId: string
   initialSection?: SettingsSection
@@ -37,7 +44,22 @@ type SettingsPageProps = {
   onBack: () => void
   onReloadCommunications: () => void
   onReloadCommunitySettings: () => void
+  onReloadCommunityReferentials: () => void
+  onCreateCommunityOption: (input: CommunityOptionInput) => Promise<void>
+  onDeleteCommunityOption: (
+    section: CommunityOptionSection,
+    optionId: string,
+  ) => Promise<void>
+  onReorderCommunityOptions: (
+    section: CommunityOptionSection,
+    optionIds: string[],
+  ) => Promise<void>
   onSaveCommunitySettings: (input: CommunitySettingsInput) => Promise<void>
+  onUpdateCommunityOption: (
+    optionId: string,
+    input: CommunityOptionInput,
+    isActive: boolean,
+  ) => Promise<void>
   onViewNewsPost: (postId: string) => void
 }
 
@@ -46,6 +68,8 @@ export function SettingsPage({
   communicationPersistenceError,
   communitySettingsError,
   communitySettingsStatus,
+  communityReferentialsError,
+  communityReferentialsStatus,
   data,
   managerId,
   initialSection,
@@ -53,7 +77,12 @@ export function SettingsPage({
   onBack,
   onReloadCommunications,
   onReloadCommunitySettings,
+  onReloadCommunityReferentials,
+  onCreateCommunityOption,
+  onDeleteCommunityOption,
+  onReorderCommunityOptions,
   onSaveCommunitySettings,
+  onUpdateCommunityOption,
   onViewNewsPost,
 }: SettingsPageProps) {
   const [activeSection, setActiveSection] = useState<SettingsSection>(
@@ -167,8 +196,13 @@ export function SettingsPage({
       ) : activeSection === 'options' ? (
         <CommunityOptionManager
           data={data}
-          managerId={managerId}
-          onDataChange={onDataChange}
+          persistenceError={communityReferentialsError}
+          persistenceStatus={communityReferentialsStatus}
+          onCreate={onCreateCommunityOption}
+          onDelete={onDeleteCommunityOption}
+          onReload={onReloadCommunityReferentials}
+          onReorder={onReorderCommunityOptions}
+          onUpdate={onUpdateCommunityOption}
         />
       ) : activeSection === 'registrations' ? (
         <RegistrationSettingsPanel
