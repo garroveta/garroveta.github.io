@@ -150,7 +150,7 @@ export function MemberManagementPanel({
 
         return [
           member.displayName,
-          member.email,
+          member.email ?? '',
           roleLabels[member.role],
           statusLabels[member.status],
           ...tagNames,
@@ -340,8 +340,8 @@ export function MemberManagementPanel({
                 >
                   <div className="managed-member-row__identity">
                     <strong>{member.displayName}</strong>
-                    <span title={member.email}>
-                      {member.email} · {statusLabels[member.status]}
+                    <span title={member.email ?? ''}>
+                      {member.email ?? ''} · {statusLabels[member.status]}
                       {isCurrentManager ? ' · Tu cuenta' : ''}
                     </span>
                   </div>

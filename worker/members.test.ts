@@ -1,11 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { authorizeApprovedManager } from './authorization'
+import {
+  authorizeApprovedManager,
+  authorizeApprovedMember,
+} from './authorization'
 import { type AuthEnv } from './auth'
 import { handleMemberApiRequest, matchMemberRoute } from './members'
 
 vi.mock('./authorization', () => ({
   authorizeApprovedManager: vi.fn(),
+  authorizeApprovedMember: vi.fn(),
 }))
 
 const collectionRoute = {
@@ -33,6 +37,25 @@ const managerAuthorization = {
       email: 'manager@example.com',
       id: 'user-manager',
       name: 'Tomás',
+    },
+  },
+}
+
+const playerAuthorization = {
+  authorized: true as const,
+  value: {
+    membership: {
+      communityId: 'community-crc-delorean',
+      displayName: 'Marina Valverde',
+      id: 'member-player',
+      role: 'player' as const,
+      status: 'approved' as const,
+      userId: 'user-player',
+    },
+    user: {
+      email: 'marina@example.com',
+      id: 'user-player',
+      name: 'Marina Valverde',
     },
   },
 }
@@ -122,11 +145,14 @@ describe('Member manager API', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(authorizeApprovedManager).mockResolvedValue(managerAuthorization)
+    vi.mocked(authorizeApprovedMember).mockResolvedValue(managerAuthorization)
     vi.spyOn(console, 'info').mockImplementation(() => undefined)
   })
 
-  it('lists community members without exposing authentication secrets', async () => {
-    const { context, statements } = createContext({ rows: [approvedPlayer] })
+  it('lets a manager list every member, including email and pending statuses', async () => {
+    const { context, prepare, statements } = createContext({
+      rows: [approvedPlayer],
+    })
 
     const response = await handleMemberApiRequest(context, collectionRoute)
 
@@ -148,6 +174,38 @@ describe('Member manager API', () => {
       ],
     })
     expect(statements[0]?.bind).toHaveBeenCalledWith('community-crc-delorean')
+    expect((prepare.mock.calls[0] as unknown as [string])[0]).not.toContain(
+      "cm.status = 'approved'",
+    )
+  })
+
+  it('lets a non-manager list only approved members, without email', async () => {
+    vi.mocked(authorizeApprovedMember).mockResolvedValue(playerAuthorization)
+    const { context, prepare, statements } = createContext({
+      rows: [approvedPlayer],
+    })
+
+    const response = await handleMemberApiRequest(context, collectionRoute)
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({
+      currentMemberId: 'member-player',
+      members: [
+        {
+          displayName: 'Marina Valverde',
+          favoriteGameIds: ['game-mtg'],
+          id: 'member-player',
+          joinedAt: '2026-09-01T10:00:00.000Z',
+          role: 'player',
+          status: 'approved',
+          tagIds: ['tag-pauper'],
+        },
+      ],
+    })
+    expect(statements[0]?.bind).toHaveBeenCalledWith('community-crc-delorean')
+    expect((prepare.mock.calls[0] as unknown as [string])[0]).toContain(
+      "cm.status = 'approved'",
+    )
   })
 
   it('updates a member role, status and tags', async () => {
@@ -258,17 +316,39 @@ describe('Member manager API', () => {
 
   it.each([
     [401, 'authentication_required'],
-    [403, 'manager_access_required'],
+    [403, 'membership_access_required'],
   ])(
-    'returns a %i authorization failure before querying the member list',
+    'returns a %i authorization failure before listing members for any member',
     async (status, code) => {
-      vi.mocked(authorizeApprovedManager).mockResolvedValue({
+      vi.mocked(authorizeApprovedMember).mockResolvedValue({
         authorized: false,
         response: Response.json({ error: { code } }, { status }),
       })
       const { context, prepare } = createContext()
 
       const response = await handleMemberApiRequest(context, collectionRoute)
+
+      expect(response.status).toBe(status)
+      expect(prepare).not.toHaveBeenCalled()
+    },
+  )
+
+  it.each([
+    [401, 'authentication_required'],
+    [403, 'manager_access_required'],
+  ])(
+    'returns a %i authorization failure before updating a member',
+    async (status, code) => {
+      vi.mocked(authorizeApprovedManager).mockResolvedValue({
+        authorized: false,
+        response: Response.json({ error: { code } }, { status }),
+      })
+      const { context, prepare } = createContext({
+        body: { role: 'moderator' },
+        method: 'PATCH',
+      })
+
+      const response = await handleMemberApiRequest(context, memberRoute)
 
       expect(response.status).toBe(status)
       expect(prepare).not.toHaveBeenCalled()
@@ -282,6 +362,7 @@ describe('Member manager API', () => {
 
     expect(response.status).toBe(405)
     expect(response.headers.get('Allow')).toBe('GET')
+    expect(authorizeApprovedMember).not.toHaveBeenCalled()
     expect(authorizeApprovedManager).not.toHaveBeenCalled()
     expect(prepare).not.toHaveBeenCalled()
   })

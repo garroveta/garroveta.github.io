@@ -3,7 +3,8 @@ import { apiRequest } from './client'
 
 export type ManagedCommunityMember = {
   displayName: string
-  email: string
+  /** Only present when the requester is an approved manager. */
+  email?: string
   favoriteGameIds: string[]
   id: string
   joinedAt: string

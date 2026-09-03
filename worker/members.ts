@@ -1,5 +1,9 @@
 import { type AuthEnv } from './auth'
-import { authorizeApprovedManager } from './authorization'
+import {
+  authorizeApprovedManager,
+  authorizeApprovedMember,
+  type ApprovedMembership,
+} from './authorization'
 import { ApiRequestError, apiError, jsonResponse, readJsonBody } from './http'
 
 const RESOURCE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$/
@@ -163,10 +167,10 @@ export function matchMemberRoute(pathname: string): MemberRoute | null {
   return { communityId, kind: 'member', memberId }
 }
 
-function toMember(member: CommunityMemberRow) {
+function toMember(member: CommunityMemberRow, includeEmail: boolean) {
   return {
     displayName: member.display_name,
-    email: member.email,
+    ...(includeEmail ? { email: member.email } : {}),
     favoriteGameIds: parseStringArray(member.favorite_game_ids),
     id: member.id,
     joinedAt: member.joined_at,
@@ -179,8 +183,10 @@ function toMember(member: CommunityMemberRow) {
 async function listMembers(
   requestContext: MemberRequestContext,
   communityId: string,
-  currentMemberId: string,
+  membership: ApprovedMembership,
 ) {
+  const isManager = membership.role === 'manager'
+  const statusFilter = isManager ? '' : "and cm.status = 'approved'"
   const { results } = await requestContext.env.DB.prepare(
     `select
       cm.id,
@@ -193,7 +199,7 @@ async function listMembers(
       u.email
     from community_member cm
     inner join "user" u on u.id = cm.user_id
-    where cm.community_id = ?
+    where cm.community_id = ? ${statusFilter}
     order by
       case cm.status
         when 'pending' then 0
@@ -208,8 +214,8 @@ async function listMembers(
     .all<CommunityMemberRow>()
 
   return jsonResponse({
-    currentMemberId,
-    members: results.map(toMember),
+    currentMemberId: membership.id,
+    members: results.map((member) => toMember(member, isManager)),
   })
 }
 
@@ -323,7 +329,7 @@ async function updateMember(
   )
 
   return jsonResponse({
-    member: toMember({ ...updatedMember, email: member.email }),
+    member: toMember({ ...updatedMember, email: member.email }, true),
   })
 }
 
@@ -342,6 +348,31 @@ export async function handleMemberApiRequest(
     )
   }
 
+  if (route.kind === 'collection') {
+    const authorization = await authorizeApprovedMember(
+      requestContext,
+      route.communityId,
+    )
+
+    if (!authorization.authorized) {
+      return authorization.response
+    }
+
+    try {
+      return await listMembers(
+        requestContext,
+        route.communityId,
+        authorization.value.membership,
+      )
+    } catch (error) {
+      if (error instanceof ApiRequestError) {
+        return apiError(error.status, error.code, error.message)
+      }
+
+      throw error
+    }
+  }
+
   const authorization = await authorizeApprovedManager(
     requestContext,
     route.communityId,
@@ -352,18 +383,12 @@ export async function handleMemberApiRequest(
   }
 
   try {
-    return route.kind === 'collection'
-      ? await listMembers(
-          requestContext,
-          route.communityId,
-          authorization.value.membership.id,
-        )
-      : await updateMember(
-          requestContext,
-          route.communityId,
-          route.memberId!,
-          authorization.value.membership.id,
-        )
+    return await updateMember(
+      requestContext,
+      route.communityId,
+      route.memberId!,
+      authorization.value.membership.id,
+    )
   } catch (error) {
     if (error instanceof ApiRequestError) {
       return apiError(error.status, error.code, error.message)
