@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 
 import {
   cancelPersistedEventRegistration,
@@ -51,6 +51,8 @@ import { useCommunityReferentials } from './hooks/useCommunityReferentials'
 import { useCommunityRegistrationSettings } from './hooks/useCommunityRegistrationSettings'
 import { useRankingSeasons } from './hooks/useRankingSeasons'
 import { useEventStandings } from './hooks/useEventStandings'
+import { useCommunityMembers } from './hooks/useCommunityMembers'
+import { getMemberInitials } from './data/communityMembers'
 import { useDemoRole } from './hooks/useDemoRole'
 import { useHashRoute } from './hooks/useHashRoute'
 import { useCurrentUser } from './hooks/useCurrentUser'
@@ -90,16 +92,6 @@ function getPublishingMember(data: DemoDataSet, activeRole: DemoRole) {
     data.members.find(({ role }) => role === communityRole) ??
     getCurrentMember(data)
   )
-}
-
-function getMemberInitials(displayName: string) {
-  const words = displayName.trim().split(/\s+/).filter(Boolean)
-
-  return words
-    .slice(0, 2)
-    .map((word) => word[0])
-    .join('')
-    .toLocaleUpperCase('es')
 }
 
 export function App() {
@@ -214,6 +206,14 @@ export function App() {
     enabled: Boolean(approvedMembership),
     onLoaded: replaceEventStandings,
   })
+  const [communityMembers, setCommunityMembers] = useState<
+    DemoDataSet['members']
+  >(data.members)
+  const communityMembersFeed = useCommunityMembers({
+    communityId: data.community.id,
+    enabled: Boolean(approvedMembership),
+    onLoaded: setCommunityMembers,
+  })
   const listEventParticipants = useCallback(
     (eventId: string) =>
       listPersistedEventRegistrations(data.community.id, eventId),
@@ -235,15 +235,21 @@ export function App() {
       : data
   const rankingData =
     approvedMembership &&
-    (rankingSeasons.status !== 'ready' || eventStandings.status !== 'ready')
+    (rankingSeasons.status !== 'ready' ||
+      eventStandings.status !== 'ready' ||
+      communityMembersFeed.status !== 'ready')
       ? {
           ...data,
           rankingSeasons:
             rankingSeasons.status === 'ready' ? data.rankingSeasons : [],
           eventStandings:
             eventStandings.status === 'ready' ? data.eventStandings : [],
+          members:
+            communityMembersFeed.status === 'ready' ? communityMembers : [],
         }
-      : data
+      : approvedMembership
+        ? { ...data, members: communityMembers }
+        : data
   const authenticatedRole: DemoRole | null = approvedMembership
     ? approvedMembership.role === 'manager'
       ? 'gerente'

@@ -33,6 +33,7 @@ import type {
 import type { CommunityReferentialsStatus } from './hooks/useCommunityReferentials'
 import type { RankingSeasonsStatus } from './hooks/useRankingSeasons'
 import type { EventStandingsStatus } from './hooks/useEventStandings'
+import type { CommunityMembersStatus } from './hooks/useCommunityMembers'
 
 const registrationApiMocks = vi.hoisted(() => ({
   redeemInvitation: vi.fn(),
@@ -123,6 +124,10 @@ const eventStandingsHookMocks = vi.hoisted(() => ({
   reload: vi.fn(),
   status: 'ready' as EventStandingsStatus,
 }))
+const communityMembersHookMocks = vi.hoisted(() => ({
+  reload: vi.fn(),
+  status: 'ready' as CommunityMembersStatus,
+}))
 
 vi.mock('./api/registration', () => registrationApiMocks)
 vi.mock('./api/managerInvitations', () => managerInvitationApiMocks)
@@ -163,6 +168,9 @@ vi.mock('./hooks/useRankingSeasons', () => ({
 }))
 vi.mock('./hooks/useEventStandings', () => ({
   useEventStandings: () => eventStandingsHookMocks,
+}))
+vi.mock('./hooks/useCommunityMembers', () => ({
+  useCommunityMembers: () => communityMembersHookMocks,
 }))
 vi.mock('./hooks/useCurrentUser', async () => {
   const { useState } = await vi.importActual<typeof import('react')>('react')
@@ -305,6 +313,7 @@ describe('App', () => {
     communityRegistrationSettingsHookMocks.status = 'ready'
     rankingSeasonsHookMocks.status = 'ready'
     eventStandingsHookMocks.status = 'ready'
+    communityMembersHookMocks.status = 'ready'
     const currentUser = buildCurrentUser()
     currentUserHookMocks.current = {
       data: currentUser,
