@@ -34,7 +34,6 @@ import {
 } from './api/rankingSeasons'
 import { saveCommunityEventStanding } from './api/eventStandings'
 import type { DemoRole } from './app/demoRoles'
-import { getDemoDataSummary } from './data/demoData'
 import {
   applyCommunityOptionOrder,
   removeCommunityOption,
@@ -53,7 +52,6 @@ import { useRankingSeasons } from './hooks/useRankingSeasons'
 import { useEventStandings } from './hooks/useEventStandings'
 import { useCommunityMembers } from './hooks/useCommunityMembers'
 import { getMemberInitials } from './data/communityMembers'
-import { useDemoRole } from './hooks/useDemoRole'
 import { useHashRoute } from './hooks/useHashRoute'
 import { useCurrentUser } from './hooks/useCurrentUser'
 import { EventsPage } from './pages/EventsPage'
@@ -96,8 +94,7 @@ function getPublishingMember(data: DemoDataSet, activeRole: DemoRole) {
 
 export function App() {
   const { activeRoute, routeQuery, navigate } = useHashRoute()
-  const { activeRole, setActiveRole, resetRole } = useDemoRole()
-  const { data, updateData, resetData } = useDemoData()
+  const { data, updateData } = useDemoData()
   const currentUser = useCurrentUser()
   const currentMember = getCurrentMember(data)
   const currentMembership = currentUser.data?.memberships.find(
@@ -257,7 +254,7 @@ export function App() {
         ? 'moderador'
         : 'jugador'
     : null
-  const effectiveRole = authenticatedRole ?? activeRole
+  const effectiveRole = authenticatedRole ?? 'jugador'
   const connectedMember = approvedMembership
     ? {
         ...currentMember,
@@ -271,7 +268,6 @@ export function App() {
       }
     : currentMember
   const publishingMember = getPublishingMember(data, effectiveRole)
-  const dataSummary = getDemoDataSummary(data)
   const cardRouteParams = new URLSearchParams(routeQuery)
   const rankingRouteParams = new URLSearchParams(routeQuery)
   const eventRouteParams = new URLSearchParams(routeQuery)
@@ -284,11 +280,6 @@ export function App() {
     effectiveRole === 'gerente'
   const sharedCardsMemberId =
     activeRoute === 'cartas' ? cardRouteParams.get('member') : null
-
-  const resetDemo = () => {
-    resetRole()
-    resetData()
-  }
 
   if (activeRoute === 'registro') {
     const registrationRouteParams = new URLSearchParams(routeQuery)
@@ -756,9 +747,6 @@ export function App() {
             accountEmail={authenticatedUserData.user.email}
             data={data}
             currentMember={connectedMember}
-            dataSummary={dataSummary}
-            onRoleChange={setActiveRole}
-            onReset={resetDemo}
             onOpenSettings={() => navigate('perfil', 'view=configuracion')}
             onSignOut={async () => {
               await signOutCurrentUser()

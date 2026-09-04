@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { DemoDataSet } from '../domain/types'
-import { demoData, getDemoDataSummary } from './demoData'
+import { demoData } from './demoData'
 
 function expectUniqueIds(items: Array<{ id: string }>) {
   const ids = items.map(({ id }) => id)
@@ -181,15 +181,6 @@ describe('demoData', () => {
       expect(match.score).toBeGreaterThan(0)
       expect(match.score).toBeLessThanOrEqual(100)
     }
-  })
-
-  it('exposes the expected pilot summary', () => {
-    expect(getDemoDataSummary()).toEqual({
-      members: 150,
-      events: 24,
-      newsPosts: 6,
-      cardMatches: 9,
-    })
   })
 
   it('includes a varied 150-card marketplace inventory for display tests', () => {

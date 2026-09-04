@@ -335,10 +335,3 @@ export type DemoDataSet = {
   cardMatches: CardMatch[]
   cardDeals: CardDeal[]
 }
-
-export type DemoDataSummary = {
-  members: number
-  events: number
-  newsPosts: number
-  cardMatches: number
-}

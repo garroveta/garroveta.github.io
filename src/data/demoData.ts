@@ -4,7 +4,6 @@ import type {
   CardLanguage,
   CommunityMember,
   DemoDataSet,
-  DemoDataSummary,
   EventStandingEntry,
   MarketplaceListing,
 } from '../domain/types'
@@ -2271,14 +2270,3 @@ export const demoData = {
   ],
   cardDeals: [],
 } satisfies DemoDataSet
-
-export function getDemoDataSummary(
-  data: DemoDataSet = demoData,
-): DemoDataSummary {
-  return {
-    members: data.community.memberCount,
-    events: data.events.length,
-    newsPosts: data.newsPosts.length,
-    cardMatches: data.cardMatches.length,
-  }
-}

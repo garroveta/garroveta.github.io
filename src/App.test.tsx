@@ -864,7 +864,6 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
-    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
     fireEvent.click(screen.getByRole('tab', { name: 'Ranking' }))
 
@@ -917,7 +916,6 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
-    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
     fireEvent.click(screen.getByRole('tab', { name: 'Inscripciones' }))
 
@@ -969,7 +967,6 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
-    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
     fireEvent.click(screen.getByRole('tab', { name: 'Invitaciones' }))
 
@@ -991,7 +988,6 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
-    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
     fireEvent.click(screen.getByRole('tab', { name: 'Invitaciones' }))
     fireEvent.click(
@@ -1051,7 +1047,6 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
-    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
     fireEvent.click(screen.getByRole('tab', { name: 'Comunidad' }))
 
@@ -1116,16 +1111,6 @@ describe('App', () => {
         { day: 'sunday' },
       ]),
     })
-
-    fireEvent.click(screen.getByRole('button', { name: 'Volver al perfil' }))
-    expect(screen.getByText('Carrer Major, 12')).toBeInTheDocument()
-    expect(
-      screen.getByRole('link', { name: 'hola@delorean.example' }),
-    ).toHaveAttribute('href', 'mailto:hola@delorean.example')
-    expect(screen.getByRole('link', { name: 'Web' })).toHaveAttribute(
-      'href',
-      'https://delorean.example',
-    )
   })
 
   it('loads and manages the real community members for the manager', async () => {
@@ -1133,7 +1118,6 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
-    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
     fireEvent.click(screen.getByRole('tab', { name: 'Miembros' }))
     await screen.findByText('Lucas Muntaner')
@@ -1277,7 +1261,6 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
-    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
     fireEvent.click(screen.getByRole('tab', { name: 'Publicaciones' }))
     fireEvent.click(screen.getByRole('button', { name: 'Nueva' }))
@@ -1662,7 +1645,6 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
-    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
 
     const optionManager = screen
@@ -1780,7 +1762,6 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
-    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
 
     fireEvent.click(
@@ -2206,7 +2187,6 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
-    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
     fireEvent.click(screen.getByRole('link', { name: 'Inicio' }))
 
     expect(
@@ -2262,7 +2242,6 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
-    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
     fireEvent.click(screen.getByRole('link', { name: 'Eventos' }))
 
     expect(
@@ -2307,7 +2286,6 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
-    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
     fireEvent.click(screen.getByRole('link', { name: 'Eventos' }))
     fireEvent.click(
       screen.getByRole('button', {
@@ -2574,7 +2552,6 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
-    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
     fireEvent.click(screen.getAllByRole('link', { name: /Noticias/ }).at(-1)!)
     expect(
       screen.queryByRole('button', { name: 'Nueva publicación' }),
@@ -2635,7 +2612,6 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
-    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
     fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
     fireEvent.click(screen.getByRole('button', { name: 'Nuevo evento' }))
 
@@ -2700,7 +2676,6 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
-    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
     fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
     const draftCard = screen
       .getByRole('heading', { name: 'Draft express MTG' })
@@ -2744,7 +2719,6 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
-    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
     fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
 
     const eventRow = screen
@@ -2813,7 +2787,6 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
-    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
     fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
 
     const eventRow = screen
@@ -3919,51 +3892,20 @@ describe('App', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('does not let a player elevate their authenticated role', () => {
+  it('shows the authenticated role and no way to preview a different one', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
 
     expect(
-      screen.getByRole('heading', { name: 'CRC Delorean' }),
+      screen.getByRole('heading', { name: 'Álex Romero' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Inca')).toBeInTheDocument()
-    expect(screen.getByText('150')).toBeInTheDocument()
+    expect(screen.getByLabelText('Vista actual: Jugador')).toBeInTheDocument()
     expect(
-      screen.getByText('Datos guardados en este navegador'),
-    ).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: /Gerente/ }))
-
-    expect(screen.getByLabelText('Vista actual: Jugador')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Jugador/ })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    )
-
-    fireEvent.click(screen.getByRole('button', { name: 'Restablecer' }))
-
-    expect(screen.getByLabelText('Vista actual: Jugador')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Jugador/ })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    )
-  })
-
-  it('restores the original local data from the profile', () => {
-    const repository = createLocalDemoRepository(window.localStorage)
-    const modifiedData = structuredClone(demoData)
-    modifiedData.community.memberCount = 151
-    repository.save(modifiedData)
-
-    render(<App />)
-
-    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
-    expect(screen.getByText('151')).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Restablecer' }))
-
-    expect(screen.getByText('150')).toBeInTheDocument()
-    expect(repository.load().community.memberCount).toBe(150)
+      screen.queryByRole('button', { name: 'Restablecer' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Cambiar de vista' }),
+    ).not.toBeInTheDocument()
   })
 })
