@@ -686,6 +686,19 @@ describe('App', () => {
     expect(screen.getByText('Gerente')).toBeInTheDocument()
   })
 
+  it('greets the manager by their own real name, not the demo persona', async () => {
+    const user = buildCurrentUser('manager')
+    user.memberships[0]!.displayName = 'Nuria Ferrer'
+    currentUserHookMocks.current = { data: user, status: 'authenticated' }
+    currentUserHookMocks.refresh.mockResolvedValue(user)
+
+    render(<App />)
+
+    expect(
+      await screen.findByRole('heading', { name: 'Hola, Nuria' }),
+    ).toBeInTheDocument()
+  })
+
   it('opens a section from the main navigation', () => {
     render(<App />)
 

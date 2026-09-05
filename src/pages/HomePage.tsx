@@ -34,7 +34,6 @@ type HomePageProps = {
   activeRole: DemoRole
   data: DemoDataSet
   currentMember: CommunityMember
-  publishingMember: CommunityMember
   onNavigate: (route: AppRoute, query?: string) => void
 }
 
@@ -487,14 +486,13 @@ export function HomePage({
   activeRole,
   data,
   currentMember,
-  publishingMember,
   onNavigate,
 }: HomePageProps) {
   if (activeRole === 'gerente') {
     return (
       <ManagerHome
         data={data}
-        manager={publishingMember}
+        manager={currentMember}
         onNavigate={onNavigate}
       />
     )

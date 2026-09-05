@@ -78,20 +78,6 @@ function getCurrentMember(data: DemoDataSet) {
   return member
 }
 
-function getPublishingMember(data: DemoDataSet, activeRole: DemoRole) {
-  const communityRole =
-    activeRole === 'gerente'
-      ? 'manager'
-      : activeRole === 'moderador'
-        ? 'moderator'
-        : 'player'
-
-  return (
-    data.members.find(({ role }) => role === communityRole) ??
-    getCurrentMember(data)
-  )
-}
-
 export function App() {
   const { activeRoute, routeQuery, navigate } = useHashRoute()
   const { data, updateData } = useDemoData()
@@ -267,7 +253,6 @@ export function App() {
         tagIds: approvedMembership.tagIds,
       }
     : currentMember
-  const publishingMember = getPublishingMember(data, effectiveRole)
   const cardRouteParams = new URLSearchParams(routeQuery)
   const rankingRouteParams = new URLSearchParams(routeQuery)
   const eventRouteParams = new URLSearchParams(routeQuery)
@@ -402,7 +387,6 @@ export function App() {
               newsPosts: communicationData.newsPosts,
             }}
             currentMember={connectedMember}
-            publishingMember={publishingMember}
             onNavigate={navigate}
           />
         ) : activeRoute === 'eventos' ? (
