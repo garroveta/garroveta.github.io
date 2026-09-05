@@ -233,6 +233,11 @@ export function App() {
       : approvedMembership
         ? { ...data, members: communityMembers }
         : data
+  const homeData = {
+    ...rankingData,
+    events: agendaData.events,
+    newsPosts: communicationData.newsPosts,
+  }
   const authenticatedRole: DemoRole | null = approvedMembership
     ? approvedMembership.role === 'manager'
       ? 'gerente'
@@ -382,11 +387,9 @@ export function App() {
         {activeRoute === 'inicio' ? (
           <HomePage
             activeRole={effectiveRole}
-            data={{
-              ...agendaData,
-              newsPosts: communicationData.newsPosts,
-            }}
+            data={homeData}
             currentMember={connectedMember}
+            rankingMemberId={approvedMembership?.id}
             onNavigate={navigate}
           />
         ) : activeRoute === 'eventos' ? (

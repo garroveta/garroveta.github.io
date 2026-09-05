@@ -29,10 +29,7 @@ import {
   type DashboardEvent,
   type ManagerDashboardEvent,
 } from '../data/dashboardSelectors'
-import {
-  getCommunityLeaderboard,
-  type CommunityRankingPlayer,
-} from '../data/rankingSelectors'
+import type { CommunityRankingPlayer } from '../data/rankingSelectors'
 import type {
   CommunityMember,
   CommunityRankingSeason,
@@ -43,6 +40,7 @@ type HomePageProps = {
   activeRole: DemoRole
   data: DemoDataSet
   currentMember: CommunityMember
+  rankingMemberId?: string
   onNavigate: (route: AppRoute, query?: string) => void
 }
 
@@ -545,6 +543,7 @@ export function HomePage({
   activeRole,
   data,
   currentMember,
+  rankingMemberId,
   onNavigate,
 }: HomePageProps) {
   if (activeRole === 'gerente') {
@@ -557,17 +556,8 @@ export function HomePage({
     )
   }
 
-  const dashboard = getPlayerDashboard(data, currentMember.id)
+  const dashboard = getPlayerDashboard(data, currentMember, rankingMemberId)
   const firstName = currentMember.displayName.split(' ')[0]
-  const rankingSeason =
-    data.rankingSeasons.find(({ status }) => status === 'active') ??
-    data.rankingSeasons.find(({ status }) => status !== 'upcoming')
-  const playerRanking = rankingSeason
-    ? getCommunityLeaderboard(data, {
-        gameId: 'game-mtg',
-        seasonId: rankingSeason.id,
-      }).find(({ member }) => member.id === currentMember.id)
-    : undefined
 
   return (
     <div className="page">
@@ -586,11 +576,13 @@ export function HomePage({
           onNavigate={onNavigate}
         />
 
-        <RankingPositionCard
-          season={rankingSeason}
-          ranking={playerRanking}
-          onNavigate={onNavigate}
-        />
+        {dashboard.rankingHighlight ? (
+          <RankingPositionCard
+            season={dashboard.rankingHighlight.season}
+            ranking={dashboard.rankingHighlight.ranking}
+            onNavigate={onNavigate}
+          />
+        ) : null}
 
         <section
           className="dashboard-card news-card"

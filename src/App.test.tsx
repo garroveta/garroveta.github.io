@@ -904,6 +904,21 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
+  it('hides the ranking card for a player who opted out of MTG', () => {
+    const user = buildCurrentUser('player')
+    user.memberships[0]!.favoriteGameIds = ['game-one-piece']
+    currentUserHookMocks.current = { data: user, status: 'authenticated' }
+    currentUserHookMocks.refresh.mockResolvedValue(user)
+
+    render(<App />)
+
+    expect(
+      screen.queryByRole('heading', {
+        name: /Posición|clasificado|temporada/i,
+      }),
+    ).not.toBeInTheDocument()
+  })
+
   it('lets the manager configure the community ranking barometer', async () => {
     authenticateAsManager()
     const activeSeason = demoData.rankingSeasons.find(

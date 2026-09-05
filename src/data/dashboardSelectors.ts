@@ -4,11 +4,16 @@ import type {
   CommunityEvent,
   CommunityGame,
   CommunityMember,
+  CommunityRankingSeason,
   DemoDataSet,
   EventRegistration,
   MarketplaceListing,
   NewsPost,
 } from '../domain/types'
+import {
+  getCommunityLeaderboard,
+  type CommunityRankingPlayer,
+} from './rankingSelectors'
 
 export const DEMO_REFERENCE_TIME = '2026-07-29T12:00:00+02:00'
 
@@ -25,10 +30,16 @@ export type DashboardMatch = {
   seller: CommunityMember
 }
 
+export type RankingHighlight = {
+  season?: CommunityRankingSeason
+  ranking?: CommunityRankingPlayer
+}
+
 export type PlayerDashboard = {
   nextEvent?: DashboardEvent
   highlightedNews?: NewsPost
   newMatches: DashboardMatch[]
+  rankingHighlight?: RankingHighlight
 }
 
 export type ManagerDashboardEvent = {
@@ -56,15 +67,11 @@ function byMostRecent(
 
 export function getPlayerDashboard(
   data: DemoDataSet,
-  memberId: string,
+  member: CommunityMember,
+  rankingMemberId: string = member.id,
   referenceTime = DEMO_REFERENCE_TIME,
 ): PlayerDashboard {
-  const member = data.members.find(({ id }) => id === memberId)
-
-  if (!member) {
-    throw new Error('No se ha encontrado el jugador del panel.')
-  }
-
+  const memberId = member.id
   const referenceTimestamp = new Date(referenceTime).getTime()
   const favoriteGameIds = new Set(member.favoriteGameIds)
   const nextEvent = data.events
@@ -117,6 +124,13 @@ export function getPlayerDashboard(
       return listing && card && seller ? [{ match, listing, card, seller }] : []
     })
 
+  const followsMtg =
+    favoriteGameIds.size === 0 || favoriteGameIds.has('game-mtg')
+  const rankingSeason = followsMtg
+    ? (data.rankingSeasons.find(({ status }) => status === 'active') ??
+      data.rankingSeasons.find(({ status }) => status !== 'upcoming'))
+    : undefined
+
   return {
     nextEvent: nextEvent
       ? {
@@ -129,6 +143,20 @@ export function getPlayerDashboard(
       : undefined,
     highlightedNews,
     newMatches,
+    rankingHighlight: followsMtg
+      ? {
+          season: rankingSeason,
+          ranking: rankingSeason
+            ? getCommunityLeaderboard(data, {
+                gameId: 'game-mtg',
+                seasonId: rankingSeason.id,
+              }).find(
+                ({ member: rankedMember }) =>
+                  rankedMember.id === rankingMemberId,
+              )
+            : undefined,
+        }
+      : undefined,
   }
 }
 
