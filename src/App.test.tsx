@@ -861,6 +861,49 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
+  it('shows the player their community ranking position on the home page', () => {
+    render(<App />)
+
+    expect(
+      screen.getByRole('heading', { name: 'Posición 7' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('34 puntos comunidad · Temporada 2026'),
+    ).toBeInTheDocument()
+  })
+
+  it('shows a not-yet-ranked state when the player has no results yet', () => {
+    const modifiedData = structuredClone(demoData)
+    modifiedData.eventStandings = modifiedData.eventStandings.map(
+      (standing) => ({
+        ...standing,
+        entries: standing.entries.filter(
+          ({ memberId }) => memberId !== 'member-alex',
+        ),
+      }),
+    )
+    createLocalDemoRepository(window.localStorage).save(modifiedData)
+
+    render(<App />)
+
+    expect(
+      screen.getByRole('heading', { name: 'Aún no estás clasificado' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/Temporada 2026/)).toBeInTheDocument()
+  })
+
+  it('shows an empty ranking state when no season exists yet', () => {
+    const modifiedData = structuredClone(demoData)
+    modifiedData.rankingSeasons = []
+    createLocalDemoRepository(window.localStorage).save(modifiedData)
+
+    render(<App />)
+
+    expect(
+      screen.getByRole('heading', { name: 'Sin temporada activa' }),
+    ).toBeInTheDocument()
+  })
+
   it('lets the manager configure the community ranking barometer', async () => {
     authenticateAsManager()
     const activeSeason = demoData.rankingSeasons.find(

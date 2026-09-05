@@ -11,6 +11,7 @@ import {
   Plus,
   Settings2,
   Sparkles,
+  Trophy,
   UserPlus,
   UsersRound,
 } from 'lucide-react'
@@ -28,7 +29,15 @@ import {
   type DashboardEvent,
   type ManagerDashboardEvent,
 } from '../data/dashboardSelectors'
-import type { CommunityMember, DemoDataSet } from '../domain/types'
+import {
+  getCommunityLeaderboard,
+  type CommunityRankingPlayer,
+} from '../data/rankingSelectors'
+import type {
+  CommunityMember,
+  CommunityRankingSeason,
+  DemoDataSet,
+} from '../domain/types'
 
 type HomePageProps = {
   activeRole: DemoRole
@@ -168,6 +177,56 @@ function NextEventCard({
 
       <DashboardLink route="eventos" onNavigate={onNavigate}>
         Ver evento
+      </DashboardLink>
+    </section>
+  )
+}
+
+function RankingPositionCard({
+  season,
+  ranking,
+  onNavigate,
+}: {
+  season?: CommunityRankingSeason
+  ranking?: CommunityRankingPlayer
+  onNavigate: (route: AppRoute, query?: string) => void
+}) {
+  return (
+    <section
+      className="dashboard-card ranking-position-card"
+      aria-labelledby="ranking-position-title"
+    >
+      <div className="dashboard-card__topline">
+        <span className="dashboard-label">
+          <Trophy aria-hidden="true" size={15} />
+          Ranking
+        </span>
+      </div>
+
+      {season && ranking ? (
+        <>
+          <h2 id="ranking-position-title">Posición {ranking.rank}</h2>
+          <p>
+            {ranking.points} puntos comunidad · {season.name}
+          </p>
+        </>
+      ) : season ? (
+        <>
+          <h2 id="ranking-position-title">Aún no estás clasificado</h2>
+          <p>
+            Juega un evento MTG puntuable para entrar en la clasificación de{' '}
+            {season.name}.
+          </p>
+        </>
+      ) : (
+        <>
+          <h2 id="ranking-position-title">Sin temporada activa</h2>
+          <p>Todavía no hay una temporada de ranking en marcha.</p>
+        </>
+      )}
+
+      <DashboardLink route="ranking" onNavigate={onNavigate}>
+        Ver clasificación
       </DashboardLink>
     </section>
   )
@@ -500,6 +559,15 @@ export function HomePage({
 
   const dashboard = getPlayerDashboard(data, currentMember.id)
   const firstName = currentMember.displayName.split(' ')[0]
+  const rankingSeason =
+    data.rankingSeasons.find(({ status }) => status === 'active') ??
+    data.rankingSeasons.find(({ status }) => status !== 'upcoming')
+  const playerRanking = rankingSeason
+    ? getCommunityLeaderboard(data, {
+        gameId: 'game-mtg',
+        seasonId: rankingSeason.id,
+      }).find(({ member }) => member.id === currentMember.id)
+    : undefined
 
   return (
     <div className="page">
@@ -515,6 +583,12 @@ export function HomePage({
       <div className="dashboard-grid">
         <NextEventCard
           dashboardEvent={dashboard.nextEvent}
+          onNavigate={onNavigate}
+        />
+
+        <RankingPositionCard
+          season={rankingSeason}
+          ranking={playerRanking}
           onNavigate={onNavigate}
         />
 
