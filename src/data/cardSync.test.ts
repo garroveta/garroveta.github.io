@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  applyMarketplaceSyncPlan,
   computeMarketplaceSyncPlan,
+  resolveMarketplaceSyncConflict,
   type MarketplaceSyncScope,
 } from './cardSync'
 import type { MarketplaceImportItemInput } from './cardMutations'
@@ -352,5 +354,164 @@ describe('marketplace sync plan', () => {
     ])
 
     expect(plan.added).toEqual([])
+  })
+})
+
+describe('marketplace sync application', () => {
+  it('refuses to apply a plan that still holds a conflict', () => {
+    const data = buildData([
+      buildListing({ id: 'listing-sync-1', cardId: solRing.id }),
+      buildListing({ id: 'listing-sync-2', cardId: solRing.id, priceEur: 6 }),
+    ])
+    const plan = computeMarketplaceSyncPlan(data, scope, [
+      buildItem(solRing, { quantity: 2 }),
+    ])
+
+    expect(plan.conflicts).toHaveLength(1)
+
+    const result = applyMarketplaceSyncPlan(data, scope, plan)
+
+    expect(result.data).toBe(data)
+    expect(result).toMatchObject({ added: 0, updated: 0, withdrawn: 0 })
+  })
+
+  it('settles a conflict by keeping one offer and withdrawing the others', () => {
+    const data = buildData([
+      buildListing({ id: 'listing-sync-1', cardId: solRing.id, priceEur: 4 }),
+      buildListing({ id: 'listing-sync-2', cardId: solRing.id, priceEur: 6 }),
+    ])
+    const plan = computeMarketplaceSyncPlan(data, scope, [
+      buildItem(solRing, { quantity: 2 }),
+    ])
+    const settled = resolveMarketplaceSyncConflict(
+      plan,
+      plan.conflicts[0].line.key,
+      { kind: 'apply', listingId: 'listing-sync-1', quantity: 5, priceEur: 7 },
+    )
+
+    expect(settled.conflicts).toEqual([])
+    expect(settled.updated).toHaveLength(1)
+    expect(settled.updated[0]).toMatchObject({
+      quantity: { from: 1, to: 5 },
+      price: { from: 4, to: 7 },
+    })
+    expect(settled.withdrawn.map(({ id }) => id)).toEqual(['listing-sync-2'])
+
+    const result = applyMarketplaceSyncPlan(data, scope, settled)
+    const listings = result.data.listings
+
+    expect(listings.find(({ id }) => id === 'listing-sync-1')).toMatchObject({
+      quantity: 5,
+      priceEur: 7,
+      status: 'available',
+    })
+    expect(listings.find(({ id }) => id === 'listing-sync-2')?.status).toBe(
+      'withdrawn',
+    )
+    expect(result).toMatchObject({ added: 0, updated: 1, withdrawn: 1 })
+  })
+
+  it('leaves every offer of a skipped conflict untouched', () => {
+    const data = buildData([
+      buildListing({ id: 'listing-sync-1', cardId: solRing.id }),
+      buildListing({ id: 'listing-sync-2', cardId: solRing.id }),
+    ])
+    const plan = computeMarketplaceSyncPlan(data, scope, [buildItem(solRing)])
+    const settled = resolveMarketplaceSyncConflict(
+      plan,
+      plan.conflicts[0].line.key,
+      { kind: 'skip' },
+    )
+    const result = applyMarketplaceSyncPlan(data, scope, settled)
+
+    expect(settled.unchanged).toBe(2)
+    expect(result).toMatchObject({ added: 0, updated: 0, withdrawn: 0 })
+    expect(
+      result.data.listings.filter(({ status }) => status !== 'available'),
+    ).toEqual([])
+  })
+
+  it('settles an ambiguous price into a single new offer', () => {
+    const data = buildData([])
+    const plan = computeMarketplaceSyncPlan(data, scope, [
+      buildItem(solRing, { quantity: 2, priceEur: 5, lineNumber: 1 }),
+      buildItem(solRing, { quantity: 1, priceEur: 7, lineNumber: 2 }),
+    ])
+    const settled = resolveMarketplaceSyncConflict(
+      plan,
+      plan.conflicts[0].line.key,
+      { kind: 'apply', quantity: 3, priceEur: 6 },
+    )
+
+    expect(settled.added).toHaveLength(1)
+
+    const result = applyMarketplaceSyncPlan(data, scope, settled)
+
+    expect(result.added).toBe(1)
+    expect(result.data.listings.at(-1)).toMatchObject({
+      memberId,
+      cardListId,
+      quantity: 3,
+      priceEur: 6,
+      status: 'available',
+    })
+  })
+
+  it('creates the catalogue entry of an offer the community did not know', () => {
+    const data: DemoDataSet = {
+      ...demoData,
+      cards: demoData.cards.filter(({ id }) => id !== solRing.id),
+      listings: [],
+      cardMatches: [],
+    }
+    const plan = computeMarketplaceSyncPlan(data, scope, [
+      buildItem(solRing, { quantity: 1, priceEur: 3 }),
+    ])
+    const result = applyMarketplaceSyncPlan(data, scope, plan)
+    const createdCard = result.data.cards.find(
+      ({ scryfallId }) => scryfallId === solRing.scryfallId,
+    )
+
+    expect(createdCard).toMatchObject({ name: 'Sol Ring', setCode: 'CMM' })
+    expect(result.data.listings.at(-1)?.cardId).toBe(createdCard?.id)
+  })
+
+  it('applies a republication and reports an offer reserved meanwhile', () => {
+    const data = buildData([
+      buildListing({
+        id: 'listing-sync-1',
+        cardId: solRing.id,
+        status: 'withdrawn',
+      }),
+      buildListing({ id: 'listing-sync-2', cardId: rhysticStudy.id }),
+    ])
+    const plan = computeMarketplaceSyncPlan(data, scope, [buildItem(solRing)])
+
+    expect(plan.withdrawn.map(({ id }) => id)).toEqual(['listing-sync-2'])
+
+    const movedOn: DemoDataSet = {
+      ...data,
+      listings: data.listings.map((listing) =>
+        listing.id === 'listing-sync-2'
+          ? {
+              ...listing,
+              status: 'reserved' as const,
+              reservedByMemberId: 'member-diego',
+              reservedQuantity: 1,
+            }
+          : listing,
+      ),
+    }
+    const result = applyMarketplaceSyncPlan(movedOn, scope, plan)
+
+    expect(result.updated).toBe(1)
+    expect(result.withdrawn).toBe(0)
+    expect(result.skipped.map(({ id }) => id)).toEqual(['listing-sync-2'])
+    expect(
+      result.data.listings.find(({ id }) => id === 'listing-sync-1')?.status,
+    ).toBe('available')
+    expect(
+      result.data.listings.find(({ id }) => id === 'listing-sync-2')?.status,
+    ).toBe('reserved')
   })
 })

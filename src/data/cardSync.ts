@@ -6,10 +6,14 @@ import type {
 import type { CardListSection } from './cardListImport'
 import type { CardImportResolution } from './scryfallClient'
 import {
+  ensureResolvedCard,
   findExactCatalogCard,
+  nextUniqueId,
   normalizeCardName,
   type MarketplaceImportItemInput,
 } from './cardMutations'
+import { synchronizeCardMatches } from './cardMatching'
+import { DEMO_REFERENCE_TIME } from './dashboardSelectors'
 
 /**
  * A sync always runs inside one personal list: a member usually exports only
@@ -38,6 +42,8 @@ export type MarketplaceSyncLine = {
   /** Every distinct price the merged lines carried, to settle an ambiguity. */
   candidatePrices: number[]
   lineNumbers: number[]
+  /** Stable identity of the variant, used to address a conflict. */
+  key: string
 }
 
 export type MarketplaceSyncUpdate = {
@@ -158,6 +164,7 @@ function mergeImportLines(
 
     if (!existing) {
       linesByKey.set(key, {
+        key,
         resolution: { ...resolution, card: resolvedCard },
         cardId: catalogCard?.id,
         cardName: resolvedCard.name,
@@ -183,6 +190,27 @@ function mergeImportLines(
   }
 
   return { lines: [...linesByKey.values()], unresolvedLines }
+}
+
+/** Returns what the file changes for one offer, or undefined when nothing does. */
+function buildUpdate(
+  line: MarketplaceSyncLine,
+  listing: MarketplaceListing,
+): MarketplaceSyncUpdate | undefined {
+  const republished = listing.status === 'withdrawn'
+  const quantity =
+    listing.quantity === line.quantity
+      ? undefined
+      : { from: listing.quantity, to: line.quantity }
+  // A file without prices never erases a price typed by hand.
+  const price =
+    line.priceEur === undefined || line.priceEur === listing.priceEur
+      ? undefined
+      : { from: listing.priceEur, to: line.priceEur }
+
+  return !republished && !quantity && !price
+    ? undefined
+    : { line, listing, quantity, price, republished }
 }
 
 /**
@@ -266,23 +294,14 @@ export function computeMarketplaceSyncPlan(
       continue
     }
 
-    const republished = listing.status === 'withdrawn'
-    const quantity =
-      listing.quantity === line.quantity
-        ? undefined
-        : { from: listing.quantity, to: line.quantity }
-    // A file without prices never erases a price typed by hand.
-    const price =
-      line.priceEur === undefined || line.priceEur === listing.priceEur
-        ? undefined
-        : { from: listing.priceEur, to: line.priceEur }
+    const update = buildUpdate(line, listing)
 
-    if (!republished && !quantity && !price) {
+    if (!update) {
       plan.unchanged += 1
       continue
     }
 
-    plan.updated.push({ line, listing, quantity, price, republished })
+    plan.updated.push(update)
   }
 
   for (const listing of scopeListings) {
@@ -311,4 +330,199 @@ export function computeMarketplaceSyncPlan(
   }
 
   return plan
+}
+
+export type MarketplaceSyncConflictChoice =
+  /** Settle the line: `listingId` picks the offer to keep, the others go. */
+  | { kind: 'apply'; listingId?: string; quantity: number; priceEur?: number }
+  /** Leave every offer of the line untouched. */
+  | { kind: 'skip' }
+
+/**
+ * Turns one settled conflict into ordinary plan entries. A plan can only be
+ * applied once every conflict has gone through here.
+ */
+export function resolveMarketplaceSyncConflict(
+  plan: MarketplaceSyncPlan,
+  lineKey: string,
+  choice: MarketplaceSyncConflictChoice,
+): MarketplaceSyncPlan {
+  const conflict = plan.conflicts.find(({ line }) => line.key === lineKey)
+
+  if (!conflict) {
+    return plan
+  }
+
+  const conflicts = plan.conflicts.filter(({ line }) => line.key !== lineKey)
+
+  if (choice.kind === 'skip') {
+    return {
+      ...plan,
+      conflicts,
+      unchanged: plan.unchanged + conflict.listings.length,
+    }
+  }
+
+  const line: MarketplaceSyncLine = {
+    ...conflict.line,
+    quantity: choice.quantity,
+    priceEur: roundedPrice(choice.priceEur),
+    candidatePrices:
+      roundedPrice(choice.priceEur) === undefined
+        ? []
+        : [roundedPrice(choice.priceEur)!],
+  }
+  const kept = choice.listingId
+    ? conflict.listings.find(({ id }) => id === choice.listingId)
+    : undefined
+  const dropped = conflict.listings.filter(({ id }) => id !== kept?.id)
+
+  if (!kept) {
+    return {
+      ...plan,
+      conflicts,
+      added: [...plan.added, line],
+      withdrawn: [...plan.withdrawn, ...dropped],
+    }
+  }
+
+  const update = buildUpdate(line, kept)
+
+  return {
+    ...plan,
+    conflicts,
+    updated: update ? [...plan.updated, update] : plan.updated,
+    withdrawn: [...plan.withdrawn, ...dropped],
+    unchanged: update ? plan.unchanged : plan.unchanged + 1,
+  }
+}
+
+export type MarketplaceSyncResult = {
+  data: DemoDataSet
+  added: number
+  updated: number
+  withdrawn: number
+  /** Offers the plan expected in another state, left untouched. */
+  skipped: MarketplaceListing[]
+}
+
+/**
+ * Applies a settled plan. Every offer is re-read from the data first: one whose
+ * state moved since the plan was computed — a reservation arriving meanwhile —
+ * is reported rather than overwritten.
+ */
+export function applyMarketplaceSyncPlan(
+  data: DemoDataSet,
+  scope: MarketplaceSyncScope,
+  plan: MarketplaceSyncPlan,
+  appliedAt = DEMO_REFERENCE_TIME,
+): MarketplaceSyncResult {
+  const emptyResult = { data, added: 0, updated: 0, withdrawn: 0, skipped: [] }
+
+  if (plan.conflicts.length > 0 || !findScope(data, scope)) {
+    return emptyResult
+  }
+
+  const currentById = new Map(
+    data.listings.map((listing) => [listing.id, listing]),
+  )
+  const changes = new Map<string, MarketplaceListing>()
+  const skipped: MarketplaceListing[] = []
+  let updated = 0
+  let withdrawn = 0
+
+  const claim = (
+    listing: MarketplaceListing,
+    expectedStatus: MarketplaceListing['status'],
+  ) => {
+    const current = currentById.get(listing.id)
+
+    if (
+      !current ||
+      current.memberId !== scope.memberId ||
+      current.cardListId !== scope.cardListId ||
+      current.status !== expectedStatus ||
+      changes.has(current.id)
+    ) {
+      if (current) {
+        skipped.push(current)
+      }
+
+      return undefined
+    }
+
+    return current
+  }
+
+  for (const update of plan.updated) {
+    const current = claim(update.listing, update.listing.status)
+
+    if (!current) {
+      continue
+    }
+
+    changes.set(current.id, {
+      ...current,
+      quantity: update.quantity?.to ?? current.quantity,
+      priceEur: update.price ? update.price.to : current.priceEur,
+      status: update.republished ? 'available' : current.status,
+    })
+    updated += 1
+  }
+
+  for (const listing of plan.withdrawn) {
+    const current = claim(listing, 'available')
+
+    if (!current) {
+      continue
+    }
+
+    changes.set(current.id, { ...current, status: 'withdrawn' })
+    withdrawn += 1
+  }
+
+  let cards = [...data.cards]
+  const createdListings: MarketplaceListing[] = []
+  const usedIds = data.listings.map(({ id }) => id)
+
+  for (const line of plan.added) {
+    const ensured = ensureResolvedCard(cards, line.resolution.card, false)
+    cards = ensured.cards
+
+    const id = nextUniqueId(
+      usedIds,
+      `listing-${scope.memberId.replace('member-', '')}-${ensured.cardId.replace('card-', '')}`,
+    )
+    usedIds.push(id)
+    createdListings.push({
+      id,
+      communityId: data.community.id,
+      memberId: scope.memberId,
+      cardId: ensured.cardId,
+      cardListId: scope.cardListId,
+      quantity: line.quantity,
+      language: line.language,
+      condition: line.condition,
+      finish: line.finish,
+      offerType: 'sale',
+      priceEur: line.priceEur,
+      status: 'available',
+      createdAt: appliedAt,
+    })
+  }
+
+  return {
+    data: synchronizeCardMatches({
+      ...data,
+      cards,
+      listings: [
+        ...data.listings.map((listing) => changes.get(listing.id) ?? listing),
+        ...createdListings,
+      ],
+    }),
+    added: createdListings.length,
+    updated,
+    withdrawn,
+    skipped,
+  }
 }

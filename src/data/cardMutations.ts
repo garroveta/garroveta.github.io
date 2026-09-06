@@ -100,7 +100,7 @@ function wantedVariantKey(
   return `${cardKey}|${language}|${finish}`
 }
 
-function nextUniqueId(dataIds: string[], baseId: string) {
+export function nextUniqueId(dataIds: string[], baseId: string) {
   let candidateId = baseId
   let suffix = 2
 
@@ -138,7 +138,7 @@ export function findExactCatalogCard(
   )
 }
 
-function ensureResolvedCard(
+export function ensureResolvedCard(
   cards: Card[],
   resolvedCard: NonNullable<CardImportResolution['card']>,
   allowAnyPrinting: boolean,
