@@ -1,7 +1,15 @@
+import type {
+  CardCondition,
+  CardLanguage,
+  MarketplaceListing,
+} from '../domain/types'
+
 export type CardListSection =
   'main' | 'sideboard' | 'maybeboard' | 'commander' | 'companion'
 
 export type CardListSource = 'manabox_csv' | 'text'
+
+export type CardFinish = MarketplaceListing['finish']
 
 export type ParsedCardListItem = {
   lineNumber: number
@@ -12,6 +20,11 @@ export type ParsedCardListItem = {
   collectorNumber?: string
   scryfallId?: string
   section: CardListSection
+  /** Commercial attributes, filled only by exports that carry them. */
+  language?: CardLanguage
+  condition?: CardCondition
+  finish?: CardFinish
+  priceEur?: number
 }
 
 export type ParsedCardList = {
@@ -94,6 +107,61 @@ function looksLikeManaBoxCsv(value: string) {
   )
 }
 
+const manaBoxLanguages = new Map<string, CardLanguage>([
+  ['en', 'en'],
+  ['english', 'en'],
+  ['es', 'es'],
+  ['spanish', 'es'],
+  ['espanol', 'es'],
+  ['fr', 'fr'],
+  ['french', 'fr'],
+  ['de', 'de'],
+  ['german', 'de'],
+  ['deutsch', 'de'],
+  ['it', 'it'],
+  ['italian', 'it'],
+  ['italiano', 'it'],
+  ['pt', 'pt'],
+  ['pt-br', 'pt'],
+  ['portuguese', 'pt'],
+  ['ja', 'jp'],
+  ['jp', 'jp'],
+  ['japanese', 'jp'],
+])
+
+/**
+ * ManaBox grades cards below `good`, a range the community model does not
+ * express. They fall back to `good`, the lowest grade available here, which
+ * never overstates the card as much as the `near_mint` default would.
+ */
+const manaBoxConditions = new Map<string, CardCondition>([
+  ['mint', 'mint'],
+  ['m', 'mint'],
+  ['near_mint', 'near_mint'],
+  ['near mint', 'near_mint'],
+  ['nm', 'near_mint'],
+  ['excellent', 'excellent'],
+  ['ex', 'excellent'],
+  ['good', 'good'],
+  ['gd', 'good'],
+  ['light_played', 'good'],
+  ['lightly played', 'good'],
+  ['lp', 'good'],
+  ['played', 'good'],
+  ['pl', 'good'],
+  ['poor', 'good'],
+  ['po', 'good'],
+])
+
+const manaBoxFinishes = new Map<string, CardFinish>([
+  ['normal', 'nonfoil'],
+  ['nonfoil', 'nonfoil'],
+  ['false', 'nonfoil'],
+  ['foil', 'foil'],
+  ['etched', 'foil'],
+  ['true', 'foil'],
+])
+
 function parseManaBoxCsv(value: string): ParsedCardList {
   const rows = parseCsvRows(value)
   const headers = (rows.shift() ?? []).map(normalizeHeader)
@@ -128,6 +196,15 @@ function parseManaBoxCsv(value: string): ParsedCardList {
       collectorNumber: row[indexOf('collector number')]?.trim() || undefined,
       scryfallId: row[indexOf('scryfall id')]?.trim() || undefined,
       section: 'main',
+      language: manaBoxLanguages.get(
+        normalizeHeader(row[indexOf('language')] ?? ''),
+      ),
+      condition: manaBoxConditions.get(
+        normalizeHeader(row[indexOf('condition')] ?? ''),
+      ),
+      finish: manaBoxFinishes.get(normalizeHeader(row[indexOf('foil')] ?? '')),
+      // `Purchase price` is what the owner paid, not a sale price: never
+      // publish it as one.
     })
   })
 

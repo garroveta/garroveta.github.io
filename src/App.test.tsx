@@ -3325,6 +3325,42 @@ describe('App', () => {
     ).toMatchObject({ quantity: 3, priceEur: 4.75 })
   })
 
+  it('prefills offers with the attributes of a ManaBox CSV', async () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: 'Importar lista' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ofertas' }))
+    fireEvent.change(screen.getByLabelText('Lista de cartas'), {
+      target: {
+        value: [
+          'Name,Set code,Collector number,Quantity,Scryfall ID,Foil,Condition,Language',
+          'Sol Ring,CMM,410,2,,foil,good,fr',
+        ].join('\n'),
+      },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Analizar lista' }))
+
+    expect(await screen.findByLabelText('Idioma de Sol Ring')).toHaveValue('fr')
+    expect(screen.getByLabelText('Estado de Sol Ring')).toHaveValue('good')
+    expect(screen.getByLabelText('Acabado de Sol Ring')).toHaveValue('foil')
+    expect(screen.getByLabelText('Cantidad de Sol Ring')).toHaveValue(2)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar ofertas' }))
+
+    expect(
+      createLocalDemoRepository(window.localStorage)
+        .load()
+        .listings.find(
+          ({ memberId, language, condition, finish }) =>
+            memberId === demoData.currentMemberId &&
+            language === 'fr' &&
+            condition === 'good' &&
+            finish === 'foil',
+        ),
+    ).toMatchObject({ quantity: 2 })
+  })
+
   it('creates and displays automatic matches after an import', async () => {
     render(<App />)
 

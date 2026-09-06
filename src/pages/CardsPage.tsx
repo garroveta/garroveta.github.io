@@ -1176,6 +1176,13 @@ function WantedImportComposer({
     )
     return counts
   }, [parsedList.items])
+  const detectedAttributeCount = useMemo(
+    () =>
+      parsedList.items.filter(
+        (item) => item.language ?? item.condition ?? item.finish,
+      ).length,
+    [parsedList.items],
+  )
   const resolvedCount =
     resolutions?.filter(({ status }) => status === 'resolved').length ?? 0
   const unresolvedCount = (resolutions?.length ?? 0) - resolvedCount
@@ -1214,17 +1221,18 @@ function WantedImportComposer({
         resolved.map((resolution) => ({
           resolution,
           quantity: resolution.item.quantity,
-          language: 'es',
-          condition: 'near_mint',
-          finish: 'nonfoil',
+          language: resolution.item.language ?? 'es',
+          condition: resolution.item.condition ?? 'near_mint',
+          finish: resolution.item.finish ?? 'nonfoil',
+          priceEur: resolution.item.priceEur,
         })),
       )
       setWantedInputs(
         resolved.map((resolution) => ({
           resolution,
           quantity: resolution.item.quantity,
-          acceptedLanguages: ['es'],
-          acceptedFinishes: ['nonfoil'],
+          acceptedLanguages: [resolution.item.language ?? 'es'],
+          acceptedFinishes: [resolution.item.finish ?? 'nonfoil'],
         })),
       )
     } catch {
@@ -1357,6 +1365,14 @@ function WantedImportComposer({
               {parsedList.items.reduce((sum, item) => sum + item.quantity, 0)}{' '}
               cartas
               {parsedList.source === 'manabox_csv' ? ' · CSV ManaBox' : ''}
+            </p>
+          ) : null}
+
+          {detectedAttributeCount > 0 ? (
+            <p className="import-detection" role="status">
+              <CheckCircle2 aria-hidden="true" size={16} />
+              {detectedAttributeCount} líneas traen idioma, estado o acabado: se
+              rellenan solos y podrás corregirlos antes de publicar.
             </p>
           ) : null}
 

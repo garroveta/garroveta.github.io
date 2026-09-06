@@ -49,4 +49,70 @@ describe('card list imports', () => {
       scryfallId: '12345678-1234-1234-1234-123456789abc',
     })
   })
+
+  it('carries the language, condition and finish of a ManaBox CSV', () => {
+    const result = parseCardList(
+      [
+        'Name,Set code,Quantity,Scryfall ID,Foil,Condition,Language',
+        'Bloodghast,MM2,1,id-1,foil,near_mint,en',
+        'Gut Shot,NPH,2,id-2,normal,excellent,es',
+        'Llanowar Elves,DOM,1,id-3,etched,mint,ja',
+      ].join('\n'),
+    )
+
+    expect(
+      result.items.map(({ language, condition, finish }) => ({
+        language,
+        condition,
+        finish,
+      })),
+    ).toEqual([
+      { language: 'en', condition: 'near_mint', finish: 'foil' },
+      { language: 'es', condition: 'excellent', finish: 'nonfoil' },
+      { language: 'jp', condition: 'mint', finish: 'foil' },
+    ])
+  })
+
+  it('downgrades ManaBox grades below good to the lowest grade available', () => {
+    const result = parseCardList(
+      [
+        'Name,Quantity,Scryfall ID,Condition',
+        'Bloodghast,1,id-1,light_played',
+        'Gut Shot,1,id-2,poor',
+      ].join('\n'),
+    )
+
+    expect(result.items.map(({ condition }) => condition)).toEqual([
+      'good',
+      'good',
+    ])
+  })
+
+  it('leaves unsupported ManaBox values undefined', () => {
+    const result = parseCardList(
+      'Name,Quantity,Scryfall ID,Condition,Language\nBloodghast,1,id-1,,ru',
+    )
+
+    expect(result.items[0].language).toBeUndefined()
+    expect(result.items[0].condition).toBeUndefined()
+    expect(result.items[0].finish).toBeUndefined()
+  })
+
+  it('never turns a ManaBox purchase price into a sale price', () => {
+    const result = parseCardList(
+      'Name,Quantity,Scryfall ID,Purchase price\nBloodghast,1,id-1,12.50',
+    )
+
+    expect(result.items[0].priceEur).toBeUndefined()
+  })
+
+  it('leaves the commercial attributes undefined for a text list', () => {
+    const result = parseCardList('2x Bloodghast\n1 Gut Shot')
+
+    result.items.forEach((item) => {
+      expect(item.language).toBeUndefined()
+      expect(item.condition).toBeUndefined()
+      expect(item.finish).toBeUndefined()
+    })
+  })
 })
