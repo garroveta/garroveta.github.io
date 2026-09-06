@@ -80,7 +80,10 @@ export function synchronizeCardMatches(
 
       if (
         (listing.status !== 'available' &&
-          listing.reservedByMemberId !== wantedCard.memberId) ||
+          !(
+            listing.status === 'reserved' &&
+            listing.reservedByMemberId === wantedCard.memberId
+          )) ||
         listing.memberId === wantedCard.memberId ||
         !cardsMatch(wantedCard, wantedPrinting, listingPrinting) ||
         !wantedCard.acceptedLanguages.includes(listing.language) ||

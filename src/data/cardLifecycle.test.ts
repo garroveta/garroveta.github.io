@@ -9,6 +9,10 @@ import {
   updateWantedCardDetails,
   updateWantedCardStatus,
 } from './cardLifecycle'
+import {
+  getMarketplaceListings,
+  getMemberSharedListings,
+} from './cardSelectors'
 import { demoData } from './demoData'
 
 describe('card list lifecycle', () => {
@@ -37,6 +41,73 @@ describe('card list lifecycle', () => {
         ({ listingId }) => listingId === 'listing-sol-ring',
       ),
     ).toBe(false)
+  })
+
+  it('withdraws a listing without closing a sale, and republishes it', () => {
+    const withdrawnData = updateMarketplaceListingStatus(
+      demoData,
+      'listing-sol-ring',
+      'member-diego',
+      'withdrawn',
+    )
+    const withdrawnListing = withdrawnData.listings.find(
+      ({ id }) => id === 'listing-sol-ring',
+    )
+
+    expect(withdrawnListing?.status).toBe('withdrawn')
+    expect(withdrawnData.cardDeals).toEqual(demoData.cardDeals)
+    expect(
+      getMarketplaceListings(withdrawnData).some(
+        ({ listing }) => listing.id === 'listing-sol-ring',
+      ),
+    ).toBe(false)
+    expect(
+      getMemberSharedListings(withdrawnData, 'member-diego').some(
+        ({ listing }) => listing.id === 'listing-sol-ring',
+      ),
+    ).toBe(false)
+    expect(
+      withdrawnData.cardMatches.some(
+        ({ listingId }) => listingId === 'listing-sol-ring',
+      ),
+    ).toBe(false)
+
+    const republishedData = updateMarketplaceListingStatus(
+      withdrawnData,
+      'listing-sol-ring',
+      'member-diego',
+      'available',
+    )
+
+    expect(
+      republishedData.listings.find(({ id }) => id === 'listing-sol-ring')
+        ?.status,
+    ).toBe('available')
+    expect(
+      republishedData.cardMatches.some(
+        ({ listingId }) => listingId === 'listing-sol-ring',
+      ),
+    ).toBe(true)
+  })
+
+  it('refuses to withdraw a listing another member is holding', () => {
+    const reservedData = reserveMarketplaceListing(
+      demoData,
+      'listing-sol-ring',
+      demoData.currentMemberId,
+    )
+
+    expect(
+      reservedData.listings.find(({ id }) => id === 'listing-sol-ring')?.status,
+    ).toBe('reserved')
+    expect(
+      updateMarketplaceListingStatus(
+        reservedData,
+        'listing-sol-ring',
+        'member-diego',
+        'withdrawn',
+      ),
+    ).toBe(reservedData)
   })
 
   it('pauses and reactivates a wanted card with its matches', () => {

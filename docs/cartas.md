@@ -75,7 +75,7 @@ existían.
 | `condition`                                            | los siete grados de Cardmarket, de `mint` a `poor`    |
 | `finish`                                               | `nonfoil` o `foil`                                    |
 | `priceEur`                                             | opcional                                              |
-| `status`                                               | `available`, `reserved`, `completed`                  |
+| `status`                                               | `available`, `reserved`, `completed`, `withdrawn`     |
 | `reservedByMemberId`, `reservedQuantity`, `reservedAt` | reserva en curso                                      |
 
 ### `WantedCard` — una búsqueda
@@ -204,14 +204,27 @@ se libera todo, vuelve a `available`.
 Una oferta reservada deja de aparecer en el catálogo general, pero **sigue
 generando coincidencia para la persona que la reservó**.
 
-### 5.6 Cerrar una operación
+### 5.6 Retirar una oferta
+
+Desde «Mis ofertas», el propietario puede retirar una carta sin perderla:
+pasa a `withdrawn`, desaparece del catálogo, de la página compartible y de las
+coincidencias, pero sigue visible en sus propias listas y se vuelve a publicar
+con un clic. Es el equivalente de la pausa de las búsquedas.
+
+Una oferta reservada por otro miembro **no se puede retirar**: primero hay que
+resolver o cancelar la reserva.
+
+`withdrawn` no debe confundirse con `completed`, que solo se aplica cuando una
+operación se ha cerrado de verdad y va acompañado de un `CardDeal`.
+
+### 5.7 Cerrar una operación
 
 Desde el detalle de una coincidencia, el comprador confirma que el intercambio
 se ha realizado. En una sola acción: la oferta pasa a `completed`, la búsqueda
 a `fulfilled`, la coincidencia a `completed` y se crea un `CardDeal`. Una misma
 coincidencia no puede registrarse dos veces.
 
-### 5.7 Datos de contacto
+### 5.8 Datos de contacto
 
 Los datos de contacto del vendedor (WhatsApp, correo, Discord) aparecen
 **únicamente en el detalle de una coincidencia**, y la propia pantalla lo

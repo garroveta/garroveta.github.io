@@ -112,7 +112,11 @@ export function updateMarketplaceListingStatus(
       candidate.id === listingId && candidate.memberId === memberId,
   )
 
-  if (!listing || listing.status === status) {
+  if (
+    !listing ||
+    listing.status === status ||
+    (status === 'withdrawn' && listing.status === 'reserved')
+  ) {
     return data
   }
 

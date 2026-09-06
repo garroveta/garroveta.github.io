@@ -7065,7 +7065,8 @@ a {
   background: #f5edce;
 }
 
-.listing-status--completed {
+.listing-status--completed,
+.listing-status--withdrawn {
   color: #635d66;
   background: #e9e6ea;
 }

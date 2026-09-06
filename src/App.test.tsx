@@ -3604,10 +3604,10 @@ describe('App', () => {
     expect(
       within(ownedListing as HTMLElement).getByText('Retirada'),
     ).toBeInTheDocument()
-    expect(
-      createLocalDemoRepository(window.localStorage).load().listings.at(-1)
-        ?.status,
-    ).toBe('completed')
+    const repository = createLocalDemoRepository(window.localStorage)
+
+    expect(repository.load().listings.at(-1)?.status).toBe('withdrawn')
+    expect(repository.load().cardDeals).toHaveLength(0)
 
     fireEvent.click(
       within(ownedListing as HTMLElement).getByRole('button', {

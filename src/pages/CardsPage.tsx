@@ -104,7 +104,8 @@ const MY_LISTS_PAGE_SIZE = 10
 const listingStatusLabels: Record<MarketplaceListing['status'], string> = {
   available: 'Publicada',
   reserved: 'Con reserva',
-  completed: 'Retirada',
+  completed: 'Vendida',
+  withdrawn: 'Retirada',
 }
 
 function WantedCardRow({
@@ -466,21 +467,21 @@ function MemberListingRow({
                 <ListChecks aria-hidden="true" size={14} />
                 Gestionar reserva
               </button>
-            ) : item.listing.status === 'completed' ? (
+            ) : item.listing.status === 'available' ? (
+              <button
+                type="button"
+                aria-label={`Retirar oferta de ${item.card.name}`}
+                onClick={() => onStatusChange('withdrawn')}
+              >
+                <X aria-hidden="true" size={14} /> Retirar oferta
+              </button>
+            ) : (
               <button
                 type="button"
                 aria-label={`Volver a publicar ${item.card.name}`}
                 onClick={() => onStatusChange('available')}
               >
                 <Check aria-hidden="true" size={14} /> Volver a publicar
-              </button>
-            ) : (
-              <button
-                type="button"
-                aria-label={`Retirar oferta de ${item.card.name}`}
-                onClick={() => onStatusChange('completed')}
-              >
-                <X aria-hidden="true" size={14} /> Retirar oferta
               </button>
             )}
           </div>

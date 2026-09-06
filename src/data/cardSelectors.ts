@@ -58,7 +58,9 @@ export function getMemberSharedListings(
   return data.listings
     .filter(
       ({ memberId: sellerId, status }) =>
-        sellerId === memberId && status !== 'completed',
+        sellerId === memberId &&
+        status !== 'completed' &&
+        status !== 'withdrawn',
     )
     .sort(
       (first, second) =>

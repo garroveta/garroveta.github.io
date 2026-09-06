@@ -266,7 +266,8 @@ export type MarketplaceListing = {
   /** @deprecated Legacy demo field kept for locally persisted prototypes. */
   offerType: 'sale' | 'trade' | 'sale_or_trade'
   priceEur?: number
-  status: 'available' | 'reserved' | 'completed'
+  /** `withdrawn` is reversible; `completed` records a closed deal. */
+  status: 'available' | 'reserved' | 'completed' | 'withdrawn'
   reservedByMemberId?: EntityId
   /** Quantity held by the reserving member in this prototype reservation. */
   reservedQuantity?: number
