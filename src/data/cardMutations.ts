@@ -84,7 +84,7 @@ function isResolvedWantedImportItem(
   )
 }
 
-function normalizeCardName(value: string) {
+export function normalizeCardName(value: string) {
   return value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -120,12 +120,12 @@ function isScryfallId(value: string) {
   return !value.startsWith('local:')
 }
 
-function ensureResolvedCard(
+/** Finds the catalogue entry for an exact printing, without adding anything. */
+export function findExactCatalogCard(
   cards: Card[],
   resolvedCard: NonNullable<CardImportResolution['card']>,
-  allowAnyPrinting: boolean,
 ) {
-  const exactCard =
+  return (
     cards.find(({ scryfallId }) => scryfallId === resolvedCard.scryfallId) ??
     cards.find(
       ({ name, setCode, collectorNumber }) =>
@@ -135,6 +135,15 @@ function ensureResolvedCard(
         collectorNumber.toLocaleLowerCase('en') ===
           resolvedCard.collectorNumber.toLocaleLowerCase('en'),
     )
+  )
+}
+
+function ensureResolvedCard(
+  cards: Card[],
+  resolvedCard: NonNullable<CardImportResolution['card']>,
+  allowAnyPrinting: boolean,
+) {
+  const exactCard = findExactCatalogCard(cards, resolvedCard)
   const existingCard =
     exactCard ??
     (allowAnyPrinting
