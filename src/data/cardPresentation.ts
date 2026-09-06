@@ -8,6 +8,7 @@ export const cardLanguageLabels: Record<CardLanguage, string> = {
   it: 'Italiano',
   pt: 'Portugués',
   jp: 'Japonés',
+  other: 'Otro idioma',
 }
 
 export const cardConditionLabels: Record<CardCondition, string> = {
@@ -15,6 +16,9 @@ export const cardConditionLabels: Record<CardCondition, string> = {
   near_mint: 'Near Mint',
   excellent: 'Excellent',
   good: 'Good',
+  light_played: 'Light Played',
+  played: 'Played',
+  poor: 'Poor',
 }
 
 export function formatMarketplacePrice(priceEur?: number) {

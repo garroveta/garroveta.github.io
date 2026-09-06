@@ -73,24 +73,43 @@ describe('card list imports', () => {
     ])
   })
 
-  it('downgrades ManaBox grades below good to the lowest grade available', () => {
+  it('keeps the ManaBox grades below good as they are', () => {
     const result = parseCardList(
       [
         'Name,Quantity,Scryfall ID,Condition',
         'Bloodghast,1,id-1,light_played',
-        'Gut Shot,1,id-2,poor',
+        'Gut Shot,1,id-2,played',
+        'Sol Ring,1,id-3,poor',
+        'Esper Sentinel,1,id-4,LP',
       ].join('\n'),
     )
 
     expect(result.items.map(({ condition }) => condition)).toEqual([
-      'good',
-      'good',
+      'light_played',
+      'played',
+      'poor',
+      'light_played',
     ])
   })
 
-  it('leaves unsupported ManaBox values undefined', () => {
+  it('reports an unlisted ManaBox language as other', () => {
     const result = parseCardList(
-      'Name,Quantity,Scryfall ID,Condition,Language\nBloodghast,1,id-1,,ru',
+      [
+        'Name,Quantity,Scryfall ID,Language',
+        'Bloodghast,1,id-1,ru',
+        'Gut Shot,1,id-2,zhs',
+      ].join('\n'),
+    )
+
+    expect(result.items.map(({ language }) => language)).toEqual([
+      'other',
+      'other',
+    ])
+  })
+
+  it('leaves an empty ManaBox value undefined', () => {
+    const result = parseCardList(
+      'Name,Quantity,Scryfall ID,Condition,Language\nBloodghast,1,id-1,,',
     )
 
     expect(result.items[0].language).toBeUndefined()

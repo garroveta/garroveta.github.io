@@ -232,8 +232,25 @@ export type Card = {
   imageUri?: string
 }
 
-export type CardLanguage = 'es' | 'en' | 'fr' | 'de' | 'it' | 'pt' | 'jp'
-export type CardCondition = 'mint' | 'near_mint' | 'excellent' | 'good'
+export type CardLanguage =
+  | 'es'
+  | 'en'
+  | 'fr'
+  | 'de'
+  | 'it'
+  | 'pt'
+  | 'jp'
+  /** Any other printed language, kept as one bucket rather than mislabelled. */
+  | 'other'
+/** The seven Cardmarket grades, from best to worst. */
+export type CardCondition =
+  | 'mint'
+  | 'near_mint'
+  | 'excellent'
+  | 'good'
+  | 'light_played'
+  | 'played'
+  | 'poor'
 
 export type MarketplaceListing = {
   id: EntityId

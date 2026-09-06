@@ -271,12 +271,16 @@ const marketplaceLanguages: CardLanguage[] = [
   'it',
   'pt',
   'jp',
+  'other',
 ]
 const marketplaceConditions: CardCondition[] = [
   'mint',
   'near_mint',
   'excellent',
   'good',
+  'light_played',
+  'played',
+  'poor',
 ]
 const generatedMarketplaceCards: Card[] = Array.from(
   { length: 150 },

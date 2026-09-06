@@ -71,8 +71,8 @@ existían.
 | `cardId`                                               | impresión concreta ofrecida                           |
 | `cardListId`                                           | lista personal a la que pertenece (opcional, privada) |
 | `quantity`                                             | unidades disponibles                                  |
-| `language`                                             | `es`, `en`, `fr`, `de`, `it`, `pt`, `jp`              |
-| `condition`                                            | `mint`, `near_mint`, `excellent`, `good`              |
+| `language`                                             | `es`, `en`, `fr`, `de`, `it`, `pt`, `jp`, `other`     |
+| `condition`                                            | los siete grados de Cardmarket, de `mint` a `poor`    |
 | `finish`                                               | `nonfoil` o `foil`                                    |
 | `priceEur`                                             | opcional                                              |
 | `status`                                               | `available`, `reserved`, `completed`                  |
@@ -152,6 +152,13 @@ El importador acepta dos formatos, detectados automáticamente:
 - **Texto libre**, con varias sintaxis de cantidad (`2x Carta`, `2 Carta`,
   `Carta x2`), impresión concreta (`Carta (SET) 123`), comentarios (`//`, `#`)
   y encabezados de sección (`Sideboard`, `Commander`, `Maybeboard`…).
+
+El CSV de ManaBox aporta además el idioma, el estado y el acabado de cada
+carta: se rellenan solos en la vista previa y siguen siendo modificables. Un
+idioma que no está en la lista de la comunidad (coreano, ruso, chino…) se
+registra como `other` en lugar de caer en el valor por defecto. El
+`Purchase price` de ManaBox es el precio pagado por su propietario, no un
+precio de venta: nunca se publica como tal.
 
 Después del análisis, cada línea se resuelve **primero contra el catálogo local
 y luego contra Scryfall** (ver sección 7). El usuario revisa el resultado,

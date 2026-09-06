@@ -191,10 +191,10 @@ describe('demoData', () => {
     expect(generatedListings).toHaveLength(150)
     expect(
       new Set(generatedListings.map(({ language }) => language)).size,
-    ).toBe(7)
+    ).toBe(8)
     expect(
       new Set(generatedListings.map(({ condition }) => condition)).size,
-    ).toBe(4)
+    ).toBe(7)
     expect(
       new Set(generatedListings.map(({ offerType }) => offerType)),
     ).toEqual(new Set(['sale']))

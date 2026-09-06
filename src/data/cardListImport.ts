@@ -130,10 +130,19 @@ const manaBoxLanguages = new Map<string, CardLanguage>([
 ])
 
 /**
- * ManaBox grades cards below `good`, a range the community model does not
- * express. They fall back to `good`, the lowest grade available here, which
- * never overstates the card as much as the `near_mint` default would.
+ * An unlisted language (Korean, Russian, Chinese…) is reported as `other`:
+ * leaving it empty would silently fall back to the Spanish default.
  */
+function parseManaBoxLanguage(value: string | undefined) {
+  const normalized = normalizeHeader(value ?? '')
+
+  if (!normalized) {
+    return undefined
+  }
+
+  return manaBoxLanguages.get(normalized) ?? 'other'
+}
+
 const manaBoxConditions = new Map<string, CardCondition>([
   ['mint', 'mint'],
   ['m', 'mint'],
@@ -144,13 +153,13 @@ const manaBoxConditions = new Map<string, CardCondition>([
   ['ex', 'excellent'],
   ['good', 'good'],
   ['gd', 'good'],
-  ['light_played', 'good'],
-  ['lightly played', 'good'],
-  ['lp', 'good'],
-  ['played', 'good'],
-  ['pl', 'good'],
-  ['poor', 'good'],
-  ['po', 'good'],
+  ['light_played', 'light_played'],
+  ['lightly played', 'light_played'],
+  ['lp', 'light_played'],
+  ['played', 'played'],
+  ['pl', 'played'],
+  ['poor', 'poor'],
+  ['po', 'poor'],
 ])
 
 const manaBoxFinishes = new Map<string, CardFinish>([
@@ -196,9 +205,7 @@ function parseManaBoxCsv(value: string): ParsedCardList {
       collectorNumber: row[indexOf('collector number')]?.trim() || undefined,
       scryfallId: row[indexOf('scryfall id')]?.trim() || undefined,
       section: 'main',
-      language: manaBoxLanguages.get(
-        normalizeHeader(row[indexOf('language')] ?? ''),
-      ),
+      language: parseManaBoxLanguage(row[indexOf('language')]),
       condition: manaBoxConditions.get(
         normalizeHeader(row[indexOf('condition')] ?? ''),
       ),
