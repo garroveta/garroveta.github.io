@@ -189,6 +189,11 @@ y luego contra Scryfall** (ver sección 7). El usuario revisa el resultado,
 elige qué secciones incluir, ajusta cantidades y variantes, y decide el
 destino: sus búsquedas o sus ofertas.
 
+Para no repetir el mismo ajuste centenares de veces, **«Aplicar a todas las
+líneas»** fija de una vez el idioma, el estado, el acabado o el precio. Solo se
+aplican los campos elegidos: los que quedan en «Sin cambiar» no tocan nada, de
+modo que un ajuste hecho línea a línea no se pierde.
+
 Para las **ofertas** hay dos modos:
 
 | Modo   | Efecto                                                                   |
@@ -402,6 +407,7 @@ Resumen de la migración pendiente, en el orden en que tendría sentido hacerla:
 
 `src/pages/CardsPage.tsx`, `src/pages/SharedCardsPage.tsx`,
 `src/components/cards/CardListColumnMapper.tsx`,
+`src/components/cards/ImportBulkEditor.tsx`,
 `src/components/cards/MarketplaceSection.tsx`,
 `src/components/cards/MarketplaceSyncPreview.tsx`,
 `src/components/cards/MatchesSection.tsx`,

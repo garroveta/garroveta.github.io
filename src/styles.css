@@ -10883,3 +10883,46 @@ a {
   background: #fff;
   font-size: 0.74rem;
 }
+
+.import-bulk {
+  display: grid;
+  gap: 0.45rem;
+  border: 1px dashed #ddd7e2;
+  border-radius: 0.7rem;
+  padding: 0.55rem 0.7rem;
+  background: #fbfafc;
+}
+
+.import-bulk p {
+  margin: 0;
+  color: #4a4551;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.import-bulk__fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.import-bulk__fields label {
+  display: grid;
+  gap: 0.15rem;
+  font-size: 0.66rem;
+  color: #635d66;
+}
+
+.import-bulk__fields select,
+.import-bulk__fields input {
+  min-width: 5.5rem;
+  border: 1px solid #ddd7e2;
+  border-radius: 0.45rem;
+  padding: 0.25rem 0.35rem;
+  background: #fff;
+  font-size: 0.74rem;
+}
+
+.import-bulk button {
+  justify-self: start;
+}

@@ -3361,6 +3361,44 @@ describe('App', () => {
     ).toMatchObject({ quantity: 2 })
   })
 
+  it('applies a value to every imported offer at once', async () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: 'Importar lista' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ofertas' }))
+    fireEvent.change(screen.getByLabelText('Lista de cartas'), {
+      target: { value: '1 Sol Ring (CMM) 410\n1 Esper Sentinel' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Analizar lista' }))
+    await screen.findByLabelText('Cantidad de Sol Ring')
+
+    // one line tuned by hand keeps its price when other fields go in bulk
+    fireEvent.change(screen.getByLabelText('Precio de Sol Ring'), {
+      target: { value: '9.99' },
+    })
+    fireEvent.change(screen.getByLabelText('Idioma para todas las líneas'), {
+      target: { value: 'fr' },
+    })
+    fireEvent.change(screen.getByLabelText('Estado para todas las líneas'), {
+      target: { value: 'played' },
+    })
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Aplicar a las 2 líneas' }),
+    )
+
+    expect(screen.getByLabelText('Idioma de Sol Ring')).toHaveValue('fr')
+    expect(screen.getByLabelText('Idioma de Esper Sentinel')).toHaveValue('fr')
+    expect(screen.getByLabelText('Estado de Esper Sentinel')).toHaveValue(
+      'played',
+    )
+    expect(screen.getByLabelText('Precio de Sol Ring')).toHaveValue(9.99)
+    expect(screen.getByLabelText('Precio de Esper Sentinel')).toHaveValue(null)
+    expect(screen.getByLabelText('Idioma para todas las líneas')).toHaveValue(
+      '',
+    )
+  })
+
   it('imports a CSV whose card column has to be mapped by hand', async () => {
     render(<App />)
 

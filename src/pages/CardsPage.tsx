@@ -28,6 +28,10 @@ import { CardImagePreview } from '../components/CardImagePreview'
 import { MarketplaceReservationSheet } from '../components/MarketplaceReservationSheet'
 import { MarketplaceSection } from '../components/cards/MarketplaceSection'
 import { CardListColumnMapper } from '../components/cards/CardListColumnMapper'
+import {
+  ImportBulkEditor,
+  type ImportBulkValues,
+} from '../components/cards/ImportBulkEditor'
 import { MarketplaceSyncPreview } from '../components/cards/MarketplaceSyncPreview'
 import {
   MatchesSection,
@@ -1598,6 +1602,15 @@ function WantedImportComposer({
               className="offer-import-preview"
               aria-label="Editar ofertas importadas"
             >
+              <ImportBulkEditor
+                count={offerInputs.length}
+                fields={['language', 'condition', 'finish', 'priceEur']}
+                onApply={(values) =>
+                  setOfferInputs((current) =>
+                    current.map((candidate) => ({ ...candidate, ...values })),
+                  )
+                }
+              />
               {offerInputs.map((input, index) => (
                 <div
                   className="offer-import-row"
@@ -1756,6 +1769,31 @@ function WantedImportComposer({
               className="wanted-import-preview"
               aria-label="Editar búsquedas importadas"
             >
+              <ImportBulkEditor
+                count={wantedInputs.length}
+                fields={['language', 'finish']}
+                onApply={(values: ImportBulkValues) =>
+                  setWantedInputs((current) =>
+                    current.map((candidate) => ({
+                      ...candidate,
+                      ...(values.language
+                        ? {
+                            acceptedLanguages: [values.language] as [
+                              CardLanguage,
+                            ],
+                          }
+                        : {}),
+                      ...(values.finish
+                        ? {
+                            acceptedFinishes: [values.finish] as [
+                              MarketplaceListing['finish'],
+                            ],
+                          }
+                        : {}),
+                    })),
+                  )
+                }
+              />
               {wantedInputs.map((input, index) => (
                 <div
                   className="wanted-import-row"
