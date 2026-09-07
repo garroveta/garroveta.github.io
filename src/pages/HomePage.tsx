@@ -25,6 +25,7 @@ import type { DemoRole } from '../app/demoRoles'
 import type { AppRoute } from '../app/navigation'
 import {
   getManagerDashboard,
+  getMemberNewCardMatches,
   getPlayerDashboard,
   type DashboardEvent,
   type ManagerDashboardEvent,
@@ -41,6 +42,11 @@ type HomePageProps = {
   data: DemoDataSet
   currentMember: CommunityMember
   rankingMemberId?: string
+  /**
+   * The local prototype dataset, kept apart because `data` may carry the real
+   * community members while card matches still point at prototype sellers.
+   */
+  cardsData?: DemoDataSet
   onNavigate: (route: AppRoute, query?: string) => void
 }
 
@@ -542,6 +548,7 @@ function ManagerHome({
 export function HomePage({
   activeRole,
   data,
+  cardsData,
   currentMember,
   rankingMemberId,
   onNavigate,
@@ -557,6 +564,10 @@ export function HomePage({
   }
 
   const dashboard = getPlayerDashboard(data, currentMember, rankingMemberId)
+  const newMatches = getMemberNewCardMatches(
+    cardsData ?? data,
+    currentMember.id,
+  )
   const firstName = currentMember.displayName.split(' ')[0]
 
   return (
@@ -628,15 +639,14 @@ export function HomePage({
               Cartas
             </span>
             <span className="match-count">
-              {dashboard.newMatches.length}{' '}
-              {dashboard.newMatches.length === 1 ? 'nueva' : 'nuevas'}
+              {newMatches.length} {newMatches.length === 1 ? 'nueva' : 'nuevas'}
             </span>
           </div>
 
           <div className="matches-card__heading">
             <div>
               <h2 id="matches-title">
-                {dashboard.newMatches.length} coincidencias nuevas
+                {newMatches.length} coincidencias nuevas
               </h2>
               <p>Otros miembros tienen cartas que estás buscando.</p>
             </div>
@@ -644,7 +654,7 @@ export function HomePage({
           </div>
 
           <div className="match-list">
-            {dashboard.newMatches.slice(0, 2).map(({ card, match, seller }) => (
+            {newMatches.slice(0, 2).map(({ card, match, seller }) => (
               <article className="match-item" key={match.id}>
                 <span className="match-item__initials" aria-hidden="true">
                   {seller.initials}

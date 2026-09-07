@@ -10948,3 +10948,22 @@ a {
 .import-overlap button {
   justify-self: start;
 }
+
+.contact-demo-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin: 0 0 0.5rem;
+  border: 1px solid #e6cfa8;
+  border-radius: 0.6rem;
+  padding: 0.45rem 0.55rem;
+  background: #fdf7ea;
+  color: #745f25;
+  font-size: 0.7rem;
+}
+
+.contact-methods__empty {
+  margin: 0;
+  color: #635d66;
+  font-size: 0.72rem;
+}

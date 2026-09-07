@@ -360,14 +360,14 @@ trae imagen propia.
 
 ## 8. Límites conocidos
 
-| Límite                      | Detalle                                                                                                                                      |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Sin backend                 | Nada se comparte entre miembros ni entre dispositivos (sección 2).                                                                           |
-| Datos de contacto no reales | No existe columna en la base de datos ni forma de rellenarlos desde el perfil: hoy solo son datos ficticios de demostración.                 |
-| Identidad local             | Las comprobaciones de propiedad («esta oferta es mía») se apoyan en el identificador ficticio del prototipo, no en la cuenta real conectada. |
-| Tarjeta de Inicio           | La tarjeta «Cartas» de la pantalla de Inicio anuncia un número concreto de coincidencias que hoy es ficticio.                                |
-| Sin mensajería              | El contacto ocurre fuera de la aplicación, por los medios que indique el vendedor.                                                           |
-| Sin precios de referencia   | No hay estimación automática de precio de mercado.                                                                                           |
+| Límite                      | Detalle                                                                                                                                                           |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sin backend                 | Nada se comparte entre miembros ni entre dispositivos (sección 2).                                                                                                |
+| Datos de contacto no reales | No existe columna en la base de datos ni forma de rellenarlos desde el perfil. La pantalla lo advierte explícitamente para que nadie intente contactar con ellos. |
+| Identidad local             | Las comprobaciones de propiedad («esta oferta es mía») se apoyan en el identificador ficticio del prototipo, no en la cuenta real conectada.                      |
+| Tarjeta de Inicio           | Cuenta las coincidencias reales del juego de datos local, leídas siempre del prototipo aunque haya una cuenta conectada.                                          |
+| Sin mensajería              | El contacto ocurre fuera de la aplicación, por los medios que indique el vendedor.                                                                                |
+| Sin precios de referencia   | No hay estimación automática de precio de mercado.                                                                                                                |
 
 ---
 

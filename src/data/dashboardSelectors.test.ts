@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import { demoData } from './demoData'
-import { getManagerDashboard, getPlayerDashboard } from './dashboardSelectors'
+import {
+  getManagerDashboard,
+  getMemberNewCardMatches,
+  getPlayerDashboard,
+} from './dashboardSelectors'
 import type { DemoDataSet } from '../domain/types'
 
 function getDemoMember(data: DemoDataSet, memberId: string) {
@@ -102,6 +106,25 @@ describe('manager dashboard selectors', () => {
     ])
     expect(dashboard.attentionEvents.map(({ event }) => event.id)).toContain(
       'event-presentation-hobbit',
+    )
+  })
+
+  it('reads card matches from the prototype dataset, not the member feed', () => {
+    const memberId = demoData.currentMemberId
+    const expected = getMemberNewCardMatches(demoData, memberId)
+
+    expect(expected.length).toBeGreaterThan(0)
+
+    // a connected account replaces the members by the real community feed,
+    // which does not hold the prototype sellers
+    const withRealMembers = {
+      ...demoData,
+      members: demoData.members.filter(({ id }) => id === memberId),
+    }
+
+    expect(getMemberNewCardMatches(withRealMembers, memberId)).toEqual([])
+    expect(getMemberNewCardMatches(demoData, memberId)).toHaveLength(
+      expected.length,
     )
   })
 })

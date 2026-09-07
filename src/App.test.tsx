@@ -699,6 +699,22 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
+  it('keeps counting card matches once a real membership is connected', async () => {
+    const user = buildCurrentUser('player')
+    currentUserHookMocks.current = { data: user, status: 'authenticated' }
+    currentUserHookMocks.refresh.mockResolvedValue(user)
+
+    render(<App />)
+
+    await screen.findByRole('heading', { name: 'Hola, Álex' })
+
+    // the community member feed does not hold the prototype sellers, which
+    // must not turn the card matches of the local dataset into a silent zero
+    expect(
+      screen.getByRole('heading', { name: '4 coincidencias nuevas' }),
+    ).toBeInTheDocument()
+  })
+
   it('opens a section from the main navigation', () => {
     render(<App />)
 
@@ -3696,6 +3712,9 @@ describe('App', () => {
     expect(screen.getByText('diego-modern')).toBeInTheDocument()
     expect(
       screen.getByText(/solo se muestran porque existe una coincidencia/),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/Datos de demostración: todavía no se pueden rellenar/),
     ).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Reservar carta' }))
     const matchReservationDialog = screen.getByRole('dialog', {

@@ -65,6 +65,32 @@ function byMostRecent(
   )
 }
 
+/**
+ * Card matches still live in the local prototype dataset, so they must be read
+ * from it: the community member feed of a connected account does not hold the
+ * prototype sellers, and looking them up there silently drops every match.
+ */
+export function getMemberNewCardMatches(
+  data: DemoDataSet,
+  memberId: string,
+): DashboardMatch[] {
+  return data.cardMatches
+    .filter(
+      ({ buyerMemberId, status }) =>
+        buyerMemberId === memberId && status === 'new',
+    )
+    .sort(byMostRecent)
+    .flatMap((match) => {
+      const listing = data.listings.find(({ id }) => id === match.listingId)
+      const card = listing
+        ? data.cards.find(({ id }) => id === listing.cardId)
+        : undefined
+      const seller = data.members.find(({ id }) => id === match.sellerMemberId)
+
+      return listing && card && seller ? [{ match, listing, card, seller }] : []
+    })
+}
+
 export function getPlayerDashboard(
   data: DemoDataSet,
   member: CommunityMember,
@@ -108,21 +134,7 @@ export function getPlayerDashboard(
           new Date(first.publishedAt).getTime(),
     )[0]
 
-  const newMatches = data.cardMatches
-    .filter(
-      ({ buyerMemberId, status }) =>
-        buyerMemberId === memberId && status === 'new',
-    )
-    .sort(byMostRecent)
-    .flatMap((match) => {
-      const listing = data.listings.find(({ id }) => id === match.listingId)
-      const card = listing
-        ? data.cards.find(({ id }) => id === listing.cardId)
-        : undefined
-      const seller = data.members.find(({ id }) => id === match.sellerMemberId)
-
-      return listing && card && seller ? [{ match, listing, card, seller }] : []
-    })
+  const newMatches = getMemberNewCardMatches(data, memberId)
 
   const followsMtg =
     favoriteGameIds.size === 0 || favoriteGameIds.has('game-mtg')

@@ -388,6 +388,7 @@ export function App() {
           <HomePage
             activeRole={effectiveRole}
             data={homeData}
+            cardsData={data}
             currentMember={connectedMember}
             rankingMemberId={approvedMembership?.id}
             onNavigate={navigate}

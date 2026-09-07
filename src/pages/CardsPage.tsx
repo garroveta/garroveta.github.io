@@ -788,6 +788,14 @@ function MatchDetail({
             </div>
           </div>
 
+          <p className="contact-demo-notice">
+            <AlertCircle aria-hidden="true" size={15} />
+            <span>
+              Datos de demostración: todavía no se pueden rellenar desde el
+              perfil, así que no sirven para contactar de verdad.
+            </span>
+          </p>
+
           <div className="contact-methods">
             {item.seller.contactMethods.map((contactMethod) => {
               const ContactIcon = contactIcons[contactMethod.kind]
@@ -802,6 +810,11 @@ function MatchDetail({
                 </div>
               )
             })}
+            {item.seller.contactMethods.length === 0 ? (
+              <p className="contact-methods__empty">
+                Este miembro no ha indicado ninguna forma de contacto.
+              </p>
+            ) : null}
           </div>
 
           <p>
