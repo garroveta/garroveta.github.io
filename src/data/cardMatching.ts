@@ -5,8 +5,12 @@ function matchKey(wantedCardId: string, listingId: string) {
   return `${wantedCardId}:${listingId}`
 }
 
+/**
+ * A Set, not an array: this runs once per match created, and a linear scan
+ * made a full recalculation quadratic in the number of matches.
+ */
 function createMatchId(
-  existingIds: string[],
+  existingIds: Set<string>,
   wantedCardId: string,
   listingId: string,
 ) {
@@ -14,7 +18,7 @@ function createMatchId(
   let candidateId = baseId
   let suffix = 2
 
-  while (existingIds.includes(candidateId)) {
+  while (existingIds.has(candidateId)) {
     candidateId = `${baseId}-${suffix}`
     suffix += 1
   }
@@ -63,7 +67,7 @@ export function synchronizeCardMatches(
       match,
     ]),
   )
-  const matchIds = data.cardMatches.map(({ id }) => id)
+  const matchIds = new Set(data.cardMatches.map(({ id }) => id))
   const cardMatches: CardMatch[] = data.cardMatches.filter(
     ({ status }) => status === 'completed',
   )
@@ -112,7 +116,7 @@ export function synchronizeCardMatches(
         status: 'new',
         createdAt,
       }
-      matchIds.push(newMatch.id)
+      matchIds.add(newMatch.id)
       cardMatches.push(newMatch)
     }
   }

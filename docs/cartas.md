@@ -368,7 +368,6 @@ trae imagen propia.
 | Tarjeta de Inicio           | La tarjeta «Cartas» de la pantalla de Inicio anuncia un número concreto de coincidencias que hoy es ficticio.                                |
 | Sin mensajería              | El contacto ocurre fuera de la aplicación, por los medios que indique el vendedor.                                                           |
 | Sin precios de referencia   | No hay estimación automática de precio de mercado.                                                                                           |
-| Código heredado             | `importWantedCards` (importación antigua contra el catálogo local) ya no se usa en la interfaz; el flujo activo es el que pasa por Scryfall. |
 
 ---
 
