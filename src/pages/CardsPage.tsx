@@ -27,6 +27,7 @@ import { useMemo, useState } from 'react'
 import { CardImagePreview } from '../components/CardImagePreview'
 import { MarketplaceReservationSheet } from '../components/MarketplaceReservationSheet'
 import { MarketplaceSection } from '../components/cards/MarketplaceSection'
+import { MarketplaceSyncPreview } from '../components/cards/MarketplaceSyncPreview'
 import {
   MatchesSection,
   type MatchGrouping,
@@ -42,6 +43,14 @@ import {
   type WantedImportResult,
 } from '../data/cardMutations'
 import { parseCardList, type CardListSection } from '../data/cardListImport'
+import {
+  applyMarketplaceSyncPlan,
+  computeMarketplaceSyncPlan,
+  resolveMarketplaceSyncConflict,
+  type MarketplaceSyncConflictChoice,
+  type MarketplaceSyncPlan,
+  type MarketplaceSyncResult,
+} from '../data/cardSync'
 import { completeCardDeal } from '../data/cardDeals'
 import { matchStatusLabels } from '../data/cardMatchPresentation'
 import {
@@ -1130,6 +1139,7 @@ function WantedImportComposer({
   onClose,
   onDataChange,
   onImported,
+  onSynced,
 }: {
   data: DemoDataSet
   memberId: string
@@ -1138,6 +1148,7 @@ function WantedImportComposer({
   onImported: (
     result: WantedImportResult & { destination: 'wanted' | 'offers' },
   ) => void
+  onSynced: (result: MarketplaceSyncResult) => void
 }) {
   const [destination, setDestination] = useState<'wanted' | 'offers'>('wanted')
   const [rawList, setRawList] = useState('')
@@ -1146,6 +1157,8 @@ function WantedImportComposer({
   const [isResolving, setIsResolving] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [mode, setMode] = useState<WantedImportMode>('update')
+  const [offerMode, setOfferMode] = useState<'add' | 'sync'>('add')
+  const [syncPlan, setSyncPlan] = useState<MarketplaceSyncPlan>()
   const [matchAllPrintings, setMatchAllPrintings] = useState(true)
   const wantedLists = data.cardLists.filter(
     ({ memberId: ownerId, kind }) => ownerId === memberId && kind === 'wanted',
@@ -1243,6 +1256,57 @@ function WantedImportComposer({
     } finally {
       setIsResolving(false)
     }
+  }
+
+  const syncScope = {
+    memberId,
+    cardListId: offerCardListId,
+    includedSections,
+  }
+
+  const handleShowSyncPlan = () => {
+    if (!offerCardListId) {
+      setErrorMessage(
+        'Elige la lista privada que quieres sincronizar: solo se tocarán sus ofertas.',
+      )
+      return
+    }
+
+    setErrorMessage('')
+    setSyncPlan(computeMarketplaceSyncPlan(data, syncScope, offerInputs))
+  }
+
+  const handleResolveAllConflicts = (kind: 'keep_first' | 'skip') => {
+    setSyncPlan((current) => {
+      if (!current) {
+        return current
+      }
+
+      return current.conflicts.reduce((plan, conflict) => {
+        const choice: MarketplaceSyncConflictChoice =
+          kind === 'skip'
+            ? { kind: 'skip' }
+            : {
+                kind: 'apply',
+                listingId: conflict.listings[0]?.id,
+                quantity: conflict.line.quantity,
+                priceEur: conflict.line.priceEur,
+              }
+
+        return resolveMarketplaceSyncConflict(plan, conflict.line.key, choice)
+      }, current)
+    })
+  }
+
+  const handleApplySync = () => {
+    if (!syncPlan) {
+      return
+    }
+
+    const result = applyMarketplaceSyncPlan(data, syncScope, syncPlan)
+
+    onDataChange(result.data)
+    onSynced(result)
   }
 
   const handleImport = () => {
@@ -1407,6 +1471,25 @@ function WantedImportComposer({
             </button>
           </div>
         </>
+      ) : syncPlan ? (
+        <MarketplaceSyncPreview
+          cards={data.cards}
+          listName={
+            offerLists.find(({ id }) => id === offerCardListId)?.name ??
+            'mi lista'
+          }
+          plan={syncPlan}
+          onApply={handleApplySync}
+          onBack={() => setSyncPlan(undefined)}
+          onResolveAll={handleResolveAllConflicts}
+          onResolveConflict={(lineKey, choice) =>
+            setSyncPlan((current) =>
+              current
+                ? resolveMarketplaceSyncConflict(current, lineKey, choice)
+                : current,
+            )
+          }
+        />
       ) : (
         <>
           <div className="import-summary" aria-live="polite">
@@ -1722,6 +1805,41 @@ function WantedImportComposer({
             </div>
           )}
 
+          {destination === 'offers' ? (
+            <fieldset className="import-options">
+              <legend>Cómo actualizar mis ofertas</legend>
+              <div className="import-mode-options">
+                <label>
+                  <input
+                    checked={offerMode === 'add'}
+                    name="offer-import-mode"
+                    type="radio"
+                    onChange={() => setOfferMode('add')}
+                  />
+                  <span>
+                    <strong>Añadir</strong>
+                    <small>Publica cada línea como una oferta nueva.</small>
+                  </span>
+                </label>
+                <label>
+                  <input
+                    checked={offerMode === 'sync'}
+                    name="offer-import-mode"
+                    type="radio"
+                    onChange={() => setOfferMode('sync')}
+                  />
+                  <span>
+                    <strong>Sincronizar</strong>
+                    <small>
+                      Ajusta una lista privada al archivo y retira lo que ya no
+                      está. Verás los cambios antes de aplicarlos.
+                    </small>
+                  </span>
+                </label>
+              </div>
+            </fieldset>
+          ) : null}
+
           {destination === 'wanted' ? (
             <fieldset className="import-options">
               <legend>Cómo actualizar mi lista</legend>
@@ -1767,7 +1885,11 @@ function WantedImportComposer({
           ) : null}
 
           <label className="form-field">
-            <span>Guardar en mi lista privada</span>
+            <span>
+              {destination === 'offers' && offerMode === 'sync'
+                ? 'Lista privada que se sincroniza'
+                : 'Guardar en mi lista privada'}
+            </span>
             <select
               value={
                 destination === 'wanted' ? wantedCardListId : offerCardListId
@@ -1823,11 +1945,17 @@ function WantedImportComposer({
               className="primary-button"
               disabled={resolvedCount === 0 || includedSections.length === 0}
               type="button"
-              onClick={handleImport}
+              onClick={
+                destination === 'offers' && offerMode === 'sync'
+                  ? handleShowSyncPlan
+                  : handleImport
+              }
             >
               {destination === 'wanted'
                 ? 'Importar búsquedas'
-                : 'Publicar ofertas'}
+                : offerMode === 'sync'
+                  ? 'Ver los cambios'
+                  : 'Publicar ofertas'}
             </button>
           </div>
         </>
@@ -2142,6 +2270,30 @@ export function CardsPage({
                       : ''
                   }`
                 : 'No se ha reconocido ninguna carta.',
+            )
+          }}
+          onSynced={(result) => {
+            setActiveComposer(undefined)
+            setActiveView('wanted')
+            setMyListsView('offers')
+            setSelectedPersonalListId('')
+
+            const changes = [
+              result.added > 0 ? `${result.added} publicadas` : undefined,
+              result.updated > 0 ? `${result.updated} actualizadas` : undefined,
+              result.withdrawn > 0
+                ? `${result.withdrawn} retiradas`
+                : undefined,
+            ].filter(Boolean)
+
+            setActionMessage(
+              changes.length > 0
+                ? `Sincronización aplicada: ${changes.join(', ')}.${
+                    result.skipped.length > 0
+                      ? ` ${result.skipped.length} sin tocar porque cambiaron mientras tanto.`
+                      : ''
+                  }`
+                : 'No había nada que cambiar.',
             )
           }}
         />

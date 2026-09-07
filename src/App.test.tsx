@@ -3361,6 +3361,92 @@ describe('App', () => {
     ).toMatchObject({ quantity: 2 })
   })
 
+  it('previews and applies a sync of an offers list', async () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: 'Importar lista' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ofertas' }))
+    fireEvent.change(screen.getByLabelText('Lista de cartas'), {
+      target: { value: '2 Sol Ring (CMM) 410' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Analizar lista' }))
+    await screen.findByLabelText('Cantidad de Sol Ring')
+
+    fireEvent.click(screen.getByRole('radio', { name: /Sincronizar/ }))
+    fireEvent.change(screen.getByLabelText('Lista privada que se sincroniza'), {
+      target: { value: 'card-list-alex-offers' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Ver los cambios' }))
+
+    const preview = screen.getByLabelText('Cambios de la sincronización')
+
+    expect(
+      within(preview).getByRole('heading', {
+        name: 'Cambios en «Cartas disponibles»',
+      }),
+    ).toBeInTheDocument()
+    expect(within(preview).getByText(/Se retiran/)).toBeInTheDocument()
+
+    const listingsBefore = createLocalDemoRepository(window.localStorage)
+      .load()
+      .listings.filter(
+        ({ cardListId }) => cardListId === 'card-list-alex-offers',
+      )
+
+    fireEvent.click(
+      within(preview).getByRole('button', { name: 'Aplicar los cambios' }),
+    )
+
+    expect(screen.getByText(/Sincronización aplicada/)).toBeInTheDocument()
+
+    const listingsAfter = createLocalDemoRepository(window.localStorage)
+      .load()
+      .listings.filter(
+        ({ cardListId }) => cardListId === 'card-list-alex-offers',
+      )
+
+    expect(
+      listingsAfter.filter(({ status }) => status === 'withdrawn').length,
+    ).toBeGreaterThan(0)
+    expect(
+      listingsAfter.some(
+        ({ status, quantity }) => status === 'available' && quantity === 2,
+      ),
+    ).toBe(true)
+    expect(listingsBefore.every(({ status }) => status !== 'withdrawn')).toBe(
+      true,
+    )
+  })
+
+  it('requires a private list before planning a sync', async () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: 'Importar lista' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ofertas' }))
+    fireEvent.change(screen.getByLabelText('Lista de cartas'), {
+      target: { value: '2 Sol Ring (CMM) 410' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Analizar lista' }))
+    await screen.findByLabelText('Cantidad de Sol Ring')
+
+    fireEvent.click(screen.getByRole('radio', { name: /Sincronizar/ }))
+    fireEvent.change(screen.getByLabelText('Lista privada que se sincroniza'), {
+      target: { value: '' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Ver los cambios' }))
+
+    expect(
+      screen.getByText(
+        'Elige la lista privada que quieres sincronizar: solo se tocarán sus ofertas.',
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByLabelText('Cambios de la sincronización'),
+    ).not.toBeInTheDocument()
+  })
+
   it('creates and displays automatic matches after an import', async () => {
     render(<App />)
 

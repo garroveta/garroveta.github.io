@@ -10652,3 +10652,185 @@ a {
     transition-duration: 0.01ms !important;
   }
 }
+
+.sync-preview {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.sync-preview__heading h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.sync-preview__heading p {
+  margin: 0.2rem 0 0;
+  color: #635d66;
+  font-size: 0.72rem;
+}
+
+.sync-group {
+  border: 1px solid #e7e3ea;
+  border-radius: 0.7rem;
+  padding: 0.6rem 0.7rem;
+  background: #fdfcfe;
+}
+
+.sync-group h4 {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.4rem;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #4a4551;
+}
+
+.sync-group h4 span {
+  margin-left: auto;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: #ece8ef;
+  font-size: 0.68rem;
+}
+
+.sync-group ul {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sync-group li {
+  display: grid;
+  gap: 0.05rem;
+}
+
+.sync-group li strong {
+  font-size: 0.8rem;
+}
+
+.sync-group li small,
+.sync-group__more {
+  color: #635d66;
+  font-size: 0.68rem;
+}
+
+.sync-group__more {
+  margin: 0.35rem 0 0;
+}
+
+.sync-conflicts {
+  display: grid;
+  gap: 0.6rem;
+  border: 1px solid #e6cfa8;
+  border-radius: 0.7rem;
+  padding: 0.7rem;
+  background: #fdf7ea;
+}
+
+.sync-conflicts__heading h4 {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 0.82rem;
+  color: #745f25;
+}
+
+.sync-conflicts__heading p {
+  margin: 0.2rem 0 0;
+  color: #7a6a4a;
+  font-size: 0.7rem;
+}
+
+.sync-conflicts__bulk {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.sync-conflicts__bulk button {
+  border: 1px solid #e0cca6;
+  border-radius: 999px;
+  padding: 0.28rem 0.6rem;
+  background: #fffdf8;
+  color: #745f25;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sync-conflict {
+  display: grid;
+  gap: 0.5rem;
+  border: 1px solid #efe2c8;
+  border-radius: 0.6rem;
+  padding: 0.6rem;
+  background: #fff;
+}
+
+.sync-conflict header strong {
+  font-size: 0.85rem;
+}
+
+.sync-conflict header small,
+.sync-conflict header p {
+  display: block;
+  color: #635d66;
+  font-size: 0.7rem;
+}
+
+.sync-conflict header p {
+  margin: 0.25rem 0 0;
+}
+
+.sync-conflict__choices {
+  display: grid;
+  gap: 0.3rem;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.sync-conflict__choices legend {
+  padding: 0;
+  color: #4a4551;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.sync-conflict__choices label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+}
+
+.sync-conflict__fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sync-conflict__fields label {
+  display: grid;
+  gap: 0.15rem;
+  font-size: 0.68rem;
+  color: #635d66;
+}
+
+.sync-conflict__fields input {
+  width: 5.5rem;
+  border: 1px solid #ddd7e2;
+  border-radius: 0.45rem;
+  padding: 0.28rem 0.4rem;
+  font-size: 0.8rem;
+}
+
+.sync-conflict__actions {
+  display: flex;
+  gap: 0.4rem;
+}

@@ -165,6 +165,15 @@ y luego contra Scryfall** (ver sección 7). El usuario revisa el resultado,
 elige qué secciones incluir, ajusta cantidades y variantes, y decide el
 destino: sus búsquedas o sus ofertas.
 
+Para las **ofertas** hay dos modos:
+
+| Modo   | Efecto                                                                   |
+| ------ | ------------------------------------------------------------------------ |
+| `add`  | publica cada línea como una oferta nueva                                 |
+| `sync` | ajusta una lista privada al archivo, y retira lo que ya no aparece en él |
+
+La sincronización se describe en la sección 5.3.
+
 Para las búsquedas hay tres modos:
 
 | Modo     | Efecto                                                                           |
@@ -175,13 +184,50 @@ Para las búsquedas hay tres modos:
 
 Las líneas no reconocidas se listan al final para que la persona las revise.
 
-### 5.3 Listas personales
+### 5.3 Sincronizar una lista de ofertas
+
+Pensado para quien mantiene su stock en otra herramienta (ManaBox, Cardmarket)
+y vuelve a importarlo cada cierto tiempo.
+
+**La sincronización siempre se limita a una lista privada.** Casi nadie exporta
+todo su stock de una vez, así que una sincronización global retiraría todo lo
+que el archivo no menciona. Elegir la lista es obligatorio.
+
+El proceso tiene dos tiempos. Primero se calcula un **plan** que no cambia nada
+(`computeMarketplaceSyncPlan`) y se muestra por completo:
+
+| Categoría             | Contenido                                                            |
+| --------------------- | -------------------------------------------------------------------- |
+| Se publican           | líneas del archivo sin oferta correspondiente                        |
+| Se actualizan         | cambios de cantidad, de precio, o vuelta a publicación               |
+| Se retiran            | ofertas de la lista ausentes del archivo                             |
+| Conflictos            | varias ofertas responden a una línea, o el archivo da varios precios |
+| No se tocan           | reservadas, ya vendidas, o nombradas por una línea no reconocida     |
+| Líneas no reconocidas | lo que Scryfall no ha sabido resolver                                |
+
+Solo después, y **únicamente si no queda ningún conflicto**, se aplica
+(`applyMarketplaceSyncPlan`). Reglas que se garantizan en la capa de datos:
+
+- nada se modifica en silencio: el plan se propone y la persona lo valida;
+- una oferta reservada o ya vendida nunca se retira;
+- una línea que Scryfall no ha reconocido no provoca ninguna retirada;
+- un archivo sin precios nunca borra un precio escrito a mano;
+- reimportar el mismo archivo no cambia nada;
+- una oferta retirada que vuelve a aparecer se vuelve a publicar, no se duplica;
+- cada oferta se relee antes de modificarla: si su estado ha cambiado mientras
+  tanto, se deja intacta y se avisa.
+
+Los conflictos se resuelven uno a uno —eligiendo qué oferta conservar, con qué
+cantidad y a qué precio— o en bloque, con «Conservar la primera y retirar las
+demás» o «No tocar ninguna».
+
+### 5.4 Listas personales
 
 Se pueden crear y renombrar carpetas, y mover cualquier oferta o búsqueda de
 una a otra. Es organización privada: no cambia nada de cara al resto de la
 comunidad ni al motor de coincidencias.
 
-### 5.4 Coincidencias automáticas
+### 5.5 Coincidencias automáticas
 
 No hay que pulsar nada: cada vez que alguien publica, importa, edita, reserva o
 libera algo, las coincidencias se recalculan por completo
@@ -191,7 +237,7 @@ Las coincidencias ya completadas se conservan siempre; las demás se
 reconstruyen, manteniendo su estado (`new`, `seen`, `contacted`) cuando la
 pareja búsqueda/oferta sigue siendo válida.
 
-### 5.5 Reservas
+### 5.6 Reservas
 
 Desde una oferta, otro miembro puede reservar **una cantidad parcial** (de 1
 hasta la cantidad disponible). Condiciones: ser miembro aprobado, que la oferta
@@ -204,7 +250,7 @@ se libera todo, vuelve a `available`.
 Una oferta reservada deja de aparecer en el catálogo general, pero **sigue
 generando coincidencia para la persona que la reservó**.
 
-### 5.6 Retirar una oferta
+### 5.7 Retirar una oferta
 
 Desde «Mis ofertas», el propietario puede retirar una carta sin perderla:
 pasa a `withdrawn`, desaparece del catálogo, de la página compartible y de las
@@ -217,14 +263,14 @@ resolver o cancelar la reserva.
 `withdrawn` no debe confundirse con `completed`, que solo se aplica cuando una
 operación se ha cerrado de verdad y va acompañado de un `CardDeal`.
 
-### 5.7 Cerrar una operación
+### 5.8 Cerrar una operación
 
 Desde el detalle de una coincidencia, el comprador confirma que el intercambio
 se ha realizado. En una sola acción: la oferta pasa a `completed`, la búsqueda
 a `fulfilled`, la coincidencia a `completed` y se crea un `CardDeal`. Una misma
 coincidencia no puede registrarse dos veces.
 
-### 5.8 Datos de contacto
+### 5.9 Datos de contacto
 
 Los datos de contacto del vendedor (WhatsApp, correo, Discord) aparecen
 **únicamente en el detalle de una coincidencia**, y la propia pantalla lo
@@ -323,6 +369,7 @@ Resumen de la migración pendiente, en el orden en que tendría sentido hacerla:
 | `cardDeals.ts`                                    | cierre de operaciones                                   |
 | `cardSelectors.ts`                                | consultas para la interfaz                              |
 | `cardListImport.ts`                               | análisis de listas (texto y CSV de ManaBox)             |
+| `cardSync.ts`                                     | plan y aplicación de una sincronización de ofertas      |
 | `scryfallClient.ts`                               | resolución de cartas contra Scryfall                    |
 | `cardPresentation.ts`, `cardMatchPresentation.ts` | etiquetas en español                                    |
 | `scryfallImages.ts`                               | imágenes de respaldo                                    |
@@ -331,6 +378,7 @@ Resumen de la migración pendiente, en el orden en que tendría sentido hacerla:
 
 `src/pages/CardsPage.tsx`, `src/pages/SharedCardsPage.tsx`,
 `src/components/cards/MarketplaceSection.tsx`,
+`src/components/cards/MarketplaceSyncPreview.tsx`,
 `src/components/cards/MatchesSection.tsx`,
 `src/components/MarketplaceCatalog.tsx`,
 `MarketplaceListingTable.tsx`, `MarketplaceListingGallery.tsx`,
