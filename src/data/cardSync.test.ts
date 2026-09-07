@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   applyMarketplaceSyncPlan,
   computeMarketplaceSyncPlan,
+  findMarketplaceImportOverlap,
   resolveMarketplaceSyncConflict,
   type MarketplaceSyncScope,
 } from './cardSync'
@@ -513,5 +514,103 @@ describe('marketplace sync application', () => {
     expect(
       result.data.listings.find(({ id }) => id === 'listing-sync-2')?.status,
     ).toBe('reserved')
+  })
+})
+
+describe('marketplace import overlap', () => {
+  it('counts the lines the member already offers', () => {
+    const data = buildData([
+      buildListing({ id: 'listing-sync-1', cardId: solRing.id }),
+    ])
+    const overlap = findMarketplaceImportOverlap(
+      data,
+      memberId,
+      [buildItem(solRing), buildItem(rhysticStudy)],
+      ['main'],
+    )
+
+    expect(overlap).toEqual({
+      matchedLines: 1,
+      totalLines: 2,
+      cardListIds: [cardListId],
+    })
+  })
+
+  it('looks across every private list, not just one', () => {
+    const data = buildData([
+      buildListing({
+        id: 'listing-sync-1',
+        cardId: solRing.id,
+        cardListId: undefined,
+      }),
+    ])
+    const overlap = findMarketplaceImportOverlap(
+      data,
+      memberId,
+      [buildItem(solRing)],
+      ['main'],
+    )
+
+    expect(overlap.matchedLines).toBe(1)
+    expect(overlap.cardListIds).toEqual([])
+  })
+
+  it('ignores another member and a variant that differs', () => {
+    const data = buildData([
+      buildListing({
+        id: 'listing-other-member',
+        cardId: solRing.id,
+        memberId: 'member-diego',
+      }),
+      buildListing({
+        id: 'listing-other-language',
+        cardId: rhysticStudy.id,
+        language: 'en',
+      }),
+    ])
+    const overlap = findMarketplaceImportOverlap(
+      data,
+      memberId,
+      [buildItem(solRing), buildItem(rhysticStudy)],
+      ['main'],
+    )
+
+    expect(overlap.matchedLines).toBe(0)
+  })
+
+  it('does not count an offer already sold', () => {
+    const data = buildData([
+      buildListing({
+        id: 'listing-sync-1',
+        cardId: solRing.id,
+        status: 'completed',
+      }),
+    ])
+    const overlap = findMarketplaceImportOverlap(
+      data,
+      memberId,
+      [buildItem(solRing)],
+      ['main'],
+    )
+
+    expect(overlap.matchedLines).toBe(0)
+  })
+
+  it('counts an offer that was withdrawn', () => {
+    const data = buildData([
+      buildListing({
+        id: 'listing-sync-1',
+        cardId: solRing.id,
+        status: 'withdrawn',
+      }),
+    ])
+    const overlap = findMarketplaceImportOverlap(
+      data,
+      memberId,
+      [buildItem(solRing)],
+      ['main'],
+    )
+
+    expect(overlap.matchedLines).toBe(1)
   })
 })

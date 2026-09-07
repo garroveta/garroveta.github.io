@@ -3361,6 +3361,87 @@ describe('App', () => {
     ).toMatchObject({ quantity: 2 })
   })
 
+  it('warns before adding offers the member already has, and offers to sync', async () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: 'Importar lista' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ofertas' }))
+    fireEvent.change(screen.getByLabelText('Lista de cartas'), {
+      target: { value: '1 Sol Ring (CMM) 410' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Analizar lista' }))
+    await screen.findByLabelText('Cantidad de Sol Ring')
+
+    // the demo member has no Sol Ring in Spanish / Near Mint / non-foil yet
+    expect(
+      screen.queryByText(/ya están en tus ofertas/),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar ofertas' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Importar lista' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ofertas' }))
+    fireEvent.change(screen.getByLabelText('Lista de cartas'), {
+      target: { value: '1 Sol Ring (CMM) 410' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Analizar lista' }))
+    await screen.findByLabelText('Cantidad de Sol Ring')
+
+    expect(
+      screen.getByText(
+        '1 de estas 1 cartas ya están en tus ofertas. Añadirlas creará duplicados.',
+      ),
+    ).toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Sincronizar en su lugar' }),
+    )
+
+    expect(screen.getByRole('radio', { name: /Sincronizar/ })).toBeChecked()
+    expect(
+      screen.queryByText(/ya están en tus ofertas/),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Ver los cambios' }),
+    ).toBeInTheDocument()
+  })
+
+  it('stops warning once the imported variant differs', async () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: 'Importar lista' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ofertas' }))
+    fireEvent.change(screen.getByLabelText('Lista de cartas'), {
+      target: { value: '1 Sol Ring (CMM) 410' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Analizar lista' }))
+    await screen.findByLabelText('Cantidad de Sol Ring')
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar ofertas' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Importar lista' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ofertas' }))
+    fireEvent.change(screen.getByLabelText('Lista de cartas'), {
+      target: { value: '1 Sol Ring (CMM) 410' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Analizar lista' }))
+    await screen.findByLabelText('Cantidad de Sol Ring')
+
+    expect(screen.getByText(/ya están en tus ofertas/)).toBeInTheDocument()
+
+    // a foil copy is a different offer, not a duplicate
+    fireEvent.change(screen.getByLabelText('Acabado para todas las líneas'), {
+      target: { value: 'foil' },
+    })
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Aplicar a las 1 líneas' }),
+    )
+
+    expect(
+      screen.queryByText(/ya están en tus ofertas/),
+    ).not.toBeInTheDocument()
+  })
+
   it('applies a value to every imported offer at once', async () => {
     render(<App />)
 

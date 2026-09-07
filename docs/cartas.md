@@ -194,6 +194,14 @@ líneas»** fija de una vez el idioma, el estado, el acabado o el precio. Solo s
 aplican los campos elegidos: los que quedan en «Sin cambiar» no tocan nada, de
 modo que un ajuste hecho línea a línea no se pierde.
 
+Antes de añadir, el importador comprueba **cuántas de esas cartas ya ofrece la
+persona** (misma carta, idioma, estado y acabado) y lo avisa: «2 de estas 3
+cartas ya están en tus ofertas. Añadirlas creará duplicados», con un botón para
+pasar a sincronizar. La comprobación no se basa en el archivo sino en las
+ofertas existentes, así que sigue funcionando aunque el archivo se haya
+reexportado o editado. Se recalcula al editar las líneas: cambiar el acabado a
+foil hace desaparecer el aviso, porque una copia foil no es un duplicado.
+
 Para las **ofertas** hay dos modos:
 
 | Modo   | Efecto                                                                   |

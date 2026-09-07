@@ -55,6 +55,7 @@ import {
 import {
   applyMarketplaceSyncPlan,
   computeMarketplaceSyncPlan,
+  findMarketplaceImportOverlap,
   resolveMarketplaceSyncConflict,
   type MarketplaceSyncConflictChoice,
   type MarketplaceSyncPlan,
@@ -1297,6 +1298,20 @@ function WantedImportComposer({
     cardListId: offerCardListId,
     includedSections,
   }
+  // Recomputed as the rows are edited: changing a language in bulk changes
+  // which lines the member already offers.
+  const importOverlap = useMemo(
+    () =>
+      destination === 'offers' && offerMode === 'add' && offerInputs.length > 0
+        ? findMarketplaceImportOverlap(
+            data,
+            memberId,
+            offerInputs,
+            includedSections,
+          )
+        : undefined,
+    [data, destination, includedSections, memberId, offerInputs, offerMode],
+  )
 
   const handleShowSyncPlan = () => {
     if (!offerCardListId) {
@@ -1602,6 +1617,32 @@ function WantedImportComposer({
               className="offer-import-preview"
               aria-label="Editar ofertas importadas"
             >
+              {importOverlap && importOverlap.matchedLines > 0 ? (
+                <div className="import-overlap" role="status">
+                  <p>
+                    <AlertCircle aria-hidden="true" size={16} />
+                    <span>
+                      {importOverlap.matchedLines} de estas{' '}
+                      {importOverlap.totalLines} cartas ya están en tus ofertas.
+                      Añadirlas creará duplicados.
+                    </span>
+                  </p>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={() => {
+                      setOfferMode('sync')
+
+                      if (importOverlap.cardListIds.length === 1) {
+                        setOfferCardListId(importOverlap.cardListIds[0])
+                      }
+                    }}
+                  >
+                    Sincronizar en su lugar
+                  </button>
+                </div>
+              ) : null}
+
               <ImportBulkEditor
                 count={offerInputs.length}
                 fields={['language', 'condition', 'finish', 'priceEur']}

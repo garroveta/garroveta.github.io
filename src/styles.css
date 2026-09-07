@@ -10926,3 +10926,25 @@ a {
 .import-bulk button {
   justify-self: start;
 }
+
+.import-overlap {
+  display: grid;
+  gap: 0.45rem;
+  border: 1px solid #e6cfa8;
+  border-radius: 0.7rem;
+  padding: 0.55rem 0.7rem;
+  background: #fdf7ea;
+}
+
+.import-overlap p {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin: 0;
+  color: #745f25;
+  font-size: 0.73rem;
+}
+
+.import-overlap button {
+  justify-self: start;
+}

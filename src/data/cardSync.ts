@@ -124,10 +124,10 @@ function findScope(data: DemoDataSet, scope: MarketplaceSyncScope) {
 /** Merges the lines of the file that describe the very same offer. */
 function mergeImportLines(
   data: DemoDataSet,
-  scope: MarketplaceSyncScope,
+  sections: CardListSection[],
   items: MarketplaceImportItemInput[],
 ) {
-  const includedSections = new Set(scope.includedSections)
+  const includedSections = new Set(sections)
   const unresolvedLines: CardImportResolution[] = []
   const linesByKey = new Map<string, MarketplaceSyncLine>()
 
@@ -227,7 +227,11 @@ export function computeMarketplaceSyncPlan(
     return emptyPlan
   }
 
-  const { lines, unresolvedLines } = mergeImportLines(data, scope, items)
+  const { lines, unresolvedLines } = mergeImportLines(
+    data,
+    scope.includedSections,
+    items,
+  )
   const scopeListings = data.listings.filter(
     ({ memberId, cardListId }) =>
       memberId === scope.memberId && cardListId === scope.cardListId,
@@ -524,5 +528,67 @@ export function applyMarketplaceSyncPlan(
     updated,
     withdrawn,
     skipped,
+  }
+}
+
+export type MarketplaceImportOverlap = {
+  /** Lines of the file that already match an offer of this member. */
+  matchedLines: number
+  totalLines: number
+  /** Private lists holding those offers, to suggest what to synchronise. */
+  cardListIds: string[]
+}
+
+/**
+ * Tells how much of an import the member already offers, so that adding does
+ * not silently duplicate a stock they simply exported again. Unlike a file
+ * fingerprint, this still recognises a file that was edited between exports.
+ */
+export function findMarketplaceImportOverlap(
+  data: DemoDataSet,
+  memberId: string,
+  items: MarketplaceImportItemInput[],
+  sections: CardListSection[],
+): MarketplaceImportOverlap {
+  const { lines } = mergeImportLines(data, sections, items)
+  const listingsByKey = new Map<string, MarketplaceListing[]>()
+
+  data.listings
+    .filter(
+      (listing) =>
+        listing.memberId === memberId && listing.status !== 'completed',
+    )
+    .forEach((listing) => {
+      const key = variantKey(
+        listing.cardId,
+        listing.language,
+        listing.condition,
+        listing.finish,
+      )
+      listingsByKey.set(key, [...(listingsByKey.get(key) ?? []), listing])
+    })
+
+  const cardListIds = new Set<string>()
+  let matchedLines = 0
+
+  for (const line of lines) {
+    const matches = line.cardId ? (listingsByKey.get(line.key) ?? []) : []
+
+    if (matches.length === 0) {
+      continue
+    }
+
+    matchedLines += 1
+    matches.forEach(({ cardListId }) => {
+      if (cardListId) {
+        cardListIds.add(cardListId)
+      }
+    })
+  }
+
+  return {
+    matchedLines,
+    totalLines: lines.length,
+    cardListIds: [...cardListIds],
   }
 }
