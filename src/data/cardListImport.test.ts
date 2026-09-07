@@ -213,8 +213,55 @@ describe('card list imports', () => {
     expect(result.items[0].name).toBe('Sol Ring')
   })
 
-  it('falls back to the text parser when no column names the card', () => {
+  it('asks for the card column when no header names it', () => {
     const result = parseCardList('Ref,Qty\nABC-1,2')
+
+    expect(result.source).toBe('csv')
+    expect(result.items).toEqual([])
+    expect(result.errors[0].message).toBe(
+      'Ninguna columna contiene el nombre de la carta. Indícala más abajo.',
+    )
+    expect(result.columns).toEqual([
+      { header: 'Ref' },
+      { header: 'Qty', column: 'quantity' },
+    ])
+  })
+
+  it('imports a CSV once the card column is mapped by hand', () => {
+    const result = parseCardList('Ref,Qty\nSol Ring,2', { 0: 'name' })
+
+    expect(result.errors).toEqual([])
+    expect(result.items[0]).toMatchObject({ name: 'Sol Ring', quantity: 2 })
+  })
+
+  it('lets a manual choice take a field from the column that had it', () => {
+    const result = parseCardList(
+      'Name,Alias,Quantity\nSol Ring,Anillo solar,2',
+      { 1: 'name' },
+    )
+
+    expect(result.columns).toEqual([
+      { header: 'Name' },
+      { header: 'Alias', column: 'name' },
+      { header: 'Quantity', column: 'quantity' },
+    ])
+    expect(result.items[0].name).toBe('Anillo solar')
+  })
+
+  it('drops a column that the reader marks as not to import', () => {
+    const result = parseCardList('Name,Price\nSol Ring,4.50', { 1: 'none' })
+
+    expect(result.columns).toEqual([
+      { header: 'Name', column: 'name' },
+      { header: 'Price' },
+    ])
+    expect(result.items[0].priceEur).toBeUndefined()
+  })
+
+  it('keeps reading a plain text list as text', () => {
+    const result = parseCardList(
+      '2x Bloodghast\n1 Gut Shot\nSideboard\n1 Sol Ring',
+    )
 
     expect(result.source).toBe('text')
     expect(result.columns).toBeUndefined()

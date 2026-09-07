@@ -158,7 +158,11 @@ El importador acepta dos formatos, detectados automáticamente:
   - valores tolerantes: `NM` o `Near Mint`, `Ingles` o `English`, `X`/`Yes`
     para foil, y precios `1,50`, `1.50` o `1,50 €`;
   - las columnas que no se reconocen se listan en pantalla, para que nadie
-    crea que se han importado;
+    crea que se han importado, y **cada columna se puede reasignar a mano**
+    desde «Columnas del archivo»; una elección manual quita el campo a la
+    columna que lo tuviera;
+  - si ninguna columna contiene el nombre de la carta, el importador lo dice y
+    abre el selector de columnas en lugar de fallar en silencio;
   - una columna de edición solo se usa si contiene un **código** (`CMM`); un
     nombre de edición no sirve para resolver la carta y se ignora.
 
@@ -169,8 +173,9 @@ El importador acepta dos formatos, detectados automáticamente:
   `Carta x2`), impresión concreta (`Carta (SET) 123`), comentarios (`//`, `#`)
   y encabezados de sección (`Sideboard`, `Commander`, `Maybeboard`…).
 
-Se toma por CSV lo que tiene varias columnas y una de ellas nombra la carta;
-en caso contrario se analiza como texto.
+Se toma por CSV lo que tiene **varias filas del mismo ancho**, independientemente
+de sus cabeceras; en caso contrario se analiza como texto. Las líneas que no se
+pueden analizar se muestran antes de importar, agrupadas por motivo.
 
 El CSV de ManaBox aporta además el idioma, el estado y el acabado de cada
 carta: se rellenan solos en la vista previa y siguen siendo modificables. Un
@@ -396,6 +401,7 @@ Resumen de la migración pendiente, en el orden en que tendría sentido hacerla:
 ### Interfaz
 
 `src/pages/CardsPage.tsx`, `src/pages/SharedCardsPage.tsx`,
+`src/components/cards/CardListColumnMapper.tsx`,
 `src/components/cards/MarketplaceSection.tsx`,
 `src/components/cards/MarketplaceSyncPreview.tsx`,
 `src/components/cards/MatchesSection.tsx`,

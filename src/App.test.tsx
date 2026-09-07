@@ -3361,6 +3361,38 @@ describe('App', () => {
     ).toMatchObject({ quantity: 2 })
   })
 
+  it('imports a CSV whose card column has to be mapped by hand', async () => {
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: 'Importar lista' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ofertas' }))
+    fireEvent.change(screen.getByLabelText('Lista de cartas'), {
+      target: { value: 'Referencia;Uds\nSol Ring;2' },
+    })
+
+    expect(
+      screen.getByText(
+        'Ninguna columna contiene el nombre de la carta. Indícala más abajo.',
+      ),
+    ).toBeInTheDocument()
+
+    fireEvent.change(
+      screen.getByLabelText('Contenido de la columna Referencia'),
+      { target: { value: 'name' } },
+    )
+
+    expect(
+      screen.queryByText(
+        'Ninguna columna contiene el nombre de la carta. Indícala más abajo.',
+      ),
+    ).not.toBeInTheDocument()
+    expect(screen.getByText(/1 líneas detectadas/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Analizar lista' }))
+    expect(await screen.findByLabelText('Cantidad de Sol Ring')).toHaveValue(2)
+  })
+
   it('previews and applies a sync of an offers list', async () => {
     render(<App />)
 

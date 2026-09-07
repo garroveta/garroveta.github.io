@@ -27,6 +27,7 @@ import { useMemo, useState } from 'react'
 import { CardImagePreview } from '../components/CardImagePreview'
 import { MarketplaceReservationSheet } from '../components/MarketplaceReservationSheet'
 import { MarketplaceSection } from '../components/cards/MarketplaceSection'
+import { CardListColumnMapper } from '../components/cards/CardListColumnMapper'
 import { MarketplaceSyncPreview } from '../components/cards/MarketplaceSyncPreview'
 import {
   MatchesSection,
@@ -42,7 +43,11 @@ import {
   type WantedImportItemInput,
   type WantedImportResult,
 } from '../data/cardMutations'
-import { parseCardList, type CardListSection } from '../data/cardListImport'
+import {
+  parseCardList,
+  type CardListColumnOverrides,
+  type CardListSection,
+} from '../data/cardListImport'
 import {
   applyMarketplaceSyncPlan,
   computeMarketplaceSyncPlan,
@@ -1182,7 +1187,12 @@ function WantedImportComposer({
     'commander',
     'companion',
   ])
-  const parsedList = useMemo(() => parseCardList(rawList), [rawList])
+  const [columnOverrides, setColumnOverrides] =
+    useState<CardListColumnOverrides>({})
+  const parsedList = useMemo(
+    () => parseCardList(rawList, columnOverrides),
+    [rawList, columnOverrides],
+  )
   const sectionCounts = useMemo(() => {
     const counts = new Map<CardListSection, number>()
     parsedList.items.forEach((item) =>
@@ -1190,6 +1200,18 @@ function WantedImportComposer({
     )
     return counts
   }, [parsedList.items])
+  // Parse errors used to be invisible until the import silently dropped them.
+  const parseErrors = useMemo(() => {
+    const counts = new Map<string, number>()
+
+    parsedList.errors.forEach(({ message }) =>
+      counts.set(message, (counts.get(message) ?? 0) + 1),
+    )
+
+    return [...counts.entries()].map(([message, count]) =>
+      count > 1 ? `${message} (${count} líneas)` : message,
+    )
+  }, [parsedList.errors])
   const unmappedColumns = useMemo(
     () =>
       (parsedList.columns ?? [])
@@ -1217,6 +1239,7 @@ function WantedImportComposer({
 
     setRawList(await file.text())
     setFileName(file.name)
+    setColumnOverrides({})
     setResolutions(undefined)
     setErrorMessage('')
   }
@@ -1444,6 +1467,21 @@ function WantedImportComposer({
                   ? ' · CSV'
                   : ''}
             </p>
+          ) : null}
+
+          {parseErrors.length > 0 ? (
+            <p className="import-error" role="alert">
+              <AlertCircle aria-hidden="true" size={17} />{' '}
+              {parseErrors.join(' ')}
+            </p>
+          ) : null}
+
+          {parsedList.columns ? (
+            <CardListColumnMapper
+              columns={parsedList.columns}
+              overrides={columnOverrides}
+              onChange={setColumnOverrides}
+            />
           ) : null}
 
           {unmappedColumns.length > 0 ? (

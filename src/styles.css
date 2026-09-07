@@ -10834,3 +10834,52 @@ a {
   display: flex;
   gap: 0.4rem;
 }
+
+.column-mapper {
+  border: 1px solid #e7e3ea;
+  border-radius: 0.7rem;
+  padding: 0.5rem 0.7rem;
+  background: #fdfcfe;
+}
+
+.column-mapper summary {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #4a4551;
+  cursor: pointer;
+}
+
+.column-mapper__help {
+  margin: 0.4rem 0 0.5rem;
+  color: #635d66;
+  font-size: 0.68rem;
+}
+
+.column-mapper__rows {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.column-mapper__rows label {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.column-mapper__rows label span {
+  overflow: hidden;
+  color: #4a4551;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.column-mapper__rows select {
+  border: 1px solid #ddd7e2;
+  border-radius: 0.45rem;
+  padding: 0.25rem 0.35rem;
+  background: #fff;
+  font-size: 0.74rem;
+}

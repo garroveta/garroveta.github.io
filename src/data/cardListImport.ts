@@ -149,6 +149,7 @@ const columnAliases = new Map<string, CardListColumn>([
   ['count', 'quantity'],
   ['cantidad', 'quantity'],
   ['unidades', 'quantity'],
+  ['uds', 'quantity'],
   ['anzahl', 'quantity'],
   ['menge', 'quantity'],
   ['quantite', 'quantity'],
@@ -199,10 +200,35 @@ function normalizeValue(value: string) {
     .toLocaleLowerCase('en')
 }
 
-export function mapCardListColumns(headers: string[]): CardListColumnMapping[] {
-  const used = new Set<CardListColumn>()
+/** An explicit choice for one column; `none` drops a column that was mapped. */
+export type CardListColumnOverrides = Record<number, CardListColumn | 'none'>
 
-  return headers.map((header) => {
+/**
+ * Maps every header to the field it feeds. A choice made by hand always wins
+ * over the alias table, and takes the field away from any other column.
+ */
+export function mapCardListColumns(
+  headers: string[],
+  overrides: CardListColumnOverrides = {},
+): CardListColumnMapping[] {
+  const claimed = new Set<CardListColumn>()
+  const chosen = headers.map((_, index) => overrides[index])
+
+  chosen.forEach((column) => {
+    if (column && column !== 'none') {
+      claimed.add(column)
+    }
+  })
+
+  const used = new Set(claimed)
+
+  return headers.map((header, index) => {
+    const override = chosen[index]
+
+    if (override) {
+      return override === 'none' ? { header } : { header, column: override }
+    }
+
     const column = columnAliases.get(normalizeValue(header))
 
     if (!column || used.has(column)) {
@@ -332,10 +358,33 @@ function looksLikeManaBoxCsv(headers: string[]) {
   )
 }
 
-function parseCsv(value: string, delimiter: string): ParsedCardList {
+function parseCsv(
+  value: string,
+  delimiter: string,
+  overrides: CardListColumnOverrides,
+): ParsedCardList {
   const rows = parseCsvRows(value, delimiter)
   const headers = rows.shift() ?? []
-  const columns = mapCardListColumns(headers)
+  const columns = mapCardListColumns(headers, overrides)
+
+  if (!columns.some(({ column }) => column === 'name')) {
+    return {
+      source: looksLikeManaBoxCsv(headers) ? 'manabox_csv' : 'csv',
+      items: [],
+      ignoredLines: [],
+      errors: [
+        {
+          lineNumber: 1,
+          line: headers.join(delimiter),
+          message:
+            'Ninguna columna contiene el nombre de la carta. Indícala más abajo.',
+        },
+      ],
+      columns,
+      delimiter,
+    }
+  }
+
   const indexOf = (column: CardListColumn) =>
     columns.findIndex((candidate) => candidate.column === column)
   const fieldOf = (row: string[], column: CardListColumn) => {
@@ -479,7 +528,23 @@ function parseTextList(value: string): ParsedCardList {
   return { source: 'text', items, ignoredLines, errors }
 }
 
-export function parseCardList(value: string): ParsedCardList {
+/** Several rows of the same width: a table, whatever its headers say. */
+function looksTabular(rows: string[][]) {
+  const width = rows[0]?.length ?? 0
+
+  if (rows.length < 2 || width < 2) {
+    return false
+  }
+
+  return rows.every(
+    (row) => row.length === width || row.every((field) => !field.trim()),
+  )
+}
+
+export function parseCardList(
+  value: string,
+  overrides: CardListColumnOverrides = {},
+): ParsedCardList {
   const normalizedValue = value.replace(/^\uFEFF/, '').trim()
 
   if (!normalizedValue) {
@@ -488,13 +553,8 @@ export function parseCardList(value: string): ParsedCardList {
 
   const firstLine = normalizedValue.split(/\r?\n/, 1)[0] ?? ''
   const delimiter = detectDelimiter(firstLine)
-  const headers = parseCsvRows(firstLine, delimiter)[0] ?? []
-  const columns = mapCardListColumns(headers)
-  // A CSV is recognised by having several columns, one of which names the card.
-  const looksLikeCsv =
-    headers.length > 1 && columns.some(({ column }) => column === 'name')
 
-  return looksLikeCsv
-    ? parseCsv(normalizedValue, delimiter)
+  return looksTabular(parseCsvRows(normalizedValue, delimiter))
+    ? parseCsv(normalizedValue, delimiter, overrides)
     : parseTextList(normalizedValue)
 }
