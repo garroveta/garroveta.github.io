@@ -7,7 +7,24 @@ import type {
 export type CardListSection =
   'main' | 'sideboard' | 'maybeboard' | 'commander' | 'companion'
 
-export type CardListSource = 'manabox_csv' | 'text'
+export type CardListSource = 'manabox_csv' | 'csv' | 'text'
+
+/** The fields a CSV column can feed, whatever the tool that produced it. */
+export type CardListColumn =
+  | 'name'
+  | 'quantity'
+  | 'setCode'
+  | 'collectorNumber'
+  | 'scryfallId'
+  | 'language'
+  | 'condition'
+  | 'finish'
+  | 'priceEur'
+
+export type CardListColumnMapping = {
+  header: string
+  column?: CardListColumn
+}
 
 export type CardFinish = MarketplaceListing['finish']
 
@@ -32,6 +49,9 @@ export type ParsedCardList = {
   items: ParsedCardListItem[]
   ignoredLines: string[]
   errors: Array<{ lineNumber: number; line: string; message: string }>
+  /** Columns of a CSV and the field each one feeds, for review and remapping. */
+  columns?: CardListColumnMapping[]
+  delimiter?: string
 }
 
 const sectionLabels = new Map<string, CardListSection>([
@@ -45,11 +65,7 @@ const sectionLabels = new Map<string, CardListSection>([
   ['companion', 'companion'],
 ])
 
-function normalizeHeader(value: string) {
-  return value.trim().toLocaleLowerCase('en')
-}
-
-function parseCsvRows(value: string) {
+function parseCsvRows(value: string, delimiter = ',') {
   const rows: string[][] = []
   let row: string[] = []
   let field = ''
@@ -68,7 +84,7 @@ function parseCsvRows(value: string) {
       continue
     }
 
-    if (character === ',' && !quoted) {
+    if (character === delimiter && !quoted) {
       row.push(field)
       field = ''
       continue
@@ -96,56 +112,157 @@ function parseCsvRows(value: string) {
   return rows
 }
 
-function looksLikeManaBoxCsv(value: string) {
-  const firstLine = value.split(/\r?\n/, 1)[0] ?? ''
-  const headers = parseCsvRows(firstLine)[0]?.map(normalizeHeader) ?? []
+const DELIMITERS = [',', ';', '\t']
 
-  return (
-    headers.includes('name') &&
-    headers.includes('quantity') &&
-    headers.includes('scryfall id')
-  )
+/** Picks the separator that splits the header row into the most columns. */
+function detectDelimiter(firstLine: string) {
+  return DELIMITERS.reduce((best, candidate) => {
+    const count = parseCsvRows(firstLine, candidate)[0]?.length ?? 0
+    const bestCount = parseCsvRows(firstLine, best)[0]?.length ?? 0
+
+    return count > bestCount ? candidate : best
+  }, DELIMITERS[0])
 }
 
-const manaBoxLanguages = new Map<string, CardLanguage>([
+/**
+ * Header spellings met in the wild: ManaBox, the Cardmarket browser
+ * extensions, TCG Automate and hand-made spreadsheets, in several languages.
+ */
+const columnAliases = new Map<string, CardListColumn>([
+  ['name', 'name'],
+  ['card', 'name'],
+  ['card name', 'name'],
+  ['cardname', 'name'],
+  ['english name', 'name'],
+  ['nombre', 'name'],
+  ['carta', 'name'],
+  ['nombre de la carta', 'name'],
+  ['product', 'name'],
+  ['produkt', 'name'],
+  ['kartenname', 'name'],
+  ['article', 'name'],
+  ['artikel', 'name'],
+  ['nom', 'name'],
+  ['quantity', 'quantity'],
+  ['qty', 'quantity'],
+  ['amount', 'quantity'],
+  ['count', 'quantity'],
+  ['cantidad', 'quantity'],
+  ['unidades', 'quantity'],
+  ['anzahl', 'quantity'],
+  ['menge', 'quantity'],
+  ['quantite', 'quantity'],
+  ['set code', 'setCode'],
+  ['setcode', 'setCode'],
+  ['set', 'setCode'],
+  ['edition', 'setCode'],
+  ['edicion', 'setCode'],
+  ['expansion', 'setCode'],
+  ['expansion code', 'setCode'],
+  ['erweiterung', 'setCode'],
+  ['collector number', 'collectorNumber'],
+  ['collectornumber', 'collectorNumber'],
+  ['card number', 'collectorNumber'],
+  ['number', 'collectorNumber'],
+  ['numero', 'collectorNumber'],
+  ['nummer', 'collectorNumber'],
+  ['scryfall id', 'scryfallId'],
+  ['scryfallid', 'scryfallId'],
+  ['scryfall', 'scryfallId'],
+  ['language', 'language'],
+  ['lang', 'language'],
+  ['idioma', 'language'],
+  ['sprache', 'language'],
+  ['langue', 'language'],
+  ['condition', 'condition'],
+  ['cond', 'condition'],
+  ['estado', 'condition'],
+  ['zustand', 'condition'],
+  ['etat', 'condition'],
+  ['foil', 'finish'],
+  ['finish', 'finish'],
+  ['is foil', 'finish'],
+  ['acabado', 'finish'],
+  ['price', 'priceEur'],
+  ['price eur', 'priceEur'],
+  ['selling price', 'priceEur'],
+  ['precio', 'priceEur'],
+  ['preis', 'priceEur'],
+  ['prix', 'priceEur'],
+])
+
+function normalizeValue(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLocaleLowerCase('en')
+}
+
+export function mapCardListColumns(headers: string[]): CardListColumnMapping[] {
+  const used = new Set<CardListColumn>()
+
+  return headers.map((header) => {
+    const column = columnAliases.get(normalizeValue(header))
+
+    if (!column || used.has(column)) {
+      return { header }
+    }
+
+    used.add(column)
+    return { header, column }
+  })
+}
+
+const cardLanguageValues = new Map<string, CardLanguage>([
   ['en', 'en'],
   ['english', 'en'],
+  ['ingles', 'en'],
+  ['englisch', 'en'],
   ['es', 'es'],
   ['spanish', 'es'],
   ['espanol', 'es'],
+  ['spanisch', 'es'],
   ['fr', 'fr'],
   ['french', 'fr'],
+  ['frances', 'fr'],
+  ['francais', 'fr'],
   ['de', 'de'],
   ['german', 'de'],
   ['deutsch', 'de'],
+  ['aleman', 'de'],
   ['it', 'it'],
   ['italian', 'it'],
   ['italiano', 'it'],
   ['pt', 'pt'],
   ['pt-br', 'pt'],
   ['portuguese', 'pt'],
+  ['portugues', 'pt'],
   ['ja', 'jp'],
   ['jp', 'jp'],
   ['japanese', 'jp'],
+  ['japones', 'jp'],
 ])
 
 /**
  * An unlisted language (Korean, Russian, Chinese…) is reported as `other`:
  * leaving it empty would silently fall back to the Spanish default.
  */
-function parseManaBoxLanguage(value: string | undefined) {
-  const normalized = normalizeHeader(value ?? '')
+function parseCardLanguage(value: string | undefined) {
+  const normalized = normalizeValue(value ?? '')
 
   if (!normalized) {
     return undefined
   }
 
-  return manaBoxLanguages.get(normalized) ?? 'other'
+  return cardLanguageValues.get(normalized) ?? 'other'
 }
 
-const manaBoxConditions = new Map<string, CardCondition>([
+/** The seven Cardmarket grades, by full name and by the usual two-letter code. */
+const cardConditionValues = new Map<string, CardCondition>([
   ['mint', 'mint'],
   ['m', 'mint'],
+  ['mt', 'mint'],
   ['near_mint', 'near_mint'],
   ['near mint', 'near_mint'],
   ['nm', 'near_mint'],
@@ -155,6 +272,7 @@ const manaBoxConditions = new Map<string, CardCondition>([
   ['gd', 'good'],
   ['light_played', 'light_played'],
   ['lightly played', 'light_played'],
+  ['light played', 'light_played'],
   ['lp', 'light_played'],
   ['played', 'played'],
   ['pl', 'played'],
@@ -162,19 +280,69 @@ const manaBoxConditions = new Map<string, CardCondition>([
   ['po', 'poor'],
 ])
 
-const manaBoxFinishes = new Map<string, CardFinish>([
+const cardFinishValues = new Map<string, CardFinish>([
   ['normal', 'nonfoil'],
   ['nonfoil', 'nonfoil'],
+  ['non-foil', 'nonfoil'],
   ['false', 'nonfoil'],
+  ['no', 'nonfoil'],
+  ['0', 'nonfoil'],
   ['foil', 'foil'],
   ['etched', 'foil'],
   ['true', 'foil'],
+  ['yes', 'foil'],
+  ['1', 'foil'],
+  ['x', 'foil'],
 ])
 
-function parseManaBoxCsv(value: string): ParsedCardList {
-  const rows = parseCsvRows(value)
-  const headers = (rows.shift() ?? []).map(normalizeHeader)
-  const indexOf = (header: string) => headers.indexOf(header)
+/** Reads `1.50`, `1,50` and `1,50 €` alike. */
+function parsePrice(value: string | undefined) {
+  const normalized = (value ?? '').replace(/[^\d,.-]/g, '').trim()
+
+  if (!normalized) {
+    return undefined
+  }
+
+  const decimal = normalized.includes(',')
+    ? normalized.replace(/\./g, '').replace(',', '.')
+    : normalized
+  const price = Number(decimal)
+
+  return Number.isFinite(price) && price > 0
+    ? Math.round(price * 100) / 100
+    : undefined
+}
+
+/** A set code is short and unspaced; a set name is not usable for resolution. */
+function parseSetCode(value: string | undefined) {
+  const code = value?.trim() ?? ''
+
+  return code && code.length <= 6 && !code.includes(' ')
+    ? code.toUpperCase()
+    : undefined
+}
+
+function looksLikeManaBoxCsv(headers: string[]) {
+  const normalized = headers.map(normalizeValue)
+
+  return (
+    normalized.includes('name') &&
+    normalized.includes('quantity') &&
+    normalized.includes('scryfall id')
+  )
+}
+
+function parseCsv(value: string, delimiter: string): ParsedCardList {
+  const rows = parseCsvRows(value, delimiter)
+  const headers = rows.shift() ?? []
+  const columns = mapCardListColumns(headers)
+  const indexOf = (column: CardListColumn) =>
+    columns.findIndex((candidate) => candidate.column === column)
+  const fieldOf = (row: string[], column: CardListColumn) => {
+    const index = indexOf(column)
+
+    return index < 0 ? undefined : row[index]
+  }
   const items: ParsedCardListItem[] = []
   const errors: ParsedCardList['errors'] = []
 
@@ -184,13 +352,14 @@ function parseManaBoxCsv(value: string): ParsedCardList {
     }
 
     const lineNumber = rowIndex + 2
-    const name = row[indexOf('name')]?.trim() ?? ''
-    const quantity = Number(row[indexOf('quantity')] ?? 1)
+    const name = fieldOf(row, 'name')?.trim() ?? ''
+    const rawQuantity = fieldOf(row, 'quantity')?.trim()
+    const quantity = rawQuantity ? Number(rawQuantity) : 1
 
     if (!name || !Number.isInteger(quantity) || quantity < 1) {
       errors.push({
         lineNumber,
-        line: row.join(','),
+        line: row.join(delimiter),
         message: 'Nombre o cantidad no válidos.',
       })
       return
@@ -198,24 +367,32 @@ function parseManaBoxCsv(value: string): ParsedCardList {
 
     items.push({
       lineNumber,
-      rawLine: row.join(','),
+      rawLine: row.join(delimiter),
       quantity,
       name,
-      setCode: row[indexOf('set code')]?.trim() || undefined,
-      collectorNumber: row[indexOf('collector number')]?.trim() || undefined,
-      scryfallId: row[indexOf('scryfall id')]?.trim() || undefined,
+      setCode: parseSetCode(fieldOf(row, 'setCode')),
+      collectorNumber: fieldOf(row, 'collectorNumber')?.trim() || undefined,
+      scryfallId: fieldOf(row, 'scryfallId')?.trim() || undefined,
       section: 'main',
-      language: parseManaBoxLanguage(row[indexOf('language')]),
-      condition: manaBoxConditions.get(
-        normalizeHeader(row[indexOf('condition')] ?? ''),
+      language: parseCardLanguage(fieldOf(row, 'language')),
+      condition: cardConditionValues.get(
+        normalizeValue(fieldOf(row, 'condition') ?? ''),
       ),
-      finish: manaBoxFinishes.get(normalizeHeader(row[indexOf('foil')] ?? '')),
-      // `Purchase price` is what the owner paid, not a sale price: never
-      // publish it as one.
+      finish: cardFinishValues.get(
+        normalizeValue(fieldOf(row, 'finish') ?? ''),
+      ),
+      priceEur: parsePrice(fieldOf(row, 'priceEur')),
     })
   })
 
-  return { source: 'manabox_csv', items, ignoredLines: [], errors }
+  return {
+    source: looksLikeManaBoxCsv(headers) ? 'manabox_csv' : 'csv',
+    items,
+    ignoredLines: [],
+    errors,
+    columns,
+    delimiter,
+  }
 }
 
 function parseSection(line: string) {
@@ -309,7 +486,15 @@ export function parseCardList(value: string): ParsedCardList {
     return { source: 'text', items: [], ignoredLines: [], errors: [] }
   }
 
-  return looksLikeManaBoxCsv(normalizedValue)
-    ? parseManaBoxCsv(normalizedValue)
+  const firstLine = normalizedValue.split(/\r?\n/, 1)[0] ?? ''
+  const delimiter = detectDelimiter(firstLine)
+  const headers = parseCsvRows(firstLine, delimiter)[0] ?? []
+  const columns = mapCardListColumns(headers)
+  // A CSV is recognised by having several columns, one of which names the card.
+  const looksLikeCsv =
+    headers.length > 1 && columns.some(({ column }) => column === 'name')
+
+  return looksLikeCsv
+    ? parseCsv(normalizedValue, delimiter)
     : parseTextList(normalizedValue)
 }

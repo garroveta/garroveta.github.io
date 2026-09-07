@@ -1190,6 +1190,13 @@ function WantedImportComposer({
     )
     return counts
   }, [parsedList.items])
+  const unmappedColumns = useMemo(
+    () =>
+      (parsedList.columns ?? [])
+        .filter(({ column, header }) => !column && header.trim())
+        .map(({ header }) => header.trim()),
+    [parsedList.columns],
+  )
   const detectedAttributeCount = useMemo(
     () =>
       parsedList.items.filter(
@@ -1388,7 +1395,9 @@ function WantedImportComposer({
             <FileText aria-hidden="true" size={22} />
             <span>
               <strong>{fileName || 'Seleccionar un archivo'}</strong>
-              <small>TXT de Moxfield o ManaBox, CSV de ManaBox</small>
+              <small>
+                TXT de Moxfield o ManaBox, o cualquier CSV de cartas
+              </small>
             </span>
             <input
               accept=".txt,.csv,text/plain,text/csv"
@@ -1429,7 +1438,19 @@ function WantedImportComposer({
               {parsedList.items.length} líneas detectadas ·{' '}
               {parsedList.items.reduce((sum, item) => sum + item.quantity, 0)}{' '}
               cartas
-              {parsedList.source === 'manabox_csv' ? ' · CSV ManaBox' : ''}
+              {parsedList.source === 'manabox_csv'
+                ? ' · CSV ManaBox'
+                : parsedList.source === 'csv'
+                  ? ' · CSV'
+                  : ''}
+            </p>
+          ) : null}
+
+          {unmappedColumns.length > 0 ? (
+            <p className="import-detection" role="status">
+              <AlertCircle aria-hidden="true" size={16} />
+              Columnas no reconocidas: {unmappedColumns.join(', ')}. Sus datos
+              no se importarán.
             </p>
           ) : null}
 

@@ -134,4 +134,95 @@ describe('card list imports', () => {
       expect(item.finish).toBeUndefined()
     })
   })
+
+  it('reads a semicolon CSV with Spanish headers', () => {
+    const result = parseCardList(
+      [
+        'Nombre;Cantidad;Edicion;Numero;Idioma;Estado;Foil;Precio',
+        'Sol Ring;3;CMM;410;Ingles;NM;X;1,50',
+      ].join('\n'),
+    )
+
+    expect(result.source).toBe('csv')
+    expect(result.delimiter).toBe(';')
+    expect(result.items[0]).toMatchObject({
+      name: 'Sol Ring',
+      quantity: 3,
+      setCode: 'CMM',
+      collectorNumber: '410',
+      language: 'en',
+      condition: 'near_mint',
+      finish: 'foil',
+      priceEur: 1.5,
+    })
+  })
+
+  it('reads European and plain decimal prices alike', () => {
+    const result = parseCardList(
+      [
+        'Name,Quantity,Price',
+        'Sol Ring,1,"2,50 €"',
+        'Rhystic Study,1,12.75',
+        'Gut Shot,1,',
+      ].join('\n'),
+    )
+
+    expect(result.items.map(({ priceEur }) => priceEur)).toEqual([
+      2.5,
+      12.75,
+      undefined,
+    ])
+  })
+
+  it('reads a tab separated list', () => {
+    const result = parseCardList('Name\tQuantity\nSol Ring\t2')
+
+    expect(result.source).toBe('csv')
+    expect(result.items[0]).toMatchObject({ name: 'Sol Ring', quantity: 2 })
+  })
+
+  it('ignores a set column that holds a name instead of a code', () => {
+    const result = parseCardList(
+      'Name,Quantity,Expansion\nSol Ring,1,Commander Masters',
+    )
+
+    expect(result.items[0].setCode).toBeUndefined()
+    expect(result.items[0].name).toBe('Sol Ring')
+  })
+
+  it('reports the columns it recognised and those it did not', () => {
+    const result = parseCardList('Name,Quantity,Rarity\nSol Ring,1,uncommon')
+
+    expect(result.columns).toEqual([
+      { header: 'Name', column: 'name' },
+      { header: 'Quantity', column: 'quantity' },
+      { header: 'Rarity' },
+    ])
+  })
+
+  it('maps a field to the first matching column only', () => {
+    const result = parseCardList(
+      'Name,Card name,Quantity\nSol Ring,Sol Ring bis,1',
+    )
+
+    expect(result.columns).toEqual([
+      { header: 'Name', column: 'name' },
+      { header: 'Card name' },
+      { header: 'Quantity', column: 'quantity' },
+    ])
+    expect(result.items[0].name).toBe('Sol Ring')
+  })
+
+  it('falls back to the text parser when no column names the card', () => {
+    const result = parseCardList('Ref,Qty\nABC-1,2')
+
+    expect(result.source).toBe('text')
+    expect(result.columns).toBeUndefined()
+  })
+
+  it('still recognises a ManaBox CSV as such', () => {
+    const result = parseCardList('Name,Quantity,Scryfall ID\nSol Ring,1,id-1')
+
+    expect(result.source).toBe('manabox_csv')
+  })
 })

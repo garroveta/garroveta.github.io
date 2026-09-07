@@ -147,11 +147,30 @@ con la misma variante, las cantidades se suman en lugar de duplicar la línea.
 
 El importador acepta dos formatos, detectados automáticamente:
 
-- **CSV de ManaBox**, reconocido por sus cabeceras (`name`, `quantity`,
-  `scryfall id`).
+- **Cualquier CSV de cartas**, no solo el de una herramienta concreta.
+  Cardmarket no exporta el stock, así que cada persona llega con el archivo de
+  la herramienta que use; el importador se adapta en lugar de imponer un
+  formato:
+  - separador `,`, `;` o tabulador, elegido automáticamente;
+  - cabeceras reconocidas por **alias** en varios idiomas (`Nombre`/`Name`,
+    `Cantidad`/`Quantity`/`Amount`, `Idioma`/`Language`, `Estado`/`Condition`,
+    `Foil`, `Precio`/`Price`…);
+  - valores tolerantes: `NM` o `Near Mint`, `Ingles` o `English`, `X`/`Yes`
+    para foil, y precios `1,50`, `1.50` o `1,50 €`;
+  - las columnas que no se reconocen se listan en pantalla, para que nadie
+    crea que se han importado;
+  - una columna de edición solo se usa si contiene un **código** (`CMM`); un
+    nombre de edición no sirve para resolver la carta y se ignora.
+
+  Un CSV de ManaBox se sigue reconociendo como tal por sus cabeceras
+  (`name`, `quantity`, `scryfall id`).
+
 - **Texto libre**, con varias sintaxis de cantidad (`2x Carta`, `2 Carta`,
   `Carta x2`), impresión concreta (`Carta (SET) 123`), comentarios (`//`, `#`)
   y encabezados de sección (`Sideboard`, `Commander`, `Maybeboard`…).
+
+Se toma por CSV lo que tiene varias columnas y una de ellas nombra la carta;
+en caso contrario se analiza como texto.
 
 El CSV de ManaBox aporta además el idioma, el estado y el acabado de cada
 carta: se rellenan solos en la vista previa y siguen siendo modificables. Un
