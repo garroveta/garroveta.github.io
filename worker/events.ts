@@ -583,6 +583,14 @@ async function updateEvent(
         updated_at = ?
     where community_id = ?
       and id = ?
+      and not exists (
+        select 1
+        from event_standing standing
+        inner join community_ranking_season season
+          on season.id = standing.ranking_season_id
+        where standing.event_id = community_event.id
+          and season.status = 'closed'
+      )
       and (
         not exists (
           select 1
@@ -627,12 +635,32 @@ async function updateEvent(
 
   if (!updatedEvent) {
     const existingEvent = await requestContext.env.DB.prepare(
-      `select id from community_event where community_id = ? and id = ? limit 1`,
+      `select
+        community_event.id,
+        exists (
+          select 1
+          from event_standing standing
+          inner join community_ranking_season season
+            on season.id = standing.ranking_season_id
+          where standing.event_id = community_event.id
+            and season.status = 'closed'
+        ) as ranking_season_closed
+      from community_event
+      where community_id = ? and id = ?
+      limit 1`,
     )
       .bind(communityId, eventId)
-      .first<{ id: string }>()
+      .first<{ id: string; ranking_season_closed: number }>()
 
     if (existingEvent) {
+      if (existingEvent.ranking_season_closed === 1) {
+        return apiError(
+          409,
+          'ranking_season_closed',
+          'Events with results in a closed ranking season cannot be modified.',
+        )
+      }
+
       return apiError(
         409,
         'event_registration_conflict',
@@ -673,13 +701,48 @@ async function deleteEvent(
 ) {
   const deletedEvent = await requestContext.env.DB.prepare(
     `delete from community_event
-    where community_id = ? and id = ?
+    where community_id = ?
+      and id = ?
+      and not exists (
+        select 1
+        from event_standing standing
+        inner join community_ranking_season season
+          on season.id = standing.ranking_season_id
+        where standing.event_id = community_event.id
+          and season.status = 'closed'
+      )
     returning id`,
   )
     .bind(communityId, eventId)
     .first<{ id: string }>()
 
   if (!deletedEvent) {
+    const existingEvent = await requestContext.env.DB.prepare(
+      `select
+        community_event.id,
+        exists (
+          select 1
+          from event_standing standing
+          inner join community_ranking_season season
+            on season.id = standing.ranking_season_id
+          where standing.event_id = community_event.id
+            and season.status = 'closed'
+        ) as ranking_season_closed
+      from community_event
+      where community_id = ? and id = ?
+      limit 1`,
+    )
+      .bind(communityId, eventId)
+      .first<{ id: string; ranking_season_closed: number }>()
+
+    if (existingEvent?.ranking_season_closed === 1) {
+      return apiError(
+        409,
+        'ranking_season_closed',
+        'Events with results in a closed ranking season cannot be deleted.',
+      )
+    }
+
     return apiError(404, 'event_not_found', 'Community event not found.')
   }
 

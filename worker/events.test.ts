@@ -285,6 +285,35 @@ describe('Community event API', () => {
     })
   })
 
+  it('does not modify an event with results in a closed ranking season', async () => {
+    const update = createContext({
+      body: { ...eventInput, title: 'Título corregido' },
+      firstResults: [null, { id: 'event-standard', ranking_season_closed: 1 }],
+      method: 'PATCH',
+    })
+
+    const response = await handleEventApiRequest(update.context, eventRoute)
+
+    expect(response.status).toBe(409)
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: 'ranking_season_closed' },
+    })
+  })
+
+  it('does not delete an event with results in a closed ranking season', async () => {
+    const deletion = createContext({
+      firstResults: [null, { id: 'event-standard', ranking_season_closed: 1 }],
+      method: 'DELETE',
+    })
+
+    const response = await handleEventApiRequest(deletion.context, eventRoute)
+
+    expect(response.status).toBe(409)
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: 'ranking_season_closed' },
+    })
+  })
+
   it('rejects invalid event input before accessing D1', async () => {
     const { context, prepare } = createContext({
       body: { ...eventInput, endsAt: eventInput.startsAt },
