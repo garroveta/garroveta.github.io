@@ -48,6 +48,21 @@ const typeLabels: Record<NewsPostType, string> = {
 
 const newsTypes = Object.keys(typeLabels) as NewsPostType[]
 
+function toLocalInputValue(isoInstant?: string) {
+  if (!isoInstant) {
+    return ''
+  }
+
+  const instant = new Date(isoInstant)
+  const offset = instant.getTimezoneOffset() * 60_000
+
+  return new Date(instant.getTime() - offset).toISOString().slice(0, 16)
+}
+
+function fromLocalInputValue(value: string) {
+  return value ? new Date(value).toISOString() : null
+}
+
 /**
  * `poll` is not offered until voting actually exists: the type only ever was a
  * badge, on a publication that invited a vote nobody could cast. The label and
@@ -102,6 +117,10 @@ function CommunicationEditor({
   const [content, setContent] = useState(post?.content ?? '')
   const [tagIds, setTagIds] = useState<string[]>(post?.tagIds ?? [])
   const [pinned, setPinned] = useState(post?.pinned ?? false)
+  const [publishedAt, setPublishedAt] = useState(
+    toLocalInputValue(post?.publishedAt),
+  )
+  const [expiresAt, setExpiresAt] = useState(toLocalInputValue(post?.expiresAt))
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const activeTags = data.tags.filter(isCommunityOptionActive)
@@ -120,7 +139,17 @@ function CommunicationEditor({
     setSaveError('')
 
     try {
-      await onSave({ type, title, excerpt, content, tagIds, pinned })
+      await onSave({
+        type,
+        title,
+        excerpt,
+        content,
+        tagIds,
+        pinned,
+        publishedAt:
+          fromLocalInputValue(publishedAt) ?? new Date().toISOString(),
+        expiresAt: fromLocalInputValue(expiresAt),
+      })
     } catch {
       setSaveError(
         'No se ha podido guardar la publicación. Inténtalo de nuevo.',
@@ -206,6 +235,34 @@ function CommunicationEditor({
             </label>
           ))}
         </div>
+      </fieldset>
+
+      <fieldset className="communication-schedule">
+        <legend>Cuándo se ve</legend>
+        <div className="communication-schedule__fields">
+          <label className="form-field">
+            <span>Se publica</span>
+            <input
+              aria-label="Fecha de publicación"
+              type="datetime-local"
+              value={publishedAt}
+              onChange={(event) => setPublishedAt(event.target.value)}
+            />
+          </label>
+          <label className="form-field">
+            <span>Caduca (opcional)</span>
+            <input
+              aria-label="Fecha de caducidad"
+              type="datetime-local"
+              value={expiresAt}
+              onChange={(event) => setExpiresAt(event.target.value)}
+            />
+          </label>
+        </div>
+        <small>
+          Una fecha futura mantiene la publicación oculta hasta ese momento. Sin
+          caducidad, se queda hasta que la borres.
+        </small>
       </fieldset>
 
       <label className="communication-pin-option">
@@ -370,7 +427,9 @@ export function CommunicationManagementPanel({
         {
           content: post.content,
           excerpt: post.excerpt,
+          expiresAt: post.expiresAt ?? null,
           pinned: !post.pinned,
+          publishedAt: post.publishedAt,
           tagIds: post.tagIds,
           title: post.title,
           type: post.type,

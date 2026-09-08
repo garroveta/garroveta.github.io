@@ -215,8 +215,15 @@ describe('Community communication API', () => {
     await handleCommunicationApiRequest(context, collectionRoute)
 
     expect(prepare.mock.calls[0]?.[0]).toContain('json_each(c.tag_ids)')
+    // a player also only sees what is live: published already, not expired yet
+    expect(prepare.mock.calls[0]?.[0]).toContain('c.published_at <= ?')
+    expect(prepare.mock.calls[0]?.[0]).toContain(
+      'c.expires_at is null or c.expires_at > ?',
+    )
     expect(statements[0]?.bind).toHaveBeenCalledWith(
       'community-crc-delorean',
+      expect.any(String),
+      expect.any(String),
       'member-manager',
     )
   })
@@ -252,6 +259,7 @@ describe('Community communication API', () => {
       '[]',
       1,
       expect.any(String),
+      null,
       expect.any(String),
       expect.any(String),
     )
@@ -329,5 +337,85 @@ describe('Community communication API', () => {
 
     expect(response.status).toBe(403)
     expect(prepare).not.toHaveBeenCalled()
+  })
+
+  it('stores the schedule an author chooses', async () => {
+    const create = createContext({
+      body: {
+        content: 'Abrimos a las 17:00.',
+        excerpt: 'El bar abre más tarde.',
+        expiresAt: '2026-09-30T21:00:00.000Z',
+        pinned: false,
+        publishedAt: '2026-09-20T08:00:00.000Z',
+        tagIds: [],
+        title: 'Horario de verano',
+        type: 'news',
+      },
+      firstResults: [persistedCommunicationWithoutAuthor],
+      method: 'POST',
+    })
+
+    const response = await handleCommunicationApiRequest(create.context, {
+      communityId: 'community-crc-delorean',
+      kind: 'collection',
+    })
+
+    expect(response.status).toBe(201)
+    expect(create.statements[0]?.bind).toHaveBeenCalledWith(
+      expect.any(String),
+      'community-crc-delorean',
+      'member-manager',
+      'news',
+      'Horario de verano',
+      'El bar abre más tarde.',
+      'Abrimos a las 17:00.',
+      '[]',
+      0,
+      '2026-09-20T08:00:00.000Z',
+      '2026-09-30T21:00:00.000Z',
+      expect.any(String),
+      expect.any(String),
+    )
+  })
+
+  it.each([
+    [
+      'an expiry before the publication',
+      {
+        expiresAt: '2026-09-01T08:00:00.000Z',
+        publishedAt: '2026-09-20T08:00:00.000Z',
+      },
+    ],
+    [
+      'an expiry equal to the publication',
+      {
+        expiresAt: '2026-09-20T08:00:00.000Z',
+        publishedAt: '2026-09-20T08:00:00.000Z',
+      },
+    ],
+    ['an unparsable date', { publishedAt: 'mañana' }],
+  ])('rejects %s', async (_case, schedule) => {
+    const create = createContext({
+      body: {
+        content: 'Abrimos a las 17:00.',
+        excerpt: 'El bar abre más tarde.',
+        pinned: false,
+        tagIds: [],
+        title: 'Horario de verano',
+        type: 'news',
+        ...schedule,
+      },
+      method: 'POST',
+    })
+
+    const response = await handleCommunicationApiRequest(create.context, {
+      communityId: 'community-crc-delorean',
+      kind: 'collection',
+    })
+
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: 'communication_invalid' },
+    })
   })
 })

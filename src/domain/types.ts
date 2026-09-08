@@ -219,6 +219,8 @@ export type NewsPost = {
   excerpt: string
   content: string
   publishedAt: ISODateTime
+  /** Absent means it never expires; both bounds are read filters, not jobs. */
+  expiresAt?: ISODateTime
   tagIds: EntityId[]
   pinned: boolean
 }

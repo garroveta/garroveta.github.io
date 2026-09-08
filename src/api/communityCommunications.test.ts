@@ -11,7 +11,9 @@ import {
 const communicationInput: CommunityCommunicationWriteInput = {
   content: 'Abrimos a las 17:00 de miércoles a viernes.',
   excerpt: 'El bar abre más tarde durante el verano.',
+  expiresAt: null,
   pinned: true,
+  publishedAt: '2026-09-01T10:00:00.000Z',
   tagIds: ['tag-mtg'],
   title: 'Horario de verano',
   type: 'urgent',

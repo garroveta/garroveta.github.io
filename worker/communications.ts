@@ -32,6 +32,7 @@ export interface CommunicationRoute {
 
 interface CommunicationRow {
   author_display_name: string
+  expires_at: string | null
   author_member_id: string
   community_id: string
   content: string
@@ -47,7 +48,9 @@ interface CommunicationRow {
 interface CommunicationInput {
   content: string
   excerpt: string
+  expiresAt: string | null
   pinned: boolean
+  publishedAt: string
   tagIds: string[]
   title: string
   type: CommunicationType
@@ -109,7 +112,9 @@ function parseCommunicationInput(value: unknown): CommunicationInput {
   const knownFields = new Set([
     'content',
     'excerpt',
+    'expiresAt',
     'pinned',
+    'publishedAt',
     'tagIds',
     'title',
     'type',
@@ -145,14 +150,48 @@ function parseCommunicationInput(value: unknown): CommunicationInput {
     )
   }
 
+  const publishedAt =
+    parseInstant(value.publishedAt, 'publishedAt') ?? new Date().toISOString()
+  const expiresAt = parseInstant(value.expiresAt, 'expiresAt')
+
+  if (expiresAt && expiresAt <= publishedAt) {
+    throw new ApiRequestError(
+      400,
+      'communication_invalid',
+      'expiresAt must be later than publishedAt.',
+    )
+  }
+
   return {
     content: parseText(value.content, 'content', 10_000),
     excerpt: parseText(value.excerpt, 'excerpt', 500),
+    expiresAt,
     pinned: value.pinned,
+    publishedAt,
     tagIds: parseTagIds(value.tagIds),
     title: parseText(value.title, 'title', 120),
     type: value.type as CommunicationType,
   }
+}
+
+/**
+ * A schedule is only ever a read filter: a publication appears and disappears
+ * on its own, so nothing has to run in the background.
+ */
+function parseInstant(value: unknown, fieldName: string) {
+  if (value === undefined || value === null || value === '') {
+    return null
+  }
+
+  if (typeof value !== 'string' || Number.isNaN(Date.parse(value))) {
+    throw new ApiRequestError(
+      400,
+      'communication_invalid',
+      `${fieldName} must be a valid date.`,
+    )
+  }
+
+  return new Date(value).toISOString()
 }
 
 function parseStoredTagIds(value: string) {
@@ -177,6 +216,7 @@ function toCommunication(communication: CommunicationRow) {
     excerpt: communication.excerpt,
     id: communication.id,
     pinned: communication.pinned === 1,
+    expiresAt: communication.expires_at ?? undefined,
     publishedAt: communication.published_at,
     tagIds: parseStoredTagIds(communication.tag_ids),
     title: communication.title,
@@ -222,6 +262,11 @@ async function listCommunications(
   communityId: string,
   membership: ApprovedMembership,
 ) {
+  const scheduleFilter =
+    membership.role === 'manager'
+      ? ''
+      : `and c.published_at <= ?
+      and (c.expires_at is null or c.expires_at > ?)`
   const visibilityFilter =
     membership.role === 'manager'
       ? ''
@@ -250,17 +295,19 @@ async function listCommunications(
       c.content,
       c.tag_ids,
       c.pinned,
-      c.published_at
+      c.published_at,
+      c.expires_at
     from community_communication as c
     inner join community_member as author on author.id = c.author_member_id
-    where c.community_id = ? ${visibilityFilter}
+    where c.community_id = ? ${scheduleFilter} ${visibilityFilter}
     order by c.pinned desc, c.published_at desc, c.id asc
     limit 500`,
   )
+  const now = new Date().toISOString()
   const { results } = await (
     membership.role === 'manager'
       ? statement.bind(communityId)
-      : statement.bind(communityId, membership.id)
+      : statement.bind(communityId, now, now, membership.id)
   ).all<CommunicationRow>()
 
   return jsonResponse({ communications: results.map(toCommunication) })
@@ -288,9 +335,10 @@ async function createCommunication(
       tag_ids,
       pinned,
       published_at,
+      expires_at,
       created_at,
       updated_at
-    ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     returning *`,
   )
     .bind(
@@ -303,7 +351,8 @@ async function createCommunication(
       input.content,
       JSON.stringify(input.tagIds),
       Number(input.pinned),
-      now,
+      input.publishedAt,
+      input.expiresAt,
       now,
       now,
     )
@@ -351,7 +400,8 @@ async function getCommunication(
         c.content,
         c.tag_ids,
         c.pinned,
-        c.published_at
+        c.published_at,
+        c.expires_at
       from community_communication as c
       inner join community_member as author on author.id = c.author_member_id
       where c.community_id = ? and c.id = ?
@@ -378,6 +428,8 @@ async function updateCommunication(
         content = ?,
         tag_ids = ?,
         pinned = ?,
+        published_at = ?,
+        expires_at = ?,
         updated_at = ?
     where community_id = ? and id = ?
     returning id`,
@@ -389,6 +441,8 @@ async function updateCommunication(
       input.content,
       JSON.stringify(input.tagIds),
       Number(input.pinned),
+      input.publishedAt,
+      input.expiresAt,
       new Date().toISOString(),
       communityId,
       communicationId,

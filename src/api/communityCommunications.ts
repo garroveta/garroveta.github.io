@@ -8,7 +8,11 @@ export type CommunityCommunication = NewsPost & {
 export type CommunityCommunicationWriteInput = {
   content: string
   excerpt: string
+  /** ISO instant, or null to never expire. */
+  expiresAt: string | null
   pinned: boolean
+  /** ISO instant; a future one keeps the publication hidden until then. */
+  publishedAt: string
   tagIds: string[]
   title: string
   type: NewsPostType

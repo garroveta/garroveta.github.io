@@ -10978,3 +10978,35 @@ a {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+.communication-schedule {
+  border: 1px solid #e7e3ea;
+  border-radius: 0.7rem;
+  padding: 0.55rem 0.7rem;
+  background: #fdfcfe;
+}
+
+.communication-schedule legend {
+  padding: 0 0.3rem;
+  color: #4a4551;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.communication-schedule__fields {
+  display: grid;
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .communication-schedule__fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.communication-schedule small {
+  display: block;
+  margin-top: 0.4rem;
+  color: #635d66;
+  font-size: 0.68rem;
+}
