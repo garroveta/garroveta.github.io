@@ -2385,6 +2385,30 @@ a {
   font-weight: 850;
 }
 
+.communication-schedule-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.16rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.58rem;
+  font-weight: 800;
+}
+
+.communication-schedule-label--scheduled {
+  color: #2f5fa0;
+  background: #e3ecf8;
+}
+
+.communication-schedule-label--expired {
+  color: #635d66;
+  background: #e9e6ea;
+}
+
+.managed-communication-row--expired {
+  opacity: 0.72;
+}
+
 .managed-communication-row__actions {
   display: flex;
   gap: 0.3rem;

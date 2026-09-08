@@ -1,5 +1,11 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const communicationApiMocks = vi.hoisted(() => ({
   createCommunityCommunication: vi.fn(),
@@ -188,5 +194,78 @@ describe('CommunicationManagementPanel', () => {
         }),
       ),
     )
+  })
+
+  it('labels and orders publications by schedule state', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-08T12:00:00+02:00'))
+
+    try {
+      renderPanel([
+        buildPost({
+          id: 'news-live',
+          title: 'En curso',
+          publishedAt: '2026-08-01T10:00:00+02:00',
+        }),
+        buildPost({
+          id: 'news-scheduled',
+          title: 'Aún no publicada',
+          publishedAt: '2026-12-01T10:00:00+02:00',
+        }),
+        buildPost({
+          id: 'news-expired-pinned',
+          title: 'Caducada y fijada',
+          pinned: true,
+          publishedAt: '2026-07-01T10:00:00+02:00',
+          expiresAt: '2026-08-15T10:00:00+02:00',
+        }),
+      ])
+
+      const rows = screen.getAllByRole('article')
+      expect(
+        rows.map((row) => row.querySelector('strong')?.textContent),
+      ).toEqual(['Aún no publicada', 'En curso', 'Caducada y fijada'])
+
+      const scheduledRow = screen
+        .getByText('Aún no publicada')
+        .closest('article')
+      expect(
+        within(scheduledRow as HTMLElement).getByText('Programada'),
+      ).toBeInTheDocument()
+      expect(
+        within(scheduledRow as HTMLElement).getByText(/Se publica el/),
+      ).toBeInTheDocument()
+
+      const liveRow = screen.getByText('En curso').closest('article')
+      expect(
+        within(liveRow as HTMLElement).queryByText('Programada'),
+      ).not.toBeInTheDocument()
+      expect(
+        within(liveRow as HTMLElement).queryByText('Caducada'),
+      ).not.toBeInTheDocument()
+      expect(
+        within(liveRow as HTMLElement).getByText(/Publicado el/),
+      ).toBeInTheDocument()
+
+      const expiredRow = screen
+        .getByText('Caducada y fijada')
+        .closest('article')
+      expect(
+        within(expiredRow as HTMLElement).getByText('Caducada'),
+      ).toBeInTheDocument()
+      // pinned no longer beats the schedule: it still sorts after the live post
+      expect(
+        within(expiredRow as HTMLElement).getByText('Fijada'),
+      ).toBeInTheDocument()
+      expect(
+        within(expiredRow as HTMLElement).getByText(/Caducó el/),
+      ).toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 })

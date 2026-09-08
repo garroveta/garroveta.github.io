@@ -1,6 +1,8 @@
 import {
+  Archive,
   Check,
   CheckCircle2,
+  Clock,
   Copy,
   ExternalLink,
   Megaphone,
@@ -78,6 +80,34 @@ const dateFormatter = new Intl.DateTimeFormat('es-ES', {
   year: 'numeric',
   timeZone: 'Europe/Madrid',
 })
+
+type PublicationState = 'scheduled' | 'live' | 'expired'
+
+const publicationStateRank: Record<PublicationState, number> = {
+  scheduled: 0,
+  live: 1,
+  expired: 2,
+}
+
+/**
+ * Scheduling and expiry are read filters, not jobs: this only tells the
+ * manager panel how to label and order a row. A member's own visibility comes
+ * straight from the same rule applied on the server.
+ */
+function getPublicationState(
+  post: Pick<NewsPost, 'publishedAt' | 'expiresAt'>,
+  now: Date,
+): PublicationState {
+  if (new Date(post.publishedAt) > now) {
+    return 'scheduled'
+  }
+
+  if (post.expiresAt && new Date(post.expiresAt) <= now) {
+    return 'expired'
+  }
+
+  return 'live'
+}
 
 async function copyText(text: string) {
   if (navigator.clipboard?.writeText) {
@@ -352,6 +382,7 @@ export function CommunicationManagementPanel({
   )
   const filteredPosts = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase('es')
+    const now = new Date()
 
     return [...data.newsPosts]
       .filter(({ type }) => typeFilter === 'all' || type === typeFilter)
@@ -370,11 +401,22 @@ export function CommunicationManagementPanel({
           .toLocaleLowerCase('es')
           .includes(normalizedQuery)
       })
-      .sort(
-        (first, second) =>
-          Number(second.pinned) - Number(first.pinned) ||
-          Date.parse(second.publishedAt) - Date.parse(first.publishedAt),
-      )
+      .sort((first, second) => {
+        const firstState = getPublicationState(first, now)
+        const secondState = getPublicationState(second, now)
+        const stateOrder =
+          publicationStateRank[firstState] - publicationStateRank[secondState]
+
+        if (stateOrder !== 0) {
+          return stateOrder
+        }
+
+        // soonest first while it waits; most recent first once it is live or gone
+        return firstState === 'scheduled'
+          ? Date.parse(first.publishedAt) - Date.parse(second.publishedAt)
+          : Number(second.pinned) - Number(first.pinned) ||
+              Date.parse(second.publishedAt) - Date.parse(first.publishedAt)
+      })
   }, [data.newsPosts, data.tags, query, typeFilter])
   const editedPost =
     editorMode !== 'closed' && editorMode !== 'new'
@@ -638,6 +680,10 @@ export function CommunicationManagementPanel({
       </p>
 
       <div className="managed-communication-list">
+        {/* Recomputed each render rather than ticking live: a schedule
+            crossing over can lag until the next render, which never affects
+            what a member actually sees — the server applies the same rule
+            independently. */}
         {filteredPosts.map((post) => {
           const author = data.members.find(
             ({ id }) => id === post.authorMemberId,
@@ -646,9 +692,19 @@ export function CommunicationManagementPanel({
             const tag = data.tags.find(({ id }) => id === tagId)
             return tag ? [tag.name] : []
           })
+          const state = getPublicationState(post, new Date())
+          const dateLabel =
+            state === 'scheduled'
+              ? `Se publica el ${dateFormatter.format(new Date(post.publishedAt))}`
+              : state === 'expired'
+                ? `Caducó el ${dateFormatter.format(new Date(post.expiresAt!))}`
+                : `Publicado el ${dateFormatter.format(new Date(post.publishedAt))}`
 
           return (
-            <article className="managed-communication-row" key={post.id}>
+            <article
+              className={`managed-communication-row managed-communication-row--${state}`}
+              key={post.id}
+            >
               <div className="managed-communication-row__identity">
                 <div>
                   <span
@@ -656,6 +712,15 @@ export function CommunicationManagementPanel({
                   >
                     {typeLabels[post.type]}
                   </span>
+                  {state === 'scheduled' ? (
+                    <span className="communication-schedule-label communication-schedule-label--scheduled">
+                      <Clock aria-hidden="true" size={12} /> Programada
+                    </span>
+                  ) : state === 'expired' ? (
+                    <span className="communication-schedule-label communication-schedule-label--expired">
+                      <Archive aria-hidden="true" size={12} /> Caducada
+                    </span>
+                  ) : null}
                   {post.pinned ? (
                     <span className="communication-pinned-label">
                       <Pin aria-hidden="true" size={12} /> Fijada
@@ -667,8 +732,7 @@ export function CommunicationManagementPanel({
                   {tagNames.length > 0
                     ? tagNames.join(', ')
                     : 'Toda la comunidad'}{' '}
-                  · {author?.displayName ?? data.community.name} ·{' '}
-                  {dateFormatter.format(new Date(post.publishedAt))}
+                  · {author?.displayName ?? data.community.name} · {dateLabel}
                 </small>
               </div>
 
