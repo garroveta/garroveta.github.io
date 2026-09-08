@@ -373,24 +373,9 @@ trae imagen propia.
 
 ## 9. Qué haría falta para conectarla a D1
 
-Resumen de la migración pendiente, en el orden en que tendría sentido hacerla:
-
-1. **Datos de contacto reales**: columna en la base de datos, edición desde el
-   perfil y visualización en el detalle de coincidencia. Es la puerta de
-   entrada más simple y también la que hoy falta por completo.
-2. **Tablas y rutas** para ofertas, búsquedas, listas personales, coincidencias
-   y operaciones, con las mismas autorizaciones que el resto de la aplicación
-   (miembro aprobado; cada persona solo modifica lo suyo).
-3. **Motor de coincidencias en el servidor**: hoy se recalcula entero en el
-   navegador a cada cambio; con datos compartidos debe calcularse donde están
-   los datos.
-4. **Identidad real**: sustituir el identificador ficticio del prototipo por el
-   de la cuenta conectada, para que las comprobaciones de propiedad y de
-   reserva sean correctas entre personas distintas.
-5. **Catálogo de cartas compartido**: hoy cada navegador amplía su propio
-   catálogo al importar; con backend debería ser común a la comunidad.
-
----
+El plan de migración completo —modelo de datos, consulta de emparejamiento,
+secuencia de trabajo y riesgos— está en
+[`cartas-backend.md`](./cartas-backend.md).
 
 ## 10. Archivos y pruebas
 
