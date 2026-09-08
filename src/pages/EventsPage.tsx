@@ -1,5 +1,6 @@
 import {
   ArrowLeft,
+  CalendarPlus,
   CalendarDays,
   ChevronRight,
   Clock3,
@@ -42,6 +43,7 @@ import {
   getRegistrationRule,
 } from '../data/registrationSettings'
 import type {
+  Community,
   CommunityEvent,
   CommunityMember,
   DemoDataSet,
@@ -49,6 +51,7 @@ import type {
   EventStanding,
   EventType,
 } from '../domain/types'
+import { buildEventCalendarExport } from '../utils/eventCalendar'
 
 type EventsPageProps = {
   activeRole: DemoRole
@@ -884,14 +887,14 @@ function CompactEventList({
 function EventDetail({
   activeRole,
   item,
-  communityName,
+  community,
   onBack,
   onCancelRegistration,
   onRegister,
 }: {
   activeRole: DemoRole
   item: EventListItem
-  communityName: string
+  community: Pick<Community, 'address' | 'city' | 'name'>
   onBack: () => void
   onCancelRegistration: (eventId: string) => Promise<void>
   onRegister: (eventId: string) => Promise<EventRegistration>
@@ -912,6 +915,13 @@ function EventDetail({
     item.event.waitlistEnabled !== false
   const isConfirmed = item.registration?.status === 'confirmed'
   const isWaitlisted = item.registration?.status === 'waitlisted'
+  const eventUrl = new URL(window.location.href)
+  eventUrl.hash = `eventos?event=${encodeURIComponent(item.event.id)}`
+  const calendarExport = buildEventCalendarExport({
+    event: item.event,
+    community,
+    eventUrl: eventUrl.toString(),
+  })
 
   const handleRegistration = async () => {
     setActionError('')
@@ -980,7 +990,7 @@ function EventDetail({
               <MapPin aria-hidden="true" size={18} />
               Lugar
             </dt>
-            <dd>{communityName}</dd>
+            <dd>{community.name}</dd>
           </div>
           {item.event.registrationEnabled ? (
             <div>
@@ -1012,26 +1022,37 @@ function EventDetail({
           </p>
         ) : null}
 
-        {item.event.registrationEnabled &&
-        (canRegister || canJoinWaitlist || item.registration) &&
-        activeRole !== 'gerente' ? (
-          <button
-            className="primary-button event-action"
-            type="button"
-            disabled={isActionPending}
-            onClick={() => void handleRegistration()}
+        <div className="event-detail__actions">
+          <a
+            className="secondary-button event-calendar-action"
+            download={calendarExport.fileName}
+            href={calendarExport.dataUri}
           >
-            {isActionPending
-              ? 'Guardando…'
-              : isConfirmed
-                ? 'Cancelar inscripción'
-                : isWaitlisted
-                  ? 'Salir de la lista de espera'
-                  : canRegister
-                    ? 'Inscribirme'
-                    : 'Unirme a la lista de espera'}
-          </button>
-        ) : null}
+            <CalendarPlus aria-hidden="true" size={18} />
+            Añadir al calendario
+          </a>
+
+          {item.event.registrationEnabled &&
+          (canRegister || canJoinWaitlist || item.registration) &&
+          activeRole !== 'gerente' ? (
+            <button
+              className="primary-button event-action"
+              type="button"
+              disabled={isActionPending}
+              onClick={() => void handleRegistration()}
+            >
+              {isActionPending
+                ? 'Guardando…'
+                : isConfirmed
+                  ? 'Cancelar inscripción'
+                  : isWaitlisted
+                    ? 'Salir de la lista de espera'
+                    : canRegister
+                      ? 'Inscribirme'
+                      : 'Unirme a la lista de espera'}
+            </button>
+          ) : null}
+        </div>
 
         <p className="action-message" aria-live="polite">
           {actionMessage}
@@ -1603,7 +1624,7 @@ export function EventsPage({
       <EventDetail
         activeRole={activeRole}
         item={selectedEvent}
-        communityName={data.community.name}
+        community={data.community}
         onBack={closeEvent}
         onCancelRegistration={onCancelRegistration}
         onRegister={onRegister}

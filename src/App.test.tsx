@@ -1717,6 +1717,16 @@ describe('App', () => {
     expect(
       screen.queryByRole('button', { name: /Inscribirme/ }),
     ).not.toBeInTheDocument()
+    const calendarLink = screen.getByRole('link', {
+      name: 'Añadir al calendario',
+    })
+    expect(calendarLink).toHaveAttribute('download', 'fnm-standard.ics')
+    expect(calendarLink.getAttribute('href')).toMatch(
+      /^data:text\/calendar;charset=utf-8,/,
+    )
+    expect(
+      decodeURIComponent(calendarLink.getAttribute('href') ?? ''),
+    ).toContain('URL:http://localhost:3000/#eventos?event=event-fnm-standard')
 
     fireEvent.click(screen.getByRole('button', { name: 'Volver a la agenda' }))
 

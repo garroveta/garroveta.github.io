@@ -4735,6 +4735,25 @@ a {
   text-transform: capitalize;
 }
 
+.event-detail__actions {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.event-calendar-action,
+.event-detail__actions .event-action {
+  width: 100%;
+}
+
+.event-detail__actions .event-action {
+  margin-top: 0;
+}
+
+.event-calendar-action {
+  text-decoration: none;
+}
+
 .event-waitlist-summary,
 .event-detail__registration {
   width: fit-content;
@@ -10310,6 +10329,10 @@ a {
   }
 
   .event-detail__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .event-detail__actions:has(.event-action) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
