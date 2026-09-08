@@ -1605,6 +1605,22 @@ describe('App', () => {
         .newsPosts.find(({ title }) => title === 'Cambio de horario'),
     ).toMatchObject({ type: 'urgent', tagIds: ['tag-pauper'], pinned: true })
 
+    const windowOpen = vi.spyOn(window, 'open').mockReturnValue({} as Window)
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar por WhatsApp' }))
+    expect(windowOpen).toHaveBeenCalledWith(
+      expect.stringMatching(
+        /^https:\/\/wa\.me\/\?text=.*Cambio%20de%20horario/,
+      ),
+      '_blank',
+      'noopener,noreferrer',
+    )
+    expect(
+      screen.getByText(
+        'Se ha abierto WhatsApp. Elige el grupo o contacto y pulsa enviar.',
+      ),
+    ).toBeInTheDocument()
+    windowOpen.mockRestore()
+
     fireEvent.click(
       screen.getByRole('button', { name: 'Copiar para WhatsApp' }),
     )

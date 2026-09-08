@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { demoData } from './demoData'
-import { formatNewsPostForWhatsApp } from './newsSharing'
+import { formatNewsPostForWhatsApp, getWhatsAppShareUrl } from './newsSharing'
 
 describe('communication sharing', () => {
   it('formats a targeted communication for WhatsApp', () => {
@@ -30,5 +30,11 @@ describe('communication sharing', () => {
     expect(
       formatNewsPostForWhatsApp(demoData.newsPosts[0], [], demoData.community),
     ).toContain('👥 Para: Toda la comunidad')
+  })
+
+  it('builds a wa.me link with no recipient and the text URL-encoded', () => {
+    expect(getWhatsAppShareUrl('Hola equipo! ¿Todo listo?')).toBe(
+      'https://wa.me/?text=Hola%20equipo!%20%C2%BFTodo%20listo%3F',
+    )
   })
 })
