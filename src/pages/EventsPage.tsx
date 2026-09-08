@@ -77,6 +77,7 @@ type EventsPageProps = {
     eventId: string,
     input: CommunityEventWriteInput,
   ) => Promise<void>
+  initialEventId?: string
   initialManagerAction?: 'new'
 }
 
@@ -1421,9 +1422,9 @@ export function EventsPage({
   onRemoveParticipant,
   onSaveEventStanding,
   onUpdateEvent,
+  initialEventId,
   initialManagerAction,
 }: EventsPageProps) {
-  const [selectedEventId, setSelectedEventId] = useState<string>()
   const [selectedGameId, setSelectedGameId] = useState<string>()
   const [selectedType, setSelectedType] = useState<EventType>()
   const [eventViewMode, setEventViewMode] = useState<EventViewMode>(
@@ -1443,6 +1444,8 @@ export function EventsPage({
   const [importedStandingId, setImportedStandingId] = useState<string>()
   const participantPanelRef = useRef<HTMLDivElement>(null)
   const importPanelRef = useRef<HTMLDivElement>(null)
+  const agendaScrollPositionRef = useRef(0)
+  const shouldRestoreAgendaScrollRef = useRef(false)
   const completeAgenda = getEventAgenda(data, currentMember.id)
   const agenda = filterEventAgenda(completeAgenda, {
     gameId: selectedGameId,
@@ -1450,8 +1453,8 @@ export function EventsPage({
   })
   const upcomingDays = groupEventsByDay(agenda.upcoming)
   const pastDays = groupEventsByDay(agenda.past)
-  const selectedEvent = selectedEventId
-    ? getEventById(data, currentMember.id, selectedEventId)
+  const selectedEvent = initialEventId
+    ? getEventById(data, currentMember.id, initialEventId)
     : undefined
   const editingEvent = editingEventId
     ? data.events.find(({ id }) => id === editingEventId)
@@ -1488,6 +1491,22 @@ export function EventsPage({
   }, [eventViewMode])
 
   useEffect(() => {
+    if (initialEventId || !shouldRestoreAgendaScrollRef.current) {
+      return
+    }
+
+    shouldRestoreAgendaScrollRef.current = false
+    const frame = window.requestAnimationFrame(() => {
+      window.scrollTo({
+        behavior: 'auto',
+        top: agendaScrollPositionRef.current,
+      })
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [initialEventId])
+
+  useEffect(() => {
     if (!managedParticipantEventId || !participantPanelRef.current) {
       return
     }
@@ -1516,6 +1535,16 @@ export function EventsPage({
     setManagedParticipantEventId(undefined)
     setManagedImportEventId(undefined)
     setPendingDeleteEventId(undefined)
+  }
+
+  const openEvent = (eventId: string) => {
+    agendaScrollPositionRef.current = window.scrollY
+    shouldRestoreAgendaScrollRef.current = true
+    onNavigate('eventos', `event=${encodeURIComponent(eventId)}`)
+  }
+
+  const closeEvent = () => {
+    onNavigate('eventos')
   }
 
   const deleteEvent = async (eventId: string) => {
@@ -1575,7 +1604,7 @@ export function EventsPage({
         activeRole={activeRole}
         item={selectedEvent}
         communityName={data.community.name}
-        onBack={() => setSelectedEventId(undefined)}
+        onBack={closeEvent}
         onCancelRegistration={onCancelRegistration}
         onRegister={onRegister}
       />
@@ -1921,7 +1950,7 @@ export function EventsPage({
               <CompactEventList
                 items={agenda.upcoming}
                 label="Próximos eventos en vista de lista"
-                onSelect={setSelectedEventId}
+                onSelect={openEvent}
               />
             ) : upcomingDays.length > 0 ? (
               <div className="agenda-list">
@@ -1929,7 +1958,7 @@ export function EventsPage({
                   <EventDay
                     group={group}
                     key={group.dateKey}
-                    onSelect={setSelectedEventId}
+                    onSelect={openEvent}
                   />
                 ))}
               </div>
@@ -1952,7 +1981,7 @@ export function EventsPage({
               <CompactEventList
                 items={agenda.past}
                 label="Eventos pasados en vista de lista"
-                onSelect={setSelectedEventId}
+                onSelect={openEvent}
               />
             ) : pastDays.length > 0 ? (
               <div className="agenda-list agenda-list--past">
@@ -1960,7 +1989,7 @@ export function EventsPage({
                   <EventDay
                     group={group}
                     key={group.dateKey}
-                    onSelect={setSelectedEventId}
+                    onSelect={openEvent}
                   />
                 ))}
               </div>

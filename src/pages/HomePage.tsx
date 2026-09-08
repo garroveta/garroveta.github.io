@@ -183,7 +183,11 @@ function NextEventCard({
         </div>
       </div>
 
-      <DashboardLink route="eventos" onNavigate={onNavigate}>
+      <DashboardLink
+        route="eventos"
+        query={`event=${encodeURIComponent(event.id)}`}
+        onNavigate={onNavigate}
+      >
         Ver evento
       </DashboardLink>
     </section>

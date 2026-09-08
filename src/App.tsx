@@ -583,6 +583,7 @@ export function App() {
                 ),
               }))
             }}
+            initialEventId={eventRouteParams.get('event') ?? undefined}
             initialManagerAction={
               eventRouteParams.get('action') === 'new' ? 'new' : undefined
             }

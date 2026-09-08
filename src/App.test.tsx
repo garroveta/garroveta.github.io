@@ -1598,7 +1598,10 @@ describe('App', () => {
     )
   })
 
-  it('opens an event detail and returns to the agenda', () => {
+  it('opens an event detail with a direct URL and restores the agenda position', async () => {
+    const scrollTo = vi.fn()
+    vi.stubGlobal('scrollTo', scrollTo)
+    vi.stubGlobal('scrollY', 640)
     render(<App />)
 
     fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
@@ -1611,6 +1614,7 @@ describe('App', () => {
       }),
     )
 
+    expect(window.location.hash).toBe('#eventos?event=event-fnm-standard')
     expect(
       screen.getByRole('heading', { name: 'FNM Standard' }),
     ).toBeInTheDocument()
@@ -1622,8 +1626,41 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Volver a la agenda' }))
 
+    expect(window.location.hash).toBe('#eventos')
     expect(
       screen.getByRole('heading', { name: 'Próximos eventos' }),
+    ).toBeInTheDocument()
+    await waitFor(() =>
+      expect(scrollTo).toHaveBeenCalledWith({ behavior: 'auto', top: 640 }),
+    )
+  })
+
+  it('links the next home event directly to its detail', () => {
+    render(<App />)
+
+    const eventLink = screen.getByRole('link', { name: 'Ver evento' })
+    expect(eventLink).toHaveAttribute(
+      'href',
+      '#eventos?event=event-modern-tournament',
+    )
+    fireEvent.click(eventLink)
+
+    expect(window.location.hash).toBe('#eventos?event=event-modern-tournament')
+    expect(
+      screen.getByRole('heading', { name: 'Torneo Modern' }),
+    ).toBeInTheDocument()
+  })
+
+  it('opens a shared event URL directly after loading persisted data', () => {
+    window.history.replaceState(null, '', '/#eventos?event=event-fnm-standard')
+
+    render(<App />)
+
+    expect(
+      screen.getByRole('heading', { name: 'FNM Standard' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Volver a la agenda' }),
     ).toBeInTheDocument()
   })
 
