@@ -23,6 +23,7 @@ import {
 } from '../api/managerMembers'
 import type { DemoRole } from '../app/demoRoles'
 import type { AppRoute } from '../app/navigation'
+import { DataStateView } from '../components/DataStateView'
 import {
   getManagerDashboard,
   getMemberNewCardMatches,
@@ -40,6 +41,8 @@ import type {
 type HomePageProps = {
   activeRole: DemoRole
   data: DemoDataSet
+  dataError?: unknown
+  dataStatus: 'error' | 'loading' | 'ready'
   currentMember: CommunityMember
   rankingMemberId?: string
   /**
@@ -48,6 +51,7 @@ type HomePageProps = {
    */
   cardsData?: DemoDataSet
   onNavigate: (route: AppRoute, query?: string) => void
+  onRetryData: () => void
 }
 
 const eventDateFormatter = new Intl.DateTimeFormat('es-ES', {
@@ -548,11 +552,48 @@ function ManagerHome({
 export function HomePage({
   activeRole,
   data,
+  dataError,
+  dataStatus,
   cardsData,
   currentMember,
   rankingMemberId,
   onNavigate,
+  onRetryData,
 }: HomePageProps) {
+  if (dataStatus !== 'ready') {
+    const firstName = currentMember.displayName.split(' ')[0]
+
+    return (
+      <div className="page">
+        <header className="page-heading dashboard-heading">
+          <span className="page-eyebrow">
+            <MapPin aria-hidden="true" size={13} />
+            {data.community.name} · {data.community.city}
+          </span>
+          <h1>Hola, {firstName}</h1>
+          <p>
+            {activeRole === 'gerente'
+              ? 'Este es el estado de la tienda y de sus próximas actividades.'
+              : 'Esto es lo más importante para tu próxima visita.'}
+          </p>
+        </header>
+
+        <DataStateView
+          error={dataError}
+          loadingDescription={
+            activeRole === 'gerente'
+              ? 'Estamos reuniendo los datos de la agenda.'
+              : 'Estamos reuniendo la agenda, las noticias y la clasificación.'
+          }
+          loadingTitle="Cargando el inicio…"
+          onRetry={onRetryData}
+          status={dataStatus}
+          variant="page"
+        />
+      </div>
+    )
+  }
+
   if (activeRole === 'gerente') {
     return (
       <ManagerHome

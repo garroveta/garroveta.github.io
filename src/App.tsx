@@ -78,6 +78,31 @@ function getCurrentMember(data: DemoDataSet) {
   return member
 }
 
+type DataFeed = {
+  error: unknown
+  reload: () => void
+  status: 'error' | 'idle' | 'loading' | 'ready'
+}
+
+function getCombinedDataState(feeds: DataFeed[]) {
+  const failedFeed = feeds.find(({ status }) => status === 'error')
+
+  return {
+    error: failedFeed?.error,
+    status: failedFeed
+      ? ('error' as const)
+      : feeds.every(({ status }) => status === 'ready')
+        ? ('ready' as const)
+        : ('loading' as const),
+  }
+}
+
+function reloadFailedFeeds(feeds: DataFeed[]) {
+  feeds
+    .filter(({ status }) => status === 'error')
+    .forEach(({ reload }) => reload())
+}
+
 export function App() {
   const { activeRoute, routeQuery, navigate } = useHashRoute()
   const { data, updateData } = useDemoData()
@@ -197,6 +222,26 @@ export function App() {
     enabled: Boolean(approvedMembership),
     onLoaded: setCommunityMembers,
   })
+  const authenticatedRole: DemoRole | null = approvedMembership
+    ? approvedMembership.role === 'manager'
+      ? 'gerente'
+      : approvedMembership.role === 'moderator'
+        ? 'moderador'
+        : 'jugador'
+    : null
+  const effectiveRole = authenticatedRole ?? 'jugador'
+  const rankingFeeds = [
+    rankingSeasons,
+    eventStandings,
+    communityMembersFeed,
+  ] satisfies DataFeed[]
+  const homeFeeds = (
+    effectiveRole === 'gerente'
+      ? [communityEvents]
+      : [communityEvents, communityCommunications, ...rankingFeeds]
+  ) satisfies DataFeed[]
+  const homeDataState = getCombinedDataState(homeFeeds)
+  const rankingDataState = getCombinedDataState(rankingFeeds)
   const listEventParticipants = useCallback(
     (eventId: string) =>
       listPersistedEventRegistrations(data.community.id, eventId),
@@ -238,14 +283,6 @@ export function App() {
     events: agendaData.events,
     newsPosts: communicationData.newsPosts,
   }
-  const authenticatedRole: DemoRole | null = approvedMembership
-    ? approvedMembership.role === 'manager'
-      ? 'gerente'
-      : approvedMembership.role === 'moderator'
-        ? 'moderador'
-        : 'jugador'
-    : null
-  const effectiveRole = authenticatedRole ?? 'jugador'
   const connectedMember = approvedMembership
     ? {
         ...currentMember,
@@ -391,8 +428,11 @@ export function App() {
             data={homeData}
             cardsData={data}
             currentMember={connectedMember}
+            dataError={homeDataState.error}
+            dataStatus={homeDataState.status}
             rankingMemberId={approvedMembership?.id}
             onNavigate={navigate}
+            onRetryData={() => reloadFailedFeeds(homeFeeds)}
           />
         ) : activeRoute === 'eventos' ? (
           <EventsPage
@@ -550,10 +590,13 @@ export function App() {
         ) : activeRoute === 'ranking' ? (
           <RankingsPage
             data={rankingData}
+            dataError={rankingDataState.error}
+            dataStatus={rankingDataState.status}
             initialStandingId={rankingRouteParams.get('standing') ?? undefined}
             initialView={
               rankingRouteParams.get('view') === 'events' ? 'events' : undefined
             }
+            onRetryData={() => reloadFailedFeeds(rankingFeeds)}
           />
         ) : activeRoute === 'cartas' && sharedCardsMemberId ? (
           <SharedCardsPage

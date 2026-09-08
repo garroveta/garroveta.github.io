@@ -15,6 +15,7 @@ import {
   getLatestEventStandings,
   type ResolvedEventStanding,
 } from '../data/rankingSelectors'
+import { DataStateView } from '../components/DataStateView'
 import { getCommunityPoints } from '../data/rankingSettings'
 import { getRankingSeasonForDate } from '../data/rankingSeasons'
 import type {
@@ -27,8 +28,11 @@ type RankingView = 'community' | 'events'
 
 type RankingsPageProps = {
   data: DemoDataSet
+  dataError?: unknown
+  dataStatus: 'error' | 'loading' | 'ready'
   initialView?: RankingView
   initialStandingId?: string
+  onRetryData: () => void
 }
 
 const eventDateFormatter = new Intl.DateTimeFormat('es-ES', {
@@ -398,6 +402,11 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
       seasons[0]?.id ??
       '',
   )
+  const resolvedSeasonId = seasons.some(({ id }) => id === seasonId)
+    ? seasonId
+    : (seasons.find(({ status }) => status === 'active')?.id ??
+      seasons[0]?.id ??
+      '')
   const [limit, setLimit] = useState<10 | 'all'>(
     data.rankingSettings.defaultLimit,
   )
@@ -407,17 +416,13 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
   const formats = data.competitionFormats.filter(
     (format) => format.gameId === gameId,
   )
-  const ranking = useMemo(
-    () =>
-      getCommunityLeaderboard(data, {
-        gameId,
-        formatId: formatId || undefined,
-        competitionEventKindId: eventKindId || undefined,
-        seasonId,
-      }),
-    [data, eventKindId, formatId, gameId, seasonId],
-  )
-  const selectedSeason = seasons.find(({ id }) => id === seasonId)
+  const ranking = getCommunityLeaderboard(data, {
+    gameId,
+    formatId: formatId || undefined,
+    competitionEventKindId: eventKindId || undefined,
+    seasonId: resolvedSeasonId,
+  })
+  const selectedSeason = seasons.find(({ id }) => id === resolvedSeasonId)
   const selectedGame = data.games.find(({ id }) => id === gameId)
   const selectedFormat = data.competitionFormats.find(
     ({ id }) => id === formatId,
@@ -466,7 +471,7 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
             <label className="form-field">
               <span>Temporada</span>
               <select
-                value={seasonId}
+                value={resolvedSeasonId}
                 onChange={(event) => setSeasonId(event.target.value)}
               >
                 {seasons.map((season) => (
@@ -703,8 +708,11 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
 
 export function RankingsPage({
   data,
+  dataError,
+  dataStatus,
   initialView = 'community',
   initialStandingId,
+  onRetryData,
 }: RankingsPageProps) {
   const standings = useMemo(() => getLatestEventStandings(data), [data])
   const rankingDetailRef = useRef<HTMLElement>(null)
@@ -727,6 +735,30 @@ export function RankingsPage({
   const activeSeason =
     data.rankingSeasons.find(({ status }) => status === 'active') ??
     data.rankingSeasons[0]
+
+  if (dataStatus !== 'ready') {
+    return (
+      <div className="page rankings-page">
+        <header className="page-heading rankings-heading">
+          <span className="page-eyebrow">Comunidad competitiva</span>
+          <h1>Clasificaciones</h1>
+          <p>
+            Consulta los últimos resultados y sigue la evolución de los
+            jugadores de CRC DeLorean.
+          </p>
+        </header>
+
+        <DataStateView
+          error={dataError}
+          loadingDescription="Estamos reuniendo las temporadas, los resultados y los jugadores."
+          loadingTitle="Cargando las clasificaciones…"
+          onRetry={onRetryData}
+          status={dataStatus}
+          variant="page"
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="page rankings-page">

@@ -96,10 +96,12 @@ const eventStandingsApiMocks = vi.hoisted(() => ({
   saveCommunityEventStanding: vi.fn(),
 }))
 const communityEventsHookMocks = vi.hoisted(() => ({
+  error: null as unknown,
   reload: vi.fn(),
   status: 'ready' as CommunityEventsStatus,
 }))
 const communityCommunicationsHookMocks = vi.hoisted(() => ({
+  error: null as unknown,
   invoke: vi.fn(),
   reload: vi.fn(),
   status: 'ready' as CommunityCommunicationsStatus,
@@ -117,14 +119,17 @@ const communityRegistrationSettingsHookMocks = vi.hoisted(() => ({
   status: 'ready' as CommunitySettingsStatus,
 }))
 const rankingSeasonsHookMocks = vi.hoisted(() => ({
+  error: null as unknown,
   reload: vi.fn(),
   status: 'ready' as RankingSeasonsStatus,
 }))
 const eventStandingsHookMocks = vi.hoisted(() => ({
+  error: null as unknown,
   reload: vi.fn(),
   status: 'ready' as EventStandingsStatus,
 }))
 const communityMembersHookMocks = vi.hoisted(() => ({
+  error: null as unknown,
   reload: vi.fn(),
   status: 'ready' as CommunityMembersStatus,
 }))
@@ -308,13 +313,18 @@ describe('App', () => {
     window.sessionStorage.clear()
     vi.clearAllMocks()
     communityEventsHookMocks.status = 'ready'
+    communityEventsHookMocks.error = null
     communityCommunicationsHookMocks.status = 'ready'
+    communityCommunicationsHookMocks.error = null
     communitySettingsHookMocks.status = 'ready'
     communityReferentialsHookMocks.status = 'ready'
     communityRegistrationSettingsHookMocks.status = 'ready'
     rankingSeasonsHookMocks.status = 'ready'
+    rankingSeasonsHookMocks.error = null
     eventStandingsHookMocks.status = 'ready'
+    eventStandingsHookMocks.error = null
     communityMembersHookMocks.status = 'ready'
+    communityMembersHookMocks.error = null
     const currentUser = buildCurrentUser()
     currentUserHookMocks.current = {
       data: currentUser,
@@ -674,6 +684,73 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
 
     expect(communityEventsHookMocks.reload).toHaveBeenCalledOnce()
+  })
+
+  it('does not present empty home cards while their persisted data is loading', () => {
+    communityEventsHookMocks.status = 'loading'
+    render(<App />)
+
+    expect(
+      screen.getByRole('heading', { name: 'Cargando el inicio…' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'No hay eventos programados.' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Sin temporada activa' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('lets a member retry only the failed home feeds', () => {
+    communityCommunicationsHookMocks.error = new Error('Unavailable')
+    communityCommunicationsHookMocks.status = 'error'
+    render(<App />)
+
+    expect(
+      screen.getByRole('heading', { name: 'Ha ocurrido un error' }),
+    ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
+
+    expect(communityCommunicationsHookMocks.reload).toHaveBeenCalledOnce()
+    expect(communityEventsHookMocks.reload).not.toHaveBeenCalled()
+    expect(rankingSeasonsHookMocks.reload).not.toHaveBeenCalled()
+    expect(eventStandingsHookMocks.reload).not.toHaveBeenCalled()
+    expect(communityMembersHookMocks.reload).not.toHaveBeenCalled()
+  })
+
+  it('distinguishes loading and errors from an empty ranking', () => {
+    rankingSeasonsHookMocks.status = 'loading'
+    const { rerender } = render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Ranking/ }).at(-1)!)
+    expect(
+      screen.getByRole('heading', { name: 'Cargando las clasificaciones…' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', {
+        name: 'Aún no hay resultados con estos filtros.',
+      }),
+    ).not.toBeInTheDocument()
+
+    rankingSeasonsHookMocks.status = 'ready'
+    rerender(<App />)
+    expect(
+      screen.getByRole('heading', {
+        name: /MTG · Temporada 2026 · Todos los formatos/,
+      }),
+    ).toBeInTheDocument()
+
+    eventStandingsHookMocks.error = new Error('Unavailable')
+    eventStandingsHookMocks.status = 'error'
+    rerender(<App />)
+
+    expect(
+      screen.getByRole('heading', { name: 'Ha ocurrido un error' }),
+    ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
+    expect(eventStandingsHookMocks.reload).toHaveBeenCalledOnce()
+    expect(rankingSeasonsHookMocks.reload).not.toHaveBeenCalled()
+    expect(communityMembersHookMocks.reload).not.toHaveBeenCalled()
   })
 
   it('uses an approved authenticated membership role', async () => {
