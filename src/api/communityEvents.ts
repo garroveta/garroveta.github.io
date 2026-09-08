@@ -34,6 +34,11 @@ export type EventRegistrationMutation = {
   registrationSummary: EventRegistrationSummary
 }
 
+export type EventRegistrationCancellation = EventRegistrationMutation & {
+  cancelledMemberId: string
+  promotedRegistration?: EventRegistration
+}
+
 export function listCommunityEvents(communityId: string, signal?: AbortSignal) {
   return apiRequest<{
     events: CommunityEvent[]
@@ -54,7 +59,7 @@ export function cancelPersistedEventRegistration(
   communityId: string,
   eventId: string,
 ) {
-  return apiRequest<EventRegistrationMutation & { cancelledMemberId: string }>(
+  return apiRequest<EventRegistrationCancellation>(
     `${eventRegistrationPath(communityId, eventId)}/me`,
     {
       method: 'DELETE',
@@ -76,7 +81,7 @@ export function removePersistedEventRegistration(
   eventId: string,
   memberId: string,
 ) {
-  return apiRequest<EventRegistrationMutation & { cancelledMemberId: string }>(
+  return apiRequest<EventRegistrationCancellation>(
     `${eventRegistrationPath(communityId, eventId)}/${encodeURIComponent(memberId)}`,
     { method: 'DELETE' },
   )

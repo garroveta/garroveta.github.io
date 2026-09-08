@@ -300,6 +300,7 @@ async function cancelRegistration(
   memberId: string,
   actorMemberId: string,
 ) {
+  const now = new Date().toISOString()
   const cancelled = await requestContext.env.DB.prepare(
     `update event_registration
     set status = 'cancelled', updated_at = ?
@@ -309,7 +310,7 @@ async function cancelRegistration(
       and status in ('confirmed', 'waitlisted')
     returning id`,
   )
-    .bind(new Date().toISOString(), route.communityId, route.eventId, memberId)
+    .bind(now, route.communityId, route.eventId, memberId)
     .first<{ id: string }>()
 
   if (!cancelled) {
@@ -330,6 +331,24 @@ async function cancelRegistration(
     )
   }
 
+  // The D1 trigger created with event registrations promotes the oldest
+  // waitlisted registration in the same transaction as the cancellation.
+  // Its updated_at value matches this operation, which lets the API report
+  // the promotion without duplicating the queue-ordering rule in TypeScript.
+  const promotedRegistration = await requestContext.env.DB.prepare(
+    `select id, event_id, member_id, status, registered_at
+    from event_registration
+    where community_id = ?
+      and event_id = ?
+      and member_id != ?
+      and status = 'confirmed'
+      and updated_at = ?
+    order by registered_at asc, id asc
+    limit 1`,
+  )
+    .bind(route.communityId, route.eventId, memberId, now)
+    .first<EventRegistrationRow>()
+
   const registrationSummary = await getEventRegistrationSummary(
     requestContext.env.DB,
     route.eventId,
@@ -342,10 +361,17 @@ async function cancelRegistration(
       event: 'event_registration.cancelled',
       eventId: route.eventId,
       memberId,
+      promotedMemberId: promotedRegistration?.member_id,
     }),
   )
 
-  return jsonResponse({ cancelledMemberId: memberId, registrationSummary })
+  return jsonResponse({
+    cancelledMemberId: memberId,
+    promotedRegistration: promotedRegistration
+      ? toRegistration(promotedRegistration)
+      : undefined,
+    registrationSummary,
+  })
 }
 
 async function listManagedRegistrations(

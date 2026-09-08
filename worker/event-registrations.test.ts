@@ -179,6 +179,7 @@ describe('Event registration API', () => {
     const { context } = createContext({
       firstResults: [
         { id: 'registration-aina' },
+        null,
         { confirmed: 3, waitlisted: 0 },
       ],
       method: 'DELETE',
@@ -195,6 +196,49 @@ describe('Event registration API', () => {
       cancelledMemberId: membership.id,
       registrationSummary: { confirmed: 3, waitlisted: 0 },
     })
+  })
+
+  it('reports the first waitlisted member promoted by the cancellation trigger', async () => {
+    const promotedRegistration = {
+      event_id: eventId,
+      id: 'registration-waitlisted',
+      member_id: 'member-waitlisted',
+      registered_at: '2026-09-01T11:00:00.000Z',
+      status: 'confirmed',
+    }
+    const { context, statements } = createContext({
+      firstResults: [
+        { id: 'registration-aina' },
+        promotedRegistration,
+        { confirmed: 4, waitlisted: 1 },
+      ],
+      method: 'DELETE',
+    })
+
+    const response = await handleEventRegistrationApiRequest(context, {
+      communityId,
+      eventId,
+      kind: 'self',
+    })
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({
+      cancelledMemberId: membership.id,
+      promotedRegistration: {
+        eventId,
+        id: 'registration-waitlisted',
+        memberId: 'member-waitlisted',
+        registeredAt: '2026-09-01T11:00:00.000Z',
+        status: 'confirmed',
+      },
+      registrationSummary: { confirmed: 4, waitlisted: 1 },
+    })
+    expect(statements[1]?.bind).toHaveBeenCalledWith(
+      communityId,
+      eventId,
+      membership.id,
+      expect.any(String),
+    )
   })
 
   it('lets a manager list participants without attendance data', async () => {

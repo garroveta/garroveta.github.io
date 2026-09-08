@@ -498,6 +498,8 @@ export function App() {
                     : event,
                 ),
               }))
+
+              return result
             }}
             onSaveEventStanding={async (eventId, input) => {
               const { standing } = await saveCommunityEventStanding(

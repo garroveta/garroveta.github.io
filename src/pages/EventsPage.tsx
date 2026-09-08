@@ -23,6 +23,7 @@ import type { DemoRole } from '../app/demoRoles'
 import type { AppRoute } from '../app/navigation'
 import type {
   CommunityEventWriteInput,
+  EventRegistrationCancellation,
   ManagedEventRegistration,
 } from '../api/communityEvents'
 import type { EventStandingWriteInput } from '../api/eventStandings'
@@ -64,7 +65,10 @@ type EventsPageProps = {
     eventId: string,
   ) => Promise<{ registrations: ManagedEventRegistration[] }>
   onRegister: (eventId: string) => Promise<EventRegistration>
-  onRemoveParticipant: (eventId: string, memberId: string) => Promise<void>
+  onRemoveParticipant: (
+    eventId: string,
+    memberId: string,
+  ) => Promise<EventRegistrationCancellation>
   onSaveEventStanding: (
     eventId: string,
     input: EventStandingWriteInput,
@@ -1052,7 +1056,10 @@ function EventParticipantManager({
   onListParticipants: (
     eventId: string,
   ) => Promise<{ registrations: ManagedEventRegistration[] }>
-  onRemoveParticipant: (eventId: string, memberId: string) => Promise<void>
+  onRemoveParticipant: (
+    eventId: string,
+    memberId: string,
+  ) => Promise<EventRegistrationCancellation>
 }) {
   const [participants, setParticipants] = useState<ManagedEventRegistration[]>(
     [],
@@ -1061,6 +1068,7 @@ function EventParticipantManager({
   const [loadError, setLoadError] = useState<unknown>(null)
   const [pendingMemberId, setPendingMemberId] = useState<string>()
   const [operationError, setOperationError] = useState('')
+  const [operationMessage, setOperationMessage] = useState('')
   const registered = participants.filter(({ status }) => status === 'confirmed')
   const waitlisted = participants.filter(
     ({ status }) => status === 'waitlisted',
@@ -1106,11 +1114,23 @@ function EventParticipantManager({
   const removeParticipant = async (memberId: string) => {
     setPendingMemberId(memberId)
     setOperationError('')
+    setOperationMessage('')
 
     try {
-      await onRemoveParticipant(eventId, memberId)
+      const result = await onRemoveParticipant(eventId, memberId)
       const response = await onListParticipants(eventId)
       setParticipants(response.registrations)
+      const promoted = result.promotedRegistration
+        ? response.registrations.find(
+            ({ memberId: participantMemberId }) =>
+              participantMemberId === result.promotedRegistration?.memberId,
+          )
+        : undefined
+      setOperationMessage(
+        promoted
+          ? `${promoted.displayName} ha recibido automáticamente la plaza liberada.`
+          : 'La inscripción se ha retirado.',
+      )
     } catch {
       setOperationError(
         'No se ha podido retirar la inscripción. Inténtalo de nuevo.',
@@ -1243,6 +1263,11 @@ function EventParticipantManager({
       {operationError ? (
         <p className="event-operation-error" role="alert">
           {operationError}
+        </p>
+      ) : null}
+      {operationMessage ? (
+        <p className="action-message" aria-live="polite">
+          {operationMessage}
         </p>
       ) : null}
     </section>

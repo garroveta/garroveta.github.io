@@ -2837,6 +2837,90 @@ describe('App', () => {
     )
   })
 
+  it('shows the manager which waitlisted member receives a released place', async () => {
+    communityEventApiMocks.listPersistedEventRegistrations
+      .mockResolvedValueOnce({
+        registrations: [
+          {
+            displayName: 'Sergio Gil',
+            eventId: 'event-mtg-draft-express',
+            id: 'registration-sergio-draft-express',
+            initials: 'SG',
+            memberId: 'member-sergio',
+            registeredAt: '2026-07-24T21:15:00+02:00',
+            status: 'confirmed',
+          },
+          {
+            displayName: 'Aina Mir',
+            eventId: 'event-mtg-draft-express',
+            id: 'registration-aina-draft-express',
+            initials: 'AM',
+            memberId: 'member-aina',
+            registeredAt: '2026-07-24T21:20:00+02:00',
+            status: 'waitlisted',
+            waitlistPosition: 1,
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        registrations: [
+          {
+            displayName: 'Aina Mir',
+            eventId: 'event-mtg-draft-express',
+            id: 'registration-aina-draft-express',
+            initials: 'AM',
+            memberId: 'member-aina',
+            registeredAt: '2026-07-24T21:20:00+02:00',
+            status: 'confirmed',
+          },
+        ],
+      })
+    communityEventApiMocks.removePersistedEventRegistration.mockResolvedValueOnce(
+      {
+        cancelledMemberId: 'member-sergio',
+        promotedRegistration: {
+          eventId: 'event-mtg-draft-express',
+          id: 'registration-aina-draft-express',
+          memberId: 'member-aina',
+          registeredAt: '2026-07-24T21:20:00+02:00',
+          status: 'confirmed',
+        },
+        registrationSummary: { confirmed: 4, waitlisted: 0 },
+      },
+    )
+    authenticateAsManager()
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
+    const draftCard = screen
+      .getByRole('heading', { name: 'Draft express MTG' })
+      .closest('article')
+    fireEvent.click(
+      within(draftCard as HTMLElement).getByRole('button', {
+        name: /Inscripciones/,
+      }),
+    )
+
+    const sergioParticipant = (await screen.findByText('Sergio Gil')).closest(
+      'article',
+    )
+    fireEvent.click(
+      within(sergioParticipant as HTMLElement).getByRole('button', {
+        name: 'Liberar plaza',
+      }),
+    )
+
+    expect(
+      await screen.findByText(
+        'Aina Mir ha recibido automáticamente la plaza liberada.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Aina Mir').closest('article')).toHaveTextContent(
+      'Confirmada',
+    )
+  })
+
   it('lets a manager edit, inspect registrations and delete events', async () => {
     authenticateAsManager()
     render(<App />)
