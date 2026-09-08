@@ -1,4 +1,4 @@
-import type { CommunityRole } from '../domain/types'
+import type { CommunityRole, ContactMethod } from '../domain/types'
 import { apiRequest } from './client'
 
 export type CurrentMembership = {
@@ -8,6 +8,7 @@ export type CurrentMembership = {
     name: string
     slug: string
   }
+  contactMethods: ContactMethod[]
   displayName: string
   favoriteGameIds: string[]
   id: string
@@ -28,6 +29,7 @@ export type CurrentUser = {
 
 export type UpdateCurrentMembershipInput = {
   communityId: string
+  contactMethods: ContactMethod[]
   displayName: string
   favoriteGameIds: string[]
   tagIds: string[]
@@ -35,7 +37,7 @@ export type UpdateCurrentMembershipInput = {
 
 export type UpdatedCurrentMembership = Pick<
   CurrentMembership,
-  'displayName' | 'favoriteGameIds' | 'id' | 'tagIds'
+  'contactMethods' | 'displayName' | 'favoriteGameIds' | 'id' | 'tagIds'
 > & {
   communityId: string
 }

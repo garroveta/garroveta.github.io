@@ -217,6 +217,7 @@ function buildCurrentUser(
           name: 'CRC Delorean',
           slug: 'crc-delorean',
         },
+        contactMethods: [],
         displayName: identity.displayName,
         favoriteGameIds: ['game-mtg', 'game-one-piece'],
         id: `member-${identity.id}`,
@@ -713,6 +714,40 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: '4 coincidencias nuevas' }),
     ).toBeInTheDocument()
+  })
+
+  it('saves the contact details a member chooses to share', async () => {
+    const user = buildCurrentUser('player')
+    currentUserHookMocks.current = { data: user, status: 'authenticated' }
+    currentUserHookMocks.refresh.mockResolvedValue(user)
+    currentUserApiMocks.updateCurrentMembership.mockResolvedValue({
+      membership: user.memberships[0],
+    })
+
+    render(<App />)
+
+    fireEvent.click(screen.getAllByRole('link', { name: /Perfil/ }).at(-1)!)
+
+    const whatsapp = await screen.findByLabelText('WhatsApp')
+
+    expect(whatsapp).toHaveValue('')
+
+    fireEvent.change(whatsapp, { target: { value: '  +34600111222  ' } })
+    fireEvent.change(screen.getByLabelText('Discord'), {
+      target: { value: 'alex#1234' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+
+    await waitFor(() =>
+      expect(currentUserApiMocks.updateCurrentMembership).toHaveBeenCalledWith(
+        expect.objectContaining({
+          contactMethods: [
+            { kind: 'whatsapp', label: 'WhatsApp', value: '+34600111222' },
+            { kind: 'discord', label: 'Discord', value: 'alex#1234' },
+          ],
+        }),
+      ),
+    )
   })
 
   it('opens a section from the main navigation', () => {
@@ -1628,6 +1663,7 @@ describe('App', () => {
     await waitFor(() =>
       expect(currentUserApiMocks.updateCurrentMembership).toHaveBeenCalledWith({
         communityId: 'community-crc-delorean',
+        contactMethods: [],
         displayName: 'Álex Romero Vidal',
         favoriteGameIds: ['game-mtg', 'game-one-piece', 'game-gundam'],
         tagIds: ['tag-commander', 'tag-intercambios', 'tag-pauper'],

@@ -94,6 +94,7 @@ describe('Current user API', () => {
             name: 'CRC Delorean',
             slug: 'crc-delorean',
           },
+          contactMethods: [],
           displayName: 'Tomás',
           favoriteGameIds: ['game-mtg'],
           id: 'member-manager',
@@ -158,6 +159,7 @@ describe('Current user API', () => {
     await expect(response.json()).resolves.toEqual({
       membership: {
         communityId: 'community-crc-delorean',
+        contactMethods: [],
         displayName: 'Tomás Garau',
         favoriteGameIds: ['game-mtg', 'game-one-piece'],
         id: 'member-manager',
@@ -168,6 +170,7 @@ describe('Current user API', () => {
       'Tomás Garau',
       '["game-mtg","game-one-piece"]',
       '["tag-pauper","tag-commander"]',
+      '[]',
       expect.any(String),
       'community-crc-delorean',
       'user-manager',
@@ -227,5 +230,126 @@ describe('Current user API', () => {
     expect(response.status).toBe(405)
     expect(response.headers.get('Allow')).toBe('GET, PATCH')
     expect(getAuthenticatedUser).not.toHaveBeenCalled()
+  })
+
+  it('stores the contact details a member chooses to share', async () => {
+    const { bind, context } = createContext({
+      body: {
+        communityId: 'community-crc-delorean',
+        contactMethods: [
+          {
+            kind: 'whatsapp',
+            label: '  WhatsApp  ',
+            value: '  +34600111222  ',
+          },
+          { kind: 'discord', label: 'Discord', value: 'alex#1234' },
+        ],
+        displayName: 'Álex Romero',
+        favoriteGameIds: ['game-mtg'],
+        tagIds: [],
+      },
+      method: 'PATCH',
+      updatedMembership: {
+        community_id: 'community-crc-delorean',
+        contact_methods:
+          '[{"kind":"whatsapp","label":"WhatsApp","value":"+34600111222"},{"kind":"discord","label":"Discord","value":"alex#1234"}]',
+        display_name: 'Álex Romero',
+        favorite_game_ids: '["game-mtg"]',
+        id: 'member-alex',
+        tag_ids: '[]',
+      },
+    })
+
+    const response = await handleCurrentUserRequest(context)
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toMatchObject({
+      membership: {
+        contactMethods: [
+          { kind: 'whatsapp', label: 'WhatsApp', value: '+34600111222' },
+          { kind: 'discord', label: 'Discord', value: 'alex#1234' },
+        ],
+      },
+    })
+    expect(bind).toHaveBeenCalledWith(
+      'Álex Romero',
+      '["game-mtg"]',
+      '[]',
+      '[{"kind":"whatsapp","label":"WhatsApp","value":"+34600111222"},{"kind":"discord","label":"Discord","value":"alex#1234"}]',
+      expect.any(String),
+      'community-crc-delorean',
+      'user-manager',
+    )
+  })
+
+  it.each([
+    [
+      'an unsupported kind',
+      [{ kind: 'telegram', label: 'Telegram', value: '@alex' }],
+    ],
+    [
+      'a repeated kind',
+      [
+        { kind: 'email', label: 'Correo', value: 'a@example.com' },
+        { kind: 'email', label: 'Otro', value: 'b@example.com' },
+      ],
+    ],
+    ['an empty value', [{ kind: 'email', label: 'Correo', value: '   ' }]],
+    [
+      'too many entries',
+      [
+        { kind: 'email', label: 'Correo', value: 'a@example.com' },
+        { kind: 'discord', label: 'Discord', value: 'alex' },
+        { kind: 'whatsapp', label: 'WhatsApp', value: '+34600111222' },
+        { kind: 'email', label: 'Correo', value: 'c@example.com' },
+      ],
+    ],
+  ])('rejects contact details with %s', async (_case, contactMethods) => {
+    const { context, prepare } = createContext({
+      body: {
+        communityId: 'community-crc-delorean',
+        contactMethods,
+        displayName: 'Álex Romero',
+        favoriteGameIds: [],
+        tagIds: [],
+      },
+      method: 'PATCH',
+    })
+
+    const response = await handleCurrentUserRequest(context)
+
+    expect(response.status).toBe(400)
+    expect(prepare).not.toHaveBeenCalled()
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: 'profile_invalid' },
+    })
+  })
+
+  it('reads a corrupt stored value as no contact details', async () => {
+    const { context } = createContext({
+      memberships: [
+        {
+          city: 'Inca',
+          community_id: 'community-crc-delorean',
+          community_name: 'CRC Delorean',
+          community_slug: 'crc-delorean',
+          contact_methods: 'not json',
+          display_name: 'Álex',
+          favorite_game_ids: '[]',
+          id: 'member-alex',
+          joined_at: '2026-08-30T10:00:00.000Z',
+          role: 'player',
+          status: 'approved',
+          tag_ids: '[]',
+        },
+      ],
+    })
+
+    const response = await handleCurrentUserRequest(context)
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toMatchObject({
+      memberships: [{ contactMethods: [] }],
+    })
   })
 })

@@ -10967,3 +10967,14 @@ a {
   color: #635d66;
   font-size: 0.72rem;
 }
+
+.contact-methods-group .contact-methods-fields {
+  display: grid;
+  gap: 0.55rem;
+}
+
+@media (min-width: 640px) {
+  .contact-methods-group .contact-methods-fields {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

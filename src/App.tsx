@@ -249,6 +249,7 @@ export function App() {
   const connectedMember = approvedMembership
     ? {
         ...currentMember,
+        contactMethods: approvedMembership.contactMethods,
         displayName: approvedMembership.displayName,
         favoriteGameIds: approvedMembership.favoriteGameIds,
         initials: getMemberInitials(approvedMembership.displayName),

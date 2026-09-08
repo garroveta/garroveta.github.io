@@ -4,14 +4,63 @@ import { useMemo, useState } from 'react'
 
 import { ClientApiError } from '../api/client'
 import { isCommunityOptionActive } from '../data/communityOptions'
-import type { CommunityGame, CommunityTag } from '../domain/types'
+import type {
+  CommunityGame,
+  CommunityTag,
+  ContactMethod,
+} from '../domain/types'
+
+/**
+ * Fixed labels: the member chooses what to share, not how it is named, so the
+ * same wording appears to everyone who is matched with them.
+ */
+const contactKinds: Array<{ kind: ContactMethod['kind']; label: string }> = [
+  { kind: 'whatsapp', label: 'WhatsApp' },
+  { kind: 'email', label: 'Correo' },
+  { kind: 'discord', label: 'Discord' },
+]
+
+type ContactDraft = Record<ContactMethod['kind'], string>
+
+const emptyContactDraft: ContactDraft = {
+  whatsapp: '',
+  email: '',
+  discord: '',
+}
+
+function toContactDraft(contactMethods: ContactMethod[]): ContactDraft {
+  return contactMethods.reduce(
+    (draft, { kind, value }) => ({ ...draft, [kind]: value }),
+    emptyContactDraft,
+  )
+}
+
+function toContactMethods(draft: ContactDraft): ContactMethod[] {
+  return contactKinds.flatMap(({ kind, label }) =>
+    draft[kind].trim() ? [{ kind, label, value: draft[kind].trim() }] : [],
+  )
+}
+
+function haveSameContacts(left: ContactMethod[], right: ContactMethod[]) {
+  return (
+    left.length === right.length &&
+    left.every((method) =>
+      right.some(
+        (candidate) =>
+          candidate.kind === method.kind && candidate.value === method.value,
+      ),
+    )
+  )
+}
 
 type AccountPreferencesFormProps = {
+  contactMethods: ContactMethod[]
   displayName: string
   email: string
   favoriteGameIds: string[]
   games: CommunityGame[]
   onSave: (input: {
+    contactMethods: ContactMethod[]
     displayName: string
     favoriteGameIds: string[]
     tagIds: string[]
@@ -33,6 +82,7 @@ function toggleId(ids: string[], id: string) {
 }
 
 export function AccountPreferencesForm({
+  contactMethods,
   displayName,
   email,
   favoriteGameIds,
@@ -49,7 +99,11 @@ export function AccountPreferencesForm({
   const [draftName, setDraftName] = useState(displayName)
   const [selectedGameIds, setSelectedGameIds] = useState(favoriteGameIds)
   const [selectedTagIds, setSelectedTagIds] = useState(tagIds)
+  const [contactDraft, setContactDraft] = useState(() =>
+    toContactDraft(contactMethods),
+  )
   const [savedValues, setSavedValues] = useState({
+    contactMethods,
     displayName,
     favoriteGameIds,
     tagIds,
@@ -64,12 +118,17 @@ export function AccountPreferencesForm({
   const hasChanges =
     normalizedName !== savedValues.displayName ||
     !haveSameIds(selectedGameIds, savedValues.favoriteGameIds) ||
-    !haveSameIds(selectedTagIds, savedValues.tagIds)
+    !haveSameIds(selectedTagIds, savedValues.tagIds) ||
+    !haveSameContacts(
+      toContactMethods(contactDraft),
+      savedValues.contactMethods,
+    )
 
   const resetDraft = () => {
     setDraftName(savedValues.displayName)
     setSelectedGameIds(savedValues.favoriteGameIds)
     setSelectedTagIds(savedValues.tagIds)
+    setContactDraft(toContactDraft(savedValues.contactMethods))
     setFeedback(null)
   }
 
@@ -89,6 +148,7 @@ export function AccountPreferencesForm({
 
     try {
       const updatedValues = {
+        contactMethods: toContactMethods(contactDraft),
         displayName: normalizedName,
         favoriteGameIds: selectedGameIds,
         tagIds: selectedTagIds,
@@ -156,6 +216,34 @@ export function AccountPreferencesForm({
             />
           </label>
         </div>
+
+        <fieldset className="registration-choice-group contact-methods-group">
+          <legend>Cómo pueden contactarte</legend>
+          <p>
+            Solo se muestran a un miembro cuando hay una coincidencia entre
+            vuestras listas de cartas. Deja en blanco lo que no quieras
+            compartir.
+          </p>
+          <div className="contact-methods-fields">
+            {contactKinds.map(({ kind, label }) => (
+              <label className="form-field" key={kind}>
+                <span>{label}</span>
+                <input
+                  maxLength={120}
+                  type={kind === 'email' ? 'email' : 'text'}
+                  value={contactDraft[kind]}
+                  onChange={(event) => {
+                    setContactDraft((draft) => ({
+                      ...draft,
+                      [kind]: event.target.value,
+                    }))
+                    setFeedback(null)
+                  }}
+                />
+              </label>
+            ))}
+          </div>
+        </fieldset>
 
         <fieldset className="registration-choice-group">
           <legend>Mis juegos</legend>

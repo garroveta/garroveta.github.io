@@ -3,7 +3,11 @@ import { useState } from 'react'
 
 import { getDemoRoleOption, type DemoRole } from '../app/demoRoles'
 import { AccountPreferencesForm } from '../components/AccountPreferencesForm'
-import type { CommunityMember, DemoDataSet } from '../domain/types'
+import type {
+  CommunityMember,
+  ContactMethod,
+  DemoDataSet,
+} from '../domain/types'
 
 type ProfilePageProps = {
   activeRole: DemoRole
@@ -13,6 +17,7 @@ type ProfilePageProps = {
   onOpenSettings: () => void
   onSignOut: () => Promise<void>
   onSaveAccount: (input: {
+    contactMethods: ContactMethod[]
     displayName: string
     favoriteGameIds: string[]
     tagIds: string[]
@@ -68,6 +73,7 @@ export function ProfilePage({
       </section>
 
       <AccountPreferencesForm
+        contactMethods={currentMember.contactMethods}
         displayName={currentMember.displayName}
         email={accountEmail}
         favoriteGameIds={currentMember.favoriteGameIds}

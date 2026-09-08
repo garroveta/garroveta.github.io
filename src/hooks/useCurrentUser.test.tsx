@@ -21,6 +21,7 @@ const player: CurrentUser = {
         name: 'CRC Delorean',
         slug: 'crc-delorean',
       },
+      contactMethods: [],
       displayName: 'Marina Valverde',
       favoriteGameIds: ['game-mtg'],
       id: 'member-player',

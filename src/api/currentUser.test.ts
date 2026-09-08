@@ -42,6 +42,7 @@ describe('current user API', () => {
         JSON.stringify({
           membership: {
             communityId: 'community-crc-delorean',
+            contactMethods: [],
             displayName: 'Marina Valverde',
             favoriteGameIds: ['game-mtg'],
             id: 'member-marina',
@@ -58,6 +59,9 @@ describe('current user API', () => {
 
     const input = {
       communityId: 'community-crc-delorean',
+      contactMethods: [
+        { kind: 'whatsapp' as const, label: 'WhatsApp', value: '+34600111222' },
+      ],
       displayName: 'Marina Valverde',
       favoriteGameIds: ['game-mtg'],
       tagIds: ['tag-pauper'],

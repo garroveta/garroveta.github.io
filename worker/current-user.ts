@@ -4,6 +4,10 @@ import { ApiRequestError, apiError, jsonResponse, readJsonBody } from './http'
 import { safelyReconcileActiveSeasonStandingEntries } from './standing-member-reconciliation'
 
 const MAX_DISPLAY_NAME_LENGTH = 80
+const MAX_CONTACT_METHODS = 3
+const MAX_CONTACT_LABEL_LENGTH = 40
+const MAX_CONTACT_VALUE_LENGTH = 120
+const CONTACT_METHOD_KINDS = ['whatsapp', 'email', 'discord'] as const
 const RESOURCE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$/
 
 interface CurrentUserRequestContext {
@@ -24,10 +28,18 @@ interface CurrentMembershipRow {
   role: 'manager' | 'moderator' | 'player'
   status: 'approved' | 'pending' | 'suspended'
   tag_ids: string
+  contact_methods: string
+}
+
+interface ContactMethodInput {
+  kind: (typeof CONTACT_METHOD_KINDS)[number]
+  label: string
+  value: string
 }
 
 interface UpdateCurrentMembershipInput {
   communityId: string
+  contactMethods: ContactMethodInput[]
   displayName: string
   favoriteGameIds: string[]
   tagIds: string[]
@@ -35,6 +47,7 @@ interface UpdateCurrentMembershipInput {
 
 interface UpdatedMembershipRow {
   community_id: string
+  contact_methods: string
   display_name: string
   favorite_game_ids: string
   id: string
@@ -63,6 +76,83 @@ function parseResourceIds(value: unknown, fieldName: string) {
   return [...new Set(value)] as string[]
 }
 
+/**
+ * Contact details a member chooses to share. They are only ever exposed to
+ * someone the community engine has already matched with, so the shape stays
+ * deliberately small.
+ */
+function parseContactMethods(value: unknown): ContactMethodInput[] {
+  if (value === undefined) {
+    return []
+  }
+
+  if (!Array.isArray(value) || value.length > MAX_CONTACT_METHODS) {
+    throw new ApiRequestError(
+      400,
+      'profile_invalid',
+      `contactMethods must contain at most ${MAX_CONTACT_METHODS} entries.`,
+    )
+  }
+
+  const contactMethods = value.map((item) => {
+    if (
+      !isRecord(item) ||
+      typeof item.kind !== 'string' ||
+      !CONTACT_METHOD_KINDS.includes(
+        item.kind as (typeof CONTACT_METHOD_KINDS)[number],
+      )
+    ) {
+      throw new ApiRequestError(
+        400,
+        'profile_invalid',
+        `contactMethods entries must use one of: ${CONTACT_METHOD_KINDS.join(', ')}.`,
+      )
+    }
+
+    const label = typeof item.label === 'string' ? item.label.trim() : ''
+    const contactValue = typeof item.value === 'string' ? item.value.trim() : ''
+
+    if (
+      label.length === 0 ||
+      label.length > MAX_CONTACT_LABEL_LENGTH ||
+      contactValue.length === 0 ||
+      contactValue.length > MAX_CONTACT_VALUE_LENGTH
+    ) {
+      throw new ApiRequestError(
+        400,
+        'profile_invalid',
+        'contactMethods entries need a label and a value within the allowed lengths.',
+      )
+    }
+
+    return {
+      kind: item.kind as (typeof CONTACT_METHOD_KINDS)[number],
+      label,
+      value: contactValue,
+    }
+  })
+  const kinds = new Set(contactMethods.map(({ kind }) => kind))
+
+  if (kinds.size !== contactMethods.length) {
+    throw new ApiRequestError(
+      400,
+      'profile_invalid',
+      'contactMethods must not repeat a kind.',
+    )
+  }
+
+  return contactMethods
+}
+
+/** Stored JSON is trusted less than the request body: a bad row must not 500. */
+function safelyParseJson(value: string): unknown {
+  try {
+    return JSON.parse(value)
+  } catch {
+    return []
+  }
+}
+
 function parseUpdateCurrentMembershipInput(
   value: unknown,
 ): UpdateCurrentMembershipInput {
@@ -76,6 +166,7 @@ function parseUpdateCurrentMembershipInput(
 
   const knownFields = new Set([
     'communityId',
+    'contactMethods',
     'displayName',
     'favoriteGameIds',
     'tagIds',
@@ -126,6 +217,7 @@ function parseUpdateCurrentMembershipInput(
 
   return {
     communityId: value.communityId,
+    contactMethods: parseContactMethods(value.contactMethods),
     displayName,
     favoriteGameIds: parseResourceIds(value.favoriteGameIds, 'favoriteGameIds'),
     tagIds: parseResourceIds(value.tagIds, 'tagIds'),
@@ -180,6 +272,7 @@ export async function handleCurrentUserRequest({
         set display_name = ?,
             favorite_game_ids = ?,
             tag_ids = ?,
+            contact_methods = ?,
             updated_at = ?
         where community_id = ?
           and user_id = ?
@@ -189,12 +282,14 @@ export async function handleCurrentUserRequest({
           community_id,
           display_name,
           favorite_game_ids,
-          tag_ids`,
+          tag_ids,
+          contact_methods`,
       )
         .bind(
           input.displayName,
           JSON.stringify(input.favoriteGameIds),
           JSON.stringify(input.tagIds),
+          JSON.stringify(input.contactMethods),
           updatedAt,
           input.communityId,
           user.id,
@@ -223,6 +318,9 @@ export async function handleCurrentUserRequest({
           favoriteGameIds: parseStringArray(
             updatedMembership.favorite_game_ids,
           ),
+          contactMethods: parseContactMethods(
+            safelyParseJson(updatedMembership.contact_methods),
+          ),
           id: updatedMembership.id,
           tagIds: parseStringArray(updatedMembership.tag_ids),
         },
@@ -245,6 +343,7 @@ export async function handleCurrentUserRequest({
       cm.status,
       cm.favorite_game_ids,
       cm.tag_ids,
+      cm.contact_methods,
       cm.joined_at,
       c.name as community_name,
       c.slug as community_slug,
@@ -265,6 +364,9 @@ export async function handleCurrentUserRequest({
         name: membership.community_name,
         slug: membership.community_slug,
       },
+      contactMethods: parseContactMethods(
+        safelyParseJson(membership.contact_methods),
+      ),
       displayName: membership.display_name,
       favoriteGameIds: parseStringArray(membership.favorite_game_ids),
       id: membership.id,

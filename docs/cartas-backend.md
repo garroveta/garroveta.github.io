@@ -1,6 +1,6 @@
 # Cartas — plan de migración a D1
 
-Estado: plan aprobado, sin implementar
+Estado: etapa 1 terminada, etapas 2 a 6 pendientes
 Fecha: 8 de septiembre de 2026
 
 Este documento describe cómo conectar la sección **Cartas** a la base de datos
@@ -228,18 +228,25 @@ falta un update condicional (`where quantity - reserved >= ?`) comprobando
 
 ## 8. Secuencia de trabajo
 
-| #   | Etapa                          | Contenido                                               | Qué entrega                                   |
-| --- | ------------------------------ | ------------------------------------------------------- | --------------------------------------------- |
-| 1   | **Datos de contacto**          | 1 migración, edición desde el perfil, lectura protegida | elimina el dato ficticio más visible          |
-| 2   | **Catálogo compartido**        | tabla `card`, alimentada por las importaciones          | el catálogo deja de ser por navegador         |
-| 3   | **Ofertas, búsquedas, listas** | propiedad, paginación en servidor, página compartible   | **la comunidad ve por fin las mismas cartas** |
-| 4   | **Coincidencias**              | la consulta de la sección 4 más la tabla de estado      | los avisos pasan a ser reales                 |
-| 5   | **Reservas y operaciones**     | updates condicionales, concurrencia                     | las reservas aguantan entre varias personas   |
-| 6   | **Importación y sync**         | plan calculado y aplicado en el servidor                | la sincronización pasa a ser segura           |
+| #   | Etapa                          | Contenido                                             | Qué entrega                                   |
+| --- | ------------------------------ | ----------------------------------------------------- | --------------------------------------------- |
+| 1   | **Datos de contacto** ✅       | migración `0011`, edición desde el perfil             | cada miembro guarda de verdad sus contactos   |
+| 2   | **Catálogo compartido**        | tabla `card`, alimentada por las importaciones        | el catálogo deja de ser por navegador         |
+| 3   | **Ofertas, búsquedas, listas** | propiedad, paginación en servidor, página compartible | **la comunidad ve por fin las mismas cartas** |
+| 4   | **Coincidencias**              | la consulta de la sección 4 más la tabla de estado    | los avisos pasan a ser reales                 |
+| 5   | **Reservas y operaciones**     | updates condicionales, concurrencia                   | las reservas aguantan entre varias personas   |
+| 6   | **Importación y sync**         | plan calculado y aplicado en el servidor              | la sincronización pasa a ser segura           |
 
 La etapa 1 es deliberadamente pequeña: valida toda la cadena migración →
 worker → api → hook → interfaz sobre un tema de bajo riesgo, antes de abordar la
 etapa 3.
+
+**Lo que la etapa 1 no hace.** La lectura protegida descrita en la sección 7
+depende de que las coincidencias existan en el servidor, que es la etapa 4. Por
+eso la etapa 1 se limita al **autoservicio**: cada miembro guarda y consulta sus
+propios datos, y nadie lee los de otro. Los contactos que aparecen hoy en el
+detalle de una coincidencia siguen siendo de demostración, y la pantalla lo
+sigue advirtiendo, hasta que la etapa 4 permita comprobarla en el servidor.
 
 **La etapa 3 no debe partirse.** Entregar «las ofertas en D1 pero las búsquedas
 en local» crearía justo el tipo de fractura que produjo el falso cero del
