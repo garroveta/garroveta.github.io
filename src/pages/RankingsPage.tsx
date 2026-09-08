@@ -716,10 +716,13 @@ export function RankingsPage({
     standings.find(({ standing }) => standing.id === selectedStandingId) ??
     standings[0]
   const selectedStandingSeason = selectedStanding
-    ? getRankingSeasonForDate(
+    ? (data.rankingSeasons.find(
+        ({ id }) => id === selectedStanding.standing.rankingSeasonId,
+      ) ??
+      getRankingSeasonForDate(
         data.rankingSeasons,
         selectedStanding.event.endsAt ?? selectedStanding.event.startsAt,
-      )
+      ))
     : undefined
   const activeSeason =
     data.rankingSeasons.find(({ status }) => status === 'active') ??

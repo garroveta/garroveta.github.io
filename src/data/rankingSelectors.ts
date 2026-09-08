@@ -102,10 +102,12 @@ export function getCommunityLeaderboard(
 
   for (const item of getLatestEventStandings(data)) {
     const eventDate = item.event.endsAt ?? item.event.startsAt
+    const standingSeasonId =
+      item.standing.rankingSeasonId ??
+      getRankingSeasonForDate(data.rankingSeasons, eventDate)?.id
     const matchesFilters =
       item.event.countsForCommunityRanking === true &&
-      getRankingSeasonForDate(data.rankingSeasons, eventDate)?.id ===
-        season.id &&
+      standingSeasonId === season.id &&
       item.game.id === filters.gameId &&
       (!filters.formatId || item.format.id === filters.formatId) &&
       (!filters.competitionEventKindId ||

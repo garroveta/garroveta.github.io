@@ -58,6 +58,7 @@ interface EventStandingJoinRow {
   opponent_game_win_percentage: number | null
   opponent_match_win_percentage: number | null
   rank: number | null
+  ranking_season_id: string | null
   source_external_event_id: string | null
   source_round_number: number | null
   source_store_id: string | null
@@ -338,6 +339,7 @@ function toEventStanding(rows: EventStandingJoinRow[]) {
       })),
     eventId: rows[0]!.event_id,
     id: rows[0]!.standing_id,
+    rankingSeasonId: rows[0]!.ranking_season_id ?? undefined,
     source: {
       externalEventId: rows[0]!.source_external_event_id ?? undefined,
       importedAt: rows[0]!.imported_at,
@@ -368,6 +370,7 @@ async function listEventStandings(
     `select
       s.id as standing_id,
       s.event_id,
+      s.ranking_season_id,
       s.source_store_id,
       s.source_external_event_id,
       s.source_round_number,
@@ -586,6 +589,7 @@ async function createOrReplaceEventStanding(
       entries: input.entries,
       eventId,
       id: standingId,
+      rankingSeasonId: season?.id,
       source: {
         externalEventId: input.source.externalEventId,
         importedAt: now,

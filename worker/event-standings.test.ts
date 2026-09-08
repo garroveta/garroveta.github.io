@@ -204,6 +204,7 @@ describe('Event standing API', () => {
             opponent_game_win_percentage: 50,
             opponent_match_win_percentage: 55.5,
             rank: 1,
+            ranking_season_id: 'season-2026',
             source_external_event_id: '456',
             source_round_number: 3,
             source_store_id: '123',
@@ -239,6 +240,7 @@ describe('Event standing API', () => {
           ],
           eventId: 'event-fnm-pauper',
           id: 'standing-1',
+          rankingSeasonId: 'season-2026',
           source: {
             externalEventId: '456',
             importedAt: '2026-01-10T20:00:00.000Z',
@@ -361,6 +363,7 @@ describe('Event standing API', () => {
         entries: standingInput.entries,
         eventId: 'event-fnm-pauper',
         id: 'standing-1',
+        rankingSeasonId: 'season-2026',
         source: { externalEventId: '456', roundNumber: 3, storeId: '123' },
       },
     })

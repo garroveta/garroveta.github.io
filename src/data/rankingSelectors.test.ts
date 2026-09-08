@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { demoData } from './demoData'
+import type { DemoDataSet } from '../domain/types'
 import {
   getCommunityLeaderboard,
   getCommunityPoints,
@@ -32,7 +33,7 @@ describe('rankingSelectors', () => {
   })
 
   it('keeps a result in the ranking when its event has no series', () => {
-    const data = structuredClone(demoData)
+    const data = structuredClone(demoData) as DemoDataSet
     const latestEvent = data.events.find(
       ({ id }) => id === 'event-result-win-a-box-standard-2026-08-02',
     )!
@@ -97,6 +98,39 @@ describe('rankingSelectors', () => {
       member: { displayName: 'Biel Ferrer' },
       points: 10,
       eventsPlayed: 1,
+    })
+  })
+
+  it('uses the season persisted with a standing instead of the mutable event date', () => {
+    const data = structuredClone(demoData) as DemoDataSet
+    const event = data.events.find(
+      ({ id }) => id === 'event-result-win-a-box-standard-2026-08-02',
+    )!
+    const standing = data.eventStandings.find(
+      ({ eventId }) => eventId === event.id,
+    )!
+    standing.rankingSeasonId = 'ranking-season-2026'
+    event.startsAt = '2025-08-02T10:00:00+02:00'
+    event.endsAt = '2025-08-02T16:00:00+02:00'
+
+    const activeRanking = getCommunityLeaderboard(data, {
+      gameId: 'game-mtg',
+      formatId: 'format-mtg-standard',
+      seasonId: 'ranking-season-2026',
+    })
+    const closedRanking = getCommunityLeaderboard(data, {
+      gameId: 'game-mtg',
+      formatId: 'format-mtg-standard',
+      seasonId: 'ranking-season-2025',
+    })
+
+    expect(activeRanking[0]).toMatchObject({
+      member: { displayName: 'Carla Pons Alcover' },
+      points: 47,
+    })
+    expect(closedRanking[0]).toMatchObject({
+      member: { displayName: 'Biel Ferrer' },
+      points: 10,
     })
   })
 

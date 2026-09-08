@@ -186,6 +186,8 @@ export type EventStandingEntry = {
 export type EventStanding = {
   id: EntityId
   eventId: EntityId
+  /** Persisted for shared data; omitted only by legacy local prototype results. */
+  rankingSeasonId?: EntityId
   entries: EventStandingEntry[]
   source?: {
     kind: 'eventlink_html'
