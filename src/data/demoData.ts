@@ -1778,15 +1778,15 @@ export const demoData = {
       pinned: false,
     },
     {
-      id: 'news-format-poll',
+      id: 'news-format-consultation',
       communityId,
       authorMemberId: 'member-diego',
-      type: 'poll',
+      type: 'news',
       title: '¿Qué formato quieres jugar en agosto?',
       excerpt:
-        'Vota entre Pauper, Modern y Draft para el próximo evento abierto.',
+        'Dinos en la tienda si prefieres Pauper, Modern o Draft para el próximo evento abierto.',
       content:
-        'Queremos preparar el próximo evento abierto con el formato que más apetezca a la comunidad. Elige entre Pauper, Modern y Draft; anunciaremos el resultado y la fecha próximamente.',
+        'Queremos preparar el próximo evento abierto con el formato que más apetezca a la comunidad. Pásate por la tienda o coméntaselo a Diego para decir si prefieres Pauper, Modern o Draft; anunciaremos el formato elegido y la fecha próximamente.',
       publishedAt: '2026-07-24T16:45:00+02:00',
       tagIds: ['tag-modern', 'tag-pauper', 'tag-draft'],
       pinned: false,

@@ -47,6 +47,16 @@ const typeLabels: Record<NewsPostType, string> = {
 }
 
 const newsTypes = Object.keys(typeLabels) as NewsPostType[]
+
+/**
+ * `poll` is not offered until voting actually exists: the type only ever was a
+ * badge, on a publication that invited a vote nobody could cast. The label and
+ * the stored value stay, so publications created before still read correctly.
+ */
+const retiredNewsTypes: NewsPostType[] = ['poll']
+const creatableNewsTypes = newsTypes.filter(
+  (newsType) => !retiredNewsTypes.includes(newsType),
+)
 const dateFormatter = new Intl.DateTimeFormat('es-ES', {
   day: '2-digit',
   month: 'short',
@@ -140,7 +150,10 @@ function CommunicationEditor({
             value={type}
             onChange={(event) => setType(event.target.value as NewsPostType)}
           >
-            {newsTypes.map((newsType) => (
+            {(creatableNewsTypes.includes(type)
+              ? creatableNewsTypes
+              : [...creatableNewsTypes, type]
+            ).map((newsType) => (
               <option key={newsType} value={newsType}>
                 {typeLabels[newsType]}
               </option>
@@ -271,6 +284,15 @@ export function CommunicationManagementPanel({
     postId: string
     message: string
   }>()
+  const availableTypeFilters = useMemo(
+    () =>
+      newsTypes.filter(
+        (newsType) =>
+          creatableNewsTypes.includes(newsType) ||
+          data.newsPosts.some(({ type }) => type === newsType),
+      ),
+    [data.newsPosts],
+  )
   const filteredPosts = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase('es')
 
@@ -540,7 +562,7 @@ export function CommunicationManagementPanel({
             }
           >
             <option value="all">Todos</option>
-            {newsTypes.map((newsType) => (
+            {availableTypeFilters.map((newsType) => (
               <option key={newsType} value={newsType}>
                 {typeLabels[newsType]}
               </option>

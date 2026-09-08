@@ -10,7 +10,7 @@ describe('news selectors', () => {
       'news-community-rules',
       'news-commander-tables',
       'news-arrival',
-      'news-format-poll',
+      'news-format-consultation',
       'news-trade-evening',
     ])
   })
@@ -38,6 +38,6 @@ describe('news selectors', () => {
   it('filters publications by one targeted tag', () => {
     expect(
       getNewsFeed(demoData, { tagId: 'tag-pauper' }).map(({ post }) => post.id),
-    ).toEqual(['news-format-poll'])
+    ).toEqual(['news-format-consultation'])
   })
 })

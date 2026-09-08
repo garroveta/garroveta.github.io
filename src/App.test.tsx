@@ -899,6 +899,39 @@ describe('App', () => {
     )
   })
 
+  it('stops offering the poll type while keeping an existing one editable', async () => {
+    authenticateAsManager()
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Publicaciones' }))
+
+    const filterOptions = [
+      ...(
+        await screen.findByLabelText('Filtrar comunicaciones por tipo')
+      ).querySelectorAll('option'),
+    ].map((option) => option.value)
+
+    expect(filterOptions).not.toContain('poll')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nueva' }))
+
+    const editorOptions = [
+      ...screen
+        .getByLabelText('Tipo de comunicación')
+        .querySelectorAll('option'),
+    ].map((option) => option.value)
+
+    expect(editorOptions).toEqual([
+      'news',
+      'promotion',
+      'arrival',
+      'urgent',
+      'rule',
+    ])
+  })
+
   it('opens a section from the main navigation', () => {
     render(<App />)
 
