@@ -8,10 +8,15 @@ import {
   hashInvitationToken,
   matchInvitationRoute,
 } from './invitations'
+import { safelyReconcileActiveSeasonStandingEntries } from './standing-member-reconciliation'
 
 vi.mock('./authorization', () => ({
   authorizeApprovedManager: vi.fn(),
   getAuthenticatedUser: vi.fn(),
+}))
+
+vi.mock('./standing-member-reconciliation', () => ({
+  safelyReconcileActiveSeasonStandingEntries: vi.fn(),
 }))
 
 interface StatementBehavior {
@@ -370,6 +375,10 @@ describe('Invitation manager API', () => {
 
 describe('Invitation public API', () => {
   beforeEach(() => {
+    vi.mocked(safelyReconcileActiveSeasonStandingEntries).mockResolvedValue({
+      linkedEntries: 0,
+      status: 'unmatched',
+    })
     vi.mocked(getAuthenticatedUser).mockResolvedValue(authenticatedPlayer)
     vi.spyOn(console, 'info').mockImplementation(() => undefined)
   })
@@ -457,6 +466,12 @@ describe('Invitation public API', () => {
       },
       status: 'success',
     })
+    expect(safelyReconcileActiveSeasonStandingEntries).toHaveBeenCalledWith(
+      database.db,
+      'community-crc-delorean',
+      'member-player',
+      'Marina Valverde',
+    )
   })
 
   it('is idempotent when the same user consumes the invitation again', async () => {

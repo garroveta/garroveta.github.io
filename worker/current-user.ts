@@ -1,6 +1,7 @@
 import { type AuthEnv } from './auth'
 import { getAuthenticatedUser } from './authorization'
 import { ApiRequestError, apiError, jsonResponse, readJsonBody } from './http'
+import { safelyReconcileActiveSeasonStandingEntries } from './standing-member-reconciliation'
 
 const MAX_DISPLAY_NAME_LENGTH = 80
 const RESOURCE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$/
@@ -207,6 +208,13 @@ export async function handleCurrentUserRequest({
           'An approved community membership is required.',
         )
       }
+
+      await safelyReconcileActiveSeasonStandingEntries(
+        env.DB,
+        updatedMembership.community_id,
+        updatedMembership.id,
+        updatedMembership.display_name,
+      )
 
       return jsonResponse({
         membership: {

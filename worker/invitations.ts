@@ -1,4 +1,5 @@
 import { type AuthEnv } from './auth'
+import { safelyReconcileActiveSeasonStandingEntries } from './standing-member-reconciliation'
 import {
   type ManagerAuthorization,
   authorizeApprovedManager,
@@ -579,12 +580,20 @@ async function redeemInvitation(requestContext: InvitationRequestContext) {
     invitation.used_by_user_id === user.id &&
     membership?.status === 'approved'
   ) {
+    const reconciliation = await safelyReconcileActiveSeasonStandingEntries(
+      requestContext.env.DB,
+      invitation.community_id,
+      membership.id,
+      membership.display_name,
+    )
+
     console.info(
       JSON.stringify({
         communityId: invitation.community_id,
         event: 'community_invitation.redeemed',
         invitationId: invitation.id,
         memberId: membership.id,
+        reconciledStandingEntries: reconciliation.linkedEntries,
         userId: user.id,
       }),
     )

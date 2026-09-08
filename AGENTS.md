@@ -57,6 +57,7 @@ Avant chaque commit :
 - Le parcours d’inscription reste séparé du profil connecté.
 - Les inscriptions aux événements sont optionnelles et principalement réservées aux événements MTG.
 - Une saison de ranking clôturée est figée : une activation ultérieure de membre ne modifie ni ses participants éligibles ni son barème.
+- Dans la saison active, l’activation ou le renommage d’un membre rattache rétroactivement ses résultats non liés uniquement lorsque son nom correspond sans ambiguïté.
 - Les communications créées par le gérant alimentent la section Noticias.
 - Les données du prototype sont locales et couvrent plusieurs cas réalistes.
 

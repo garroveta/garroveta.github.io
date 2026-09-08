@@ -5,6 +5,7 @@ import {
   type ApprovedMembership,
 } from './authorization'
 import { ApiRequestError, apiError, jsonResponse, readJsonBody } from './http'
+import { safelyReconcileActiveSeasonStandingEntries } from './standing-member-reconciliation'
 
 const RESOURCE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$/
 const COMMUNITY_ROLES = ['player', 'moderator', 'manager'] as const
@@ -319,12 +320,23 @@ async function updateMember(
     )
   }
 
+  const reconciliation =
+    updatedMember.status === 'approved'
+      ? await safelyReconcileActiveSeasonStandingEntries(
+          requestContext.env.DB,
+          communityId,
+          updatedMember.id,
+          updatedMember.display_name,
+        )
+      : undefined
+
   console.info(
     JSON.stringify({
       actorMemberId: currentMemberId,
       communityId,
       event: 'community_member.updated',
       memberId,
+      reconciledStandingEntries: reconciliation?.linkedEntries ?? 0,
     }),
   )
 

@@ -6,10 +6,15 @@ import {
 } from './authorization'
 import { type AuthEnv } from './auth'
 import { handleMemberApiRequest, matchMemberRoute } from './members'
+import { safelyReconcileActiveSeasonStandingEntries } from './standing-member-reconciliation'
 
 vi.mock('./authorization', () => ({
   authorizeApprovedManager: vi.fn(),
   authorizeApprovedMember: vi.fn(),
+}))
+
+vi.mock('./standing-member-reconciliation', () => ({
+  safelyReconcileActiveSeasonStandingEntries: vi.fn(),
 }))
 
 const collectionRoute = {
@@ -144,6 +149,10 @@ describe('Member manager routes', () => {
 describe('Member manager API', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(safelyReconcileActiveSeasonStandingEntries).mockResolvedValue({
+      linkedEntries: 0,
+      status: 'unmatched',
+    })
     vi.mocked(authorizeApprovedManager).mockResolvedValue(managerAuthorization)
     vi.mocked(authorizeApprovedMember).mockResolvedValue(managerAuthorization)
     vi.spyOn(console, 'info').mockImplementation(() => undefined)
@@ -249,6 +258,12 @@ describe('Member manager API', () => {
       'moderator',
       'approved',
       'community-crc-delorean',
+    )
+    expect(safelyReconcileActiveSeasonStandingEntries).toHaveBeenCalledWith(
+      context.env.DB,
+      'community-crc-delorean',
+      'member-player',
+      'Marina Valverde',
     )
   })
 

@@ -3,9 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getAuthenticatedUser } from './authorization'
 import { type AuthEnv } from './auth'
 import { handleCurrentUserRequest } from './current-user'
+import { safelyReconcileActiveSeasonStandingEntries } from './standing-member-reconciliation'
 
 vi.mock('./authorization', () => ({
   getAuthenticatedUser: vi.fn(),
+}))
+
+vi.mock('./standing-member-reconciliation', () => ({
+  safelyReconcileActiveSeasonStandingEntries: vi.fn(),
 }))
 
 function createContext({
@@ -46,6 +51,10 @@ function createContext({
 describe('Current user API', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(safelyReconcileActiveSeasonStandingEntries).mockResolvedValue({
+      linkedEntries: 0,
+      status: 'unmatched',
+    })
     vi.mocked(getAuthenticatedUser).mockResolvedValue({
       email: 'tom@example.com',
       id: 'user-manager',
@@ -162,6 +171,12 @@ describe('Current user API', () => {
       expect.any(String),
       'community-crc-delorean',
       'user-manager',
+    )
+    expect(safelyReconcileActiveSeasonStandingEntries).toHaveBeenCalledWith(
+      context.env.DB,
+      'community-crc-delorean',
+      'member-manager',
+      'Tomás Garau',
     )
   })
 
