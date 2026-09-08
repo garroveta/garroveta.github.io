@@ -222,12 +222,12 @@ export function App() {
     enabled: Boolean(approvedMembership),
     onLoaded: setCommunityMembers,
   })
+  // A stored `moderator` role grants nothing, so it is presented as a player
+  // rather than shown as a capability the application does not provide.
   const authenticatedRole: DemoRole | null = approvedMembership
     ? approvedMembership.role === 'manager'
       ? 'gerente'
-      : approvedMembership.role === 'moderator'
-        ? 'moderador'
-        : 'jugador'
+      : 'jugador'
     : null
   const effectiveRole = authenticatedRole ?? 'jugador'
   const rankingFeeds = [

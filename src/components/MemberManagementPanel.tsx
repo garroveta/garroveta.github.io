@@ -37,9 +37,14 @@ type SensitiveMemberAction = {
   message: string
 }
 
+/**
+ * `moderator` is no longer offered: it grants nothing today. The label stays so
+ * that a member who already holds it is named correctly, and the role selector
+ * keeps the option only for them, so a manager can move them off it.
+ */
 const roleLabels: Record<CommunityRole, string> = {
   player: 'Jugador',
-  moderator: 'Moderador',
+  moderator: 'Moderador (en desuso)',
   manager: 'Gerente',
 }
 
@@ -410,7 +415,11 @@ export function MemberManagementPanel({
                           }
                         >
                           <option value="player">Jugador</option>
-                          <option value="moderator">Moderador</option>
+                          {member.role === 'moderator' ? (
+                            <option value="moderator">
+                              Moderador (en desuso)
+                            </option>
+                          ) : null}
                           <option value="manager">Gerente</option>
                         </select>
                       </label>

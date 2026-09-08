@@ -1,6 +1,11 @@
-import { ShieldCheck, Store, UserRound, type LucideIcon } from 'lucide-react'
+import { Store, UserRound, type LucideIcon } from 'lucide-react'
 
-export type DemoRole = 'jugador' | 'gerente' | 'moderador'
+/**
+ * `moderator` still exists in the database and in `CommunityRole`, but it
+ * grants nothing today, so the product never presents it as a role of its own.
+ * Reinstating it means adding the option back here and defining its permissions.
+ */
+export type DemoRole = 'jugador' | 'gerente'
 
 export type DemoRoleOption = {
   id: DemoRole
@@ -21,12 +26,6 @@ export const demoRoleOptions: DemoRoleOption[] = [
     label: 'Gerente',
     description: 'Organiza la tienda, publica contenido y gestiona eventos.',
     icon: Store,
-  },
-  {
-    id: 'moderador',
-    label: 'Moderador',
-    description: 'Valida miembros y ayuda a mantener la comunidad.',
-    icon: ShieldCheck,
   },
 ]
 

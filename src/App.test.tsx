@@ -827,6 +827,78 @@ describe('App', () => {
     )
   })
 
+  it('stops offering the moderator role but lets a manager move someone off it', async () => {
+    authenticateAsManager()
+    managerMemberApiMocks.listCommunityMembers.mockResolvedValue({
+      members: [
+        {
+          displayName: 'Marta Soler',
+          email: 'marta@example.com',
+          favoriteGameIds: ['game-mtg'],
+          id: 'member-marta',
+          joinedAt: '2026-02-01T10:00:00.000Z',
+          role: 'player',
+          status: 'approved',
+          tagIds: [],
+        },
+        {
+          displayName: 'Sergio Gil',
+          email: 'sergio@example.com',
+          favoriteGameIds: ['game-mtg'],
+          id: 'member-sergio',
+          joinedAt: '2026-02-01T10:00:00.000Z',
+          role: 'moderator',
+          status: 'approved',
+          tagIds: [],
+        },
+      ],
+    })
+
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Miembros' }))
+
+    const marta = (await screen.findByText('Marta Soler')).closest('article')
+    const martaRoles = within(marta as HTMLElement)
+      .getByLabelText('Rol de Marta Soler')
+      .querySelectorAll('option')
+
+    expect([...martaRoles].map((option) => option.value)).toEqual([
+      'player',
+      'manager',
+    ])
+
+    // someone who already holds it keeps the option, so it can be undone
+    const sergio = screen.getByText('Sergio Gil').closest('article')
+    const sergioRoles = within(sergio as HTMLElement)
+      .getByLabelText('Rol de Sergio Gil')
+      .querySelectorAll('option')
+
+    expect([...sergioRoles].map((option) => option.value)).toEqual([
+      'player',
+      'moderator',
+      'manager',
+    ])
+    expect(
+      within(sergio as HTMLElement).getByText('Moderador (en desuso)'),
+    ).toBeInTheDocument()
+
+    fireEvent.change(
+      within(sergio as HTMLElement).getByLabelText('Rol de Sergio Gil'),
+      { target: { value: 'player' } },
+    )
+
+    await waitFor(() =>
+      expect(managerMemberApiMocks.updateCommunityMember).toHaveBeenCalledWith(
+        'community-crc-delorean',
+        'member-sergio',
+        { role: 'player' },
+      ),
+    )
+  })
+
   it('opens a section from the main navigation', () => {
     render(<App />)
 
@@ -1354,17 +1426,6 @@ describe('App', () => {
     })
     const marta = screen.getByText('Marta Soler').closest('article')
     expect(marta).toBeTruthy()
-    fireEvent.change(
-      within(marta as HTMLElement).getByLabelText('Rol de Marta Soler'),
-      { target: { value: 'moderator' } },
-    )
-    await waitFor(() =>
-      expect(managerMemberApiMocks.updateCommunityMember).toHaveBeenCalledWith(
-        'community-crc-delorean',
-        'member-marta',
-        { role: 'moderator' },
-      ),
-    )
     fireEvent.click(within(marta as HTMLElement).getByText(/^Etiquetas/))
     fireEvent.click(
       within(marta as HTMLElement).getByRole('checkbox', { name: 'Pauper' }),
@@ -1406,7 +1467,7 @@ describe('App', () => {
 
     fireEvent.change(
       within(marta as HTMLElement).getByLabelText('Rol de Marta Soler'),
-      { target: { value: 'moderator' } },
+      { target: { value: 'player' } },
     )
     expect(
       within(marta as HTMLElement).getByText(
@@ -1422,7 +1483,7 @@ describe('App', () => {
       expect(managerMemberApiMocks.updateCommunityMember).toHaveBeenCalledWith(
         'community-crc-delorean',
         'member-marta',
-        { role: 'moderator' },
+        { role: 'player' },
       ),
     )
 
