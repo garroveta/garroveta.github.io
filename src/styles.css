@@ -9446,6 +9446,50 @@ a {
   text-align: right;
 }
 
+.community-ranking-share {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  padding: 0.5rem;
+  border-radius: 0.75rem;
+  background: #f7f3f8;
+}
+
+.community-ranking-share button {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0 0.65rem;
+  border: 1px solid #d9cfdd;
+  border-radius: 0.65rem;
+  color: #613676;
+  background: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.community-ranking-share button:first-child {
+  color: #fff;
+  border-color: #5b2b77;
+  background: #5b2b77;
+}
+
+.community-ranking-share > span {
+  grid-column: 1 / -1;
+  min-height: 0.8rem;
+  color: #496d5e;
+  font-size: 0.62rem;
+  font-weight: 750;
+  text-align: center;
+}
+
+.community-ranking-share > span:empty {
+  display: none;
+}
+
 .ranking-table.cumulative-ranking-table {
   min-width: 100%;
   table-layout: fixed;
@@ -10584,6 +10628,13 @@ a {
 
   .ranking-choice-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .community-ranking-share {
+    grid-template-columns: repeat(2, auto);
+    justify-self: end;
+    padding: 0;
+    background: transparent;
   }
 
   .ranking-filter-panel > summary {

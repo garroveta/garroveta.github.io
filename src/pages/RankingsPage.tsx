@@ -20,6 +20,7 @@ import { ShareActions } from '../components/ShareActions'
 import { formatEventResultForWhatsApp } from '../data/eventSharing'
 import { getCommunityPoints } from '../data/rankingSettings'
 import { getRankingSeasonForDate } from '../data/rankingSeasons'
+import { formatCommunityRankingForWhatsApp } from '../data/rankingSharing'
 import type {
   CommunityRankingPoints,
   DemoDataSet,
@@ -28,10 +29,18 @@ import type {
 
 type RankingView = 'community' | 'events'
 
+type CommunityRankingInitialFilters = {
+  competitionEventKindId?: string
+  formatId?: string
+  gameId?: string
+  seasonId?: string
+}
+
 type RankingsPageProps = {
   data: DemoDataSet
   dataError?: unknown
   dataStatus: 'error' | 'loading' | 'ready'
+  initialCommunityFilters?: CommunityRankingInitialFilters
   initialView?: RankingView
   initialStandingId?: string
   onRetryData: () => void
@@ -412,17 +421,46 @@ function EventRankingDetail({
   )
 }
 
-function CommunityRanking({ data }: { data: DemoDataSet }) {
-  const [gameId, setGameId] = useState('game-mtg')
-  const [formatId, setFormatId] = useState('')
-  const [eventKindId, setEventKindId] = useState('')
+function CommunityRanking({
+  data,
+  initialFilters,
+}: {
+  data: DemoDataSet
+  initialFilters?: CommunityRankingInitialFilters
+}) {
   const seasons = data.rankingSeasons
     .filter(({ status }) => status !== 'upcoming')
     .sort((first, second) => second.startsOn.localeCompare(first.startsOn))
+  const requestedGameId = initialFilters?.gameId
+  const requestedFormatId = initialFilters?.formatId
+  const requestedEventKindId = initialFilters?.competitionEventKindId
+  const requestedSeasonId = initialFilters?.seasonId
+  const initialGameId =
+    requestedGameId && data.games.some(({ id }) => id === requestedGameId)
+      ? requestedGameId
+      : 'game-mtg'
+  const [gameId, setGameId] = useState(initialGameId)
+  const [formatId, setFormatId] = useState(
+    requestedFormatId &&
+      data.competitionFormats.some(
+        ({ gameId: candidateGameId, id }) =>
+          id === requestedFormatId && candidateGameId === initialGameId,
+      )
+      ? requestedFormatId
+      : '',
+  )
+  const [eventKindId, setEventKindId] = useState(
+    requestedEventKindId &&
+      data.competitionEventKinds.some(({ id }) => id === requestedEventKindId)
+      ? requestedEventKindId
+      : '',
+  )
   const [seasonId, setSeasonId] = useState(
-    seasons.find(({ status }) => status === 'active')?.id ??
-      seasons[0]?.id ??
-      '',
+    requestedSeasonId && seasons.some(({ id }) => id === requestedSeasonId)
+      ? requestedSeasonId
+      : (seasons.find(({ status }) => status === 'active')?.id ??
+          seasons[0]?.id ??
+          ''),
   )
   const resolvedSeasonId = seasons.some(({ id }) => id === seasonId)
     ? seasonId
@@ -460,6 +498,27 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
   ]
     .filter(Boolean)
     .join(' · ')
+  const rankingUrl = new URL(window.location.href)
+  const rankingUrlParameters = new URLSearchParams({
+    game: gameId,
+    season: resolvedSeasonId,
+    view: 'community',
+  })
+  if (formatId) rankingUrlParameters.set('format', formatId)
+  if (eventKindId) rankingUrlParameters.set('series', eventKindId)
+  rankingUrl.hash = `ranking?${rankingUrlParameters.toString()}`
+  const rankingShareText =
+    selectedGame && selectedSeason
+      ? formatCommunityRankingForWhatsApp({
+          communityName: data.community.name,
+          eventKindName: selectedEventKind?.shortName,
+          formatName: selectedFormat?.shortName,
+          gameName: selectedGame.shortName,
+          ranking,
+          rankingUrl: rankingUrl.toString(),
+          season: selectedSeason,
+        })
+      : ''
 
   const changeGame = (nextGameId: string) => {
     setGameId(nextGameId)
@@ -584,6 +643,14 @@ function CommunityRanking({ data }: { data: DemoDataSet }) {
 
       {ranking.length > 0 ? (
         <>
+          <ShareActions
+            className="community-ranking-share"
+            copiedLabel="Ranking copiado"
+            copyLabel="Copiar ranking"
+            copySuccessMessage="Ranking copiado. Ya puedes pegarlo en WhatsApp."
+            shareLabel="Compartir ranking"
+            shareText={rankingShareText}
+          />
           <div className="ranking-table-wrap cumulative-ranking-table-wrap">
             <table
               className="ranking-table cumulative-ranking-table"
@@ -732,6 +799,7 @@ export function RankingsPage({
   data,
   dataError,
   dataStatus,
+  initialCommunityFilters,
   initialView = 'community',
   initialStandingId,
   onRetryData,
@@ -819,7 +887,10 @@ export function RankingsPage({
       </div>
 
       {activeView === 'community' ? (
-        <CommunityRanking data={data} />
+        <CommunityRanking
+          data={data}
+          initialFilters={initialCommunityFilters}
+        />
       ) : (
         <>
           {selectedStanding ? (

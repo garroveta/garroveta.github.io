@@ -1042,6 +1042,8 @@ describe('App', () => {
   })
 
   it('filters the cumulative community ranking', () => {
+    const open = vi.fn().mockReturnValue({})
+    vi.stubGlobal('open', open)
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Ranking' }))
@@ -1096,11 +1098,45 @@ describe('App', () => {
       }),
     ).toBeInTheDocument()
 
+    fireEvent.click(screen.getByRole('button', { name: 'Compartir ranking' }))
+    const sharedRankingUrl = new URL(open.mock.calls[0][0] as string)
+    const sharedRankingText = sharedRankingUrl.searchParams.get('text') ?? ''
+    expect(sharedRankingText).toContain(
+      '🏆 *Ranking MTG · Temporada 2026*\n🎯 FNM',
+    )
+    expect(sharedRankingText).toContain(
+      '📊 Clasificación provisional · 15 jugadores · CRC Delorean',
+    )
+    expect(
+      sharedRankingText.split('\n').filter((line) => /^\d+\./.test(line)),
+    ).toHaveLength(5)
+    expect(sharedRankingText).toContain(
+      '#ranking?game=game-mtg&season=ranking-season-2026&view=community&series=event-kind-fnm',
+    )
+
     expect(within(rankingTable).getAllByRole('row')).toHaveLength(11)
     fireEvent.click(screen.getByRole('button', { name: 'Mostrar todos' }))
     expect(within(rankingTable).getAllByRole('row')).toHaveLength(16)
     expect(
       screen.getByRole('button', { name: 'Mostrar Top 10' }),
+    ).toBeInTheDocument()
+  })
+
+  it('restores community ranking filters from a shared link', () => {
+    window.location.hash =
+      '#ranking?view=community&game=game-mtg&season=ranking-season-2026&series=event-kind-fnm'
+    render(<App />)
+
+    fireEvent.click(screen.getByText('Modificar'))
+    expect(screen.getByLabelText('Temporada')).toHaveValue(
+      'ranking-season-2026',
+    )
+    expect(screen.getByLabelText('Juego')).toHaveValue('game-mtg')
+    expect(screen.getByLabelText('Serie')).toHaveValue('event-kind-fnm')
+    expect(
+      screen.getByRole('heading', {
+        name: 'MTG · Temporada 2026 · Todos los formatos · FNM',
+      }),
     ).toBeInTheDocument()
   })
 

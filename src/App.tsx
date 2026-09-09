@@ -595,6 +595,13 @@ export function App() {
             data={rankingData}
             dataError={rankingDataState.error}
             dataStatus={rankingDataState.status}
+            initialCommunityFilters={{
+              competitionEventKindId:
+                rankingRouteParams.get('series') ?? undefined,
+              formatId: rankingRouteParams.get('format') ?? undefined,
+              gameId: rankingRouteParams.get('game') ?? undefined,
+              seasonId: rankingRouteParams.get('season') ?? undefined,
+            }}
             initialStandingId={rankingRouteParams.get('standing') ?? undefined}
             initialView={
               rankingRouteParams.get('view') === 'events' ? 'events' : undefined
