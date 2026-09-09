@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  formatEventForWhatsApp,
   formatEventRegistrationForWhatsApp,
   formatEventResultForWhatsApp,
   formatManagerEventRegistrationsForWhatsApp,
@@ -10,10 +11,52 @@ const event = {
   capacity: 30,
   registrationSummary: { confirmed: 24, waitlisted: 0 },
   startsAt: '2026-09-12T17:00:00+02:00',
+  status: 'scheduled' as const,
   title: 'Presentación: The Hobbit',
 }
 
 describe('event registration sharing', () => {
+  it('formats an event before registration with its availability', () => {
+    expect(
+      formatEventForWhatsApp({
+        community: { name: 'CRC Delorean' },
+        event: {
+          ...event,
+          registrationEnabled: true,
+          waitlistEnabled: true,
+        },
+        eventUrl: 'https://www.garroveta.es/#eventos?event=presentation',
+      }),
+    ).toBe(
+      [
+        '🎴 *Presentación: The Hobbit*',
+        '📅 Sáb. 12 sept · 17:00 · 📍 CRC Delorean',
+        '🎟 Quedan 6 plazas — ¿Te apuntas?',
+        '🔗 Ver e inscribirse: https://www.garroveta.es/#eventos?event=presentation',
+      ].join('\n'),
+    )
+  })
+
+  it('keeps sharing useful for events without registration', () => {
+    expect(
+      formatEventForWhatsApp({
+        community: { name: 'CRC Delorean' },
+        event: {
+          ...event,
+          registrationEnabled: false,
+          waitlistEnabled: false,
+        },
+        eventUrl: 'https://www.garroveta.es/#eventos?event=workshop',
+      }),
+    ).toBe(
+      [
+        '🎴 *Presentación: The Hobbit*',
+        '📅 Sáb. 12 sept · 17:00 · 📍 CRC Delorean',
+        '🔗 Ver el evento: https://www.garroveta.es/#eventos?event=workshop',
+      ].join('\n'),
+    )
+  })
+
   it('formats a compact confirmed registration with the remaining places', () => {
     expect(
       formatEventRegistrationForWhatsApp({

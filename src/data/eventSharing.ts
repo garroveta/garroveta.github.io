@@ -36,6 +36,57 @@ function formatCompactSchedule(event: Pick<CommunityEvent, 'startsAt'>) {
   return `${formatCompactDate(event.startsAt)} · ${compactEventTimeFormatter.format(new Date(event.startsAt))}`
 }
 
+export function formatEventForWhatsApp({
+  community,
+  event,
+  eventUrl,
+}: {
+  community: Pick<Community, 'name'>
+  event: Pick<
+    CommunityEvent,
+    | 'capacity'
+    | 'registrationEnabled'
+    | 'registrationSummary'
+    | 'startsAt'
+    | 'status'
+    | 'title'
+    | 'waitlistEnabled'
+  >
+  eventUrl: string
+}) {
+  const lines = [
+    `🎴 *${event.title}*`,
+    `📅 ${formatCompactSchedule(event)} · 📍 ${community.name}`,
+  ]
+  const registrationOpen =
+    event.registrationEnabled && event.status !== 'completed'
+
+  if (registrationOpen) {
+    const remainingPlaces = Math.max(
+      0,
+      event.capacity - event.registrationSummary.confirmed,
+    )
+
+    if (remainingPlaces > 0) {
+      lines.push(
+        `🎟 ${remainingPlaces === 1 ? 'Queda 1 plaza' : `Quedan ${remainingPlaces} plazas`} — ¿Te apuntas?`,
+      )
+    } else if (event.waitlistEnabled !== false) {
+      lines.push('⏳ Evento completo — ¿Te apuntas a la lista de espera?')
+    } else {
+      lines.push('🎟 Evento completo')
+    }
+  }
+
+  lines.push(
+    registrationOpen
+      ? `🔗 Ver e inscribirse: ${eventUrl}`
+      : `🔗 Ver el evento: ${eventUrl}`,
+  )
+
+  return lines.join('\n')
+}
+
 export function formatEventRegistrationForWhatsApp({
   community,
   event,

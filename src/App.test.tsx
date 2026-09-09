@@ -1719,6 +1719,8 @@ describe('App', () => {
   })
 
   it('opens an event detail with a direct URL and restores the agenda position', async () => {
+    const open = vi.fn().mockReturnValue({})
+    vi.stubGlobal('open', open)
     const scrollTo = vi.fn()
     vi.stubGlobal('scrollTo', scrollTo)
     vi.stubGlobal('scrollY', 640)
@@ -1753,6 +1755,18 @@ describe('App', () => {
     expect(
       decodeURIComponent(calendarLink.getAttribute('href') ?? ''),
     ).toContain('URL:http://localhost:3000/#eventos?event=event-fnm-standard')
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Compartir FNM Standard por WhatsApp',
+      }),
+    )
+    const sharedEventUrl = new URL(open.mock.calls[0][0] as string)
+    expect(sharedEventUrl.searchParams.get('text')).toContain(
+      '🎴 *FNM Standard*',
+    )
+    expect(sharedEventUrl.searchParams.get('text')).toContain(
+      '🔗 Ver el evento: http://localhost:3000/#eventos?event=event-fnm-standard',
+    )
 
     fireEvent.click(screen.getByRole('button', { name: 'Volver a la agenda' }))
 
@@ -3260,6 +3274,14 @@ describe('App', () => {
     expect(
       await screen.findByText('Los cambios se han guardado.'),
     ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Compartir evento' }))
+    const editedEventShareUrl = new URL(open.mock.calls.at(-1)?.[0] as string)
+    expect(editedEventShareUrl.searchParams.get('text')).toContain(
+      '🎴 *Presentación: The Hobbit · tarde*',
+    )
+    expect(editedEventShareUrl.searchParams.get('text')).toContain(
+      '#eventos?event=event-presentation-hobbit',
+    )
     expect(
       communityEventApiMocks.updatePersistedCommunityEvent,
     ).toHaveBeenCalledWith(
@@ -3327,6 +3349,9 @@ describe('App', () => {
     expect(
       await screen.findByText('La copia ya aparece en la agenda.'),
     ).toBeVisible()
+    expect(
+      screen.getByRole('button', { name: 'Compartir evento' }),
+    ).toBeInTheDocument()
     expect(communityEventApiMocks.createCommunityEvent).toHaveBeenCalledWith(
       'community-crc-delorean',
       expect.objectContaining({

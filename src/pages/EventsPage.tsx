@@ -34,6 +34,7 @@ import { EventLinkImportPanel } from '../components/EventLinkImportPanel'
 import { ShareActions } from '../components/ShareActions'
 import { isCommunityOptionActive } from '../data/communityOptions'
 import {
+  formatEventForWhatsApp,
   formatEventResultForWhatsApp,
   formatEventRegistrationForWhatsApp,
   formatManagerEventRegistrationsForWhatsApp,
@@ -66,7 +67,7 @@ type EventsPageProps = {
   currentMember: CommunityMember
   eventPersistenceStatus: CommunityEventsStatus
   eventPersistenceError: unknown
-  onCreateEvent: (input: CommunityEventWriteInput) => Promise<void>
+  onCreateEvent: (input: CommunityEventWriteInput) => Promise<CommunityEvent>
   onDeleteEvent: (eventId: string) => Promise<void>
   onNavigate: (route: AppRoute, query?: string) => void
   onReloadEvents: () => void
@@ -86,7 +87,7 @@ type EventsPageProps = {
   onUpdateEvent: (
     eventId: string,
     input: CommunityEventWriteInput,
-  ) => Promise<void>
+  ) => Promise<CommunityEvent>
   initialEventId?: string
   initialManagerAction?: 'new'
 }
@@ -202,8 +203,8 @@ function EventComposer({
   eventToDuplicate?: CommunityEvent
   eventToEdit?: CommunityEvent
   onClose: () => void
-  onSave: (input: CommunityEventWriteInput) => Promise<void>
-  onPublished: () => void
+  onSave: (input: CommunityEventWriteInput) => Promise<CommunityEvent>
+  onPublished: (event: CommunityEvent) => void
 }) {
   const sourceEvent = eventToEdit ?? eventToDuplicate
   const availableGames = data.games.filter(
@@ -302,8 +303,8 @@ function EventComposer({
     setIsSaving(true)
 
     try {
-      await onSave(input)
-      onPublished()
+      const savedEvent = await onSave(input)
+      onPublished(savedEvent)
     } catch {
       setSaveError(
         'No se ha podido guardar el evento. Comprueba los datos e inténtalo de nuevo.',
@@ -932,6 +933,11 @@ function EventDetail({
     community,
     eventUrl: eventUrl.toString(),
   })
+  const eventShareText = formatEventForWhatsApp({
+    community,
+    event: item.event,
+    eventUrl: eventUrl.toString(),
+  })
 
   const handleRegistration = async () => {
     setActionError('')
@@ -1049,6 +1055,16 @@ function EventDetail({
             <CalendarPlus aria-hidden="true" size={18} />
             Añadir al calendario
           </a>
+
+          <ShareActions
+            className="share-actions--contents"
+            feedbackClassName="event-detail__share-feedback"
+            shareAriaLabel={`Compartir ${item.event.title} por WhatsApp`}
+            shareButtonClassName="secondary-button event-share-action"
+            shareLabel="Compartir"
+            shareText={eventShareText}
+            showCopy={false}
+          />
 
           {item.event.registrationEnabled &&
           (canRegister || canJoinWaitlist || item.registration) &&
@@ -1537,6 +1553,7 @@ export function EventsPage({
   const [managedImportEventId, setManagedImportEventId] = useState<string>()
   const [pendingDeleteEventId, setPendingDeleteEventId] = useState<string>()
   const [publicationMessage, setPublicationMessage] = useState('')
+  const [publishedEvent, setPublishedEvent] = useState<CommunityEvent>()
   const [operationError, setOperationError] = useState('')
   const [importedStandingId, setImportedStandingId] = useState<string>()
   const participantPanelRef = useRef<HTMLDivElement>(null)
@@ -1593,6 +1610,17 @@ export function EventsPage({
       event: importedStandingEvent,
       resultUrl: resultUrl.toString(),
       standing: importedStanding,
+    })
+  })()
+  const publishedEventShareText = (() => {
+    if (!publishedEvent) return ''
+    const eventUrl = new URL(window.location.href)
+    eventUrl.hash = `eventos?event=${encodeURIComponent(publishedEvent.id)}`
+
+    return formatEventForWhatsApp({
+      community: data.community,
+      event: publishedEvent,
+      eventUrl: eventUrl.toString(),
     })
   })()
 
@@ -1669,6 +1697,7 @@ export function EventsPage({
       await onDeleteEvent(eventId)
       closeManagerPanels()
       setImportedStandingId(undefined)
+      setPublishedEvent(undefined)
       setPublicationMessage(
         eventTitle ? `« ${eventTitle} » se ha eliminado.` : 'Evento eliminado.',
       )
@@ -1747,6 +1776,7 @@ export function EventsPage({
                   closeManagerPanels()
                   setPublicationMessage('')
                   setImportedStandingId(undefined)
+                  setPublishedEvent(undefined)
                   setIsComposerOpen(true)
                 }}
               >
@@ -1766,9 +1796,10 @@ export function EventsPage({
                   ? onUpdateEvent(editingEvent.id, input)
                   : onCreateEvent(input)
               }
-              onPublished={() => {
+              onPublished={(savedEvent) => {
                 closeManagerPanels()
                 setImportedStandingId(undefined)
+                setPublishedEvent(savedEvent)
                 setSelectedGameId(undefined)
                 setSelectedType(undefined)
                 setPublicationMessage(
@@ -1794,11 +1825,15 @@ export function EventsPage({
                     closeManagerPanels()
                     setPublicationMessage('')
                     setImportedStandingId(undefined)
+                    setPublishedEvent(undefined)
                     setDuplicatingEventId(eventId)
                     setIsComposerOpen(true)
                   }}
                   onEdit={(eventId) => {
                     closeManagerPanels()
+                    setPublicationMessage('')
+                    setImportedStandingId(undefined)
+                    setPublishedEvent(undefined)
                     setEditingEventId(eventId)
                     setIsComposerOpen(true)
                   }}
@@ -1806,6 +1841,7 @@ export function EventsPage({
                     closeManagerPanels()
                     setPublicationMessage('')
                     setImportedStandingId(undefined)
+                    setPublishedEvent(undefined)
                     setManagedImportEventId(eventId)
                   }}
                   onParticipants={(eventId) => {
@@ -1866,6 +1902,24 @@ export function EventsPage({
                     <ChevronRight aria-hidden="true" size={16} />
                   </button>
                 </div>
+              ) : publishedEvent ? (
+                <div className="manager-event-feedback__actions">
+                  <ShareActions
+                    className="share-actions--contents"
+                    onFeedback={setPublicationMessage}
+                    shareLabel="Compartir evento"
+                    shareText={publishedEventShareText}
+                    showCopy={false}
+                    showFeedback={false}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => openEvent(publishedEvent.id)}
+                  >
+                    Ver evento
+                    <ChevronRight aria-hidden="true" size={16} />
+                  </button>
+                </div>
               ) : null}
             </div>
           ) : null}
@@ -1907,6 +1961,7 @@ export function EventsPage({
                   setManagedImportEventId(undefined)
                   setPublicationMessage(message)
                   setImportedStandingId(standingId)
+                  setPublishedEvent(undefined)
                 }}
                 onSaveStanding={onSaveEventStanding}
               />

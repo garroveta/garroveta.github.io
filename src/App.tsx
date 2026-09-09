@@ -450,6 +450,7 @@ export function App() {
                 ...currentData,
                 events: [...currentData.events, event],
               }))
+              return event
             }}
             onDeleteEvent={async (eventId) => {
               await deletePersistedCommunityEvent(data.community.id, eventId)
@@ -582,6 +583,7 @@ export function App() {
                   candidate.id === event.id ? event : candidate,
                 ),
               }))
+              return event
             }}
             initialEventId={eventRouteParams.get('event') ?? undefined}
             initialManagerAction={

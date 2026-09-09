@@ -4772,21 +4772,36 @@ a {
 
 .event-detail__actions {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
   margin-top: 1rem;
 }
 
 .event-calendar-action,
+.event-share-action,
 .event-detail__actions .event-action {
   width: 100%;
 }
 
 .event-detail__actions .event-action {
+  grid-column: 1 / -1;
   margin-top: 0;
 }
 
 .event-calendar-action {
   text-decoration: none;
+}
+
+.event-detail__share-feedback {
+  grid-column: 1 / -1;
+  color: #496d5e;
+  font-size: 0.68rem;
+  font-weight: 750;
+  text-align: center;
+}
+
+.event-detail__share-feedback:empty {
+  display: none;
 }
 
 .event-registration-share {
