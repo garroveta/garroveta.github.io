@@ -951,6 +951,8 @@ describe('App', () => {
   })
 
   it('opens the latest community event standings', () => {
+    const open = vi.fn().mockReturnValue({})
+    vi.stubGlobal('open', open)
     const scrollIntoView = vi.fn()
     Object.defineProperty(Element.prototype, 'scrollIntoView', {
       configurable: true,
@@ -968,6 +970,14 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Win a Box Standard' }),
     ).toBeInTheDocument()
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Compartir por WhatsApp' }),
+    )
+    const sharedResultUrl = new URL(open.mock.calls[0][0] as string)
+    const sharedResult = sharedResultUrl.searchParams.get('text')
+    expect(sharedResult).toContain('🏆 *Win a Box Standard — Resultados*')
+    expect(sharedResult).toContain('📅 Dom. 2 ago · 14 jugadores')
+    expect(sharedResult).toContain('14. Joan Roig de la Fuente')
     expect(screen.getAllByText('Carla Pons Alcover')).not.toHaveLength(0)
     expect(
       screen.getByRole('columnheader', { name: 'Pts evento' }),
@@ -2625,6 +2635,8 @@ describe('App', () => {
   })
 
   it('shows an imported EventLink result and updates the community ranking', async () => {
+    const open = vi.fn().mockReturnValue({})
+    vi.stubGlobal('open', open)
     authenticateAsManager()
     eventStandingsApiMocks.saveCommunityEventStanding.mockImplementation(
       async (_communityId: string, eventId: string, input: unknown) => ({
@@ -2671,6 +2683,13 @@ describe('App', () => {
       within(importPanel).getByRole('button', {
         name: 'Importar clasificación',
       }),
+    )
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Compartir resultados' }),
+    )
+    const importedShareUrl = new URL(open.mock.calls[0][0] as string)
+    expect(importedShareUrl.searchParams.get('text')).toContain(
+      '🏆 *Presentación: The Hobbit — Resultados*',
     )
     fireEvent.click(
       await screen.findByRole('button', { name: 'Ver clasificación' }),

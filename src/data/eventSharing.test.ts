@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   formatEventRegistrationForWhatsApp,
+  formatEventResultForWhatsApp,
   formatManagerEventRegistrationsForWhatsApp,
 } from './eventSharing'
 
@@ -78,5 +79,53 @@ describe('event registration sharing', () => {
         ],
       }),
     ).toContain('👥 2/2 inscritos · ⏳ 1 en espera\nPep Peralta, Aina Mir')
+  })
+
+  it('formats a complete result with fourteen ranked participants', () => {
+    const names = [
+      'Pep Peralta Isern',
+      'Aina Mir',
+      'Biel Ferrer',
+      'Carla Pons Alcover',
+      'Diego Sánchez',
+      'Alexandre Alemany Moyà',
+      'Aitor Fernández',
+      'Marc Bauza',
+      'Iván Yusty',
+      'Joan Guillem',
+      'Miquel Oliver',
+      'Nicolas Fernandez',
+      'Fran Parra',
+      'Tomeu Cabot',
+    ]
+    const entries = names.map((displayName, index) => ({
+      displayName,
+      draws: 0,
+      eventPoints: 0,
+      gameWinPercentage: 0,
+      losses: index === 0 ? 0 : 1,
+      opponentGameWinPercentage: 0,
+      opponentMatchWinPercentage: 0,
+      rank: index + 1,
+      wins: index === 0 ? 4 : 3,
+    }))
+
+    const message = formatEventResultForWhatsApp({
+      event: { startsAt: event.startsAt, title: 'FNM Standard' },
+      resultUrl: 'https://www.garroveta.es/#ranking?view=events&standing=fnm',
+      standing: { entries },
+    })
+
+    expect(message).toContain(
+      '🏆 *FNM Standard — Resultados*\n📅 Sáb. 12 sept · 14 jugadores',
+    )
+    expect(message).toContain('🥇 Pep Peralta Isern · 4-0-0')
+    expect(message).toContain('🥈 Aina Mir · 3-1-0')
+    expect(message).toContain('🥉 Biel Ferrer · 3-1-0')
+    expect(message).toContain('14. Tomeu Cabot · 3-1-0')
+    expect(message).toContain(
+      '📊 V-D-E · 🔗 Ver clasificación: https://www.garroveta.es/#ranking?view=events&standing=fnm',
+    )
+    expect(message.split('\n')).toHaveLength(19)
   })
 })

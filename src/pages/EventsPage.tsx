@@ -34,6 +34,7 @@ import { DataStateView } from '../components/DataStateView'
 import { EventLinkImportPanel } from '../components/EventLinkImportPanel'
 import { isCommunityOptionActive } from '../data/communityOptions'
 import {
+  formatEventResultForWhatsApp,
   formatEventRegistrationForWhatsApp,
   formatManagerEventRegistrationsForWhatsApp,
 } from '../data/eventSharing'
@@ -1659,6 +1660,37 @@ export function EventsPage({
     ...completeAgenda.upcoming,
     ...completeAgenda.past.slice(0, 8),
   ]
+  const importedStanding = importedStandingId
+    ? data.eventStandings.find(({ id }) => id === importedStandingId)
+    : undefined
+  const importedStandingEvent = importedStanding
+    ? data.events.find(({ id }) => id === importedStanding.eventId)
+    : undefined
+
+  const shareImportedResult = () => {
+    if (!importedStanding || !importedStandingEvent) {
+      return
+    }
+
+    const resultUrl = new URL(window.location.href)
+    resultUrl.hash = `ranking?view=events&standing=${encodeURIComponent(importedStanding.id)}`
+    const opened = window.open(
+      getWhatsAppShareUrl(
+        formatEventResultForWhatsApp({
+          event: importedStandingEvent,
+          resultUrl: resultUrl.toString(),
+          standing: importedStanding,
+        }),
+      ),
+      '_blank',
+      'noopener,noreferrer',
+    )
+    setPublicationMessage(
+      opened
+        ? 'WhatsApp se ha abierto. Elige el grupo o contacto y pulsa enviar.'
+        : 'No se ha podido abrir WhatsApp. Abre la clasificación para copiar el resultado.',
+    )
+  }
 
   useEffect(() => {
     try {
@@ -1905,18 +1937,26 @@ export function EventsPage({
             <div className="manager-event-feedback" aria-live="polite">
               <p className="action-message">{publicationMessage}</p>
               {importedStandingId ? (
-                <button
-                  type="button"
-                  onClick={() =>
-                    onNavigate(
-                      'ranking',
-                      `view=events&standing=${encodeURIComponent(importedStandingId)}`,
-                    )
-                  }
-                >
-                  Ver clasificación
-                  <ChevronRight aria-hidden="true" size={16} />
-                </button>
+                <div className="manager-event-feedback__actions">
+                  {importedStanding && importedStandingEvent ? (
+                    <button type="button" onClick={shareImportedResult}>
+                      <MessageCircle aria-hidden="true" size={16} />
+                      Compartir resultados
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onNavigate(
+                        'ranking',
+                        `view=events&standing=${encodeURIComponent(importedStandingId)}`,
+                      )
+                    }
+                  >
+                    Ver clasificación
+                    <ChevronRight aria-hidden="true" size={16} />
+                  </button>
+                </div>
               ) : null}
             </div>
           ) : null}

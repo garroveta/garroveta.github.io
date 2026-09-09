@@ -1,4 +1,4 @@
-import type { Community, CommunityEvent } from '../domain/types'
+import type { Community, CommunityEvent, EventStanding } from '../domain/types'
 
 type SharedRegistrationStatus = 'confirmed' | 'waitlisted'
 
@@ -121,5 +121,40 @@ export function formatManagerEventRegistrationsForWhatsApp({
     heading,
     `👥 ${confirmed.length}/${event.capacity}: ${names}`,
     `🎟 ${availability} — Inscripciones: ${eventUrl}`,
+  ].join('\n')
+}
+
+export function formatEventResultForWhatsApp({
+  event,
+  resultUrl,
+  standing,
+}: {
+  event: Pick<CommunityEvent, 'startsAt' | 'title'>
+  resultUrl: string
+  standing: Pick<EventStanding, 'entries'>
+}) {
+  const entries = [...standing.entries].sort(
+    (first, second) => first.rank - second.rank,
+  )
+  const ranking = entries.map((entry) => {
+    const position =
+      entry.rank === 1
+        ? '🥇'
+        : entry.rank === 2
+          ? '🥈'
+          : entry.rank === 3
+            ? '🥉'
+            : `${entry.rank}.`
+
+    return `${position} ${entry.displayName} · ${entry.wins}-${entry.losses}-${entry.draws}`
+  })
+
+  return [
+    `🏆 *${event.title} — Resultados*`,
+    `📅 ${formatCompactDate(event.startsAt)} · ${entries.length} jugadores`,
+    '',
+    ...ranking,
+    '',
+    `📊 V-D-E · 🔗 Ver clasificación: ${resultUrl}`,
   ].join('\n')
 }

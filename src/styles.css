@@ -5116,6 +5116,7 @@ a {
 
 .manager-event-feedback {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
@@ -5138,6 +5139,14 @@ a {
   font-size: 0.76rem;
   font-weight: 800;
   cursor: pointer;
+}
+
+.manager-event-feedback__actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.65rem;
 }
 
 .news-feed {
@@ -9569,6 +9578,47 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 0.32rem;
+}
+
+.event-result-share-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+  padding: 0.6rem;
+  border-radius: 0.75rem;
+  background: #f7f3f8;
+}
+
+.event-result-share-actions button {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0 0.55rem;
+  border: 1px solid #d9cfdd;
+  border-radius: 0.65rem;
+  color: #613676;
+  background: #fff;
+  font-size: 0.66rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.event-result-share-actions button:first-child {
+  color: #fff;
+  border-color: #5b2b77;
+  background: #5b2b77;
+}
+
+.event-result-share-actions > span {
+  grid-column: 1 / -1;
+  min-height: 0.8rem;
+  color: #496d5e;
+  font-size: 0.62rem;
+  font-weight: 750;
+  text-align: center;
 }
 
 .event-points-value {
