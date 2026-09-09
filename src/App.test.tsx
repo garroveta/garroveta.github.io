@@ -3712,6 +3712,8 @@ describe('App', () => {
   })
 
   it('imports a wanted-card list and reports unknown names', async () => {
+    const open = vi.fn().mockReturnValue({})
+    vi.stubGlobal('open', open)
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
@@ -3757,6 +3759,27 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Esper Sentinel' }),
     ).toBeInTheDocument()
+    expect(
+      screen.getByRole('region', { name: 'Compartir cartas importadas' }),
+    ).toHaveTextContent('2 cartas · Buscadas')
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Compartir nuevas cartas por WhatsApp',
+      }),
+    )
+    const sharedWantedCards = new URL(
+      open.mock.calls[0][0] as string,
+    ).searchParams.get('text')
+    expect(sharedWantedCards).toContain(
+      '🔎 *Nuevas cartas buscadas por Álex Romero*',
+    )
+    expect(sharedWantedCards).toContain(
+      '• 4× Rhystic Study · WOT #25 · Inglés · Foil',
+    )
+    expect(sharedWantedCards).toContain(
+      '• 1× Esper Sentinel · MH2 #12 · Español',
+    )
+    expect(sharedWantedCards).not.toContain('Carta desconocida')
     const storedWantedCards = createLocalDemoRepository(
       window.localStorage,
     ).load().wantedCards
@@ -3779,6 +3802,8 @@ describe('App', () => {
   })
 
   it('imports an editable list of marketplace offers', async () => {
+    const open = vi.fn().mockReturnValue({})
+    vi.stubGlobal('open', open)
     render(<App />)
 
     fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
@@ -3818,6 +3843,24 @@ describe('App', () => {
     expect(
       within(importedSolRing as HTMLElement).getByText('3 unidades · Francés'),
     ).toBeInTheDocument()
+    expect(
+      screen.getByRole('region', { name: 'Compartir cartas importadas' }),
+    ).toHaveTextContent('2 cartas · Mis ofertas')
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Compartir nuevas cartas por WhatsApp',
+      }),
+    )
+    const sharedOffers = new URL(
+      open.mock.calls[0][0] as string,
+    ).searchParams.get('text')
+    expect(sharedOffers).toContain(
+      '🃏 *Nuevas cartas disponibles de Álex Romero*',
+    )
+    expect(sharedOffers).toContain(
+      '• 3× Sol Ring · CMM #410 · Francés · Good · Foil · 4.75 €',
+    )
+    expect(sharedOffers).toContain('#cartas?member=member-alex')
     expect(
       createLocalDemoRepository(window.localStorage)
         .load()

@@ -8497,6 +8497,78 @@ a {
   margin-top: 0.55rem;
 }
 
+.card-import-share {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.55rem;
+  padding: 0.7rem;
+  border: 1px solid #ded5e1;
+  border-radius: 0.9rem;
+  background: #f7f3f8;
+}
+
+.card-import-share > div:first-child {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.card-import-share strong,
+.card-import-share > div:first-child span {
+  display: block;
+}
+
+.card-import-share strong {
+  color: #3e3044;
+  font-size: 0.72rem;
+}
+
+.card-import-share > div:first-child span {
+  flex: 0 0 auto;
+  color: #817684;
+  font-size: 0.61rem;
+  font-weight: 750;
+}
+
+.card-import-share__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.card-import-share__actions button {
+  display: inline-flex;
+  min-height: 2.35rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0 0.5rem;
+  border: 1px solid #d9cfdd;
+  border-radius: 0.65rem;
+  color: #613676;
+  background: #fff;
+  font-size: 0.66rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.card-import-share__actions button:first-child {
+  color: #fff;
+  border-color: #5b2b77;
+  background: #5b2b77;
+}
+
+.card-import-share__actions > span {
+  grid-column: 1 / -1;
+  min-height: 0.8rem;
+  color: #496d5e;
+  font-size: 0.62rem;
+  font-weight: 750;
+  text-align: center;
+}
+
 .match-group-grid {
   display: grid;
   gap: 0.65rem;

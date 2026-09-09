@@ -26,6 +26,7 @@ import { useMemo, useState } from 'react'
 
 import { CardImagePreview } from '../components/CardImagePreview'
 import { MarketplaceReservationSheet } from '../components/MarketplaceReservationSheet'
+import { ShareActions } from '../components/ShareActions'
 import { MarketplaceSection } from '../components/cards/MarketplaceSection'
 import { QuantityField } from '../components/QuantityField'
 import { CardListColumnMapper } from '../components/cards/CardListColumnMapper'
@@ -48,6 +49,7 @@ import {
   type WantedImportItemInput,
   type WantedImportResult,
 } from '../data/cardMutations'
+import { formatImportedCardsForWhatsApp } from '../data/cardImportSharing'
 import {
   parseCardList,
   type CardListColumnOverrides,
@@ -2123,6 +2125,11 @@ export function CardsPage({
     description: string
   }>()
   const [actionMessage, setActionMessage] = useState('')
+  const [lastImportShare, setLastImportShare] = useState<{
+    cardCount: number
+    destination: 'wanted' | 'offers'
+    text: string
+  }>()
   const [query, setQuery] = useState('')
   const [hideOwnListings, setHideOwnListings] = useState(true)
   const listings = getMarketplaceListings(data)
@@ -2353,6 +2360,7 @@ export function CardsPage({
           type="button"
           onClick={() => {
             setActionMessage('')
+            setLastImportShare(undefined)
             setActiveComposer('listing')
           }}
         >
@@ -2364,6 +2372,7 @@ export function CardsPage({
           type="button"
           onClick={() => {
             setActionMessage('')
+            setLastImportShare(undefined)
             setActiveComposer('import')
           }}
         >
@@ -2380,6 +2389,7 @@ export function CardsPage({
           onDataChange={onDataChange}
           onPublished={() => {
             setActiveComposer(undefined)
+            setLastImportShare(undefined)
             setActiveView('market')
             setActionMessage('La carta se ha añadido a tus listas.')
           }}
@@ -2396,6 +2406,23 @@ export function CardsPage({
             setActiveView('wanted')
             setMyListsView(isOfferImport ? 'offers' : 'wanted')
             setSelectedPersonalListId('')
+            const offersUrl = `${window.location.origin}${window.location.pathname}#cartas?member=${encodeURIComponent(currentMember.id)}`
+
+            setLastImportShare(
+              result.imported.length > 0
+                ? {
+                    cardCount: result.imported.length,
+                    destination: result.destination,
+                    text: formatImportedCardsForWhatsApp({
+                      cards: result.imported,
+                      communityName: data.community.name,
+                      destination: result.destination,
+                      memberName: currentMember.displayName,
+                      offersUrl: isOfferImport ? offersUrl : undefined,
+                    }),
+                  }
+                : undefined,
+            )
             setActionMessage(
               result.imported.length > 0
                 ? `${result.imported.length} ${isOfferImport ? 'ofertas publicadas' : 'búsquedas importadas'}.${
@@ -2408,6 +2435,7 @@ export function CardsPage({
           }}
           onSynced={(result) => {
             setActiveComposer(undefined)
+            setLastImportShare(undefined)
             setActiveView('wanted')
             setMyListsView('offers')
             setSelectedPersonalListId('')
@@ -2436,6 +2464,33 @@ export function CardsPage({
       <p className="action-message card-action-message" aria-live="polite">
         {actionMessage}
       </p>
+
+      {lastImportShare ? (
+        <section
+          className="card-import-share"
+          aria-label="Compartir cartas importadas"
+        >
+          <div>
+            <strong>Lista preparada para WhatsApp</strong>
+            <span>
+              {lastImportShare.cardCount}{' '}
+              {lastImportShare.cardCount === 1 ? 'carta' : 'cartas'} ·{' '}
+              {lastImportShare.destination === 'offers'
+                ? 'Mis ofertas'
+                : 'Buscadas'}
+            </span>
+          </div>
+          <ShareActions
+            className="card-import-share__actions"
+            copiedLabel="Lista copiada"
+            copyLabel="Copiar lista"
+            copySuccessMessage="Lista copiada. Ya puedes pegarla en WhatsApp."
+            shareAriaLabel="Compartir nuevas cartas por WhatsApp"
+            shareLabel="Compartir"
+            shareText={lastImportShare.text}
+          />
+        </section>
+      ) : null}
 
       {activeView === 'matches' ? (
         <MatchesSection

@@ -33,7 +33,14 @@ export type WantedCardInput = {
 export type WantedImportItem = {
   cardId: string
   cardName: string
+  setCode: string
+  setName: string
+  collectorNumber: string
   quantity: number
+  language: CardLanguage
+  finish: MarketplaceListing['finish']
+  condition?: CardCondition
+  priceEur?: number
 }
 
 export type WantedImportResult = {
@@ -237,6 +244,9 @@ export function applyResolvedWantedCardImport(
       cardName: string
       oracleId?: string
       scryfallId: string
+      setCode: string
+      setName: string
+      collectorNumber: string
       quantity: number
       section: CardListSection
       acceptedLanguages: [CardLanguage]
@@ -269,6 +279,9 @@ export function applyResolvedWantedCardImport(
       cardName: resolution.card.name,
       oracleId: resolution.card.oracleId,
       scryfallId: resolution.card.scryfallId,
+      setCode: resolution.card.setCode,
+      setName: resolution.card.setName,
+      collectorNumber: resolution.card.collectorNumber,
       quantity: (currentGroup?.quantity ?? 0) + Math.floor(input.quantity),
       section: currentGroup?.section ?? resolution.item.section,
       acceptedLanguages: input.acceptedLanguages,
@@ -277,7 +290,25 @@ export function applyResolvedWantedCardImport(
   }
 
   const imported = [...importGroups.values()].map(
-    ({ cardId, cardName, quantity }) => ({ cardId, cardName, quantity }),
+    ({
+      acceptedFinishes,
+      acceptedLanguages,
+      cardId,
+      cardName,
+      collectorNumber,
+      quantity,
+      setCode,
+      setName,
+    }) => ({
+      cardId,
+      cardName,
+      collectorNumber,
+      finish: acceptedFinishes[0],
+      language: acceptedLanguages[0],
+      quantity,
+      setCode,
+      setName,
+    }),
   )
   const importedKeys = new Set(importGroups.keys())
   let wantedCards = data.wantedCards.map((wantedCard) => {
@@ -458,7 +489,14 @@ export function applyResolvedMarketplaceImport(
     imported.push({
       cardId: ensuredCard.cardId,
       cardName: resolvedCard.name,
+      setCode: resolvedCard.setCode,
+      setName: resolvedCard.setName,
+      collectorNumber: resolvedCard.collectorNumber,
       quantity,
+      language: input.language,
+      condition: input.condition,
+      finish: input.finish,
+      priceEur,
     })
   }
 
