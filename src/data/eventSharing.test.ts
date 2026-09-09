@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatEventRegistrationForWhatsApp } from './eventSharing'
+import {
+  formatEventRegistrationForWhatsApp,
+  formatManagerEventRegistrationsForWhatsApp,
+} from './eventSharing'
 
 const event = {
   capacity: 30,
@@ -42,5 +45,38 @@ describe('event registration sharing', () => {
     ).toContain(
       '⏳ El evento está completo — ¿Te apuntas a la espera?\n🔗 Ver el evento:',
     )
+  })
+
+  it('formats a compact manager message with participant names and availability', () => {
+    expect(
+      formatManagerEventRegistrationsForWhatsApp({
+        event: { capacity: 4, startsAt: event.startsAt, title: event.title },
+        eventUrl: 'https://www.garroveta.es/#eventos?event=presentation',
+        participants: [
+          { displayName: 'Pep Peralta', status: 'confirmed' },
+          { displayName: 'Aina Mir', status: 'confirmed' },
+        ],
+      }),
+    ).toBe(
+      [
+        '🎴 *Presentación: The Hobbit* · Sáb. 12 sept · 17:00',
+        '👥 2/4: Pep Peralta, Aina Mir',
+        '🎟 Quedan 2 plazas — Inscripciones: https://www.garroveta.es/#eventos?event=presentation',
+      ].join('\n'),
+    )
+  })
+
+  it('separates the waitlist summary when a presentation is full', () => {
+    expect(
+      formatManagerEventRegistrationsForWhatsApp({
+        event: { capacity: 2, startsAt: event.startsAt, title: event.title },
+        eventUrl: 'https://www.garroveta.es/#eventos?event=presentation',
+        participants: [
+          { displayName: 'Pep Peralta', status: 'confirmed' },
+          { displayName: 'Aina Mir', status: 'confirmed' },
+          { displayName: 'Biel Ferrer', status: 'waitlisted' },
+        ],
+      }),
+    ).toContain('👥 2/2 confirmados · ⏳ 1 en espera\nPep Peralta, Aina Mir')
   })
 })

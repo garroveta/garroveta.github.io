@@ -4901,6 +4901,47 @@ a {
   padding-top: 0.8rem;
 }
 
+.participant-share-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.65rem;
+  border-radius: 0.75rem;
+  background: #f7f3f8;
+}
+
+.participant-share-actions button {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0 0.55rem;
+  border: 1px solid #d9cfdd;
+  border-radius: 0.65rem;
+  color: #613676;
+  background: #fff;
+  font-size: 0.66rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.participant-share-actions button:first-child {
+  color: #fff;
+  border-color: #5b2b77;
+  background: #5b2b77;
+}
+
+.participant-share-actions > span {
+  grid-column: 1 / -1;
+  min-height: 0.8rem;
+  color: #496d5e;
+  font-size: 0.62rem;
+  font-weight: 750;
+  text-align: center;
+}
+
 .participant-add {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

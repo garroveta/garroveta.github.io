@@ -33,7 +33,10 @@ import type { EventStandingWriteInput } from '../api/eventStandings'
 import { DataStateView } from '../components/DataStateView'
 import { EventLinkImportPanel } from '../components/EventLinkImportPanel'
 import { isCommunityOptionActive } from '../data/communityOptions'
-import { formatEventRegistrationForWhatsApp } from '../data/eventSharing'
+import {
+  formatEventRegistrationForWhatsApp,
+  formatManagerEventRegistrationsForWhatsApp,
+} from '../data/eventSharing'
 import {
   filterEventAgenda,
   getEventAgenda,
@@ -1195,12 +1198,15 @@ function EventParticipantManager({
   const [pendingMemberId, setPendingMemberId] = useState<string>()
   const [operationError, setOperationError] = useState('')
   const [operationMessage, setOperationMessage] = useState('')
+  const [shareMessage, setShareMessage] = useState('')
   const registered = participants.filter(({ status }) => status === 'confirmed')
   const waitlisted = participants.filter(
     ({ status }) => status === 'waitlisted',
   )
   const totalRegistrations =
     event.registrationSummary.confirmed + event.registrationSummary.waitlisted
+  const eventUrl = new URL(window.location.href)
+  eventUrl.hash = `eventos?event=${encodeURIComponent(event.id)}`
 
   const loadParticipants = async () => {
     setStatus('loading')
@@ -1266,6 +1272,39 @@ function EventParticipantManager({
     }
   }
 
+  const getManagerShareText = () =>
+    formatManagerEventRegistrationsForWhatsApp({
+      event,
+      eventUrl: eventUrl.toString(),
+      participants,
+    })
+
+  const shareParticipantsOnWhatsApp = () => {
+    const opened = window.open(
+      getWhatsAppShareUrl(getManagerShareText()),
+      '_blank',
+      'noopener,noreferrer',
+    )
+    setShareMessage(
+      opened
+        ? 'WhatsApp se ha abierto. Elige el grupo o contacto y pulsa enviar.'
+        : 'No se ha podido abrir WhatsApp. Prueba a copiar el mensaje.',
+    )
+  }
+
+  const copyParticipantShareText = async () => {
+    try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error('Clipboard unavailable')
+      }
+
+      await navigator.clipboard.writeText(getManagerShareText())
+      setShareMessage('Mensaje copiado. Ya puedes pegarlo en WhatsApp.')
+    } catch {
+      setShareMessage('No se ha podido copiar el mensaje.')
+    }
+  }
+
   return (
     <section
       className="participant-manager"
@@ -1292,6 +1331,20 @@ function EventParticipantManager({
           error={loadError}
           onRetry={() => void loadParticipants()}
         />
+      ) : null}
+
+      {status === 'ready' && event.type === 'launch' ? (
+        <div className="participant-share-actions">
+          <button type="button" onClick={shareParticipantsOnWhatsApp}>
+            <MessageCircle aria-hidden="true" size={16} />
+            Compartir por WhatsApp
+          </button>
+          <button type="button" onClick={() => void copyParticipantShareText()}>
+            <Copy aria-hidden="true" size={16} />
+            Copiar mensaje
+          </button>
+          <span aria-live="polite">{shareMessage}</span>
+        </div>
       ) : null}
 
       <div className="participant-group">

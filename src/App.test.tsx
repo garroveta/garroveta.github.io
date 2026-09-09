@@ -3178,6 +3178,31 @@ describe('App', () => {
   })
 
   it('lets a manager edit, inspect registrations and delete events', async () => {
+    const open = vi.fn().mockReturnValue({})
+    vi.stubGlobal('open', open)
+    communityEventApiMocks.listPersistedEventRegistrations.mockResolvedValue({
+      registrations: [
+        {
+          displayName: 'Sergio Gil',
+          eventId: 'event-presentation-hobbit',
+          id: 'registration-sergio-hobbit',
+          initials: 'SG',
+          memberId: 'member-sergio',
+          registeredAt: '2026-07-24T21:15:00+02:00',
+          status: 'confirmed',
+        },
+        {
+          displayName: 'Aina Mir',
+          eventId: 'event-presentation-hobbit',
+          id: 'registration-aina-hobbit',
+          initials: 'AM',
+          memberId: 'member-aina',
+          registeredAt: '2026-07-24T21:20:00+02:00',
+          status: 'waitlisted',
+          waitlistPosition: 1,
+        },
+      ],
+    })
     authenticateAsManager()
     render(<App />)
 
@@ -3193,6 +3218,12 @@ describe('App', () => {
       }),
     )
     expect(await screen.findByText('Sergio Gil')).toBeInTheDocument()
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Compartir por WhatsApp' }),
+    )
+    const sharedUrl = new URL(open.mock.calls[0][0] as string)
+    expect(sharedUrl.searchParams.get('text')).toContain('👥 1/30: Sergio Gil')
+    expect(sharedUrl.searchParams.get('text')).toContain('🎟 Quedan 29 plazas')
 
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }))
     fireEvent.click(
