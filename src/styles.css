@@ -4779,6 +4779,67 @@ a {
   text-decoration: none;
 }
 
+.event-registration-share {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  padding: 0.8rem;
+  border: 1px solid #d8c7de;
+  border-radius: 0.85rem;
+  color: #613273;
+  background: #f7eff9;
+}
+
+.event-registration-share__heading strong,
+.event-registration-share__heading span {
+  display: block;
+}
+
+.event-registration-share__heading strong {
+  color: #4f3159;
+  font-size: 0.78rem;
+}
+
+.event-registration-share__heading span {
+  margin-top: 0.12rem;
+  color: #78687c;
+  font-size: 0.66rem;
+}
+
+.event-registration-share__close {
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  color: #6c4678;
+  background: rgb(255 255 255 / 75%);
+}
+
+.event-registration-share__actions {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.event-registration-share__actions .primary-button,
+.event-registration-share__actions .secondary-button {
+  min-height: 2.6rem;
+  padding: 0 0.55rem;
+  font-size: 0.66rem;
+}
+
+.event-registration-share__feedback {
+  grid-column: 1 / -1;
+  min-height: 0.9rem;
+  color: #496d5e;
+  font-size: 0.62rem;
+  font-weight: 750;
+  text-align: center;
+}
+
 .event-waitlist-summary,
 .event-detail__registration {
   width: fit-content;

@@ -2686,6 +2686,8 @@ describe('App', () => {
   })
 
   it('registers for an available event and cancels the registration', async () => {
+    const open = vi.fn().mockReturnValue({})
+    vi.stubGlobal('open', open)
     render(<App />)
 
     fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
@@ -2710,6 +2712,15 @@ describe('App', () => {
     expect(
       screen.getByRole('button', { name: 'Cancelar inscripción' }),
     ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar por WhatsApp' }))
+    const sharedUrl = new URL(open.mock.calls[0][0] as string)
+    expect(sharedUrl.origin).toBe('https://wa.me')
+    expect(sharedUrl.searchParams.get('text')).toContain(
+      '🎴 Me he apuntado a *Draft Night MTG*',
+    )
+    expect(sharedUrl.searchParams.get('text')).toContain(
+      '🎟 Queda 1 plaza — ¿Te vienes?',
+    )
 
     fireEvent.click(
       screen.getByRole('button', { name: 'Cancelar inscripción' }),
@@ -2718,6 +2729,9 @@ describe('App', () => {
     expect(
       await screen.findByText('Tu inscripción se ha cancelado.'),
     ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Enviar por WhatsApp' }),
+    ).not.toBeInTheDocument()
     expect(screen.getByText('6/8 confirmadas')).toBeInTheDocument()
     expect(
       communityEventApiMocks.cancelPersistedEventRegistration,

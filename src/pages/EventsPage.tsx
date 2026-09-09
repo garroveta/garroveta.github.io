@@ -1,5 +1,6 @@
 import {
   ArrowLeft,
+  CheckCircle2,
   CalendarPlus,
   CalendarDays,
   ChevronRight,
@@ -9,6 +10,7 @@ import {
   FileUp,
   ListChecks,
   MapPin,
+  MessageCircle,
   Plus,
   Rows3,
   Trash2,
@@ -31,6 +33,7 @@ import type { EventStandingWriteInput } from '../api/eventStandings'
 import { DataStateView } from '../components/DataStateView'
 import { EventLinkImportPanel } from '../components/EventLinkImportPanel'
 import { isCommunityOptionActive } from '../data/communityOptions'
+import { formatEventRegistrationForWhatsApp } from '../data/eventSharing'
 import {
   filterEventAgenda,
   getEventAgenda,
@@ -42,6 +45,7 @@ import {
   EVENT_TYPE_LABELS,
   getRegistrationRule,
 } from '../data/registrationSettings'
+import { getWhatsAppShareUrl } from '../data/whatsAppSharing'
 import type {
   Community,
   CommunityEvent,
@@ -902,6 +906,10 @@ function EventDetail({
   const [actionMessage, setActionMessage] = useState('')
   const [actionError, setActionError] = useState('')
   const [isActionPending, setIsActionPending] = useState(false)
+  const [shareRegistrationStatus, setShareRegistrationStatus] = useState<
+    'confirmed' | 'waitlisted' | null
+  >(null)
+  const [shareFeedback, setShareFeedback] = useState('')
   const startsAt = new Date(item.event.startsAt)
   const endsAt = item.event.endsAt ? new Date(item.event.endsAt) : undefined
   const canRegister =
@@ -926,6 +934,8 @@ function EventDetail({
   const handleRegistration = async () => {
     setActionError('')
     setActionMessage('')
+    setShareRegistrationStatus(null)
+    setShareFeedback('')
     setIsActionPending(true)
 
     try {
@@ -940,10 +950,8 @@ function EventDetail({
       }
 
       const registration = await onRegister(item.event.id)
-      setActionMessage(
-        registration.status === 'confirmed'
-          ? 'Tu plaza está confirmada.'
-          : 'Te has unido a la lista de espera.',
+      setShareRegistrationStatus(
+        registration.status === 'confirmed' ? 'confirmed' : 'waitlisted',
       )
     } catch {
       setActionError(
@@ -951,6 +959,50 @@ function EventDetail({
       )
     } finally {
       setIsActionPending(false)
+    }
+  }
+
+  const getRegistrationShareText = () =>
+    shareRegistrationStatus
+      ? formatEventRegistrationForWhatsApp({
+          community,
+          event: item.event,
+          eventUrl: eventUrl.toString(),
+          status: shareRegistrationStatus,
+        })
+      : ''
+
+  const shareRegistrationOnWhatsApp = () => {
+    const shareText = getRegistrationShareText()
+
+    if (!shareText) {
+      return
+    }
+
+    const opened = window.open(
+      getWhatsAppShareUrl(shareText),
+      '_blank',
+      'noopener,noreferrer',
+    )
+    setShareFeedback(
+      opened
+        ? 'WhatsApp se ha abierto. Elige el contacto y pulsa enviar.'
+        : 'No se ha podido abrir WhatsApp. Prueba a copiar el mensaje.',
+    )
+  }
+
+  const copyRegistrationShareText = async () => {
+    const shareText = getRegistrationShareText()
+
+    try {
+      if (!shareText || !navigator.clipboard?.writeText) {
+        throw new Error('Clipboard unavailable')
+      }
+
+      await navigator.clipboard.writeText(shareText)
+      setShareFeedback('Mensaje copiado. Ya puedes pegarlo en WhatsApp.')
+    } catch {
+      setShareFeedback('No se ha podido copiar el mensaje.')
     }
   }
 
@@ -1053,6 +1105,58 @@ function EventDetail({
             </button>
           ) : null}
         </div>
+
+        {shareRegistrationStatus ? (
+          <section
+            className="event-registration-share"
+            aria-labelledby="event-registration-share-title"
+          >
+            <CheckCircle2 aria-hidden="true" size={20} />
+            <div className="event-registration-share__heading">
+              <strong id="event-registration-share-title">
+                {shareRegistrationStatus === 'confirmed'
+                  ? 'Tu plaza está confirmada.'
+                  : 'Te has unido a la lista de espera.'}
+              </strong>
+              <span>¿Quieres avisar a tus amigos?</span>
+            </div>
+            <button
+              aria-label="Cerrar las opciones de compartir"
+              className="icon-button event-registration-share__close"
+              type="button"
+              onClick={() => {
+                setShareRegistrationStatus(null)
+                setShareFeedback('')
+              }}
+            >
+              <X aria-hidden="true" size={16} />
+            </button>
+            <div className="event-registration-share__actions">
+              <button
+                className="primary-button"
+                type="button"
+                onClick={shareRegistrationOnWhatsApp}
+              >
+                <MessageCircle aria-hidden="true" size={16} />
+                Enviar por WhatsApp
+              </button>
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => void copyRegistrationShareText()}
+              >
+                <Copy aria-hidden="true" size={16} />
+                Copiar mensaje
+              </button>
+            </div>
+            <span
+              className="event-registration-share__feedback"
+              aria-live="polite"
+            >
+              {shareFeedback}
+            </span>
+          </section>
+        ) : null}
 
         <p className="action-message" aria-live="polite">
           {actionMessage}
