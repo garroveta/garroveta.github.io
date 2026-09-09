@@ -66,6 +66,7 @@ Avant chaque commit :
 - Utiliser des messages de commit courts et explicites avec un préfixe comme `feat:`, `fix:`, `refactor:` ou `test:`.
 - Ne pas réécrire ou supprimer l’historique Git sans autorisation explicite.
 - Déployer le Worker uniquement avec `npm run deploy:worker` et valider avec `npm run deploy:worker:dry-run` ; ne jamais appeler directement `wrangler deploy`, qui peut réutiliser un bundle Vite obsolète.
+- Lors de chaque demande de push et déploiement, vérifier les migrations D1 distantes en attente, examiner leur contenu, les appliquer avant le Worker avec `npm run db:migrate:remote`, puis confirmer qu’il n’en reste aucune.
 
 ## Maintenance de ces instructions
 
