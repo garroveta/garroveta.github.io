@@ -28,6 +28,11 @@ export type RankingFilters = {
   formatId?: string
   competitionEventKindId?: string
   seasonId: string
+  /**
+   * Exclusive upper bound on the event date, to rebuild the ranking as it
+   * stood before a given result instead of as it stands today.
+   */
+  before?: string
 }
 
 export type CommunityRankingPlayer = {
@@ -39,6 +44,10 @@ export type CommunityRankingPlayer = {
   podiums: number
   bestRank: number
   latestResultAt: string
+}
+
+export function getResolvedEventDate({ event }: ResolvedEventStanding) {
+  return event.endsAt ?? event.startsAt
 }
 
 function resolveStanding(
@@ -79,6 +88,43 @@ export function getLatestEventStandings(
     )
 }
 
+/**
+ * Results counted by a ranking, most recent first. Shared with the per-member
+ * views so a result never appears in one and not in the other.
+ */
+export function getRankingSeasonStandings(
+  data: DemoDataSet,
+  filters: RankingFilters,
+): ResolvedEventStanding[] {
+  const season = data.rankingSeasons.find(({ id }) => id === filters.seasonId)
+
+  if (!season) {
+    return []
+  }
+
+  const beforeTimestamp = filters.before
+    ? new Date(filters.before).getTime()
+    : undefined
+
+  return getLatestEventStandings(data).filter((item) => {
+    const eventDate = getResolvedEventDate(item)
+    const standingSeasonId =
+      item.standing.rankingSeasonId ??
+      getRankingSeasonForDate(data.rankingSeasons, eventDate)?.id
+
+    return (
+      item.event.countsForCommunityRanking === true &&
+      standingSeasonId === season.id &&
+      item.game.id === filters.gameId &&
+      (!filters.formatId || item.format.id === filters.formatId) &&
+      (!filters.competitionEventKindId ||
+        item.eventKind?.id === filters.competitionEventKindId) &&
+      (beforeTimestamp === undefined ||
+        new Date(eventDate).getTime() < beforeTimestamp)
+    )
+  })
+}
+
 export function getCommunityLeaderboard(
   data: DemoDataSet,
   filters: RankingFilters,
@@ -100,22 +146,8 @@ export function getCommunityLeaderboard(
     Omit<CommunityRankingPlayer, 'rank' | 'member'>
   >()
 
-  for (const item of getLatestEventStandings(data)) {
-    const eventDate = item.event.endsAt ?? item.event.startsAt
-    const standingSeasonId =
-      item.standing.rankingSeasonId ??
-      getRankingSeasonForDate(data.rankingSeasons, eventDate)?.id
-    const matchesFilters =
-      item.event.countsForCommunityRanking === true &&
-      standingSeasonId === season.id &&
-      item.game.id === filters.gameId &&
-      (!filters.formatId || item.format.id === filters.formatId) &&
-      (!filters.competitionEventKindId ||
-        item.eventKind?.id === filters.competitionEventKindId)
-
-    if (!matchesFilters) {
-      continue
-    }
+  for (const item of getRankingSeasonStandings(data, filters)) {
+    const eventDate = getResolvedEventDate(item)
 
     for (const entry of item.standing.entries) {
       if (!entry.memberId || !eligibleMembers.has(entry.memberId)) {
@@ -128,7 +160,7 @@ export function getCommunityLeaderboard(
         eventWins: 0,
         podiums: 0,
         bestRank: Number.POSITIVE_INFINITY,
-        latestResultAt: item.event.endsAt ?? item.event.startsAt,
+        latestResultAt: eventDate,
       }
 
       totals.set(entry.memberId, {
@@ -138,9 +170,9 @@ export function getCommunityLeaderboard(
         podiums: current.podiums + Number(entry.rank <= 3),
         bestRank: Math.min(current.bestRank, entry.rank),
         latestResultAt:
-          new Date(item.event.endsAt ?? item.event.startsAt).getTime() >
+          new Date(eventDate).getTime() >
           new Date(current.latestResultAt).getTime()
-            ? (item.event.endsAt ?? item.event.startsAt)
+            ? eventDate
             : current.latestResultAt,
       })
     }
