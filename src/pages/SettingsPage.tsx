@@ -263,7 +263,10 @@ export function SettingsPage({
           tags={data.tags}
         />
       ) : activeSection === 'invitations' ? (
-        <InvitationManagementPanel communityId={data.community.id} />
+        <InvitationManagementPanel
+          communityId={data.community.id}
+          communityName={data.community.name}
+        />
       ) : activeSection === 'communications' ? (
         <CommunicationManagementPanel
           data={data}

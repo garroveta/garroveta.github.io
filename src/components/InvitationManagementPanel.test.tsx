@@ -17,6 +17,14 @@ vi.mock('../api/authentication', () => authenticationApiMocks)
 
 import { InvitationManagementPanel } from './InvitationManagementPanel'
 
+const renderPanel = () =>
+  render(
+    <InvitationManagementPanel
+      communityId="community-crc-delorean"
+      communityName="CRC Delorean"
+    />,
+  )
+
 describe('InvitationManagementPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -72,7 +80,7 @@ describe('InvitationManagementPanel', () => {
       ],
     })
 
-    render(<InvitationManagementPanel communityId="community-crc-delorean" />)
+    renderPanel()
 
     expect(await screen.findByText('Grupo piloto')).toBeInTheDocument()
     expect(screen.getByText('Invitación sin nombre')).toBeInTheDocument()
@@ -85,7 +93,7 @@ describe('InvitationManagementPanel', () => {
       new ClientApiError(401, 'authentication_required', 'Unauthorized'),
     )
 
-    render(<InvitationManagementPanel communityId="community-crc-delorean" />)
+    renderPanel()
 
     expect(await screen.findByText('Accede como gerente')).toBeInTheDocument()
   })
@@ -111,7 +119,7 @@ describe('InvitationManagementPanel', () => {
         ],
       })
 
-    render(<InvitationManagementPanel communityId="community-crc-delorean" />)
+    renderPanel()
 
     fireEvent.change(await screen.findByLabelText('Correo electrónico'), {
       target: { value: 'tomas@example.com' },
@@ -142,7 +150,7 @@ describe('InvitationManagementPanel', () => {
       new ClientApiError(403, 'manager_access_required', 'Forbidden'),
     )
 
-    render(<InvitationManagementPanel communityId="community-crc-delorean" />)
+    renderPanel()
 
     expect(
       await screen.findByText('Esta cuenta no tiene acceso de gerente'),
@@ -156,7 +164,7 @@ describe('InvitationManagementPanel', () => {
       invitations: [],
     })
 
-    render(<InvitationManagementPanel communityId="community-crc-delorean" />)
+    renderPanel()
 
     fireEvent.click(
       await screen.findByRole('button', { name: 'Nueva invitación' }),
@@ -182,6 +190,9 @@ describe('InvitationManagementPanel', () => {
     expect(
       screen.getByTitle('Código QR de la nueva invitación'),
     ).toBeInTheDocument()
+    expect(
+      screen.getByText('Enlace privado de un solo uso'),
+    ).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Copiar enlace' }))
 
@@ -193,6 +204,42 @@ describe('InvitationManagementPanel', () => {
     expect(screen.getByText('Enlace copiado')).toBeInTheDocument()
     expect(
       screen.getByText('Ya puedes pegarlo en WhatsApp.'),
+    ).toBeInTheDocument()
+  })
+
+  it('opens WhatsApp with the private invitation details', async () => {
+    const open = vi.fn().mockReturnValue({})
+    vi.stubGlobal('open', open)
+    invitationApiMocks.listCommunityInvitations.mockResolvedValue({
+      invitations: [],
+    })
+
+    renderPanel()
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Nueva invitación' }),
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Crear invitación' }))
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Enviar por WhatsApp' }),
+    )
+
+    expect(open).toHaveBeenCalledWith(
+      expect.stringMatching(/^https:\/\/wa\.me\/\?text=/),
+      '_blank',
+      'noopener,noreferrer',
+    )
+    const sharedUrl = new URL(open.mock.calls[0][0] as string)
+    const sharedMessage = sharedUrl.searchParams.get('text')
+    expect(sharedMessage).toContain('Invitación privada a CRC Delorean')
+    expect(sharedMessage).toContain(
+      'https://www.garroveta.es/#registro?invite=secret-token',
+    )
+    expect(sharedMessage).toContain('No reenvíes este enlace')
+    expect(
+      screen.getByText(
+        'WhatsApp se ha abierto. Elige el contacto y pulsa enviar.',
+      ),
     ).toBeInTheDocument()
   })
 })

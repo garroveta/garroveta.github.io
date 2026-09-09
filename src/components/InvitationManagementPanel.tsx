@@ -6,6 +6,7 @@ import {
   Clock3,
   Copy,
   Link2,
+  MessageCircle,
   Plus,
   QrCode,
   X,
@@ -21,11 +22,14 @@ import {
   type ManagerInvitationStatus,
 } from '../api/managerInvitations'
 import { ClientApiError } from '../api/client'
+import { formatInvitationForWhatsApp } from '../data/invitationSharing'
+import { getWhatsAppShareUrl } from '../data/whatsAppSharing'
 import { DataStateView } from './DataStateView'
 import { ManagerOtpLogin } from './ManagerOtpLogin'
 
 type InvitationManagementPanelProps = {
   communityId: string
+  communityName: string
 }
 
 const statusLabels: Record<ManagerInvitationStatus, string> = {
@@ -51,6 +55,7 @@ function formatDate(value: string) {
 
 export function InvitationManagementPanel({
   communityId,
+  communityName,
 }: InvitationManagementPanelProps) {
   const [invitations, setInvitations] = useState<ManagerInvitation[]>([])
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false)
@@ -61,6 +66,9 @@ export function InvitationManagementPanel({
   const [createdInvitation, setCreatedInvitation] =
     useState<CreatedManagerInvitation | null>(null)
   const [copyState, setCopyState] = useState<'copied' | 'error' | 'idle'>(
+    'idle',
+  )
+  const [shareState, setShareState] = useState<'error' | 'idle' | 'opened'>(
     'idle',
   )
   const [loadState, setLoadState] = useState<
@@ -132,6 +140,7 @@ export function InvitationManagementPanel({
       ])
       setCreatedInvitation(invitation)
       setCopyState('idle')
+      setShareState('idle')
       setLabel('')
       setExpiresInDays(30)
       setIsCreateFormOpen(false)
@@ -167,6 +176,21 @@ export function InvitationManagementPanel({
     } catch {
       setCopyState('error')
     }
+  }
+
+  const shareInvitationOnWhatsApp = () => {
+    if (!createdInvitation) {
+      return
+    }
+
+    const opened = window.open(
+      getWhatsAppShareUrl(
+        formatInvitationForWhatsApp(createdInvitation, communityName),
+      ),
+      '_blank',
+      'noopener,noreferrer',
+    )
+    setShareState(opened ? 'opened' : 'error')
   }
 
   return (
@@ -307,6 +331,7 @@ export function InvitationManagementPanel({
                   onClick={() => {
                     setCreatedInvitation(null)
                     setCopyState('idle')
+                    setShareState('idle')
                   }}
                 >
                   <X aria-hidden="true" size={17} />
@@ -347,8 +372,23 @@ export function InvitationManagementPanel({
                       onFocus={(event) => event.currentTarget.select()}
                     />
                   </label>
+                  <div className="created-invitation-warning">
+                    <strong>Enlace privado de un solo uso</strong>
+                    <span>
+                      Compártelo solo con la persona invitada. Quien lo reciba
+                      podrá registrarse en {communityName}.
+                    </span>
+                  </div>
                   <button
                     className="primary-button"
+                    type="button"
+                    onClick={shareInvitationOnWhatsApp}
+                  >
+                    <MessageCircle aria-hidden="true" size={16} />
+                    Enviar por WhatsApp
+                  </button>
+                  <button
+                    className="secondary-button"
                     type="button"
                     onClick={() => void copyInvitationLink()}
                   >
@@ -369,7 +409,11 @@ export function InvitationManagementPanel({
                       ? 'Ya puedes pegarlo en WhatsApp.'
                       : copyState === 'error'
                         ? 'Selecciona el enlace y cópialo manualmente.'
-                        : ''}
+                        : shareState === 'opened'
+                          ? 'WhatsApp se ha abierto. Elige el contacto y pulsa enviar.'
+                          : shareState === 'error'
+                            ? 'No se ha podido abrir WhatsApp. Copia el enlace manualmente.'
+                            : ''}
                   </span>
                 </div>
               </div>

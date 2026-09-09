@@ -1567,6 +1567,31 @@ a {
   min-height: 2.55rem;
 }
 
+.created-invitation-share .secondary-button {
+  width: 100%;
+  min-height: 2.55rem;
+}
+
+.created-invitation-warning {
+  display: grid;
+  gap: 0.18rem;
+  padding: 0.65rem;
+  border: 1px solid #e5cda0;
+  border-radius: 0.65rem;
+  color: #765622;
+  background: #fff8e8;
+}
+
+.created-invitation-warning strong {
+  color: #694a18;
+  font-size: 0.66rem;
+}
+
+.created-invitation-warning span {
+  font-size: 0.62rem;
+  line-height: 1.45;
+}
+
 .created-invitation-copy-status {
   min-height: 0.9rem;
   color: #496d5e;

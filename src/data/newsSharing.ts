@@ -1,5 +1,7 @@
 import type { Community, NewsPost } from '../domain/types'
 
+export { getWhatsAppShareUrl } from './whatsAppSharing'
+
 export function formatNewsPostForWhatsApp(
   post: NewsPost,
   audienceNames: string[],
@@ -17,14 +19,4 @@ export function formatNewsPostForWhatsApp(
   ]
     .filter(Boolean)
     .join('\n\n')
-}
-
-/**
- * Opens WhatsApp with the text pre-filled and no recipient chosen: the
- * manager still picks the group or contact and presses send themselves,
- * nothing is sent automatically. Works both for the WhatsApp app (mobile)
- * and WhatsApp Web/Desktop (desktop), unlike a `whatsapp://` deep link.
- */
-export function getWhatsAppShareUrl(text: string) {
-  return `https://wa.me/?text=${encodeURIComponent(text)}`
 }
