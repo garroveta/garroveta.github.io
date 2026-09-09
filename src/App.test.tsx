@@ -2965,12 +2965,20 @@ describe('App', () => {
   })
 
   it('lets a manager publish a multi-game event', async () => {
+    const todayInMadrid = new Intl.DateTimeFormat('sv-SE', {
+      day: '2-digit',
+      month: '2-digit',
+      timeZone: 'Europe/Madrid',
+      year: 'numeric',
+    }).format(new Date())
     authenticateAsManager()
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
     fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
     fireEvent.click(screen.getByRole('button', { name: 'Nuevo evento' }))
+
+    expect(screen.getByLabelText('Fecha')).toHaveValue(todayInMadrid)
 
     fireEvent.change(screen.getByLabelText('Juego'), {
       target: { value: 'game-one-piece' },

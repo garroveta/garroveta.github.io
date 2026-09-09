@@ -224,7 +224,7 @@ function EventComposer({
       ? eventToDuplicate
         ? addCalendarDays(madridDatePart(sourceEvent.startsAt), 7)
         : madridDatePart(sourceEvent.startsAt)
-      : '2026-08-15',
+      : madridDatePart(new Date().toISOString()),
   )
   const [startsAt, setStartsAt] = useState(
     sourceEvent ? madridTimePart(sourceEvent.startsAt) : '17:00',
