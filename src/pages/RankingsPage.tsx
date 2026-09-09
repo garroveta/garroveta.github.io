@@ -2,10 +2,8 @@ import {
   CalendarDays,
   ChevronDown,
   ChevronRight,
-  Copy,
   ListOrdered,
   Medal,
-  MessageCircle,
   Trophy,
   UserRound,
   UsersRound,
@@ -18,10 +16,10 @@ import {
   type ResolvedEventStanding,
 } from '../data/rankingSelectors'
 import { DataStateView } from '../components/DataStateView'
+import { ShareActions } from '../components/ShareActions'
 import { formatEventResultForWhatsApp } from '../data/eventSharing'
 import { getCommunityPoints } from '../data/rankingSettings'
 import { getRankingSeasonForDate } from '../data/rankingSeasons'
-import { getWhatsAppShareUrl } from '../data/whatsAppSharing'
 import type {
   CommunityRankingPoints,
   DemoDataSet,
@@ -252,41 +250,13 @@ function EventRankingDetail({
   rankingSettings: CommunityRankingPoints
   sectionRef: RefObject<HTMLElement | null>
 }) {
-  const [shareMessage, setShareMessage] = useState('')
   const resultUrl = new URL(window.location.href)
   resultUrl.hash = `ranking?view=events&standing=${encodeURIComponent(item.standing.id)}`
-  const getResultShareText = () =>
-    formatEventResultForWhatsApp({
-      event: item.event,
-      resultUrl: resultUrl.toString(),
-      standing: item.standing,
-    })
-
-  const shareResultOnWhatsApp = () => {
-    const opened = window.open(
-      getWhatsAppShareUrl(getResultShareText()),
-      '_blank',
-      'noopener,noreferrer',
-    )
-    setShareMessage(
-      opened
-        ? 'WhatsApp se ha abierto. Elige el grupo o contacto y pulsa enviar.'
-        : 'No se ha podido abrir WhatsApp. Prueba a copiar el resultado.',
-    )
-  }
-
-  const copyResult = async () => {
-    try {
-      if (!navigator.clipboard?.writeText) {
-        throw new Error('Clipboard unavailable')
-      }
-
-      await navigator.clipboard.writeText(getResultShareText())
-      setShareMessage('Resultado copiado. Ya puedes pegarlo en WhatsApp.')
-    } catch {
-      setShareMessage('No se ha podido copiar el resultado.')
-    }
-  }
+  const resultShareText = formatEventResultForWhatsApp({
+    event: item.event,
+    resultUrl: resultUrl.toString(),
+    standing: item.standing,
+  })
 
   return (
     <section
@@ -318,17 +288,17 @@ function EventRankingDetail({
         </div>
       </header>
 
-      <div className="event-result-share-actions">
-        <button type="button" onClick={shareResultOnWhatsApp}>
-          <MessageCircle aria-hidden="true" size={16} />
-          Compartir por WhatsApp
-        </button>
-        <button type="button" onClick={() => void copyResult()}>
-          <Copy aria-hidden="true" size={16} />
-          Copiar resultado
-        </button>
-        <span aria-live="polite">{shareMessage}</span>
-      </div>
+      <ShareActions
+        className="event-result-share-actions"
+        shareLabel="Compartir por WhatsApp"
+        shareText={resultShareText}
+        shareSuccessMessage="WhatsApp se ha abierto. Elige el grupo o contacto y pulsa enviar."
+        shareErrorMessage="No se ha podido abrir WhatsApp. Prueba a copiar el resultado."
+        copyLabel="Copiar resultado"
+        copiedLabel="Resultado copiado"
+        copySuccessMessage="Resultado copiado. Ya puedes pegarlo en WhatsApp."
+        copyErrorMessage="No se ha podido copiar el resultado."
+      />
 
       <MobileEventStandingList
         key={item.standing.id}

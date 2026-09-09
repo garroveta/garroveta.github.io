@@ -1,12 +1,9 @@
 import {
   CalendarClock,
-  Check,
   CheckCircle2,
   CircleSlash2,
   Clock3,
-  Copy,
   Link2,
-  MessageCircle,
   Plus,
   QrCode,
   X,
@@ -23,9 +20,9 @@ import {
 } from '../api/managerInvitations'
 import { ClientApiError } from '../api/client'
 import { formatInvitationForWhatsApp } from '../data/invitationSharing'
-import { getWhatsAppShareUrl } from '../data/whatsAppSharing'
 import { DataStateView } from './DataStateView'
 import { ManagerOtpLogin } from './ManagerOtpLogin'
+import { ShareActions } from './ShareActions'
 
 type InvitationManagementPanelProps = {
   communityId: string
@@ -65,12 +62,6 @@ export function InvitationManagementPanel({
   const [expiresInDays, setExpiresInDays] = useState(30)
   const [createdInvitation, setCreatedInvitation] =
     useState<CreatedManagerInvitation | null>(null)
-  const [copyState, setCopyState] = useState<'copied' | 'error' | 'idle'>(
-    'idle',
-  )
-  const [shareState, setShareState] = useState<'error' | 'idle' | 'opened'>(
-    'idle',
-  )
   const [loadState, setLoadState] = useState<
     | 'authentication-required'
     | 'error'
@@ -139,8 +130,6 @@ export function InvitationManagementPanel({
         ...currentInvitations,
       ])
       setCreatedInvitation(invitation)
-      setCopyState('idle')
-      setShareState('idle')
       setLabel('')
       setExpiresInDays(30)
       setIsCreateFormOpen(false)
@@ -159,38 +148,6 @@ export function InvitationManagementPanel({
     } finally {
       setIsCreating(false)
     }
-  }
-
-  const copyInvitationLink = async () => {
-    if (!createdInvitation) {
-      return
-    }
-
-    try {
-      if (!navigator.clipboard?.writeText) {
-        throw new Error('Clipboard unavailable')
-      }
-
-      await navigator.clipboard.writeText(createdInvitation.inviteUrl)
-      setCopyState('copied')
-    } catch {
-      setCopyState('error')
-    }
-  }
-
-  const shareInvitationOnWhatsApp = () => {
-    if (!createdInvitation) {
-      return
-    }
-
-    const opened = window.open(
-      getWhatsAppShareUrl(
-        formatInvitationForWhatsApp(createdInvitation, communityName),
-      ),
-      '_blank',
-      'noopener,noreferrer',
-    )
-    setShareState(opened ? 'opened' : 'error')
   }
 
   return (
@@ -328,11 +285,7 @@ export function InvitationManagementPanel({
                   aria-label="Ocultar el enlace de invitación"
                   className="icon-button"
                   type="button"
-                  onClick={() => {
-                    setCreatedInvitation(null)
-                    setCopyState('idle')
-                    setShareState('idle')
-                  }}
+                  onClick={() => setCreatedInvitation(null)}
                 >
                   <X aria-hidden="true" size={17} />
                 </button>
@@ -379,42 +332,24 @@ export function InvitationManagementPanel({
                       podrá registrarse en {communityName}.
                     </span>
                   </div>
-                  <button
-                    className="primary-button"
-                    type="button"
-                    onClick={shareInvitationOnWhatsApp}
-                  >
-                    <MessageCircle aria-hidden="true" size={16} />
-                    Enviar por WhatsApp
-                  </button>
-                  <button
-                    className="secondary-button"
-                    type="button"
-                    onClick={() => void copyInvitationLink()}
-                  >
-                    {copyState === 'copied' ? (
-                      <Check aria-hidden="true" size={16} />
-                    ) : (
-                      <Copy aria-hidden="true" size={16} />
+                  <ShareActions
+                    className="created-invitation-share-actions"
+                    copiedLabel="Enlace copiado"
+                    copyErrorMessage="Selecciona el enlace y cópialo manualmente."
+                    copyLabel="Copiar enlace"
+                    copySuccessMessage="Ya puedes pegarlo en WhatsApp."
+                    copyText={createdInvitation.inviteUrl}
+                    feedbackClassName="created-invitation-copy-status"
+                    key={createdInvitation.id}
+                    shareButtonClassName="primary-button"
+                    shareErrorMessage="No se ha podido abrir WhatsApp. Copia el enlace manualmente."
+                    shareSuccessMessage="WhatsApp se ha abierto. Elige el contacto y pulsa enviar."
+                    shareText={formatInvitationForWhatsApp(
+                      createdInvitation,
+                      communityName,
                     )}
-                    {copyState === 'copied'
-                      ? 'Enlace copiado'
-                      : 'Copiar enlace'}
-                  </button>
-                  <span
-                    className="created-invitation-copy-status"
-                    aria-live="polite"
-                  >
-                    {copyState === 'copied'
-                      ? 'Ya puedes pegarlo en WhatsApp.'
-                      : copyState === 'error'
-                        ? 'Selecciona el enlace y cópialo manualmente.'
-                        : shareState === 'opened'
-                          ? 'WhatsApp se ha abierto. Elige el contacto y pulsa enviar.'
-                          : shareState === 'error'
-                            ? 'No se ha podido abrir WhatsApp. Copia el enlace manualmente.'
-                            : ''}
-                  </span>
+                    copyButtonClassName="secondary-button"
+                  />
                 </div>
               </div>
             </section>

@@ -1,12 +1,9 @@
 import {
   Archive,
-  Check,
   CheckCircle2,
   Clock,
-  Copy,
   ExternalLink,
   Megaphone,
-  MessageCircle,
   Pencil,
   Pin,
   PinOff,
@@ -25,14 +22,12 @@ import {
   type CommunityCommunicationWriteInput,
 } from '../api/communityCommunications'
 import type { DemoDataUpdater } from '../data/demoRepository'
-import {
-  formatNewsPostForWhatsApp,
-  getWhatsAppShareUrl,
-} from '../data/newsSharing'
+import { formatNewsPostForWhatsApp } from '../data/newsSharing'
 import type { DemoDataSet, NewsPost, NewsPostType } from '../domain/types'
 import type { CommunityCommunicationsStatus } from '../hooks/useCommunityCommunications'
 import { isCommunityOptionActive } from '../data/communityOptions'
 import { DataStateView } from './DataStateView'
+import { ShareActions } from './ShareActions'
 
 type CommunicationManagementPanelProps = {
   data: DemoDataSet
@@ -111,39 +106,6 @@ function getPublicationState(
   }
 
   return 'live'
-}
-
-async function copyText(text: string) {
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(text)
-    return
-  }
-
-  const textarea = document.createElement('textarea')
-  textarea.value = text
-  textarea.setAttribute('readonly', '')
-  textarea.style.position = 'fixed'
-  textarea.style.opacity = '0'
-  document.body.appendChild(textarea)
-  textarea.select()
-  const copied = document.execCommand('copy')
-  textarea.remove()
-
-  if (!copied) {
-    throw new Error('Clipboard unavailable')
-  }
-}
-
-/**
- * Opens WhatsApp with the message ready to send; the manager still chooses
- * the group or contact and presses send. Returns whether the window actually
- * opened, so callers can fall back to "copy the text instead" if a popup
- * blocker stopped it.
- */
-function shareOnWhatsApp(text: string) {
-  return Boolean(
-    window.open(getWhatsAppShareUrl(text), '_blank', 'noopener,noreferrer'),
-  )
 }
 
 function CommunicationEditor({
@@ -380,7 +342,6 @@ export function CommunicationManagementPanel({
     'closed',
   )
   const [pendingDeleteId, setPendingDeleteId] = useState<string>()
-  const [copiedPostId, setCopiedPostId] = useState<string>()
   const [actionMessage, setActionMessage] = useState('')
   const [savingPostId, setSavingPostId] = useState<string>()
   const [savedPublication, setSavedPublication] = useState<{
@@ -396,6 +357,14 @@ export function CommunicationManagementPanel({
       ),
     [data.newsPosts],
   )
+  const getPostShareText = (post: NewsPost) => {
+    const tagNames = post.tagIds.flatMap((tagId) => {
+      const tag = data.tags.find(({ id }) => id === tagId)
+      return tag ? [tag.name] : []
+    })
+
+    return formatNewsPostForWhatsApp(post, tagNames, data.community)
+  }
   const filteredPosts = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase('es')
     const now = new Date()
@@ -601,71 +570,18 @@ export function CommunicationManagementPanel({
             <span>¿Qué quieres hacer ahora?</span>
           </div>
           <div className="communication-save-actions__buttons">
-            <button
-              type="button"
+            <ShareActions
+              className="share-actions--contents"
               disabled={!savedPost}
-              onClick={() => {
-                if (!savedPost) {
-                  return
-                }
-
-                const tagNames = savedPost.tagIds.flatMap((tagId) => {
-                  const tag = data.tags.find(({ id }) => id === tagId)
-                  return tag ? [tag.name] : []
-                })
-
-                const opened = shareOnWhatsApp(
-                  formatNewsPostForWhatsApp(
-                    savedPost,
-                    tagNames,
-                    data.community,
-                  ),
-                )
-                setActionMessage(
-                  opened
-                    ? 'Se ha abierto WhatsApp. Elige el grupo o contacto y pulsa enviar.'
-                    : 'No se ha podido abrir WhatsApp. Prueba a copiar el texto.',
-                )
-              }}
-            >
-              <MessageCircle aria-hidden="true" size={16} />
-              Enviar por WhatsApp
-            </button>
-            <button
-              type="button"
-              disabled={!savedPost}
-              onClick={async () => {
-                if (!savedPost) {
-                  return
-                }
-
-                const tagNames = savedPost.tagIds.flatMap((tagId) => {
-                  const tag = data.tags.find(({ id }) => id === tagId)
-                  return tag ? [tag.name] : []
-                })
-
-                try {
-                  await copyText(
-                    formatNewsPostForWhatsApp(
-                      savedPost,
-                      tagNames,
-                      data.community,
-                    ),
-                  )
-                  setCopiedPostId(savedPost.id)
-                  setActionMessage(
-                    'Publicación copiada. Ya puedes pegarla en WhatsApp.',
-                  )
-                } catch {
-                  setActionMessage(
-                    'No se ha podido copiar. Revisa los permisos del navegador.',
-                  )
-                }
-              }}
-            >
-              <Copy aria-hidden="true" size={16} />
-              Copiar para WhatsApp
-            </button>
+              onFeedback={setActionMessage}
+              shareText={savedPost ? getPostShareText(savedPost) : ''}
+              showFeedback={false}
+              shareSuccessMessage="Se ha abierto WhatsApp. Elige el grupo o contacto y pulsa enviar."
+              shareErrorMessage="No se ha podido abrir WhatsApp. Prueba a copiar el texto."
+              copyLabel="Copiar para WhatsApp"
+              copySuccessMessage="Publicación copiada. Ya puedes pegarla en WhatsApp."
+              copyErrorMessage="No se ha podido copiar. Revisa los permisos del navegador."
+            />
             <button
               type="button"
               disabled={!savedPost}
@@ -783,60 +699,22 @@ export function CommunicationManagementPanel({
               </div>
 
               <div className="managed-communication-row__actions">
-                <button
-                  className="managed-communication-row__whatsapp"
-                  type="button"
-                  aria-label={`Enviar ${post.title} por WhatsApp`}
-                  title="Enviar por WhatsApp"
-                  onClick={() => {
-                    const opened = shareOnWhatsApp(
-                      formatNewsPostForWhatsApp(post, tagNames, data.community),
-                    )
-                    setActionMessage(
-                      opened
-                        ? 'Se ha abierto WhatsApp. Elige el grupo o contacto y pulsa enviar.'
-                        : 'No se ha podido abrir WhatsApp. Prueba a copiar el texto.',
-                    )
-                  }}
-                >
-                  <MessageCircle aria-hidden="true" size={16} />
-                </button>
-                <button
-                  className={
-                    copiedPostId === post.id
-                      ? 'managed-communication-row__copy managed-communication-row__copy--done'
-                      : 'managed-communication-row__copy'
-                  }
-                  type="button"
-                  aria-label={`Copiar ${post.title} para WhatsApp`}
-                  title="Copiar para WhatsApp"
-                  onClick={async () => {
-                    try {
-                      await copyText(
-                        formatNewsPostForWhatsApp(
-                          post,
-                          tagNames,
-                          data.community,
-                        ),
-                      )
-                      setCopiedPostId(post.id)
-                      setActionMessage(
-                        'Comunicación copiada. Ya puedes pegarla en WhatsApp.',
-                      )
-                    } catch {
-                      setCopiedPostId(undefined)
-                      setActionMessage(
-                        'No se ha podido copiar. Revisa los permisos del navegador.',
-                      )
-                    }
-                  }}
-                >
-                  {copiedPostId === post.id ? (
-                    <Check aria-hidden="true" size={16} />
-                  ) : (
-                    <Copy aria-hidden="true" size={16} />
-                  )}
-                </button>
+                <ShareActions
+                  className="share-actions--contents"
+                  hideLabels
+                  onFeedback={setActionMessage}
+                  shareAriaLabel={`Enviar ${post.title} por WhatsApp`}
+                  shareButtonClassName="managed-communication-row__whatsapp"
+                  shareText={getPostShareText(post)}
+                  showFeedback={false}
+                  shareSuccessMessage="Se ha abierto WhatsApp. Elige el grupo o contacto y pulsa enviar."
+                  shareErrorMessage="No se ha podido abrir WhatsApp. Prueba a copiar el texto."
+                  copyAriaLabel={`Copiar ${post.title} para WhatsApp`}
+                  copyButtonClassName="managed-communication-row__copy"
+                  copyLabel="Copiar para WhatsApp"
+                  copySuccessMessage="Comunicación copiada. Ya puedes pegarla en WhatsApp."
+                  copyErrorMessage="No se ha podido copiar. Revisa los permisos del navegador."
+                />
                 <button
                   type="button"
                   disabled={savingPostId === post.id}

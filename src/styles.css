@@ -1572,6 +1572,11 @@ a {
   min-height: 2.55rem;
 }
 
+.created-invitation-share-actions {
+  display: grid;
+  gap: 0.65rem;
+}
+
 .created-invitation-warning {
   display: grid;
   gap: 0.18rem;
@@ -2439,12 +2444,17 @@ a {
   gap: 0.3rem;
 }
 
+.share-actions--contents {
+  display: contents;
+}
+
 .managed-communication-row__actions .managed-communication-row__delete {
   border-color: #e5c9c6;
   color: #985348;
 }
 
-.managed-communication-row__actions .managed-communication-row__copy--done {
+.managed-communication-row__actions
+  .managed-communication-row__copy[data-copied='true'] {
   border-color: #b8d7ca;
   color: #2f6b59;
   background: #f3faf7;

@@ -10,7 +10,6 @@ import {
   FileUp,
   ListChecks,
   MapPin,
-  MessageCircle,
   Plus,
   Rows3,
   Trash2,
@@ -32,6 +31,7 @@ import type {
 import type { EventStandingWriteInput } from '../api/eventStandings'
 import { DataStateView } from '../components/DataStateView'
 import { EventLinkImportPanel } from '../components/EventLinkImportPanel'
+import { ShareActions } from '../components/ShareActions'
 import { isCommunityOptionActive } from '../data/communityOptions'
 import {
   formatEventResultForWhatsApp,
@@ -49,7 +49,6 @@ import {
   EVENT_TYPE_LABELS,
   getRegistrationRule,
 } from '../data/registrationSettings'
-import { getWhatsAppShareUrl } from '../data/whatsAppSharing'
 import type {
   Community,
   CommunityEvent,
@@ -913,7 +912,6 @@ function EventDetail({
   const [shareRegistrationStatus, setShareRegistrationStatus] = useState<
     'confirmed' | 'waitlisted' | null
   >(null)
-  const [shareFeedback, setShareFeedback] = useState('')
   const startsAt = new Date(item.event.startsAt)
   const endsAt = item.event.endsAt ? new Date(item.event.endsAt) : undefined
   const canRegister =
@@ -939,7 +937,6 @@ function EventDetail({
     setActionError('')
     setActionMessage('')
     setShareRegistrationStatus(null)
-    setShareFeedback('')
     setIsActionPending(true)
 
     try {
@@ -966,49 +963,14 @@ function EventDetail({
     }
   }
 
-  const getRegistrationShareText = () =>
-    shareRegistrationStatus
-      ? formatEventRegistrationForWhatsApp({
-          community,
-          event: item.event,
-          eventUrl: eventUrl.toString(),
-          status: shareRegistrationStatus,
-        })
-      : ''
-
-  const shareRegistrationOnWhatsApp = () => {
-    const shareText = getRegistrationShareText()
-
-    if (!shareText) {
-      return
-    }
-
-    const opened = window.open(
-      getWhatsAppShareUrl(shareText),
-      '_blank',
-      'noopener,noreferrer',
-    )
-    setShareFeedback(
-      opened
-        ? 'WhatsApp se ha abierto. Elige el contacto y pulsa enviar.'
-        : 'No se ha podido abrir WhatsApp. Prueba a copiar el mensaje.',
-    )
-  }
-
-  const copyRegistrationShareText = async () => {
-    const shareText = getRegistrationShareText()
-
-    try {
-      if (!shareText || !navigator.clipboard?.writeText) {
-        throw new Error('Clipboard unavailable')
-      }
-
-      await navigator.clipboard.writeText(shareText)
-      setShareFeedback('Mensaje copiado. Ya puedes pegarlo en WhatsApp.')
-    } catch {
-      setShareFeedback('No se ha podido copiar el mensaje.')
-    }
-  }
+  const registrationShareText = shareRegistrationStatus
+    ? formatEventRegistrationForWhatsApp({
+        community,
+        event: item.event,
+        eventUrl: eventUrl.toString(),
+        status: shareRegistrationStatus,
+      })
+    : ''
 
   return (
     <div className="page event-detail-page">
@@ -1128,37 +1090,22 @@ function EventDetail({
               aria-label="Cerrar las opciones de compartir"
               className="icon-button event-registration-share__close"
               type="button"
-              onClick={() => {
-                setShareRegistrationStatus(null)
-                setShareFeedback('')
-              }}
+              onClick={() => setShareRegistrationStatus(null)}
             >
               <X aria-hidden="true" size={16} />
             </button>
-            <div className="event-registration-share__actions">
-              <button
-                className="primary-button"
-                type="button"
-                onClick={shareRegistrationOnWhatsApp}
-              >
-                <MessageCircle aria-hidden="true" size={16} />
-                Enviar por WhatsApp
-              </button>
-              <button
-                className="secondary-button"
-                type="button"
-                onClick={() => void copyRegistrationShareText()}
-              >
-                <Copy aria-hidden="true" size={16} />
-                Copiar mensaje
-              </button>
-            </div>
-            <span
-              className="event-registration-share__feedback"
-              aria-live="polite"
-            >
-              {shareFeedback}
-            </span>
+            <ShareActions
+              className="event-registration-share__actions"
+              shareButtonClassName="primary-button"
+              shareText={registrationShareText}
+              shareSuccessMessage="WhatsApp se ha abierto. Elige el contacto y pulsa enviar."
+              shareErrorMessage="No se ha podido abrir WhatsApp. Prueba a copiar el mensaje."
+              copyButtonClassName="secondary-button"
+              copyLabel="Copiar mensaje"
+              copySuccessMessage="Mensaje copiado. Ya puedes pegarlo en WhatsApp."
+              copyErrorMessage="No se ha podido copiar el mensaje."
+              feedbackClassName="event-registration-share__feedback"
+            />
           </section>
         ) : null}
 
@@ -1199,7 +1146,6 @@ function EventParticipantManager({
   const [pendingMemberId, setPendingMemberId] = useState<string>()
   const [operationError, setOperationError] = useState('')
   const [operationMessage, setOperationMessage] = useState('')
-  const [shareMessage, setShareMessage] = useState('')
   const registered = participants.filter(({ status }) => status === 'confirmed')
   const waitlisted = participants.filter(
     ({ status }) => status === 'waitlisted',
@@ -1273,38 +1219,11 @@ function EventParticipantManager({
     }
   }
 
-  const getManagerShareText = () =>
-    formatManagerEventRegistrationsForWhatsApp({
-      event,
-      eventUrl: eventUrl.toString(),
-      participants,
-    })
-
-  const shareParticipantsOnWhatsApp = () => {
-    const opened = window.open(
-      getWhatsAppShareUrl(getManagerShareText()),
-      '_blank',
-      'noopener,noreferrer',
-    )
-    setShareMessage(
-      opened
-        ? 'WhatsApp se ha abierto. Elige el grupo o contacto y pulsa enviar.'
-        : 'No se ha podido abrir WhatsApp. Prueba a copiar el mensaje.',
-    )
-  }
-
-  const copyParticipantShareText = async () => {
-    try {
-      if (!navigator.clipboard?.writeText) {
-        throw new Error('Clipboard unavailable')
-      }
-
-      await navigator.clipboard.writeText(getManagerShareText())
-      setShareMessage('Mensaje copiado. Ya puedes pegarlo en WhatsApp.')
-    } catch {
-      setShareMessage('No se ha podido copiar el mensaje.')
-    }
-  }
+  const managerShareText = formatManagerEventRegistrationsForWhatsApp({
+    event,
+    eventUrl: eventUrl.toString(),
+    participants,
+  })
 
   return (
     <section
@@ -1335,17 +1254,16 @@ function EventParticipantManager({
       ) : null}
 
       {status === 'ready' && event.registrationEnabled ? (
-        <div className="participant-share-actions">
-          <button type="button" onClick={shareParticipantsOnWhatsApp}>
-            <MessageCircle aria-hidden="true" size={16} />
-            Compartir por WhatsApp
-          </button>
-          <button type="button" onClick={() => void copyParticipantShareText()}>
-            <Copy aria-hidden="true" size={16} />
-            Copiar mensaje
-          </button>
-          <span aria-live="polite">{shareMessage}</span>
-        </div>
+        <ShareActions
+          className="participant-share-actions"
+          shareLabel="Compartir por WhatsApp"
+          shareText={managerShareText}
+          shareSuccessMessage="WhatsApp se ha abierto. Elige el grupo o contacto y pulsa enviar."
+          shareErrorMessage="No se ha podido abrir WhatsApp. Prueba a copiar el mensaje."
+          copyLabel="Copiar mensaje"
+          copySuccessMessage="Mensaje copiado. Ya puedes pegarlo en WhatsApp."
+          copyErrorMessage="No se ha podido copiar el mensaje."
+        />
       ) : null}
 
       <div className="participant-group">
@@ -1666,31 +1584,17 @@ export function EventsPage({
   const importedStandingEvent = importedStanding
     ? data.events.find(({ id }) => id === importedStanding.eventId)
     : undefined
-
-  const shareImportedResult = () => {
-    if (!importedStanding || !importedStandingEvent) {
-      return
-    }
-
+  const importedResultShareText = (() => {
+    if (!importedStanding || !importedStandingEvent) return ''
     const resultUrl = new URL(window.location.href)
     resultUrl.hash = `ranking?view=events&standing=${encodeURIComponent(importedStanding.id)}`
-    const opened = window.open(
-      getWhatsAppShareUrl(
-        formatEventResultForWhatsApp({
-          event: importedStandingEvent,
-          resultUrl: resultUrl.toString(),
-          standing: importedStanding,
-        }),
-      ),
-      '_blank',
-      'noopener,noreferrer',
-    )
-    setPublicationMessage(
-      opened
-        ? 'WhatsApp se ha abierto. Elige el grupo o contacto y pulsa enviar.'
-        : 'No se ha podido abrir WhatsApp. Abre la clasificación para copiar el resultado.',
-    )
-  }
+
+    return formatEventResultForWhatsApp({
+      event: importedStandingEvent,
+      resultUrl: resultUrl.toString(),
+      standing: importedStanding,
+    })
+  })()
 
   useEffect(() => {
     try {
@@ -1939,10 +1843,15 @@ export function EventsPage({
               {importedStandingId ? (
                 <div className="manager-event-feedback__actions">
                   {importedStanding && importedStandingEvent ? (
-                    <button type="button" onClick={shareImportedResult}>
-                      <MessageCircle aria-hidden="true" size={16} />
-                      Compartir resultados
-                    </button>
+                    <ShareActions
+                      className="share-actions--contents"
+                      onFeedback={setPublicationMessage}
+                      shareLabel="Compartir resultados"
+                      shareText={importedResultShareText}
+                      showCopy={false}
+                      showFeedback={false}
+                      shareErrorMessage="No se ha podido abrir WhatsApp. Abre la clasificación para copiar el resultado."
+                    />
                   ) : null}
                   <button
                     type="button"
