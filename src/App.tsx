@@ -606,6 +606,7 @@ export function App() {
             initialView={
               rankingRouteParams.get('view') === 'events' ? 'events' : undefined
             }
+            rankingMemberId={approvedMembership?.id}
             onRetryData={() => reloadFailedFeeds(rankingFeeds)}
           />
         ) : activeRoute === 'cartas' && sharedCardsMemberId ? (

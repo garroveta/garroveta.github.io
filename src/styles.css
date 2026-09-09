@@ -9088,6 +9088,207 @@ a {
   box-shadow: 0 0.35rem 0.9rem rgb(51 43 55 / 8%);
 }
 
+.member-season {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.member-season--full {
+  padding: 0.95rem;
+  border: 1px solid #e0d5e4;
+  border-radius: 1rem;
+  background: linear-gradient(160deg, #fbf7fc 0%, #fff 65%);
+  box-shadow: 0 0.7rem 1.8rem rgb(51 43 55 / 5%);
+}
+
+.member-season__topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.member-season h2 {
+  margin: 0;
+  color: #2f2733;
+  font-size: 1.25rem;
+  line-height: 1.15;
+}
+
+.member-season__context {
+  margin: 0;
+  color: #7a707d;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.member-season__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  color: #6b6270;
+  background: #f1edf2;
+  font-size: 0.68rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.member-season__delta[data-trend='up'] {
+  color: #1f6b45;
+  background: #e4f4ea;
+}
+
+.member-season__delta[data-trend='down'] {
+  color: #8c3232;
+  background: #fbeaea;
+}
+
+.member-season__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin: 0.15rem 0 0;
+}
+
+.member-season__stats div {
+  padding: 0.45rem 0.5rem;
+  border-radius: 0.7rem;
+  background: #f7f3f8;
+  text-align: center;
+}
+
+.member-season__stats dt {
+  color: #857b88;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.member-season__stats dd {
+  margin: 0.15rem 0 0;
+  color: #342c39;
+  font-size: 0.95rem;
+  font-weight: 850;
+}
+
+.member-season__gaps {
+  display: grid;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+  color: #5f5663;
+  font-size: 0.75rem;
+  font-weight: 700;
+  list-style: none;
+}
+
+.member-season__best,
+.member-season__projection {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.member-season__best {
+  color: #5f5663;
+}
+
+.member-season__projection {
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.7rem;
+  color: #5b2b77;
+  background: #f3ebf7;
+}
+
+.member-season__streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0;
+  color: #a2591c;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.member-season-results {
+  display: grid;
+  gap: 0.1rem;
+  margin: 0.15rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.member-season-results li {
+  display: grid;
+  grid-template-columns: 2.1rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.1rem;
+  border-bottom: 1px solid #efe9f0;
+}
+
+.member-season-results li:last-child {
+  border-bottom: none;
+}
+
+.member-season-results__rank {
+  color: #5b2b77;
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.member-season-results__event {
+  display: grid;
+  gap: 0.05rem;
+  min-width: 0;
+}
+
+.member-season-results__event strong {
+  overflow: hidden;
+  color: #342c39;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.member-season-results__event small {
+  color: #8a8090;
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.member-season-results__points {
+  color: #1f6b45;
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.member-season__toggle {
+  justify-self: start;
+  padding: 0.15rem 0;
+  border: none;
+  color: #5b2b77;
+  background: none;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+@media (min-width: 34rem) {
+  .member-season--full {
+    padding: 1.1rem;
+  }
+
+  .member-season h2 {
+    font-size: 1.4rem;
+  }
+}
+
 .ranking-settings-panel {
   overflow: hidden;
   border: 1px solid #d9cddd;

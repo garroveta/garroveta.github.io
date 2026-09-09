@@ -10,6 +10,8 @@ import {
 } from 'lucide-react'
 import { useMemo, useRef, useState, type RefObject } from 'react'
 
+import { MemberSeasonPanel } from '../components/MemberSeasonPanel'
+import { getMemberSeasonSummary } from '../data/rankingMemberSeason'
 import {
   getCommunityLeaderboard,
   getLatestEventStandings,
@@ -43,6 +45,7 @@ type RankingsPageProps = {
   initialCommunityFilters?: CommunityRankingInitialFilters
   initialView?: RankingView
   initialStandingId?: string
+  rankingMemberId?: string
   onRetryData: () => void
 }
 
@@ -424,9 +427,11 @@ function EventRankingDetail({
 function CommunityRanking({
   data,
   initialFilters,
+  memberId,
 }: {
   data: DemoDataSet
   initialFilters?: CommunityRankingInitialFilters
+  memberId: string
 }) {
   const seasons = data.rankingSeasons
     .filter(({ status }) => status !== 'upcoming')
@@ -476,12 +481,14 @@ function CommunityRanking({
   const formats = data.competitionFormats.filter(
     (format) => format.gameId === gameId,
   )
-  const ranking = getCommunityLeaderboard(data, {
+  const rankingFilters = {
     gameId,
     formatId: formatId || undefined,
     competitionEventKindId: eventKindId || undefined,
     seasonId: resolvedSeasonId,
-  })
+  }
+  const ranking = getCommunityLeaderboard(data, rankingFilters)
+  const memberSeason = getMemberSeasonSummary(data, memberId, rankingFilters)
   const selectedSeason = seasons.find(({ id }) => id === resolvedSeasonId)
   const selectedGame = data.games.find(({ id }) => id === gameId)
   const selectedFormat = data.competitionFormats.find(
@@ -632,6 +639,8 @@ function CommunityRanking({
           </div>
         </div>
       </details>
+
+      {memberSeason ? <MemberSeasonPanel summary={memberSeason} /> : null}
 
       <div className="community-ranking__heading">
         <div>
@@ -802,6 +811,7 @@ export function RankingsPage({
   initialCommunityFilters,
   initialView = 'community',
   initialStandingId,
+  rankingMemberId,
   onRetryData,
 }: RankingsPageProps) {
   const standings = useMemo(() => getLatestEventStandings(data), [data])
@@ -890,6 +900,7 @@ export function RankingsPage({
         <CommunityRanking
           data={data}
           initialFilters={initialCommunityFilters}
+          memberId={rankingMemberId ?? data.currentMemberId}
         />
       ) : (
         <>
