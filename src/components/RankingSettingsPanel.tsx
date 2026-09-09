@@ -7,6 +7,7 @@ import type { DemoDataUpdater } from '../data/demoRepository'
 import type { RankingSeasonsStatus } from '../hooks/useRankingSeasons'
 import type { CommunityRankingPoints, DemoDataSet } from '../domain/types'
 import { DataStateView } from './DataStateView'
+import { QuantityField } from './QuantityField'
 import { ManagerOtpLogin } from './ManagerOtpLogin'
 
 type RankingSettingsPanelProps = {
@@ -76,16 +77,13 @@ function RankingPointsFields({
       {pointFields.map(([field, label]) => (
         <label className="form-field" key={field}>
           <span>{label}</span>
-          <input
-            aria-label={`${idPrefix}: puntos para ${label}`}
-            type="number"
-            min="0"
-            max="100"
+          <QuantityField
+            ariaLabel={`${idPrefix}: puntos para ${label}`}
+            max={100}
+            min={0}
             required
             value={points[field]}
-            onChange={(event) =>
-              onChange({ ...points, [field]: Number(event.target.value) })
-            }
+            onChange={(value) => onChange({ ...points, [field]: value })}
           />
         </label>
       ))}

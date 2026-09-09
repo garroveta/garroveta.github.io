@@ -1,6 +1,7 @@
 import { Save, UsersRound } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 
+import { QuantityField } from './QuantityField'
 import {
   EVENT_TYPE_LABELS,
   isCommunityRegistrationSettingsValid,
@@ -104,17 +105,13 @@ export function RegistrationSettingsPanel({
 
               <label className="form-field registration-rule__capacity">
                 <span>Plazas</span>
-                <input
-                  aria-label={`Plazas por defecto para ${EVENT_TYPE_LABELS[rule.eventType]}`}
-                  type="number"
-                  min="1"
-                  max="500"
+                <QuantityField
+                  ariaLabel={`Plazas por defecto para ${EVENT_TYPE_LABELS[rule.eventType]}`}
+                  max={500}
                   required
                   value={rule.defaultCapacity}
-                  onChange={(event) =>
-                    updateRule(rule.eventType, {
-                      defaultCapacity: Number(event.target.value),
-                    })
+                  onChange={(defaultCapacity) =>
+                    updateRule(rule.eventType, { defaultCapacity })
                   }
                 />
               </label>

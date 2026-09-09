@@ -82,4 +82,27 @@ describe('QuantityField', () => {
     fireEvent.change(field, { target: { value: '3' } })
     expect(onChange).toHaveBeenCalledWith(3)
   })
+
+  it('accepts a minimum of zero as valid immediately, unlike a truly empty field', () => {
+    const onChange = vi.fn()
+    render(<ControlledField initial={5} min={0} onChange={onChange} />)
+
+    fireEvent.change(screen.getByLabelText('Cantidad'), {
+      target: { value: '0' },
+    })
+
+    expect(onChange).toHaveBeenCalledWith(0)
+    expect(screen.getByLabelText('Cantidad')).toHaveValue(0)
+  })
+
+  it('never shows a leading zero while a fresh digit is typed after clearing', () => {
+    render(<ControlledField initial={1} />)
+
+    const field = screen.getByLabelText('Cantidad')
+
+    fireEvent.change(field, { target: { value: '' } })
+    fireEvent.change(field, { target: { value: '2' } })
+
+    expect(field).toHaveValue(2)
+  })
 })
