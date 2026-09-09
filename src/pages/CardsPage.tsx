@@ -27,6 +27,7 @@ import { useMemo, useState } from 'react'
 import { CardImagePreview } from '../components/CardImagePreview'
 import { MarketplaceReservationSheet } from '../components/MarketplaceReservationSheet'
 import { MarketplaceSection } from '../components/cards/MarketplaceSection'
+import { QuantityField } from '../components/QuantityField'
 import { CardListColumnMapper } from '../components/cards/CardListColumnMapper'
 import {
   ImportBulkEditor,
@@ -209,14 +210,10 @@ function WantedCardRow({
           <div className="card-row-edit-grid card-row-edit-grid--wanted">
             <label>
               <span>Cantidad</span>
-              <input
-                aria-label={`Editar cantidad buscada de ${item.card.name}`}
-                min={1}
-                type="number"
+              <QuantityField
+                ariaLabel={`Editar cantidad buscada de ${item.card.name}`}
                 value={draftQuantity}
-                onChange={(event) =>
-                  setDraftQuantity(Number(event.target.value))
-                }
+                onChange={setDraftQuantity}
               />
             </label>
             <label>
@@ -384,14 +381,11 @@ function MemberListingRow({
           <div className="card-row-edit-grid">
             <label>
               <span>Cantidad</span>
-              <input
-                aria-label={`Editar cantidad de ${item.card.name}`}
+              <QuantityField
+                ariaLabel={`Editar cantidad de ${item.card.name}`}
                 min={minimumQuantity}
-                type="number"
                 value={draftQuantity}
-                onChange={(event) =>
-                  setDraftQuantity(Number(event.target.value))
-                }
+                onChange={setDraftQuantity}
               />
             </label>
             <label>
@@ -1076,12 +1070,11 @@ function CardComposer({
         </label>
         <label className="form-field">
           <span>Cantidad</span>
-          <input
+          <QuantityField
             required
-            min={1}
-            type="number"
+            ariaLabel="Cantidad"
             value={quantity}
-            onChange={(event) => setQuantity(Number(event.target.value))}
+            onChange={setQuantity}
           />
         </label>
         <label className="form-field">
@@ -1696,19 +1689,14 @@ function WantedImportComposer({
                   <div className="offer-import-row__fields">
                     <label>
                       <span>Cant.</span>
-                      <input
-                        aria-label={`Cantidad de ${input.resolution.item.name}`}
-                        min={1}
-                        type="number"
+                      <QuantityField
+                        ariaLabel={`Cantidad de ${input.resolution.item.name}`}
                         value={input.quantity}
-                        onChange={(event) =>
+                        onChange={(quantity) =>
                           setOfferInputs((current) =>
                             current.map((candidate, candidateIndex) =>
                               candidateIndex === index
-                                ? {
-                                    ...candidate,
-                                    quantity: Number(event.target.value),
-                                  }
+                                ? { ...candidate, quantity }
                                 : candidate,
                             ),
                           )
@@ -1879,19 +1867,14 @@ function WantedImportComposer({
                   <div className="wanted-import-row__fields">
                     <label>
                       <span>Cant.</span>
-                      <input
-                        aria-label={`Cantidad buscada de ${input.resolution.item.name}`}
-                        min={1}
-                        type="number"
+                      <QuantityField
+                        ariaLabel={`Cantidad buscada de ${input.resolution.item.name}`}
                         value={input.quantity}
-                        onChange={(event) =>
+                        onChange={(quantity) =>
                           setWantedInputs((current) =>
                             current.map((candidate, candidateIndex) =>
                               candidateIndex === index
-                                ? {
-                                    ...candidate,
-                                    quantity: Number(event.target.value),
-                                  }
+                                ? { ...candidate, quantity }
                                 : candidate,
                             ),
                           )

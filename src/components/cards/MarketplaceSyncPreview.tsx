@@ -21,6 +21,7 @@ import type {
   MarketplaceSyncPlan,
 } from '../../data/cardSync'
 import type { Card, MarketplaceListing } from '../../domain/types'
+import { QuantityField } from '../QuantityField'
 
 const VISIBLE_ROWS = 8
 
@@ -146,12 +147,10 @@ function ConflictRow({
       <div className="sync-conflict__fields">
         <label>
           <span>Cantidad</span>
-          <input
-            aria-label={`Cantidad conservada de ${line.cardName}`}
-            min={1}
-            type="number"
+          <QuantityField
+            ariaLabel={`Cantidad conservada de ${line.cardName}`}
             value={quantity}
-            onChange={(event) => setQuantity(Number(event.target.value))}
+            onChange={setQuantity}
           />
         </label>
         <label>
