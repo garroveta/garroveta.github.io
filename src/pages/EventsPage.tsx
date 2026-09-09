@@ -1333,7 +1333,7 @@ function EventParticipantManager({
         />
       ) : null}
 
-      {status === 'ready' && event.type === 'launch' ? (
+      {status === 'ready' && event.registrationEnabled ? (
         <div className="participant-share-actions">
           <button type="button" onClick={shareParticipantsOnWhatsApp}>
             <MessageCircle aria-hidden="true" size={16} />

@@ -100,7 +100,7 @@ export function formatManagerEventRegistrationsForWhatsApp({
 
   if (remainingPlaces === 0) {
     const registrationSummary = [
-      `👥 ${confirmed.length}/${event.capacity} confirmados`,
+      `👥 ${confirmed.length}/${event.capacity} inscritos`,
       waitlisted.length > 0 ? `⏳ ${waitlisted.length} en espera` : '',
     ]
       .filter(Boolean)

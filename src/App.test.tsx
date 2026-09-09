@@ -3072,6 +3072,9 @@ describe('App', () => {
       'article',
     )
     expect(
+      screen.getByRole('button', { name: 'Compartir por WhatsApp' }),
+    ).toBeInTheDocument()
+    expect(
       within(sergioParticipant as HTMLElement).queryByRole('button', {
         name: 'Registrar asistencia',
       }),

@@ -77,6 +77,6 @@ describe('event registration sharing', () => {
           { displayName: 'Biel Ferrer', status: 'waitlisted' },
         ],
       }),
-    ).toContain('👥 2/2 confirmados · ⏳ 1 en espera\nPep Peralta, Aina Mir')
+    ).toContain('👥 2/2 inscritos · ⏳ 1 en espera\nPep Peralta, Aina Mir')
   })
 })
