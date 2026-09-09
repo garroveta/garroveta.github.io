@@ -7,7 +7,7 @@ import {
   RefreshCw,
   X,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 
 import {
   cardConditionLabels,
@@ -53,9 +53,15 @@ function SyncGroup({
   rows: Array<{ key: string; name: string; detail: string }>
   title: string
 }) {
+  const listId = useId()
+  const [isExpanded, setIsExpanded] = useState(false)
+
   if (rows.length === 0) {
     return null
   }
+
+  const hiddenCount = rows.length - VISIBLE_ROWS
+  const visibleRows = isExpanded ? rows : rows.slice(0, VISIBLE_ROWS)
 
   return (
     <section className="sync-group" aria-label={`${title}: ${rows.length}`}>
@@ -63,16 +69,24 @@ function SyncGroup({
         {icon}
         {title} <span>{rows.length}</span>
       </h4>
-      <ul>
-        {rows.slice(0, VISIBLE_ROWS).map(({ key, name, detail }) => (
+      <ul className={isExpanded ? 'is-expanded' : undefined} id={listId}>
+        {visibleRows.map(({ key, name, detail }) => (
           <li key={key}>
             <strong>{name}</strong>
             <small>{detail}</small>
           </li>
         ))}
       </ul>
-      {rows.length > VISIBLE_ROWS ? (
-        <p className="sync-group__more">y {rows.length - VISIBLE_ROWS} más</p>
+      {hiddenCount > 0 ? (
+        <button
+          aria-controls={listId}
+          aria-expanded={isExpanded}
+          className="sync-group__more"
+          type="button"
+          onClick={() => setIsExpanded((expanded) => !expanded)}
+        >
+          {isExpanded ? 'Ver menos' : `Ver las ${hiddenCount} restantes`}
+        </button>
       ) : null}
     </section>
   )

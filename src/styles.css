@@ -10767,6 +10767,20 @@ a {
 
 .sync-group__more {
   margin: 0.35rem 0 0;
+  padding: 0.2rem 0;
+  border: 0;
+  background: none;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* An expanded group scrolls inside itself: a sync can hold hundreds of rows,
+   and the actions at the bottom of the preview must stay reachable. */
+.sync-group ul.is-expanded {
+  max-height: 45vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .sync-conflicts {
