@@ -53,6 +53,14 @@ export type MemberBadge = {
 export type BadgeHolder = {
   member: CommunityMember
   unlockedAt: string
+  /** Absent for the badges the closing decides, which no event unlocks. */
+  eventId?: string
+}
+
+export type BadgeUnlock = {
+  definition: ResolvedBadge
+  member: CommunityMember
+  unlockedAt: string
 }
 
 export type SeasonBadge = {
@@ -316,6 +324,11 @@ function badgesForSeason(data: DemoDataSet, season: CommunityRankingSeason) {
 
 type BadgeCounters = Record<BadgeCounter, number>
 
+type UnlockRecord = {
+  at: string
+  eventId?: string
+}
+
 type MemberProgress = {
   counters: BadgeCounters
   /**
@@ -324,7 +337,7 @@ type MemberProgress = {
    * bad result, and a badge must not punish a life that got in the way.
    */
   runningTopFour: number
-  unlockedAt: Map<string, string>
+  unlockedAt: Map<string, UnlockRecord>
 }
 
 function createProgress(): MemberProgress {
@@ -413,7 +426,10 @@ function collectProgress(
           !progress.unlockedAt.has(badge.id) &&
           progress.counters[badge.counter] >= badge.target
         ) {
-          progress.unlockedAt.set(badge.id, playedAt)
+          progress.unlockedAt.set(badge.id, {
+            at: playedAt,
+            eventId: item.event.id,
+          })
         }
       }
     }
@@ -432,7 +448,7 @@ function collectProgress(
           badge.finalRank !== undefined &&
           player.rank <= badge.finalRank
         ) {
-          progress.unlockedAt.set(badge.id, season.endsOn)
+          progress.unlockedAt.set(badge.id, { at: season.endsOn })
         }
       }
     }
@@ -471,9 +487,11 @@ export function getSeasonBadgeBoard(
       holders: [...progressByMember.entries()]
         .flatMap(([memberId, progress]) => {
           const member = membersById.get(memberId)
-          const unlockedAt = progress.unlockedAt.get(definition.id)
+          const unlock = progress.unlockedAt.get(definition.id)
 
-          return member && unlockedAt ? [{ member, unlockedAt }] : []
+          return member && unlock
+            ? [{ member, unlockedAt: unlock.at, eventId: unlock.eventId }]
+            : []
         })
         .sort(
           (first, second) =>
@@ -508,7 +526,7 @@ export function getMemberSeasonBadges(
 
   return badges.map((definition) => ({
     definition,
-    unlockedAt: progress?.unlockedAt.get(definition.id),
+    unlockedAt: progress?.unlockedAt.get(definition.id)?.at,
     progress:
       definition.counter && definition.target !== undefined
         ? {
@@ -520,4 +538,27 @@ export function getMemberSeasonBadges(
           }
         : undefined,
   }))
+}
+
+/**
+ * The badges an event handed out, in the order the standings rank their
+ * holders. Sharing a result is the moment these are worth telling, so they are
+ * read from the same unlock records rather than recomputed from dates.
+ */
+export function getBadgeUnlocksForEvent(
+  data: DemoDataSet,
+  scope: BadgeScope,
+  eventId: string,
+): BadgeUnlock[] {
+  const board = getSeasonBadgeBoard(data, scope)
+
+  if (!board) {
+    return []
+  }
+
+  return board.badges.flatMap(({ definition, holders }) =>
+    holders
+      .filter((holder) => holder.eventId === eventId)
+      .map(({ member, unlockedAt }) => ({ definition, member, unlockedAt })),
+  )
 }

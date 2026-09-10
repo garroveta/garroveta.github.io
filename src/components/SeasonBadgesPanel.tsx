@@ -1,6 +1,8 @@
 import { useState } from 'react'
 
 import { BadgeMark } from './BadgeMark'
+import { ShareActions } from './ShareActions'
+import { formatBadgeUnlockForWhatsApp } from '../data/badgeSharing'
 import {
   getMemberSeasonBadges,
   getSeasonBadgeBoard,
@@ -57,6 +59,8 @@ export function SeasonBadgesPanel({
   const [showEveryLocked, setShowEveryLocked] = useState(false)
 
   const scope = { gameId, seasonId }
+  const badgesUrl = new URL(window.location.href)
+  badgesUrl.hash = `ranking?view=badges&game=${gameId}&season=${seasonId}`
   const board = getSeasonBadgeBoard(data, scope)
   const memberBadges = getMemberSeasonBadges(data, memberId, scope)
 
@@ -70,6 +74,7 @@ export function SeasonBadgesPanel({
   }
 
   const { players, season } = board
+  const member = data.members.find(({ id }) => id === memberId)
   const holdersById = new Map(
     board.badges.map(({ definition, holders }) => [definition.id, holders]),
   )
@@ -125,6 +130,21 @@ export function SeasonBadgesPanel({
                 Desbloqueada el{' '}
                 {unlockDateFormatter.format(new Date(unlockedAt))}
               </p>
+            ) : null}
+            {unlockedAt && member ? (
+              <ShareActions
+                className="season-badge__share"
+                copiedLabel="Insignia copiada"
+                copyLabel="Copiar"
+                copySuccessMessage="Insignia copiada. Ya puedes pegarla en WhatsApp."
+                shareLabel="Compartir insignia"
+                shareText={formatBadgeUnlockForWhatsApp({
+                  badgeUrl: badgesUrl.toString(),
+                  communityName: data.community.name,
+                  season,
+                  unlock: { definition, member, unlockedAt },
+                })}
+              />
             ) : null}
             {holders.length > 0 ? (
               <ul

@@ -101,6 +101,26 @@ describe('SeasonBadgesPanel', () => {
     expect(row).toHaveTextContent('Nadie la tiene todavía')
   })
 
+  it('offers to share a badge only once it is unlocked', () => {
+    renderPanel()
+
+    const unlocked = badgeRow('Ferocious')
+
+    fireEvent.click(within(unlocked).getAllByRole('button')[0])
+
+    expect(
+      within(unlocked).getByRole('button', { name: /Compartir insignia/ }),
+    ).toBeInTheDocument()
+
+    const locked = badgeRow('Deathtouch')
+
+    fireEvent.click(within(locked).getAllByRole('button')[0])
+
+    expect(
+      within(locked).queryByRole('button', { name: /Compartir insignia/ }),
+    ).toBeNull()
+  })
+
   it('keeps the locked badges folded until asked', () => {
     renderPanel()
 

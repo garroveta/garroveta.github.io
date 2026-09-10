@@ -9642,6 +9642,37 @@ a {
   font-weight: 800;
 }
 
+.season-badge__share {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.season-badge__share button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid #ded4e2;
+  border-radius: 0.55rem;
+  color: #5b2b77;
+  background: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.season-badge__share > span {
+  color: #1f6b45;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.season-badge__share > span:empty {
+  display: none;
+}
+
 .season-badge__holders {
   display: flex;
   flex-wrap: wrap;

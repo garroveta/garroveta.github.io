@@ -179,10 +179,13 @@ export function formatEventResultForWhatsApp({
   event,
   resultUrl,
   standing,
+  badgeSummary = '',
 }: {
   event: Pick<CommunityEvent, 'startsAt' | 'title'>
   resultUrl: string
   standing: Pick<EventStanding, 'entries'>
+  /** Lines about the badges the event handed out, added before the link. */
+  badgeSummary?: string
 }) {
   const entries = [...standing.entries].sort(
     (first, second) => first.rank - second.rank,
@@ -206,6 +209,7 @@ export function formatEventResultForWhatsApp({
     '',
     ...ranking,
     '',
+    ...(badgeSummary ? [badgeSummary, ''] : []),
     `📊 V-D-E · 🔗 Ver clasificación: ${resultUrl}`,
   ].join('\n')
 }

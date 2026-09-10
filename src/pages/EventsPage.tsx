@@ -60,6 +60,9 @@ import type {
   EventType,
 } from '../domain/types'
 import { buildEventCalendarExport } from '../utils/eventCalendar'
+import { formatEventBadgeUnlocksForWhatsApp } from '../data/badgeSharing'
+import { getBadgeUnlocksForEvent } from '../data/rankingBadges'
+import { getRankingSeasonForDate } from '../data/rankingSeasons'
 
 type EventsPageProps = {
   activeRole: DemoRole
@@ -1606,7 +1609,25 @@ export function EventsPage({
     const resultUrl = new URL(window.location.href)
     resultUrl.hash = `ranking?view=events&standing=${encodeURIComponent(importedStanding.id)}`
 
+    const season = getRankingSeasonForDate(
+      data.rankingSeasons,
+      importedStandingEvent.endsAt ?? importedStandingEvent.startsAt,
+    )
+
     return formatEventResultForWhatsApp({
+      badgeSummary:
+        season && importedStandingEvent.gameId
+          ? formatEventBadgeUnlocksForWhatsApp(
+              getBadgeUnlocksForEvent(
+                data,
+                {
+                  gameId: importedStandingEvent.gameId,
+                  seasonId: season.id,
+                },
+                importedStandingEvent.id,
+              ),
+            )
+          : '',
       event: importedStandingEvent,
       resultUrl: resultUrl.toString(),
       standing: importedStanding,

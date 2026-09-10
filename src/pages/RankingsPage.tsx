@@ -21,7 +21,12 @@ import {
 } from '../data/rankingSelectors'
 import { DataStateView } from '../components/DataStateView'
 import { ShareActions } from '../components/ShareActions'
+import { formatEventBadgeUnlocksForWhatsApp } from '../data/badgeSharing'
 import { formatEventResultForWhatsApp } from '../data/eventSharing'
+import {
+  getBadgeUnlocksForEvent,
+  type BadgeUnlock,
+} from '../data/rankingBadges'
 import { getCommunityPoints } from '../data/rankingSettings'
 import { getRankingSeasonForDate } from '../data/rankingSeasons'
 import { formatCommunityRankingForWhatsApp } from '../data/rankingSharing'
@@ -257,10 +262,12 @@ function MobileEventStandingList({
 }
 
 function EventRankingDetail({
+  badgeUnlocks,
   item,
   rankingSettings,
   sectionRef,
 }: {
+  badgeUnlocks: BadgeUnlock[]
   item: ResolvedEventStanding
   rankingSettings: CommunityRankingPoints
   sectionRef: RefObject<HTMLElement | null>
@@ -268,6 +275,7 @@ function EventRankingDetail({
   const resultUrl = new URL(window.location.href)
   resultUrl.hash = `ranking?view=events&standing=${encodeURIComponent(item.standing.id)}`
   const resultShareText = formatEventResultForWhatsApp({
+    badgeSummary: formatEventBadgeUnlocksForWhatsApp(badgeUnlocks),
     event: item.event,
     resultUrl: resultUrl.toString(),
     standing: item.standing,
@@ -932,6 +940,18 @@ export function RankingsPage({
         <>
           {selectedStanding ? (
             <EventRankingDetail
+              badgeUnlocks={
+                selectedStandingSeason
+                  ? getBadgeUnlocksForEvent(
+                      data,
+                      {
+                        gameId: selectedStanding.game.id,
+                        seasonId: selectedStandingSeason.id,
+                      },
+                      selectedStanding.event.id,
+                    )
+                  : []
+              }
               item={selectedStanding}
               key={selectedStanding.standing.id}
               rankingSettings={
