@@ -95,6 +95,7 @@ export function SeasonBadgesPanel({
           onClick={() => setOpenBadgeId(isOpen ? undefined : definition.id)}
         >
           <BadgeMark
+            badgeId={definition.id}
             glyph={seasonGlyphs[definition.id]}
             label={`${definition.name}${unlockedAt ? ', desbloqueada' : ''}`}
             progress={progress}
