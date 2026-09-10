@@ -217,7 +217,11 @@ type BadgeCounters = Record<BadgeCounter, number>
 
 type MemberProgress = {
   counters: BadgeCounters
-  /** Top 4 finishes since the last ranked event the member missed out on. */
+  /**
+   * Top 4 finishes in a row. Only the member's own results move it, so an
+   * event they did not enter never breaks a streak: missing a week is not a
+   * bad result, and a badge must not punish a life that got in the way.
+   */
   runningTopFour: number
   unlockedAt: Map<string, string>
 }

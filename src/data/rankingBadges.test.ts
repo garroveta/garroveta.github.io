@@ -190,6 +190,43 @@ describe('rankingBadges', () => {
     ).toEqual({ current: 6, target: 10 })
   })
 
+  it('does not break a streak with an event the member did not play', () => {
+    const data = structuredClone(demoData) as DemoDataSet
+    const skipped = data.eventStandings.find(
+      ({ id }) => id === 'standing-win-a-box-2hg-2026-07-18',
+    )!
+
+    expect(
+      skipped.entries.some(({ memberId }) => memberId === 'member-sergio'),
+    ).toBe(false)
+
+    for (const standing of data.eventStandings) {
+      const entry = standing.entries.find(
+        ({ memberId }) => memberId === 'member-sergio',
+      )
+
+      if (entry) {
+        entry.rank = 10
+      }
+    }
+
+    // Two of these sit on either side of the event Sergio skipped, so the
+    // streak only reaches three if the missed week is ignored.
+    for (const standingId of [
+      'standing-fnm-standard-2026-07-17',
+      'standing-fnm-standard-2026-07-24',
+      'standing-store-championship-modern-2026-07-25',
+    ]) {
+      data.eventStandings
+        .find(({ id }) => id === standingId)!
+        .entries.find(({ memberId }) => memberId === 'member-sergio')!.rank = 1
+    }
+
+    expect(
+      memberBadge('member-sergio', 'prowess', activeScope, data).progress,
+    ).toEqual({ current: 3, target: 3 })
+  })
+
   it('lets a streak run across an event too small to count', () => {
     const data = structuredClone(demoData) as DemoDataSet
     const entryOf = (standingId: string) =>
