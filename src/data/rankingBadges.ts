@@ -62,22 +62,14 @@ export type SeasonBadgeBoard = {
 }
 
 /**
- * Kept deliberately short: a badge nobody can name is a badge nobody wants.
- * Thresholds are sized for one season, not for a career.
- */
-/**
- * Thresholds assume a weekly cadence, around 25 counted events per season.
- * A community that plays less often should lower them here, in one place.
+ * Kept short on purpose: a badge nobody can name is a badge nobody wants, and
+ * one that everybody holds is worth nothing. Thresholds assume around 50
+ * counted events and 25 to 50 ranked players per season; a community with a
+ * different rhythm changes them here, in one place.
+ *
+ * Names stay gender neutral: every badge is worn by any member.
  */
 export const SEASON_BADGES: BadgeDefinition[] = [
-  {
-    id: 'debut',
-    name: 'Debut',
-    description: 'Juega tu primer evento puntuable de la temporada',
-    family: 'participacion',
-    counter: 'played',
-    target: 1,
-  },
   {
     id: 'habitual',
     name: 'Habitual',
@@ -89,26 +81,18 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'de-la-casa',
     name: 'De la casa',
-    description: 'Juega 12 eventos puntuables',
+    description: 'Juega 15 eventos puntuables',
     family: 'participacion',
     counter: 'played',
-    target: 12,
+    target: 15,
   },
   {
     id: 'pilar-de-la-temporada',
     name: 'Pilar de la temporada',
-    description: 'Juega 20 eventos puntuables',
+    description: 'Juega 30 eventos puntuables',
     family: 'participacion',
     counter: 'played',
-    target: 20,
-  },
-  {
-    id: 'primer-podio',
-    name: 'Primer podio',
-    description: 'Termina entre los tres primeros de un evento',
-    family: 'podios',
-    counter: 'podiums',
-    target: 1,
+    target: 30,
   },
   {
     id: 'podio-habitual',
@@ -121,34 +105,42 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'siempre-arriba',
     name: 'Siempre arriba',
-    description: 'Termina 8 veces entre los tres primeros',
+    description: 'Termina 10 veces entre los tres primeros',
     family: 'podios',
     counter: 'podiums',
-    target: 8,
+    target: 10,
   },
   {
-    id: 'primer-titulo',
-    name: 'Primer título',
-    description: 'Gana un evento puntuable',
+    id: 'imparable',
+    name: 'Imparable',
+    description: 'Termina 20 veces entre los tres primeros',
+    family: 'podios',
+    counter: 'podiums',
+    target: 20,
+  },
+  {
+    id: 'doblete',
+    name: 'Doblete',
+    description: 'Gana 2 eventos puntuables',
     family: 'victorias',
     counter: 'wins',
-    target: 1,
+    target: 2,
   },
   {
-    id: 'triplete',
-    name: 'Triplete',
-    description: 'Gana 3 eventos puntuables',
-    family: 'victorias',
-    counter: 'wins',
-    target: 3,
-  },
-  {
-    id: 'dominador',
-    name: 'Dominador',
+    id: 'cinco-titulos',
+    name: 'Cinco títulos',
     description: 'Gana 5 eventos puntuables',
     family: 'victorias',
     counter: 'wins',
     target: 5,
+  },
+  {
+    id: 'leyenda-de-la-temporada',
+    name: 'Leyenda de la temporada',
+    description: 'Gana 10 eventos puntuables',
+    family: 'victorias',
+    counter: 'wins',
+    target: 10,
   },
   {
     id: 'dos-formatos',
@@ -159,20 +151,12 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     target: 2,
   },
   {
-    id: 'todoterreno',
-    name: 'Todoterreno',
-    description: 'Puntúa en 3 formatos distintos',
-    family: 'polivalencia',
-    counter: 'formats',
-    target: 3,
-  },
-  {
     id: 'impecable',
     name: 'Impecable',
-    description: 'Gana 3 rondas o más en un evento sin perder ninguna',
+    description: 'Acaba 3 eventos invicto, con 3 victorias o más',
     family: 'impecable',
     counter: 'undefeated',
-    target: 1,
+    target: 3,
   },
   {
     id: 'podio-de-la-temporada',
@@ -182,8 +166,8 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     finalRank: 3,
   },
   {
-    id: 'campeon-de-la-temporada',
-    name: 'Campeón de la temporada',
+    id: 'titulo-de-la-temporada',
+    name: 'Título de la temporada',
     description: 'Acaba primero de la clasificación final',
     family: 'temporada',
     finalRank: 1,
