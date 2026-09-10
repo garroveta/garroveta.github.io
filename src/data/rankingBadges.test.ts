@@ -56,19 +56,19 @@ describe('rankingBadges', () => {
     expect(memberBadge('member-sergio', '4x4').unlockedAt).toBe(
       '2026-07-17T21:00:00+02:00',
     )
-    expect(memberBadge('member-sergio', 'habitual').unlockedAt).toBe(
-      '2026-08-02T21:30:00+02:00',
+    expect(memberBadge('member-sergio', 'vigilance').unlockedAt).toBe(
+      '2026-07-24T21:00:00+02:00',
     )
   })
 
   it('keeps showing how far a locked badge is, capped at its target', () => {
-    expect(memberBadge('member-carla', 'de-la-casa')).toMatchObject({
+    expect(memberBadge('member-carla', 'persist')).toMatchObject({
       unlockedAt: undefined,
-      progress: { current: 7, target: 20 },
+      progress: { current: 7, target: 15 },
     })
-    expect(memberBadge('member-carla', 'pilar-de-la-temporada')).toMatchObject({
+    expect(memberBadge('member-carla', 'undying')).toMatchObject({
       unlockedAt: undefined,
-      progress: { current: 7, target: 40 },
+      progress: { current: 7, target: 30 },
     })
     expect(memberBadge('member-sergio', '4x4').progress).toEqual({
       current: 4,
@@ -79,10 +79,10 @@ describe('rankingBadges', () => {
   it('counts distinct formats, not distinct events', () => {
     expect(
       getMemberSeasonBadges(demoData, 'member-carla', activeScope)!.find(
-        ({ definition }) => definition.id === 'habitual',
+        ({ definition }) => definition.id === 'vigilance',
       )!.progress,
-    ).toEqual({ current: 7, target: 8 })
-    expect(memberBadge('member-carla', 'todoterreno').progress).toEqual({
+    ).toEqual({ current: 6, target: 6 })
+    expect(memberBadge('member-carla', 'delirium').progress).toEqual({
       current: 2,
       target: 4,
     })
@@ -113,7 +113,7 @@ describe('rankingBadges', () => {
     expect(
       ['member-biel', 'member-sergio', 'member-carla'].map(
         (memberId) =>
-          memberBadge(memberId, 'invicto', closedScope).progress?.current,
+          memberBadge(memberId, 'hexproof', closedScope).progress?.current,
       ),
     ).toEqual([1, 0, 0])
   })
@@ -123,23 +123,20 @@ describe('rankingBadges', () => {
       ({ id }) => id === closedScope.seasonId,
     )!
 
-    expect(holdersOf('titulo-de-la-temporada')).toEqual([])
-    expect(memberBadge('member-carla', 'titulo-de-la-temporada')).toMatchObject(
-      {
-        unlockedAt: undefined,
-        progress: undefined,
-      },
-    )
+    expect(holdersOf('monarch')).toEqual([])
+    expect(memberBadge('member-carla', 'monarch')).toMatchObject({
+      unlockedAt: undefined,
+      progress: undefined,
+    })
 
     expect(
-      holdersOf('titulo-de-la-temporada', closedScope).map(
-        ({ member, unlockedAt }) => [member.id, unlockedAt],
-      ),
+      holdersOf('monarch', closedScope).map(({ member, unlockedAt }) => [
+        member.id,
+        unlockedAt,
+      ]),
     ).toEqual([['member-biel', season.endsOn]])
     expect(
-      holdersOf('podio-de-la-temporada', closedScope).map(
-        ({ member }) => member.id,
-      ),
+      holdersOf('council', closedScope).map(({ member }) => member.id),
     ).toEqual(['member-biel', 'member-carla', 'member-sergio'])
   })
 
@@ -175,13 +172,51 @@ describe('rankingBadges', () => {
     closedStanding.entries[0].memberId = lateMember.id
 
     expect(
-      holdersOf('titulo-de-la-temporada', closedScope, data).some(
+      holdersOf('monarch', closedScope, data).some(
         ({ member }) => member.id === lateMember.id,
       ),
     ).toBe(false)
     expect(
-      memberBadge(lateMember.id, 'habitual', closedScope, data).progress,
-    ).toEqual({ current: 0, target: 8 })
+      memberBadge(lateMember.id, 'vigilance', closedScope, data).progress,
+    ).toEqual({ current: 0, target: 6 })
+  })
+
+  it('follows a winning streak only across events won whole', () => {
+    const data = structuredClone(demoData) as DemoDataSet
+    const setRecord = (
+      standingId: string,
+      record: { wins: number; losses: number; draws: number },
+    ) => {
+      const entry = data.eventStandings
+        .find(({ id }) => id === standingId)!
+        .entries.find(({ memberId }) => memberId === 'member-carla')
+
+      if (entry) {
+        Object.assign(entry, record)
+      }
+    }
+    const broken = { wins: 1, losses: 1, draws: 0 }
+    const swept = { wins: 3, losses: 0, draws: 0 }
+
+    for (const { id } of data.eventStandings) {
+      setRecord(id, broken)
+    }
+    setRecord('standing-store-championship-modern-2026-07-25', swept)
+    setRecord('standing-win-a-box-standard-2026-08-02', swept)
+
+    expect(
+      memberBadge('member-carla', 'storm', activeScope, data).progress,
+    ).toEqual({ current: 6, target: 10 })
+
+    setRecord('standing-store-championship-modern-2026-07-25', {
+      wins: 3,
+      losses: 0,
+      draws: 1,
+    })
+
+    expect(
+      memberBadge('member-carla', 'storm', activeScope, data).progress,
+    ).toEqual({ current: 3, target: 10 })
   })
 
   it('returns nothing for an unknown season', () => {

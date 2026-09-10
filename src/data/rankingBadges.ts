@@ -11,15 +11,10 @@ import {
 } from './rankingSelectors'
 
 export type BadgeFamily =
-  | 'participacion'
-  | 'victorias'
-  | 'top4'
-  | 'polivalencia'
-  | 'invicto'
-  | 'temporada'
+  'attendance' | 'top4' | 'titles' | 'formats' | 'clean' | 'season'
 
 export type BadgeCounter =
-  'played' | 'wins' | 'topFour' | 'formats' | 'undefeated'
+  'played' | 'topFour' | 'titles' | 'formats' | 'undefeated' | 'streak'
 
 export type BadgeDefinition = {
   id: string
@@ -74,28 +69,28 @@ export type SeasonBadgeBoard = {
  */
 export const SEASON_BADGES: BadgeDefinition[] = [
   {
-    id: 'habitual',
-    name: 'Habitual',
-    description: 'Juega 8 eventos puntuables',
-    family: 'participacion',
+    id: 'vigilance',
+    name: 'Vigilance',
+    description: 'Juega 6 eventos puntuables',
+    family: 'attendance',
     counter: 'played',
-    target: 8,
+    target: 6,
   },
   {
-    id: 'de-la-casa',
-    name: 'De la casa',
-    description: 'Juega 20 eventos puntuables',
-    family: 'participacion',
+    id: 'persist',
+    name: 'Persist',
+    description: 'Juega 15 eventos puntuables',
+    family: 'attendance',
     counter: 'played',
-    target: 20,
+    target: 15,
   },
   {
-    id: 'pilar-de-la-temporada',
-    name: 'Pilar de la temporada',
-    description: 'Juega 40 eventos puntuables',
-    family: 'participacion',
+    id: 'undying',
+    name: 'Undying',
+    description: 'Juega 30 eventos puntuables',
+    family: 'attendance',
     counter: 'played',
-    target: 40,
+    target: 30,
   },
   {
     id: '4x4',
@@ -106,73 +101,89 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     target: 4,
   },
   {
-    id: 'siempre-arriba',
-    name: 'Siempre arriba',
+    id: 'menace',
+    name: 'Menace',
+    description: 'Termina 8 veces en el Top 4',
+    family: 'top4',
+    counter: 'topFour',
+    target: 8,
+  },
+  {
+    id: 'indestructible',
+    name: 'Indestructible',
     description: 'Termina 12 veces en el Top 4',
     family: 'top4',
     counter: 'topFour',
     target: 12,
   },
   {
-    id: 'imparable',
-    name: 'Imparable',
-    description: 'Termina 25 veces en el Top 4',
-    family: 'top4',
-    counter: 'topFour',
-    target: 25,
-  },
-  {
-    id: 'triplete',
-    name: 'Triplete',
+    id: 'deathtouch',
+    name: 'Deathtouch',
     description: 'Gana 3 eventos puntuables',
-    family: 'victorias',
-    counter: 'wins',
+    family: 'titles',
+    counter: 'titles',
     target: 3,
   },
   {
-    id: 'coleccionista-de-titulos',
-    name: 'Coleccionista de títulos',
-    description: 'Gana 8 eventos puntuables',
-    family: 'victorias',
-    counter: 'wins',
-    target: 8,
+    id: 'annihilator',
+    name: 'Annihilator',
+    description: 'Gana 6 eventos puntuables',
+    family: 'titles',
+    counter: 'titles',
+    target: 6,
   },
   {
-    id: 'leyenda-de-la-temporada',
-    name: 'Leyenda de la temporada',
-    description: 'Gana 15 eventos puntuables',
-    family: 'victorias',
-    counter: 'wins',
-    target: 15,
+    id: 'legendary',
+    name: 'Legendary',
+    description: 'Gana 10 eventos puntuables',
+    family: 'titles',
+    counter: 'titles',
+    target: 10,
   },
   {
-    id: 'todoterreno',
-    name: 'Todoterreno',
+    id: 'delirium',
+    name: 'Delirium',
     description: 'Puntúa en 4 formatos distintos',
-    family: 'polivalencia',
+    family: 'formats',
     counter: 'formats',
     target: 4,
   },
   {
-    id: 'invicto',
-    name: 'Invicto',
-    description: 'Acaba 5 eventos sin derrotas, con 3 victorias o más',
-    family: 'invicto',
-    counter: 'undefeated',
+    id: 'domain',
+    name: 'Domain',
+    description: 'Puntúa en 5 formatos distintos',
+    family: 'formats',
+    counter: 'formats',
     target: 5,
   },
   {
-    id: 'podio-de-la-temporada',
-    name: 'Podio de la temporada',
+    id: 'hexproof',
+    name: 'Hexproof',
+    description: 'Acaba 4 eventos sin derrotas, con 3 victorias o más',
+    family: 'clean',
+    counter: 'undefeated',
+    target: 4,
+  },
+  {
+    id: 'storm',
+    name: 'Storm',
+    description: 'Encadena 10 rondas ganadas seguidas',
+    family: 'clean',
+    counter: 'streak',
+    target: 10,
+  },
+  {
+    id: 'council',
+    name: 'Council',
     description: 'Acaba entre los tres primeros de la clasificación final',
-    family: 'temporada',
+    family: 'season',
     finalRank: 3,
   },
   {
-    id: 'titulo-de-la-temporada',
-    name: 'Título de la temporada',
+    id: 'monarch',
+    name: 'Monarch',
     description: 'Acaba primero de la clasificación final',
-    family: 'temporada',
+    family: 'season',
     finalRank: 1,
   },
 ]
@@ -184,12 +195,27 @@ type BadgeCounters = Record<BadgeCounter, number>
 
 type MemberProgress = {
   counters: BadgeCounters
+  /**
+   * Rounds won since the last event the member did not sweep. Standings only
+   * carry per-event totals, never the order of the rounds, so a streak can
+   * only be followed across events won whole: it never credits a round it
+   * cannot prove.
+   */
+  runningStreak: number
   unlockedAt: Map<string, string>
 }
 
 function createProgress(): MemberProgress {
   return {
-    counters: { played: 0, wins: 0, topFour: 0, formats: 0, undefeated: 0 },
+    counters: {
+      played: 0,
+      topFour: 0,
+      titles: 0,
+      formats: 0,
+      undefeated: 0,
+      streak: 0,
+    },
+    runningStreak: 0,
     unlockedAt: new Map(),
   }
 }
@@ -225,13 +251,22 @@ function collectProgress(
       progressByMember.set(entry.memberId, progress)
       formatsByMember.set(entry.memberId, formats)
       formats.add(item.format.id)
+      const sweptTheEvent = entry.losses === 0 && entry.draws === 0
+
       progress.counters.played += 1
-      progress.counters.wins += Number(entry.rank === 1)
+      progress.counters.titles += Number(entry.rank === 1)
       progress.counters.topFour += Number(entry.rank <= 4)
       progress.counters.undefeated += Number(
         entry.wins >= CLEAN_RUN_WINS && entry.losses === 0,
       )
       progress.counters.formats = formats.size
+      progress.runningStreak = sweptTheEvent
+        ? progress.runningStreak + entry.wins
+        : 0
+      progress.counters.streak = Math.max(
+        progress.counters.streak,
+        progress.runningStreak,
+      )
 
       for (const badge of SEASON_BADGES) {
         if (
