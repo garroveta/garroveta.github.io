@@ -4,6 +4,7 @@
 
 - Rédiger les textes visibles dans l’application en espagnol.
 - Corriger naturellement les formulations espagnoles lorsque nécessaire.
+- Nommer les insignias avec les mots-clés anglais de Magic ; leurs descriptions restent en espagnol.
 
 ## Méthode de travail
 

@@ -11,10 +11,10 @@ import {
 } from './rankingSelectors'
 
 export type BadgeFamily =
-  'attendance' | 'top4' | 'titles' | 'formats' | 'clean' | 'season'
+  'attendance' | 'top4' | 'titles' | 'formats' | 'field' | 'season'
 
 export type BadgeCounter =
-  'played' | 'topFour' | 'titles' | 'formats' | 'undefeated' | 'streak'
+  'played' | 'topFour' | 'titles' | 'formats' | 'titleFormats' | 'bigWins'
 
 export type BadgeDefinition = {
   id: string
@@ -93,8 +93,8 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     target: 30,
   },
   {
-    id: '4x4',
-    name: '4x4',
+    id: 'trample',
+    name: 'Trample',
     description: 'Termina 4 veces en el Top 4',
     family: 'top4',
     counter: 'topFour',
@@ -157,24 +157,24 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     target: 5,
   },
   {
-    id: 'hexproof',
-    name: 'Hexproof',
-    description: 'Acaba 4 eventos sin derrotas, con 3 victorias o más',
-    family: 'clean',
-    counter: 'undefeated',
-    target: 4,
+    id: 'changeling',
+    name: 'Changeling',
+    description: 'Gana eventos en 2 formatos distintos',
+    family: 'formats',
+    counter: 'titleFormats',
+    target: 2,
   },
   {
-    id: 'storm',
-    name: 'Storm',
-    description: 'Encadena 10 rondas ganadas seguidas',
-    family: 'clean',
-    counter: 'streak',
-    target: 10,
+    id: 'melee',
+    name: 'Melee',
+    description: 'Gana un evento de 24 jugadores o más',
+    family: 'field',
+    counter: 'bigWins',
+    target: 1,
   },
   {
-    id: 'council',
-    name: 'Council',
+    id: 'renown',
+    name: 'Renown',
     description: 'Acaba entre los tres primeros de la clasificación final',
     family: 'season',
     finalRank: 3,
@@ -188,20 +188,13 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   },
 ]
 
-/** Below this, an undefeated run only means the day was short. */
-const CLEAN_RUN_WINS = 3
+/** Field size from which winning an event says something on its own. */
+const CROWDED_FIELD = 24
 
 type BadgeCounters = Record<BadgeCounter, number>
 
 type MemberProgress = {
   counters: BadgeCounters
-  /**
-   * Rounds won since the last event the member did not sweep. Standings only
-   * carry per-event totals, never the order of the rounds, so a streak can
-   * only be followed across events won whole: it never credits a round it
-   * cannot prove.
-   */
-  runningStreak: number
   unlockedAt: Map<string, string>
 }
 
@@ -212,10 +205,9 @@ function createProgress(): MemberProgress {
       topFour: 0,
       titles: 0,
       formats: 0,
-      undefeated: 0,
-      streak: 0,
+      titleFormats: 0,
+      bigWins: 0,
     },
-    runningStreak: 0,
     unlockedAt: new Map(),
   }
 }
@@ -232,6 +224,7 @@ function collectProgress(
   const eligibleMemberIds = getEligibleRankingMemberIds(season, data.members)
   const progressByMember = new Map<string, MemberProgress>()
   const formatsByMember = new Map<string, Set<string>>()
+  const titleFormatsByMember = new Map<string, Set<string>>()
   const standings = getRankingSeasonStandings(data, {
     gameId: scope.gameId,
     seasonId: scope.seasonId,
@@ -247,26 +240,27 @@ function collectProgress(
 
       const progress = progressByMember.get(entry.memberId) ?? createProgress()
       const formats = formatsByMember.get(entry.memberId) ?? new Set<string>()
+      const titleFormats =
+        titleFormatsByMember.get(entry.memberId) ?? new Set<string>()
 
       progressByMember.set(entry.memberId, progress)
       formatsByMember.set(entry.memberId, formats)
+      titleFormatsByMember.set(entry.memberId, titleFormats)
       formats.add(item.format.id)
-      const sweptTheEvent = entry.losses === 0 && entry.draws === 0
+      const wonTheEvent = entry.rank === 1
+
+      if (wonTheEvent) {
+        titleFormats.add(item.format.id)
+      }
 
       progress.counters.played += 1
-      progress.counters.titles += Number(entry.rank === 1)
+      progress.counters.titles += Number(wonTheEvent)
       progress.counters.topFour += Number(entry.rank <= 4)
-      progress.counters.undefeated += Number(
-        entry.wins >= CLEAN_RUN_WINS && entry.losses === 0,
+      progress.counters.bigWins += Number(
+        wonTheEvent && item.standing.entries.length >= CROWDED_FIELD,
       )
       progress.counters.formats = formats.size
-      progress.runningStreak = sweptTheEvent
-        ? progress.runningStreak + entry.wins
-        : 0
-      progress.counters.streak = Math.max(
-        progress.counters.streak,
-        progress.runningStreak,
-      )
+      progress.counters.titleFormats = titleFormats.size
 
       for (const badge of SEASON_BADGES) {
         if (
