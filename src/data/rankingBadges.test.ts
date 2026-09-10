@@ -53,8 +53,8 @@ describe('rankingBadges', () => {
   })
 
   it('dates a badge from the result that unlocked it', () => {
-    expect(memberBadge('member-sergio', 'podio-habitual').unlockedAt).toBe(
-      '2026-07-24T21:00:00+02:00',
+    expect(memberBadge('member-sergio', '4x4').unlockedAt).toBe(
+      '2026-07-17T21:00:00+02:00',
     )
     expect(memberBadge('member-sergio', 'habitual').unlockedAt).toBe(
       '2026-08-02T21:30:00+02:00',
@@ -70,9 +70,9 @@ describe('rankingBadges', () => {
       unlockedAt: undefined,
       progress: { current: 7, target: 40 },
     })
-    expect(memberBadge('member-carla', 'podio-habitual').progress).toEqual({
-      current: 5,
-      target: 5,
+    expect(memberBadge('member-sergio', '4x4').progress).toEqual({
+      current: 4,
+      target: 4,
     })
   })
 
@@ -85,6 +85,18 @@ describe('rankingBadges', () => {
     expect(memberBadge('member-carla', 'todoterreno').progress).toEqual({
       current: 2,
       target: 4,
+    })
+  })
+
+  it('counts a Top 4 finish, not only a podium', () => {
+    const fourth = demoData.eventStandings
+      .find(({ id }) => id === 'standing-fnm-standard-2026-07-17')!
+      .entries.find(({ rank }) => rank === 4)!
+
+    expect(fourth.memberId).toBe('member-carla')
+    expect(memberBadge('member-carla', '4x4')).toMatchObject({
+      unlockedAt: '2026-07-17T21:00:00+02:00',
+      progress: { current: 4, target: 4 },
     })
   })
 
@@ -101,7 +113,7 @@ describe('rankingBadges', () => {
     expect(
       ['member-biel', 'member-sergio', 'member-carla'].map(
         (memberId) =>
-          memberBadge(memberId, 'impecable', closedScope).progress?.current,
+          memberBadge(memberId, 'invicto', closedScope).progress?.current,
       ),
     ).toEqual([1, 0, 0])
   })
@@ -132,12 +144,10 @@ describe('rankingBadges', () => {
   })
 
   it('lists the holders from the first to unlock the badge', () => {
-    const holders = holdersOf('podio-habitual')
+    const holders = holdersOf('4x4')
 
-    expect(holders.map(({ member }) => member.id)).toEqual([
-      'member-sergio',
-      'member-carla',
-    ])
+    expect(holders).toHaveLength(4)
+    expect(holders[0].member.id).toBe('member-biel')
     expect(
       holders.every(
         (holder, index) =>

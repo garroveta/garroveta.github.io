@@ -13,13 +13,13 @@ import {
 export type BadgeFamily =
   | 'participacion'
   | 'victorias'
-  | 'podios'
+  | 'top4'
   | 'polivalencia'
-  | 'impecable'
+  | 'invicto'
   | 'temporada'
 
 export type BadgeCounter =
-  'played' | 'wins' | 'podiums' | 'formats' | 'undefeated'
+  'played' | 'wins' | 'topFour' | 'formats' | 'undefeated'
 
 export type BadgeDefinition = {
   id: string
@@ -62,7 +62,9 @@ export type SeasonBadgeBoard = {
 }
 
 /**
- * Kept short on purpose: a badge nobody can name is a badge nobody wants, and
+ * Named in the players' own words: a Magic player finishes in the Top 4, never
+ * "on a podium". Kept short on purpose: a badge nobody can name is a badge
+ * nobody wants, and
  * one that everybody holds is worth nothing. Thresholds are sized for two to
  * three MTG tournaments a week, around 65 counted events a season, played by
  * 25 to 50 ranked members. A community with another rhythm changes them here,
@@ -96,28 +98,28 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     target: 40,
   },
   {
-    id: 'podio-habitual',
-    name: 'Podio habitual',
-    description: 'Termina 5 veces entre los tres primeros',
-    family: 'podios',
-    counter: 'podiums',
-    target: 5,
+    id: '4x4',
+    name: '4x4',
+    description: 'Termina 4 veces en el Top 4',
+    family: 'top4',
+    counter: 'topFour',
+    target: 4,
   },
   {
     id: 'siempre-arriba',
     name: 'Siempre arriba',
-    description: 'Termina 15 veces entre los tres primeros',
-    family: 'podios',
-    counter: 'podiums',
-    target: 15,
+    description: 'Termina 12 veces en el Top 4',
+    family: 'top4',
+    counter: 'topFour',
+    target: 12,
   },
   {
     id: 'imparable',
     name: 'Imparable',
-    description: 'Termina 30 veces entre los tres primeros',
-    family: 'podios',
-    counter: 'podiums',
-    target: 30,
+    description: 'Termina 25 veces en el Top 4',
+    family: 'top4',
+    counter: 'topFour',
+    target: 25,
   },
   {
     id: 'triplete',
@@ -152,10 +154,10 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     target: 4,
   },
   {
-    id: 'impecable',
-    name: 'Impecable',
-    description: 'Acaba 5 eventos invicto, con 3 victorias o más',
-    family: 'impecable',
+    id: 'invicto',
+    name: 'Invicto',
+    description: 'Acaba 5 eventos sin derrotas, con 3 victorias o más',
+    family: 'invicto',
     counter: 'undefeated',
     target: 5,
   },
@@ -187,7 +189,7 @@ type MemberProgress = {
 
 function createProgress(): MemberProgress {
   return {
-    counters: { played: 0, wins: 0, podiums: 0, formats: 0, undefeated: 0 },
+    counters: { played: 0, wins: 0, topFour: 0, formats: 0, undefeated: 0 },
     unlockedAt: new Map(),
   }
 }
@@ -225,7 +227,7 @@ function collectProgress(
       formats.add(item.format.id)
       progress.counters.played += 1
       progress.counters.wins += Number(entry.rank === 1)
-      progress.counters.podiums += Number(entry.rank <= 3)
+      progress.counters.topFour += Number(entry.rank <= 4)
       progress.counters.undefeated += Number(
         entry.wins >= CLEAN_RUN_WINS && entry.losses === 0,
       )
