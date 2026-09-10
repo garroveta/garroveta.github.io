@@ -1,4 +1,5 @@
 import {
+  Award,
   CalendarDays,
   ChevronDown,
   ChevronRight,
@@ -11,6 +12,7 @@ import {
 import { useMemo, useRef, useState, type RefObject } from 'react'
 
 import { MemberSeasonPanel } from '../components/MemberSeasonPanel'
+import { SeasonBadgesPanel } from '../components/SeasonBadgesPanel'
 import { getMemberSeasonSummary } from '../data/rankingMemberSeason'
 import {
   getCommunityLeaderboard,
@@ -29,7 +31,7 @@ import type {
   EventStandingEntry,
 } from '../domain/types'
 
-type RankingView = 'community' | 'events'
+type RankingView = 'community' | 'events' | 'badges'
 
 type CommunityRankingInitialFilters = {
   competitionEventKindId?: string
@@ -894,9 +896,23 @@ export function RankingsPage({
           <CalendarDays aria-hidden="true" size={17} />
           Últimos eventos
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeView === 'badges'}
+          onClick={() => setActiveView('badges')}
+        >
+          <Award aria-hidden="true" size={17} />
+          Insignias
+        </button>
       </div>
 
-      {activeView === 'community' ? (
+      {activeView === 'badges' ? (
+        <SeasonBadgesPanel
+          data={data}
+          memberId={rankingMemberId ?? data.currentMemberId}
+        />
+      ) : activeView === 'community' ? (
         <CommunityRanking
           data={data}
           initialFilters={initialCommunityFilters}
@@ -947,21 +963,24 @@ export function RankingsPage({
         </>
       )}
 
-      <aside className="ranking-method-note">
-        <Medal aria-hidden="true" size={20} />
-        <div>
-          <strong>Un barómetro simple para empezar</strong>
-          <p>
-            Los puntos oficiales siguen visibles en cada evento. Garroveta
-            atribuye por separado entre {activeSeason?.points.first ?? 0} puntos
-            al primer puesto y {activeSeason?.points.participation ?? 0}{' '}
-            {(activeSeason?.points.participation ?? 0) === 1
-              ? 'punto'
-              : 'puntos'}{' '}
-            de participación para construir esta clasificación comunitaria.
-          </p>
-        </div>
-      </aside>
+      {activeView === 'badges' ? null : (
+        <aside className="ranking-method-note">
+          <Medal aria-hidden="true" size={20} />
+          <div>
+            <strong>Un barómetro simple para empezar</strong>
+            <p>
+              Los puntos oficiales siguen visibles en cada evento. Garroveta
+              atribuye por separado entre {activeSeason?.points.first ?? 0}{' '}
+              puntos al primer puesto y{' '}
+              {activeSeason?.points.participation ?? 0}{' '}
+              {(activeSeason?.points.participation ?? 0) === 1
+                ? 'punto'
+                : 'puntos'}{' '}
+              de participación para construir esta clasificación comunitaria.
+            </p>
+          </div>
+        </aside>
+      )}
     </div>
   )
 }

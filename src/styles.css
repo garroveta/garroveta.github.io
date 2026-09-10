@@ -9059,7 +9059,7 @@ a {
 
 .ranking-view-tabs {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.35rem;
   padding: 0.35rem;
   border: 1px solid #ded7e0;
@@ -9073,9 +9073,13 @@ a {
   justify-content: center;
   gap: 0.4rem;
   min-height: 2.75rem;
+  padding: 0 0.3rem;
+  overflow: hidden;
   border: 0;
   border-radius: 0.7rem;
   color: #756c77;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   background: transparent;
   font-size: 0.76rem;
   font-weight: 800;
@@ -9427,6 +9431,218 @@ a {
 
 .badge-settings-panel__actions > span:empty {
   display: none;
+}
+
+.badge-mark {
+  flex: none;
+}
+
+.badge-mark__disc {
+  fill: #f3ecf6;
+}
+
+.badge-mark[data-unlocked='true'] .badge-mark__disc {
+  fill: #5b2b77;
+}
+
+.badge-mark__track {
+  fill: none;
+  stroke: #e4d9e9;
+  stroke-width: 3;
+}
+
+.badge-mark[data-unlocked='true'] .badge-mark__track {
+  stroke: #5b2b77;
+}
+
+.badge-mark__ring {
+  fill: none;
+  stroke: #1f6b45;
+  stroke-linecap: round;
+  stroke-width: 3;
+}
+
+.badge-mark__value {
+  fill: #5b2b77;
+  font-size: 0.95rem;
+  font-weight: 850;
+}
+
+.badge-mark[data-unlocked='true'] .badge-mark__value {
+  fill: #fff;
+}
+
+.season-badges {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.season-badges__heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.season-badges__heading > div > span {
+  color: #857b88;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.season-badges__heading h2 {
+  margin: 0.1rem 0 0;
+  color: #2f2733;
+  font-size: 1.35rem;
+}
+
+.season-badges__heading > p {
+  margin: 0;
+  color: #7a707d;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.season-badges h3 {
+  margin: 0.2rem 0 0;
+  color: #5b2b77;
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.season-badges__list {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.season-badge {
+  overflow: hidden;
+  border: 1px solid #e6dee9;
+  border-radius: 0.85rem;
+  background: #fff;
+}
+
+.season-badge__summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: center;
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.season-badge__identity {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.season-badge__identity strong {
+  color: #2f2733;
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.season-badge__identity small {
+  color: #7a707d;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.season-badge__stat {
+  display: grid;
+  gap: 0.1rem;
+  justify-items: end;
+  text-align: right;
+}
+
+.season-badge__stat em {
+  color: #1f6b45;
+  font-size: 0.8rem;
+  font-style: normal;
+  font-weight: 850;
+}
+
+.season-badge__stat small {
+  color: #8a8090;
+  font-size: 0.64rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.season-badge__detail {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0 0.65rem 0.6rem 0.65rem;
+}
+
+.season-badge__reference {
+  margin: 0;
+  color: #8a8090;
+  font-size: 0.7rem;
+  font-style: italic;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.season-badge__unlocked {
+  margin: 0;
+  color: #1f6b45;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.season-badge__holders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.season-badge__holders li {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.9rem;
+  height: 1.9rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  color: #5b2b77;
+  background: #f3ecf6;
+  font-size: 0.66rem;
+  font-weight: 850;
+}
+
+.season-badge__holders--empty {
+  margin: 0;
+  color: #7a707d;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.season-badges__toggle {
+  justify-self: start;
+  padding: 0.15rem 0;
+  border: none;
+  color: #5b2b77;
+  background: none;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 .ranking-settings-panel {
