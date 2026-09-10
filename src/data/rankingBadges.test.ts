@@ -58,7 +58,7 @@ describe('rankingBadges', () => {
   })
 
   it('dates a badge from the result that unlocked it', () => {
-    expect(memberBadge('member-sergio', 'trample').unlockedAt).toBe(
+    expect(memberBadge('member-sergio', 'ferocious').unlockedAt).toBe(
       '2026-07-17T21:00:00+02:00',
     )
     expect(memberBadge('member-sergio', 'vigilance').unlockedAt).toBe(
@@ -71,11 +71,11 @@ describe('rankingBadges', () => {
       unlockedAt: undefined,
       progress: { current: 7, target: 15 },
     })
-    expect(memberBadge('member-carla', 'undying')).toMatchObject({
+    expect(memberBadge('member-carla', 'saga')).toMatchObject({
       unlockedAt: undefined,
       progress: { current: 7, target: 30 },
     })
-    expect(memberBadge('member-sergio', 'trample').progress).toEqual({
+    expect(memberBadge('member-sergio', 'ferocious').progress).toEqual({
       current: 4,
       target: 4,
     })
@@ -99,7 +99,7 @@ describe('rankingBadges', () => {
       .entries.find(({ rank }) => rank === 4)!
 
     expect(fourth.memberId).toBe('member-carla')
-    expect(memberBadge('member-carla', 'trample')).toMatchObject({
+    expect(memberBadge('member-carla', 'ferocious')).toMatchObject({
       unlockedAt: '2026-07-17T21:00:00+02:00',
       progress: { current: 4, target: 4 },
     })
@@ -123,12 +123,12 @@ describe('rankingBadges', () => {
       ]),
     ).toEqual([['member-biel', season.endsOn]])
     expect(
-      holdersOf('renown', closedScope).map(({ member }) => member.id),
+      holdersOf('paragon', closedScope).map(({ member }) => member.id),
     ).toEqual(['member-biel', 'member-carla', 'member-sergio'])
   })
 
   it('lists the holders from the first to unlock the badge', () => {
-    const holders = holdersOf('trample')
+    const holders = holdersOf('ferocious')
 
     expect(holders).toHaveLength(4)
     expect(holders[0].member.id).toBe('member-biel')
@@ -178,7 +178,7 @@ describe('rankingBadges', () => {
       standing.entries.find(({ memberId }) => memberId === 'member-sergio')
         ?.rank,
     ).toBeLessThanOrEqual(4)
-    expect(memberBadge('member-sergio', 'menace').progress).toEqual({
+    expect(memberBadge('member-sergio', 'citys-blessing').progress).toEqual({
       current: 7,
       target: 10,
     })
@@ -186,7 +186,8 @@ describe('rankingBadges', () => {
     standing.entries = standing.entries.slice(0, 5)
 
     expect(
-      memberBadge('member-sergio', 'menace', activeScope, data).progress,
+      memberBadge('member-sergio', 'citys-blessing', activeScope, data)
+        .progress,
     ).toEqual({ current: 6, target: 10 })
   })
 
