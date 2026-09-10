@@ -167,6 +167,27 @@ describe('local demo repository', () => {
     expect(loaded.rankingSeasons).toEqual(demoData.rankingSeasons)
   })
 
+  it('adds the badge settings to version 26 without losing local data', () => {
+    const previouslySavedData = structuredClone(
+      demoData,
+    ) as Partial<DemoDataSet>
+    previouslySavedData.community!.memberCount = 152
+    delete previouslySavedData.badgeSettings
+    window.localStorage.setItem(
+      DEMO_STORAGE_KEY,
+      JSON.stringify({
+        version: 26,
+        savedAt: '2026-09-10T10:00:00.000Z',
+        data: previouslySavedData,
+      }),
+    )
+
+    const loaded = createLocalDemoRepository(window.localStorage).load()
+
+    expect(loaded.community.memberCount).toBe(152)
+    expect(loaded.badgeSettings).toEqual(demoData.badgeSettings)
+  })
+
   it('falls back to seed data when storage is corrupted', () => {
     window.localStorage.setItem(DEMO_STORAGE_KEY, '{not-valid-json')
 

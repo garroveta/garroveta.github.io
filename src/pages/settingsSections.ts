@@ -6,6 +6,7 @@ export type SettingsSection =
   | 'members'
   | 'communications'
   | 'ranking'
+  | 'insignias'
 
 const settingsSections: SettingsSection[] = [
   'community',
@@ -15,6 +16,7 @@ const settingsSections: SettingsSection[] = [
   'members',
   'communications',
   'ranking',
+  'insignias',
 ]
 
 export function isSettingsSection(

@@ -1,10 +1,11 @@
 import { demoData } from './demoData'
+import { getDefaultBadgeSettings } from './rankingBadges'
 import { DEFAULT_COMMUNITY_RANKING_SETTINGS } from './rankingSettings'
 import { DEFAULT_COMMUNITY_REGISTRATION_SETTINGS } from './registrationSettings'
 import type { DemoDataSet } from '../domain/types'
 
 export const DEMO_STORAGE_KEY = 'mtg-community:demo-data'
-export const DEMO_STORAGE_VERSION = 26
+export const DEMO_STORAGE_VERSION = 27
 
 type DemoStorageEnvelope = {
   version: number
@@ -45,6 +46,7 @@ function isDemoDataSet(value: unknown): value is DemoDataSet {
     Array.isArray(value.competitionFormats) &&
     Array.isArray(value.competitionEventKinds) &&
     isRecord(value.rankingSettings) &&
+    isRecord(value.badgeSettings) &&
     Array.isArray(value.rankingSeasons) &&
     isRecord(value.registrationSettings) &&
     Array.isArray(value.tags) &&
@@ -171,6 +173,21 @@ function parseStoredData(rawValue: string): DemoDataSet | null {
       const migratedData = {
         ...envelope.data,
         rankingSeasons: structuredClone(demoData.rankingSeasons),
+      }
+
+      if (!isDemoDataSet(migratedData)) {
+        return null
+      }
+
+      return applySeedPrototypeEnhancements(
+        normalizeCommunityTaxonomy(structuredClone(migratedData)),
+      )
+    }
+
+    if (envelope.version === 26) {
+      const migratedData = {
+        ...envelope.data,
+        badgeSettings: getDefaultBadgeSettings(),
       }
 
       if (!isDemoDataSet(migratedData)) {

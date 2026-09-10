@@ -6,12 +6,6 @@ const MAX_NAME_LENGTH = 40
 /** Far above any sensible threshold, low enough to catch a typed mistake. */
 const MAX_TARGET = 999
 
-function isManager(data: DemoDataSet, memberId: string) {
-  return data.members.some(
-    ({ id, role }) => id === memberId && role === 'manager',
-  )
-}
-
 /**
  * A setting may only rename a badge and move its threshold. The counter stays
  * in code because it is logic, and the description is generated from the
@@ -51,13 +45,17 @@ export function isCommunityBadgeSettingsValid(
  * Saving also writes the badges into the active season, the way the points
  * scale already does: raising a threshold must never take back a badge a
  * closed season already handed out.
+ *
+ * Who may save is not checked here: the demo simulates the manager role in the
+ * app shell rather than on a member row, so a member lookup would refuse every
+ * real caller. The settings navigation gates it today, and the Worker must own
+ * it once these settings are persisted.
  */
 export function updateCommunityBadgeSettings(
   data: DemoDataSet,
-  managerId: string,
   settings: CommunityBadgeSettings,
 ): DemoDataSet {
-  if (!isManager(data, managerId) || !isCommunityBadgeSettingsValid(settings)) {
+  if (!isCommunityBadgeSettingsValid(settings)) {
     return data
   }
 

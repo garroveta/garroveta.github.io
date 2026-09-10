@@ -1,5 +1,6 @@
 import {
   ArrowLeft,
+  Award,
   Building2,
   ListTree,
   Megaphone,
@@ -15,6 +16,7 @@ import { CommunitySettingsPanel } from '../components/CommunitySettingsPanel'
 import { CommunicationManagementPanel } from '../components/CommunicationManagementPanel'
 import { MemberManagementPanel } from '../components/MemberManagementPanel'
 import { InvitationManagementPanel } from '../components/InvitationManagementPanel'
+import { BadgeSettingsPanel } from '../components/BadgeSettingsPanel'
 import { RankingSettingsPanel } from '../components/RankingSettingsPanel'
 import { RegistrationSettingsPanel } from '../components/RegistrationSettingsPanel'
 import type { DemoDataUpdater } from '../data/demoRepository'
@@ -208,6 +210,15 @@ export function SettingsPage({
           <Trophy aria-hidden="true" size={18} />
           Ranking
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeSection === 'insignias'}
+          onClick={() => setActiveSection('insignias')}
+        >
+          <Award aria-hidden="true" size={18} />
+          Insignias
+        </button>
       </div>
 
       {activeSection === 'community' ? (
@@ -276,6 +287,8 @@ export function SettingsPage({
           persistenceStatus={communicationPersistenceStatus}
           persistenceError={communicationPersistenceError}
         />
+      ) : activeSection === 'insignias' ? (
+        <BadgeSettingsPanel data={data} onDataChange={onDataChange} />
       ) : (
         <RankingSettingsPanel
           data={data}

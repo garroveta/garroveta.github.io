@@ -1,0 +1,116 @@
+import { fireEvent, render, screen, within } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
+
+import { BadgeSettingsPanel } from './BadgeSettingsPanel'
+import { demoData } from '../data/demoData'
+import type { DemoDataUpdater } from '../data/demoRepository'
+import type { DemoDataSet } from '../domain/types'
+
+function renderPanel() {
+  let saved: DemoDataSet | undefined
+  const onDataChange = vi.fn((updater: DemoDataUpdater) => {
+    saved =
+      typeof updater === 'function'
+        ? (updater(demoData) as DemoDataSet)
+        : updater
+  })
+
+  render(<BadgeSettingsPanel data={demoData} onDataChange={onDataChange} />)
+
+  return { onDataChange, getSaved: () => saved }
+}
+
+function rowOf(name: string) {
+  return screen
+    .getByDisplayValue(name)
+    .closest<HTMLElement>('.badge-settings-row')!
+}
+
+describe('BadgeSettingsPanel', () => {
+  it('says out loud that the settings never leave the device', () => {
+    renderPanel()
+
+    expect(screen.getByRole('note')).toHaveTextContent(/Función simulada/)
+  })
+
+  it('rewrites the description as the target changes', () => {
+    renderPanel()
+
+    const row = rowOf('Ferocious')
+
+    expect(row).toHaveTextContent('Termina 4 veces en el Top 4')
+
+    fireEvent.change(within(row).getByLabelText('Objetivo'), {
+      target: { value: '7' },
+    })
+
+    expect(row).toHaveTextContent('Termina 7 veces en el Top 4')
+  })
+
+  it('shows the Magic rule each name comes from', () => {
+    renderPanel()
+
+    expect(rowOf('Ferocious')).toHaveTextContent(
+      'Ferocidad: se activa si controlas una criatura con fuerza 4 o más.',
+    )
+  })
+
+  it('offers no target for a badge the final ranking decides', () => {
+    renderPanel()
+
+    const row = rowOf('Monarch')
+
+    expect(within(row).queryByLabelText('Objetivo')).toBeNull()
+    expect(row).toHaveTextContent('Lo decide la clasificación final')
+  })
+
+  it('saves a renamed badge with its new target', () => {
+    const { getSaved } = renderPanel()
+    const row = rowOf('Ferocious')
+
+    fireEvent.change(within(row).getByLabelText('Nombre'), {
+      target: { value: 'Bestial' },
+    })
+    fireEvent.change(within(row).getByLabelText('Objetivo'), {
+      target: { value: '6' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar insignias' }))
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Insignias guardadas en este dispositivo.',
+    )
+    expect(
+      getSaved()?.badgeSettings.badges.find(({ id }) => id === 'ferocious'),
+    ).toEqual({ id: 'ferocious', name: 'Bestial', target: 6 })
+  })
+
+  it('refuses to save an empty target and says what to fix', () => {
+    const { onDataChange } = renderPanel()
+
+    fireEvent.change(within(rowOf('Ferocious')).getByLabelText('Objetivo'), {
+      target: { value: '' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar insignias' }))
+
+    expect(onDataChange).not.toHaveBeenCalled()
+    expect(screen.getByRole('status')).toHaveTextContent(
+      /cada insignia necesita un nombre y un objetivo/,
+    )
+  })
+
+  it('restores the shipped catalogue', () => {
+    renderPanel()
+
+    fireEvent.change(within(rowOf('Ferocious')).getByLabelText('Nombre'), {
+      target: { value: 'Bestial' },
+    })
+
+    expect(screen.queryByDisplayValue('Ferocious')).toBeNull()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /Restaurar valores por defecto/ }),
+    )
+
+    expect(screen.getByDisplayValue('Ferocious')).toBeInTheDocument()
+  })
+})

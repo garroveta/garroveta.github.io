@@ -91,18 +91,16 @@ describe('rankingBadgeSettings', () => {
     ).toBe(false)
   })
 
-  it('only lets a manager save, and freezes the active season with it', () => {
+  it('freezes the active season with the settings it saves', () => {
     const settings = settingsWith('ferocious', { name: 'Bestial', target: 6 })
 
     expect(
-      updateCommunityBadgeSettings(demoData, 'member-carla', settings),
+      updateCommunityBadgeSettings(demoData, {
+        badges: [{ id: 'ferocious', name: '', target: 6 }],
+      }),
     ).toBe(demoData)
 
-    const saved = updateCommunityBadgeSettings(
-      demoData,
-      'member-lucia',
-      settings,
-    )
+    const saved = updateCommunityBadgeSettings(demoData, settings)
 
     expect(saved.badgeSettings.badges).toEqual(settings.badges)
     expect(
