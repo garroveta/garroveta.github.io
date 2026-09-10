@@ -24,19 +24,16 @@ import {
 import type { DemoRole } from '../app/demoRoles'
 import type { AppRoute } from '../app/navigation'
 import { DataStateView } from '../components/DataStateView'
+import { MemberSeasonPanel } from '../components/MemberSeasonPanel'
 import {
   getManagerDashboard,
   getMemberNewCardMatches,
   getPlayerDashboard,
   type DashboardEvent,
   type ManagerDashboardEvent,
+  type RankingHighlight,
 } from '../data/dashboardSelectors'
-import type { CommunityRankingPlayer } from '../data/rankingSelectors'
-import type {
-  CommunityMember,
-  CommunityRankingSeason,
-  DemoDataSet,
-} from '../domain/types'
+import type { CommunityMember, DemoDataSet } from '../domain/types'
 
 type HomePageProps = {
   activeRole: DemoRole
@@ -195,17 +192,32 @@ function NextEventCard({
 }
 
 function RankingPositionCard({
-  season,
-  ranking,
+  highlight,
   onNavigate,
 }: {
-  season?: CommunityRankingSeason
-  ranking?: CommunityRankingPlayer
+  highlight: RankingHighlight
   onNavigate: (route: AppRoute, query?: string) => void
 }) {
+  const footer = (
+    <DashboardLink route="ranking" onNavigate={onNavigate}>
+      Ver clasificación
+    </DashboardLink>
+  )
+
+  if (highlight.memberSeason) {
+    return (
+      <MemberSeasonPanel
+        density="compact"
+        footer={footer}
+        summary={highlight.memberSeason}
+        title="Ranking"
+      />
+    )
+  }
+
   return (
     <section
-      className="dashboard-card ranking-position-card"
+      className="dashboard-card"
       aria-labelledby="ranking-position-title"
     >
       <div className="dashboard-card__topline">
@@ -215,31 +227,10 @@ function RankingPositionCard({
         </span>
       </div>
 
-      {season && ranking ? (
-        <>
-          <h2 id="ranking-position-title">Posición {ranking.rank}</h2>
-          <p>
-            {ranking.points} puntos comunidad · {season.name}
-          </p>
-        </>
-      ) : season ? (
-        <>
-          <h2 id="ranking-position-title">Aún no estás clasificado</h2>
-          <p>
-            Juega un evento MTG puntuable para entrar en la clasificación de{' '}
-            {season.name}.
-          </p>
-        </>
-      ) : (
-        <>
-          <h2 id="ranking-position-title">Sin temporada activa</h2>
-          <p>Todavía no hay una temporada de ranking en marcha.</p>
-        </>
-      )}
+      <h2 id="ranking-position-title">Sin temporada activa</h2>
+      <p>Todavía no hay una temporada de ranking en marcha.</p>
 
-      <DashboardLink route="ranking" onNavigate={onNavigate}>
-        Ver clasificación
-      </DashboardLink>
+      {footer}
     </section>
   )
 }
@@ -634,8 +625,7 @@ export function HomePage({
 
         {dashboard.rankingHighlight ? (
           <RankingPositionCard
-            season={dashboard.rankingHighlight.season}
-            ranking={dashboard.rankingHighlight.ranking}
+            highlight={dashboard.rankingHighlight}
             onNavigate={onNavigate}
           />
         ) : null}

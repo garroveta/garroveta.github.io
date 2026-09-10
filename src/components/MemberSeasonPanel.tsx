@@ -74,30 +74,16 @@ export function MemberSeasonPanel({
       </h2>
       <p className="member-season__context">
         {player
-          ? `${player.points} puntos · ${season.name}`
+          ? `${player.points} puntos comunidad · ${season.name}`
           : `${season.name} · ${summary.seasonEvents} eventos puntuables`}
       </p>
 
       {density === 'full' && player ? (
         <>
-          <dl className="member-season__stats">
-            <div>
-              <dt>Puntos</dt>
-              <dd>{player.points}</dd>
-            </div>
-            <div>
-              <dt>Eventos</dt>
-              <dd>
-                {player.eventsPlayed} de {summary.seasonEvents}
-              </dd>
-            </div>
-            <div>
-              <dt>Jugadores</dt>
-              <dd>{summary.rankedPlayers}</dd>
-            </div>
-          </dl>
-
-          <ul className="member-season__gaps">
+          <ul className="member-season__facts">
+            <li>
+              {player.eventsPlayed} de {summary.seasonEvents} eventos puntuables
+            </li>
             {summary.pointsToPlaceAbove === undefined ? (
               <li>Lideras la clasificación</li>
             ) : (

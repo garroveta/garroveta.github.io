@@ -64,7 +64,7 @@ describe('player dashboard selectors', () => {
     const dashboard = getPlayerDashboard(demoData, currentMember)
 
     expect(dashboard.rankingHighlight?.season?.name).toBe('Temporada 2026')
-    expect(dashboard.rankingHighlight?.ranking?.rank).toBe(7)
+    expect(dashboard.rankingHighlight?.memberSeason?.player?.rank).toBe(7)
   })
 
   it('hides the ranking highlight for a member who opted out of MTG', () => {
@@ -84,9 +84,9 @@ describe('player dashboard selectors', () => {
       'member-sergio',
     )
 
-    expect(dashboard.rankingHighlight?.ranking?.member.displayName).toBe(
-      'Sergio Gil',
-    )
+    expect(
+      dashboard.rankingHighlight?.memberSeason?.player?.member.displayName,
+    ).toBe('Sergio Gil')
   })
 })
 

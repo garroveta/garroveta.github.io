@@ -11,9 +11,9 @@ import type {
   NewsPost,
 } from '../domain/types'
 import {
-  getCommunityLeaderboard,
-  type CommunityRankingPlayer,
-} from './rankingSelectors'
+  getMemberSeasonSummary,
+  type MemberSeasonSummary,
+} from './rankingMemberSeason'
 
 export const DEMO_REFERENCE_TIME = '2026-07-29T12:00:00+02:00'
 
@@ -32,7 +32,7 @@ export type DashboardMatch = {
 
 export type RankingHighlight = {
   season?: CommunityRankingSeason
-  ranking?: CommunityRankingPlayer
+  memberSeason?: MemberSeasonSummary
 }
 
 export type PlayerDashboard = {
@@ -158,14 +158,11 @@ export function getPlayerDashboard(
     rankingHighlight: followsMtg
       ? {
           season: rankingSeason,
-          ranking: rankingSeason
-            ? getCommunityLeaderboard(data, {
+          memberSeason: rankingSeason
+            ? getMemberSeasonSummary(data, rankingMemberId, {
                 gameId: 'game-mtg',
                 seasonId: rankingSeason.id,
-              }).find(
-                ({ member: rankedMember }) =>
-                  rankedMember.id === rankingMemberId,
-              )
+              })
             : undefined,
         }
       : undefined,

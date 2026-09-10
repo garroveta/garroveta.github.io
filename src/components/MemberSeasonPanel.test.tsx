@@ -23,9 +23,12 @@ describe('MemberSeasonPanel', () => {
     expect(
       screen.getByRole('heading', { name: 'Posición 1' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('47 puntos · Temporada 2026')).toBeInTheDocument()
+    expect(
+      screen.getByText('47 puntos comunidad · Temporada 2026'),
+    ).toBeInTheDocument()
     expect(screen.getByText('+2 puestos')).toBeInTheDocument()
     expect(screen.getByText('Lideras la clasificación')).toBeInTheDocument()
+    expect(screen.getByText('6 de 6 eventos puntuables')).toBeInTheDocument()
   })
 
   it('shows both gaps and the next placement worth playing for', () => {

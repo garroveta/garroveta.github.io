@@ -9146,36 +9146,7 @@ a {
   background: #fbeaea;
 }
 
-.member-season__stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.4rem;
-  margin: 0.15rem 0 0;
-}
-
-.member-season__stats div {
-  padding: 0.45rem 0.5rem;
-  border-radius: 0.7rem;
-  background: #f7f3f8;
-  text-align: center;
-}
-
-.member-season__stats dt {
-  color: #857b88;
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.member-season__stats dd {
-  margin: 0.15rem 0 0;
-  color: #342c39;
-  font-size: 0.95rem;
-  font-weight: 850;
-}
-
-.member-season__gaps {
+.member-season__facts {
   display: grid;
   gap: 0.15rem;
   margin: 0;
