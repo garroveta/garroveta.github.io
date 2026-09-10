@@ -2,7 +2,8 @@
 
 - Asset: `public/badges/monarch.png`
 - Generated with the built-in ImageGen tool.
-- Output: 1254 × 1254 PNG with alpha transparency.
+- Public output: optimized 192 × 192 PNG with alpha transparency.
+- Local master: `.local-assets/badges/monarch.png` (ignored by Git).
 - The badge name should be supplied by the interface as accessible text.
 
 ## Generation prompt

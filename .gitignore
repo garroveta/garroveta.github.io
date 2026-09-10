@@ -16,6 +16,7 @@ coverage/
 .env.*
 !.env.example
 *.local
+.local-assets/
 
 # Editors and operating systems
 .DS_Store
