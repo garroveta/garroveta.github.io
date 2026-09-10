@@ -53,13 +53,10 @@ describe('rankingBadges', () => {
   })
 
   it('dates a badge from the result that unlocked it', () => {
-    expect(memberBadge('member-carla', 'habitual').unlockedAt).toBe(
+    expect(memberBadge('member-sergio', 'podio-habitual').unlockedAt).toBe(
       '2026-07-24T21:00:00+02:00',
     )
-    expect(memberBadge('member-carla', 'podio-habitual').unlockedAt).toBe(
-      '2026-07-10T21:00:00+02:00',
-    )
-    expect(memberBadge('member-carla', 'doblete').unlockedAt).toBe(
+    expect(memberBadge('member-sergio', 'habitual').unlockedAt).toBe(
       '2026-08-02T21:30:00+02:00',
     )
   })
@@ -67,22 +64,27 @@ describe('rankingBadges', () => {
   it('keeps showing how far a locked badge is, capped at its target', () => {
     expect(memberBadge('member-carla', 'de-la-casa')).toMatchObject({
       unlockedAt: undefined,
-      progress: { current: 7, target: 15 },
+      progress: { current: 7, target: 20 },
     })
     expect(memberBadge('member-carla', 'pilar-de-la-temporada')).toMatchObject({
       unlockedAt: undefined,
-      progress: { current: 7, target: 30 },
+      progress: { current: 7, target: 40 },
     })
-    expect(memberBadge('member-carla', 'habitual').progress).toEqual({
+    expect(memberBadge('member-carla', 'podio-habitual').progress).toEqual({
       current: 5,
       target: 5,
     })
   })
 
-  it('counts distinct formats across the whole game', () => {
-    expect(memberBadge('member-carla', 'dos-formatos')).toMatchObject({
-      unlockedAt: '2026-07-25T19:00:00+02:00',
-      progress: { current: 2, target: 2 },
+  it('counts distinct formats, not distinct events', () => {
+    expect(
+      getMemberSeasonBadges(demoData, 'member-carla', activeScope)!.find(
+        ({ definition }) => definition.id === 'habitual',
+      )!.progress,
+    ).toEqual({ current: 7, target: 8 })
+    expect(memberBadge('member-carla', 'todoterreno').progress).toEqual({
+      current: 2,
+      target: 4,
     })
   })
 
@@ -132,10 +134,9 @@ describe('rankingBadges', () => {
   it('lists the holders from the first to unlock the badge', () => {
     const holders = holdersOf('podio-habitual')
 
-    expect(holders.slice(0, 3).map(({ member }) => member.id)).toEqual([
-      'member-carla',
+    expect(holders.map(({ member }) => member.id)).toEqual([
       'member-sergio',
-      'member-biel',
+      'member-carla',
     ])
     expect(
       holders.every(
@@ -170,7 +171,7 @@ describe('rankingBadges', () => {
     ).toBe(false)
     expect(
       memberBadge(lateMember.id, 'habitual', closedScope, data).progress,
-    ).toEqual({ current: 0, target: 5 })
+    ).toEqual({ current: 0, target: 8 })
   })
 
   it('returns nothing for an unknown season', () => {

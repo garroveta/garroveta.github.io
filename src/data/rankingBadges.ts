@@ -63,9 +63,10 @@ export type SeasonBadgeBoard = {
 
 /**
  * Kept short on purpose: a badge nobody can name is a badge nobody wants, and
- * one that everybody holds is worth nothing. Thresholds assume around 50
- * counted events and 25 to 50 ranked players per season; a community with a
- * different rhythm changes them here, in one place.
+ * one that everybody holds is worth nothing. Thresholds are sized for two to
+ * three MTG tournaments a week, around 65 counted events a season, played by
+ * 25 to 50 ranked members. A community with another rhythm changes them here,
+ * in one place.
  *
  * Names stay gender neutral: every badge is worn by any member.
  */
@@ -73,90 +74,90 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'habitual',
     name: 'Habitual',
-    description: 'Juega 5 eventos puntuables',
+    description: 'Juega 8 eventos puntuables',
     family: 'participacion',
     counter: 'played',
-    target: 5,
+    target: 8,
   },
   {
     id: 'de-la-casa',
     name: 'De la casa',
-    description: 'Juega 15 eventos puntuables',
+    description: 'Juega 20 eventos puntuables',
     family: 'participacion',
     counter: 'played',
-    target: 15,
+    target: 20,
   },
   {
     id: 'pilar-de-la-temporada',
     name: 'Pilar de la temporada',
-    description: 'Juega 30 eventos puntuables',
+    description: 'Juega 40 eventos puntuables',
     family: 'participacion',
     counter: 'played',
-    target: 30,
+    target: 40,
   },
   {
     id: 'podio-habitual',
     name: 'Podio habitual',
-    description: 'Termina 3 veces entre los tres primeros',
+    description: 'Termina 5 veces entre los tres primeros',
     family: 'podios',
     counter: 'podiums',
-    target: 3,
+    target: 5,
   },
   {
     id: 'siempre-arriba',
     name: 'Siempre arriba',
-    description: 'Termina 10 veces entre los tres primeros',
+    description: 'Termina 15 veces entre los tres primeros',
     family: 'podios',
     counter: 'podiums',
-    target: 10,
+    target: 15,
   },
   {
     id: 'imparable',
     name: 'Imparable',
-    description: 'Termina 20 veces entre los tres primeros',
+    description: 'Termina 30 veces entre los tres primeros',
     family: 'podios',
     counter: 'podiums',
-    target: 20,
+    target: 30,
   },
   {
-    id: 'doblete',
-    name: 'Doblete',
-    description: 'Gana 2 eventos puntuables',
+    id: 'triplete',
+    name: 'Triplete',
+    description: 'Gana 3 eventos puntuables',
     family: 'victorias',
     counter: 'wins',
-    target: 2,
+    target: 3,
   },
   {
-    id: 'cinco-titulos',
-    name: 'Cinco títulos',
-    description: 'Gana 5 eventos puntuables',
+    id: 'coleccionista-de-titulos',
+    name: 'Coleccionista de títulos',
+    description: 'Gana 8 eventos puntuables',
     family: 'victorias',
     counter: 'wins',
-    target: 5,
+    target: 8,
   },
   {
     id: 'leyenda-de-la-temporada',
     name: 'Leyenda de la temporada',
-    description: 'Gana 10 eventos puntuables',
+    description: 'Gana 15 eventos puntuables',
     family: 'victorias',
     counter: 'wins',
-    target: 10,
+    target: 15,
   },
   {
-    id: 'dos-formatos',
-    name: 'Dos formatos',
-    description: 'Puntúa en 2 formatos distintos',
+    id: 'todoterreno',
+    name: 'Todoterreno',
+    description: 'Puntúa en 4 formatos distintos',
     family: 'polivalencia',
     counter: 'formats',
-    target: 2,
+    target: 4,
   },
   {
     id: 'impecable',
     name: 'Impecable',
-    description: 'Acaba 3 eventos invicto, con 3 victorias o más',
+    description: 'Acaba 5 eventos invicto, con 3 victorias o más',
     family: 'impecable',
     counter: 'undefeated',
-    target: 3,
+    target: 5,
   },
   {
     id: 'podio-de-la-temporada',
