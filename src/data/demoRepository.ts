@@ -1,5 +1,5 @@
 import { demoData } from './demoData'
-import { getDefaultBadgeSettings } from './rankingBadges'
+import { getDefaultBadgeSettings } from '../domain/badges'
 import { DEFAULT_COMMUNITY_RANKING_SETTINGS } from './rankingSettings'
 import { DEFAULT_COMMUNITY_REGISTRATION_SETTINGS } from './registrationSettings'
 import type { DemoDataSet } from '../domain/types'

@@ -1,11 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import { demoData } from './demoData'
-import {
-  SEASON_BADGES,
-  getMemberSeasonBadges,
-  getSeasonBadgeBoard,
-} from './rankingBadges'
+import { SEASON_BADGES } from '../domain/badges'
+import { getMemberSeasonBadges, getSeasonBadgeBoard } from './rankingBadges'
 import type { DemoDataSet } from '../domain/types'
 
 const activeScope = { gameId: 'game-mtg', seasonId: 'ranking-season-2026' }

@@ -4,13 +4,11 @@ import { useState, type FormEvent } from 'react'
 import type { DemoDataUpdater } from '../data/demoRepository'
 import {
   getDefaultBadgeSettings,
+  isCommunityBadgeSettingsValid,
   resolveSeasonBadges,
   type BadgeFamily,
-} from '../data/rankingBadges'
-import {
-  isCommunityBadgeSettingsValid,
-  updateCommunityBadgeSettings,
-} from '../data/rankingBadgeSettings'
+} from '../domain/badges'
+import { updateCommunityBadgeSettings } from '../data/rankingBadgeSettings'
 import type { CommunityBadgeSetting, DemoDataSet } from '../domain/types'
 
 const familyLabels: Record<BadgeFamily, string> = {

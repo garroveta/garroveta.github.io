@@ -8,7 +8,7 @@ import type {
   MarketplaceListing,
 } from '../domain/types'
 import { DEFAULT_COMMUNITY_REGISTRATION_SETTINGS } from './registrationSettings'
-import { getDefaultBadgeSettings } from './rankingBadges'
+import { getDefaultBadgeSettings } from '../domain/badges'
 
 const communityId = 'community-crc-delorean'
 

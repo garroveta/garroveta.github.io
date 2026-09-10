@@ -4,13 +4,11 @@ import { demoData } from './demoData'
 import {
   SEASON_BADGES,
   getDefaultBadgeSettings,
-  getMemberSeasonBadges,
-  resolveSeasonBadges,
-} from './rankingBadges'
-import {
   isCommunityBadgeSettingsValid,
-  updateCommunityBadgeSettings,
-} from './rankingBadgeSettings'
+  resolveSeasonBadges,
+} from '../domain/badges'
+import { getMemberSeasonBadges } from './rankingBadges'
+import { updateCommunityBadgeSettings } from './rankingBadgeSettings'
 import type { CommunityBadgeSettings, DemoDataSet } from '../domain/types'
 
 const activeScope = { gameId: 'game-mtg', seasonId: 'ranking-season-2026' }
