@@ -81,6 +81,17 @@ export type CommunityRankingPoints = {
   participation: number
 }
 
+export type CommunityBadgeSetting = {
+  id: EntityId
+  name: string
+  /** Absent for the badges the final ranking decides. */
+  target?: number
+}
+
+export type CommunityBadgeSettings = {
+  badges: CommunityBadgeSetting[]
+}
+
 export type CommunityRankingSettings = {
   points: CommunityRankingPoints
   defaultPeriodMonths: 3 | 6 | 12
@@ -94,6 +105,8 @@ type CommunityRankingSeasonBase = {
   startsOn: string
   endsOn: string
   points: CommunityRankingPoints
+  /** Frozen with the season; absent means the community settings still apply. */
+  badges?: CommunityBadgeSetting[]
 }
 
 export type CommunityRankingSeason =
@@ -342,6 +355,7 @@ export type DemoDataSet = {
   competitionFormats: CompetitionFormat[]
   competitionEventKinds: CompetitionEventKind[]
   rankingSettings: CommunityRankingSettings
+  badgeSettings: CommunityBadgeSettings
   rankingSeasons: CommunityRankingSeason[]
   registrationSettings: CommunityRegistrationSettings
   tags: CommunityTag[]

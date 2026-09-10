@@ -8,6 +8,7 @@ import type {
   MarketplaceListing,
 } from '../domain/types'
 import { DEFAULT_COMMUNITY_REGISTRATION_SETTINGS } from './registrationSettings'
+import { getDefaultBadgeSettings } from './rankingBadges'
 
 const communityId = 'community-crc-delorean'
 
@@ -559,6 +560,7 @@ export const demoData = {
     defaultPeriodMonths: 6,
     defaultLimit: 10,
   },
+  badgeSettings: getDefaultBadgeSettings(),
   rankingSeasons: [
     {
       id: 'ranking-season-2025',

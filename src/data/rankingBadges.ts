@@ -1,4 +1,5 @@
 import type {
+  CommunityBadgeSettings,
   CommunityMember,
   CommunityRankingSeason,
   DemoDataSet,
@@ -25,7 +26,8 @@ export type BadgeCounter =
 export type BadgeDefinition = {
   id: string
   name: string
-  description: string
+  /** The Magic rule the name comes from, in Spanish. Not configurable. */
+  reference: string
   family: BadgeFamily
   /** Counted results and threshold, absent when the closing decides the badge. */
   counter?: BadgeCounter
@@ -39,8 +41,11 @@ export type BadgeScope = {
   seasonId: string
 }
 
+/** A definition with the sentence describing its current threshold. */
+export type ResolvedBadge = BadgeDefinition & { description: string }
+
 export type MemberBadge = {
-  definition: BadgeDefinition
+  definition: ResolvedBadge
   unlockedAt?: string
   progress?: { current: number; target: number }
 }
@@ -51,7 +56,7 @@ export type BadgeHolder = {
 }
 
 export type SeasonBadge = {
-  definition: BadgeDefinition
+  definition: ResolvedBadge
   holders: BadgeHolder[]
 }
 
@@ -77,7 +82,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'vigilance',
     name: 'Vigilance',
-    description: 'Juega 6 eventos puntuables',
+    reference: 'Vigilancia: atacar no hace que la criatura se gire.',
     family: 'attendance',
     counter: 'played',
     target: 6,
@@ -85,7 +90,8 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'persist',
     name: 'Persist',
-    description: 'Juega 15 eventos puntuables',
+    reference:
+      'Persistir: al morir sin contadores -1/-1, vuelve al campo de batalla con uno.',
     family: 'attendance',
     counter: 'played',
     target: 15,
@@ -93,7 +99,8 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'saga',
     name: 'Saga',
-    description: 'Juega 30 eventos puntuables',
+    reference:
+      'Saga: un encantamiento que cuenta su historia por capítulos, un contador por turno.',
     family: 'attendance',
     counter: 'played',
     target: 30,
@@ -101,7 +108,8 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'ferocious',
     name: 'Ferocious',
-    description: 'Termina 4 veces en el Top 4 (mínimo 8 jugadores)',
+    reference:
+      'Ferocidad: se activa si controlas una criatura con fuerza 4 o más.',
     family: 'top4',
     counter: 'topFour',
     target: 4,
@@ -109,7 +117,8 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'citys-blessing',
     name: "City's Blessing",
-    description: 'Termina 10 veces en el Top 4 (mínimo 8 jugadores)',
+    reference:
+      'La bendición de la ciudad: la obtienes al ascender, con diez o más permanentes.',
     family: 'top4',
     counter: 'topFour',
     target: 10,
@@ -117,7 +126,8 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'prowess',
     name: 'Prowess',
-    description: 'Termina 3 veces seguidas en el Top 4',
+    reference:
+      'Destreza: cada hechizo que no sea de criatura le da +1/+1 hasta el final del turno.',
     family: 'top4',
     counter: 'topFourStreak',
     target: 3,
@@ -125,7 +135,8 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'storm',
     name: 'Storm',
-    description: 'Termina 6 veces seguidas en el Top 4',
+    reference:
+      'Tormenta: el hechizo se copia por cada hechizo lanzado antes que él este turno.',
     family: 'top4',
     counter: 'topFourStreak',
     target: 6,
@@ -133,7 +144,8 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'deathtouch',
     name: 'Deathtouch',
-    description: 'Gana 3 eventos puntuables',
+    reference:
+      'Toque mortal: cualquier daño que inflija a una criatura basta para destruirla.',
     family: 'titles',
     counter: 'titles',
     target: 3,
@@ -141,7 +153,8 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'annihilator',
     name: 'Annihilator',
-    description: 'Gana 6 eventos puntuables',
+    reference:
+      'Aniquilador: al atacar, el defensor sacrifica esa cantidad de permanentes.',
     family: 'titles',
     counter: 'titles',
     target: 6,
@@ -149,7 +162,8 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'legendary',
     name: 'Legendary',
-    description: 'Gana 10 eventos puntuables',
+    reference:
+      'Legendaria: solo puedes controlar una carta legendaria con el mismo nombre.',
     family: 'titles',
     counter: 'titles',
     target: 10,
@@ -157,7 +171,8 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'delirium',
     name: 'Delirium',
-    description: 'Puntúa en 4 formatos distintos',
+    reference:
+      'Delirio: se activa con cuatro o más tipos de carta en tu cementerio.',
     family: 'formats',
     counter: 'formats',
     target: 4,
@@ -165,7 +180,8 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'domain',
     name: 'Domain',
-    description: 'Puntúa en 5 formatos distintos',
+    reference:
+      'Dominio: cuenta los tipos de tierra básica que controlas, hasta cinco.',
     family: 'formats',
     counter: 'formats',
     target: 5,
@@ -173,7 +189,8 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'changeling',
     name: 'Changeling',
-    description: 'Gana eventos en 2 formatos distintos',
+    reference:
+      'Cambiaformas: la carta es de todos los tipos de criatura a la vez.',
     family: 'formats',
     counter: 'titleFormats',
     target: 2,
@@ -181,7 +198,8 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'melee',
     name: 'Melee',
-    description: 'Gana un evento de 24 jugadores o más',
+    reference:
+      'Cuerpo a cuerpo: +1/+1 por cada oponente al que hayas atacado este turno.',
     family: 'field',
     counter: 'bigWins',
     target: 1,
@@ -189,14 +207,16 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'paragon',
     name: 'Paragon',
-    description: 'Acaba entre los tres primeros de la clasificación final',
+    reference:
+      'Paragon no es una habilidad: son las criaturas que refuerzan a las de su tipo.',
     family: 'season',
     finalRank: 3,
   },
   {
     id: 'monarch',
     name: 'Monarch',
-    description: 'Acaba primero de la clasificación final',
+    reference:
+      'El monarca: robas una carta cada turno hasta que alguien te inflija daño de combate.',
     family: 'season',
     finalRank: 1,
   },
@@ -212,6 +232,87 @@ const RANKED_FIELD = 8
 
 /** Field size from which winning an event says something on its own. */
 const CROWDED_FIELD = 24
+
+function countOf(value: number, one: string, many: string) {
+  return `${value} ${value === 1 ? one : many}`
+}
+
+/**
+ * The sentence a badge shows is derived from its counter and its threshold, so
+ * a manager who raises a target can never leave a description behind claiming
+ * the old one.
+ */
+function describeBadge({ counter, target, finalRank }: BadgeDefinition) {
+  if (finalRank !== undefined) {
+    return finalRank === 1
+      ? 'Acaba primero de la clasificación final'
+      : `Acaba entre los ${finalRank} primeros de la clasificación final`
+  }
+
+  const value = target ?? 0
+
+  switch (counter) {
+    case 'played':
+      return `Juega ${countOf(value, 'evento puntuable', 'eventos puntuables')}`
+    case 'topFour':
+      return `Termina ${countOf(value, 'vez', 'veces')} en el Top 4 (mínimo ${RANKED_FIELD} jugadores)`
+    case 'topFourStreak':
+      return `Termina ${value} ${value === 1 ? 'vez seguida' : 'veces seguidas'} en el Top 4`
+    case 'titles':
+      return `Gana ${countOf(value, 'evento puntuable', 'eventos puntuables')}`
+    case 'formats':
+      return `Puntúa en ${countOf(value, 'formato distinto', 'formatos distintos')}`
+    case 'titleFormats':
+      return `Gana eventos en ${countOf(value, 'formato distinto', 'formatos distintos')}`
+    case 'bigWins':
+      return `Gana ${value === 1 ? 'un evento' : `${value} eventos`} de ${CROWDED_FIELD} jugadores o más`
+    default:
+      return ''
+  }
+}
+
+/** The catalogue as shipped, the starting point a community can adjust. */
+export function getDefaultBadgeSettings(): CommunityBadgeSettings {
+  return {
+    badges: SEASON_BADGES.map(({ id, name, target }) =>
+      target === undefined ? { id, name } : { id, name, target },
+    ),
+  }
+}
+
+/**
+ * Merges the community settings over the catalogue shipped in code: a badge
+ * added later appears on its own, and a setting left over from a badge that no
+ * longer exists is ignored rather than resurrecting it.
+ */
+export function resolveSeasonBadges(
+  settings?: CommunityBadgeSettings,
+): ResolvedBadge[] {
+  const overrides = new Map(
+    (settings?.badges ?? []).map((badge) => [badge.id, badge]),
+  )
+
+  return SEASON_BADGES.map((definition) => {
+    const override = overrides.get(definition.id)
+    const resolved: BadgeDefinition = override
+      ? {
+          ...definition,
+          name: override.name.trim() || definition.name,
+          ...(definition.counter !== undefined && override.target !== undefined
+            ? { target: override.target }
+            : {}),
+        }
+      : definition
+
+    return { ...resolved, description: describeBadge(resolved) }
+  })
+}
+
+function badgesForSeason(data: DemoDataSet, season: CommunityRankingSeason) {
+  return resolveSeasonBadges(
+    season.badges ? { badges: season.badges } : data.badgeSettings,
+  )
+}
 
 type BadgeCounters = Record<BadgeCounter, number>
 
@@ -250,6 +351,7 @@ function collectProgress(
   data: DemoDataSet,
   scope: BadgeScope,
   season: CommunityRankingSeason,
+  badges: ResolvedBadge[],
 ) {
   const eligibleMemberIds = getEligibleRankingMemberIds(season, data.members)
   const progressByMember = new Map<string, MemberProgress>()
@@ -304,7 +406,7 @@ function collectProgress(
         )
       }
 
-      for (const badge of SEASON_BADGES) {
+      for (const badge of badges) {
         if (
           badge.counter &&
           badge.target !== undefined &&
@@ -324,7 +426,7 @@ function collectProgress(
     })) {
       const progress = progressByMember.get(player.member.id)
 
-      for (const badge of SEASON_BADGES) {
+      for (const badge of badges) {
         if (
           progress &&
           badge.finalRank !== undefined &&
@@ -357,13 +459,14 @@ export function getSeasonBadgeBoard(
     return undefined
   }
 
-  const progressByMember = collectProgress(data, scope, season)
+  const badges = badgesForSeason(data, season)
+  const progressByMember = collectProgress(data, scope, season, badges)
   const membersById = new Map(data.members.map((member) => [member.id, member]))
 
   return {
     season,
     players: progressByMember.size,
-    badges: SEASON_BADGES.map((definition) => ({
+    badges: badges.map((definition) => ({
       definition,
       holders: [...progressByMember.entries()]
         .flatMap(([memberId, progress]) => {
@@ -400,9 +503,10 @@ export function getMemberSeasonBadges(
     return undefined
   }
 
-  const progress = collectProgress(data, scope, season).get(memberId)
+  const badges = badgesForSeason(data, season)
+  const progress = collectProgress(data, scope, season, badges).get(memberId)
 
-  return SEASON_BADGES.map((definition) => ({
+  return badges.map((definition) => ({
     definition,
     unlockedAt: progress?.unlockedAt.get(definition.id),
     progress:
