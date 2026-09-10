@@ -68,7 +68,7 @@ describe('MemberSeasonPanel', () => {
     expect(screen.queryByText(/Mejor resultado/)).toBeNull()
     expect(
       within(
-        screen.getByRole('list', { name: 'Tus resultados de la temporada' }),
+        screen.getByRole('list', { name: 'Resultados de la temporada' }),
       ).getAllByRole('listitem'),
     ).toHaveLength(1)
   })
@@ -93,7 +93,7 @@ describe('MemberSeasonPanel', () => {
 
     const results = () =>
       within(
-        screen.getByRole('list', { name: 'Tus resultados de la temporada' }),
+        screen.getByRole('list', { name: 'Resultados de la temporada' }),
       ).getAllByRole('listitem')
 
     expect(results()).toHaveLength(5)
@@ -122,7 +122,7 @@ describe('MemberSeasonPanel', () => {
     ).toBeInTheDocument()
     expect(screen.queryByText(/Mejor resultado/)).toBeNull()
     expect(
-      screen.queryByRole('list', { name: 'Tus resultados de la temporada' }),
+      screen.queryByRole('list', { name: 'Resultados de la temporada' }),
     ).toBeNull()
     expect(
       screen.getByRole('link', { name: 'Ver clasificación' }),

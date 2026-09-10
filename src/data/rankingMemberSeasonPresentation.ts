@@ -28,6 +28,9 @@ export function formatRankDelta(delta: number) {
   return delta < 0 ? `−${Math.abs(delta)} ${places}` : 'Sin cambios'
 }
 
+/** Whether the panel talks to the member or about them. */
+export type SeasonPerspective = 'self' | 'other'
+
 /**
  * The projection assumes the other players do not score, so it is phrased as a
  * possibility and never as a guaranteed place.
@@ -35,10 +38,16 @@ export function formatRankDelta(delta: number) {
 export function formatSeasonProjection(
   projection: MemberSeasonProjection,
   isRanked: boolean,
+  perspective: SeasonPerspective = 'self',
 ) {
   const label = formatPlacementLabel(projection.placement)
+  const verb = isRanked
+    ? perspective === 'self'
+      ? 'subirías a'
+      : 'subiría a'
+    : perspective === 'self'
+      ? 'entrarías en'
+      : 'entraría en'
 
-  return isRanked
-    ? `Con ${label} subirías a la posición ${projection.resultingRank}`
-    : `Con ${label} entrarías en la posición ${projection.resultingRank}`
+  return `Con ${label} ${verb} la posición ${projection.resultingRank}`
 }

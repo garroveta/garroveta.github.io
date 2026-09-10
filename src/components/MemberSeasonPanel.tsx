@@ -6,6 +6,7 @@ import {
   formatPlacement,
   formatRankDelta,
   formatSeasonProjection,
+  type SeasonPerspective,
 } from '../data/rankingMemberSeasonPresentation'
 
 const VISIBLE_RESULTS = 5
@@ -22,6 +23,7 @@ const resultDateFormatter = new Intl.DateTimeFormat('es-ES', {
 type MemberSeasonPanelProps = {
   summary: MemberSeasonSummary
   density?: 'compact' | 'full'
+  perspective?: SeasonPerspective
   title?: string
   footer?: ReactNode
 }
@@ -41,9 +43,11 @@ function RankDelta({ delta }: { delta: number }) {
 export function MemberSeasonPanel({
   summary,
   density = 'full',
+  perspective = 'self',
   title = 'Tu temporada',
   footer,
 }: MemberSeasonPanelProps) {
+  const isSelf = perspective === 'self'
   const titleId = useId()
   const [showAllResults, setShowAllResults] = useState(false)
   const { bestResult, player, projection, results, season } = summary
@@ -70,7 +74,11 @@ export function MemberSeasonPanel({
       </div>
 
       <h2 id={titleId}>
-        {player ? `Posición ${player.rank}` : 'Aún no estás clasificado'}
+        {player
+          ? `Posición ${player.rank}`
+          : isSelf
+            ? 'Aún no estás clasificado'
+            : 'Todavía sin clasificar'}
       </h2>
       <p className="member-season__context">
         {player
@@ -85,7 +93,11 @@ export function MemberSeasonPanel({
               {player.eventsPlayed} de {summary.seasonEvents} eventos puntuables
             </li>
             {summary.pointsToPlaceAbove === undefined ? (
-              <li>Lideras la clasificación</li>
+              <li>
+                {isSelf
+                  ? 'Lideras la clasificación'
+                  : 'Lidera la clasificación'}
+              </li>
             ) : (
               <li>
                 A {summary.pointsToPlaceAbove}{' '}
@@ -120,7 +132,7 @@ export function MemberSeasonPanel({
 
       {projection ? (
         <p className="member-season__projection">
-          {formatSeasonProjection(projection, isRanked)}
+          {formatSeasonProjection(projection, isRanked, perspective)}
         </p>
       ) : null}
 
@@ -128,7 +140,7 @@ export function MemberSeasonPanel({
         <>
           <ol
             className="member-season-results"
-            aria-label="Tus resultados de la temporada"
+            aria-label="Resultados de la temporada"
           >
             {visibleResults.map((result) => (
               <li key={result.event.id}>

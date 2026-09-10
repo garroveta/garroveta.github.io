@@ -17,6 +17,7 @@ export type AppRoute =
   | 'noticias'
   | 'perfil'
   | 'registro'
+  | 'miembro'
 
 export type NavigationItem = {
   id: AppRoute
@@ -68,6 +69,7 @@ export function isAppRoute(value: string): value is AppRoute {
   return (
     value === 'acceso' ||
     value === 'registro' ||
+    value === 'miembro' ||
     navigationItems.some((item) => item.id === value)
   )
 }

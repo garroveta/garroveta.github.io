@@ -62,6 +62,7 @@ import { PlaceholderPage } from './pages/PlaceholderPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { RankingsPage } from './pages/RankingsPage'
 import { RegistrationPage } from './pages/RegistrationPage'
+import { MemberProfilePage } from './pages/MemberProfilePage'
 import { SharedCardsPage } from './pages/SharedCardsPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { AccessPage } from './pages/AccessPage'
@@ -308,6 +309,12 @@ export function App() {
     effectiveRole === 'gerente'
   const sharedCardsMemberId =
     activeRoute === 'cartas' ? cardRouteParams.get('member') : null
+  const profileMember =
+    activeRoute === 'miembro'
+      ? rankingData.members.find(
+          ({ id }) => id === new URLSearchParams(routeQuery).get('id'),
+        )
+      : undefined
 
   if (activeRoute === 'registro') {
     const registrationRouteParams = new URLSearchParams(routeQuery)
@@ -607,8 +614,27 @@ export function App() {
               rankingRouteParams.get('view') === 'events' ? 'events' : undefined
             }
             rankingMemberId={approvedMembership?.id}
+            onOpenMember={(memberId) => navigate('miembro', `id=${memberId}`)}
             onRetryData={() => reloadFailedFeeds(rankingFeeds)}
           />
+        ) : activeRoute === 'miembro' ? (
+          profileMember ? (
+            <MemberProfilePage
+              data={rankingData}
+              member={profileMember}
+              onBack={() => navigate('ranking')}
+            />
+          ) : (
+            <div className="page">
+              <header className="page-heading">
+                <h1>Miembro no encontrado</h1>
+                <p>
+                  Puede que haya dejado la comunidad o que el enlace ya no sea
+                  válido.
+                </p>
+              </header>
+            </div>
+          )
         ) : activeRoute === 'cartas' && sharedCardsMemberId ? (
           <SharedCardsPage
             data={data}

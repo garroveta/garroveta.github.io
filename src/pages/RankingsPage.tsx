@@ -48,6 +48,7 @@ type RankingsPageProps = {
   initialView?: RankingView
   initialStandingId?: string
   rankingMemberId?: string
+  onOpenMember: (memberId: string) => void
   onRetryData: () => void
 }
 
@@ -430,10 +431,12 @@ function CommunityRanking({
   data,
   initialFilters,
   memberId,
+  onOpenMember,
 }: {
   data: DemoDataSet
   initialFilters?: CommunityRankingInitialFilters
   memberId: string
+  onOpenMember: (memberId: string) => void
 }) {
   const seasons = data.rankingSeasons
     .filter(({ status }) => status !== 'upcoming')
@@ -746,9 +749,13 @@ function CommunityRanking({
                         </span>
                       </td>
                       <td>
-                        <span className="ranking-player-name">
+                        <button
+                          className="ranking-player-name"
+                          type="button"
+                          onClick={() => onOpenMember(player.member.id)}
+                        >
                           {player.member.displayName}
-                        </span>
+                        </button>
                       </td>
                       <td>{player.eventsPlayed}</td>
                       <td>{player.eventWins}</td>
@@ -814,6 +821,7 @@ export function RankingsPage({
   initialView = 'community',
   initialStandingId,
   rankingMemberId,
+  onOpenMember,
   onRetryData,
 }: RankingsPageProps) {
   const standings = useMemo(() => getLatestEventStandings(data), [data])
@@ -911,12 +919,14 @@ export function RankingsPage({
         <SeasonBadgesPanel
           data={data}
           memberId={rankingMemberId ?? data.currentMemberId}
+          onOpenMember={onOpenMember}
         />
       ) : activeView === 'community' ? (
         <CommunityRanking
           data={data}
           initialFilters={initialCommunityFilters}
           memberId={rankingMemberId ?? data.currentMemberId}
+          onOpenMember={onOpenMember}
         />
       ) : (
         <>

@@ -26,13 +26,21 @@ const unlockDateFormatter = new Intl.DateTimeFormat('es-ES', {
 type SeasonBadgesPanelProps = {
   data: DemoDataSet
   memberId: string
+  perspective?: 'self' | 'other'
+  onOpenMember?: (memberId: string) => void
 }
 
 function distanceOf({ progress }: MemberBadge) {
   return progress ? progress.current / progress.target : 0
 }
 
-export function SeasonBadgesPanel({ data, memberId }: SeasonBadgesPanelProps) {
+export function SeasonBadgesPanel({
+  data,
+  memberId,
+  perspective = 'self',
+  onOpenMember,
+}: SeasonBadgesPanelProps) {
+  const isSelf = perspective === 'self'
   const seasons = data.rankingSeasons
     .filter(({ status }) => status !== 'upcoming')
     .sort((first, second) => second.startsOn.localeCompare(first.startsOn))
@@ -123,17 +131,24 @@ export function SeasonBadgesPanel({ data, memberId }: SeasonBadgesPanelProps) {
                 aria-label={`Quién tiene ${definition.name}`}
               >
                 {holders.map(({ member }) => (
-                  <li key={member.id} title={member.displayName}>
-                    <span aria-hidden="true">{member.initials}</span>
-                    <span className="visually-hidden">
-                      {member.displayName}
-                    </span>
+                  <li key={member.id}>
+                    <button
+                      type="button"
+                      disabled={!onOpenMember}
+                      onClick={() => onOpenMember?.(member.id)}
+                    >
+                      <span aria-hidden="true">{member.initials}</span>
+                      <span className="visually-hidden">
+                        {member.displayName}
+                      </span>
+                    </button>
                   </li>
                 ))}
               </ul>
             ) : (
               <p className="season-badge__holders--empty">
-                Nadie la tiene todavía. Podrías ser la primera persona.
+                Nadie la tiene todavía.
+                {isSelf ? ' Podrías ser la primera persona.' : ''}
               </p>
             )}
           </div>
@@ -176,7 +191,7 @@ export function SeasonBadgesPanel({ data, memberId }: SeasonBadgesPanelProps) {
 
       <div className="season-badges__heading">
         <div>
-          <span>Tu colección</span>
+          <span>{isSelf ? 'Tu colección' : 'Su colección'}</span>
           <h2 id="season-badges-title">
             {unlocked.length} de {memberBadges.length}
           </h2>
