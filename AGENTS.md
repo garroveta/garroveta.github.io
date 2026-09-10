@@ -5,6 +5,7 @@
 - Rédiger les textes visibles dans l’application en espagnol.
 - Corriger naturellement les formulations espagnoles lorsque nécessaire.
 - Nommer les insignias avec les mots-clés anglais de Magic ; leurs descriptions restent en espagnol.
+- Avant de créer l’illustration d’une insignia, vérifier ses références dans les sources officielles Magic récentes.
 
 ## Méthode de travail
 
