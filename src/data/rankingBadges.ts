@@ -14,7 +14,13 @@ export type BadgeFamily =
   'attendance' | 'top4' | 'titles' | 'formats' | 'field' | 'season'
 
 export type BadgeCounter =
-  'played' | 'topFour' | 'titles' | 'formats' | 'titleFormats' | 'bigWins'
+  | 'played'
+  | 'topFour'
+  | 'topFourStreak'
+  | 'titles'
+  | 'formats'
+  | 'titleFormats'
+  | 'bigWins'
 
 export type BadgeDefinition = {
   id: string
@@ -95,7 +101,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'trample',
     name: 'Trample',
-    description: 'Termina 4 veces en el Top 4',
+    description: 'Termina 4 veces en el Top 4 (mínimo 8 jugadores)',
     family: 'top4',
     counter: 'topFour',
     target: 4,
@@ -103,18 +109,26 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'menace',
     name: 'Menace',
-    description: 'Termina 8 veces en el Top 4',
+    description: 'Termina 10 veces en el Top 4 (mínimo 8 jugadores)',
     family: 'top4',
     counter: 'topFour',
-    target: 8,
+    target: 10,
   },
   {
-    id: 'indestructible',
-    name: 'Indestructible',
-    description: 'Termina 12 veces en el Top 4',
+    id: 'prowess',
+    name: 'Prowess',
+    description: 'Termina 3 veces seguidas en el Top 4',
     family: 'top4',
-    counter: 'topFour',
-    target: 12,
+    counter: 'topFourStreak',
+    target: 3,
+  },
+  {
+    id: 'storm',
+    name: 'Storm',
+    description: 'Termina 6 veces seguidas en el Top 4',
+    family: 'top4',
+    counter: 'topFourStreak',
+    target: 6,
   },
   {
     id: 'deathtouch',
@@ -188,6 +202,14 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   },
 ]
 
+/**
+ * A Top 4 only means something once it is not most of the room: a four player
+ * draft or a six player evening says nothing about how well anyone finished.
+ * Events below this size are left out of the Top 4 count entirely, so playing
+ * one never breaks a streak either.
+ */
+const RANKED_FIELD = 8
+
 /** Field size from which winning an event says something on its own. */
 const CROWDED_FIELD = 24
 
@@ -195,6 +217,8 @@ type BadgeCounters = Record<BadgeCounter, number>
 
 type MemberProgress = {
   counters: BadgeCounters
+  /** Top 4 finishes since the last ranked event the member missed out on. */
+  runningTopFour: number
   unlockedAt: Map<string, string>
 }
 
@@ -203,11 +227,13 @@ function createProgress(): MemberProgress {
     counters: {
       played: 0,
       topFour: 0,
+      topFourStreak: 0,
       titles: 0,
       formats: 0,
       titleFormats: 0,
       bigWins: 0,
     },
+    runningTopFour: 0,
     unlockedAt: new Map(),
   }
 }
@@ -253,14 +279,26 @@ function collectProgress(
         titleFormats.add(item.format.id)
       }
 
+      const field = item.standing.entries.length
+
       progress.counters.played += 1
       progress.counters.titles += Number(wonTheEvent)
-      progress.counters.topFour += Number(entry.rank <= 4)
-      progress.counters.bigWins += Number(
-        wonTheEvent && item.standing.entries.length >= CROWDED_FIELD,
-      )
+      progress.counters.bigWins += Number(wonTheEvent && field >= CROWDED_FIELD)
       progress.counters.formats = formats.size
       progress.counters.titleFormats = titleFormats.size
+
+      if (field >= RANKED_FIELD) {
+        const reachedTopFour = entry.rank <= 4
+
+        progress.counters.topFour += Number(reachedTopFour)
+        progress.runningTopFour = reachedTopFour
+          ? progress.runningTopFour + 1
+          : 0
+        progress.counters.topFourStreak = Math.max(
+          progress.counters.topFourStreak,
+          progress.runningTopFour,
+        )
+      }
 
       for (const badge of SEASON_BADGES) {
         if (

@@ -168,6 +168,84 @@ describe('rankingBadges', () => {
     ).toEqual({ current: 0, target: 6 })
   })
 
+  it('ignores a Top 4 in a field too small to mean anything', () => {
+    const data = structuredClone(demoData) as DemoDataSet
+    const standing = data.eventStandings.find(
+      ({ id }) => id === 'standing-fnm-standard-2026-05-29',
+    )!
+
+    expect(
+      standing.entries.find(({ memberId }) => memberId === 'member-sergio')
+        ?.rank,
+    ).toBeLessThanOrEqual(4)
+    expect(memberBadge('member-sergio', 'menace').progress).toEqual({
+      current: 7,
+      target: 10,
+    })
+
+    standing.entries = standing.entries.slice(0, 5)
+
+    expect(
+      memberBadge('member-sergio', 'menace', activeScope, data).progress,
+    ).toEqual({ current: 6, target: 10 })
+  })
+
+  it('lets a streak run across an event too small to count', () => {
+    const data = structuredClone(demoData) as DemoDataSet
+    const entryOf = (standingId: string) =>
+      data.eventStandings
+        .find(({ id }) => id === standingId)!
+        .entries.find(({ memberId }) => memberId === 'member-sergio')!
+    const chain = [
+      'standing-fnm-standard-2026-07-10',
+      'standing-win-a-box-modern-2026-07-11',
+      'standing-fnm-standard-2026-07-17',
+      'standing-fnm-standard-2026-07-24',
+    ]
+
+    for (const standing of data.eventStandings) {
+      const entry = standing.entries.find(
+        ({ memberId }) => memberId === 'member-sergio',
+      )
+
+      if (entry) {
+        entry.rank = 10
+      }
+    }
+
+    for (const standingId of chain) {
+      entryOf(standingId).rank = 1
+    }
+
+    expect(
+      memberBadge('member-sergio', 'prowess', activeScope, data).progress,
+    ).toEqual({ current: 3, target: 3 })
+
+    const interrupted = entryOf('standing-win-a-box-modern-2026-07-11')
+    interrupted.rank = 10
+
+    expect(
+      memberBadge('member-sergio', 'prowess', activeScope, data),
+    ).toMatchObject({
+      unlockedAt: undefined,
+      progress: { current: 2, target: 3 },
+    })
+
+    const smallStanding = data.eventStandings.find(
+      ({ id }) => id === 'standing-win-a-box-modern-2026-07-11',
+    )!
+    smallStanding.entries = [
+      interrupted,
+      ...smallStanding.entries
+        .filter((entry) => entry !== interrupted)
+        .slice(0, 4),
+    ]
+
+    expect(
+      memberBadge('member-sergio', 'prowess', activeScope, data).progress,
+    ).toEqual({ current: 3, target: 3 })
+  })
+
   it('counts a win in a crowded field on its own', () => {
     const data = structuredClone(demoData) as DemoDataSet
     const standing = data.eventStandings.find(
