@@ -73,18 +73,32 @@ export function MemberSeasonPanel({
         )}
       </div>
 
-      <h2 id={titleId}>
-        {player
-          ? `Posición ${player.rank}`
-          : isSelf
-            ? 'Aún no estás clasificado'
-            : 'Todavía sin clasificar'}
-      </h2>
-      <p className="member-season__context">
-        {player
-          ? `${player.points} puntos comunidad · ${season.name}`
-          : `${season.name} · ${summary.seasonEvents} eventos puntuables`}
-      </p>
+      <div className="member-season__summary">
+        <h2 id={titleId}>
+          {player ? (
+            <>
+              <span>Posición</span> <strong>{player.rank}</strong>
+            </>
+          ) : isSelf ? (
+            'Aún no estás clasificado'
+          ) : (
+            'Todavía sin clasificar'
+          )}
+        </h2>
+        <p className="member-season__context">
+          {player ? (
+            <>
+              <strong>{player.points} puntos</strong>
+              <span>{season.name}</span>
+            </>
+          ) : (
+            <>
+              <strong>{season.name}</strong>
+              <span>{summary.seasonEvents} eventos puntuables</span>
+            </>
+          )}
+        </p>
+      </div>
 
       {density === 'full' && player ? (
         <>

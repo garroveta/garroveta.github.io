@@ -1161,9 +1161,8 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Posición 7' }),
     ).toBeInTheDocument()
-    expect(
-      screen.getByText('34 puntos comunidad · Temporada 2026'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('34 puntos')).toBeInTheDocument()
+    expect(screen.getByText('Temporada 2026')).toBeInTheDocument()
   })
 
   it('shows a not-yet-ranked state when the player has no results yet', () => {

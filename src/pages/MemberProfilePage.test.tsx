@@ -53,8 +53,11 @@ describe('MemberProfilePage', () => {
     expect(
       screen.getByRole('heading', { name: 'Posición 3' }),
     ).toBeInTheDocument()
+    expect(screen.getByText('50 puntos')).toBeInTheDocument()
     expect(
-      screen.getByText('50 puntos comunidad · Temporada 2026'),
+      within(screen.getByRole('region', { name: /^Posición/ })).getByText(
+        'Temporada 2026',
+      ),
     ).toBeInTheDocument()
   })
 
