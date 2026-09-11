@@ -9683,6 +9683,90 @@ a {
   font-weight: 800;
 }
 
+.member-profile-page {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.member-profile {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.member-profile > div > span {
+  color: #857b88;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.member-profile h1 {
+  margin: 0.1rem 0 0;
+  color: #2f2733;
+  font-size: 1.5rem;
+  line-height: 1.15;
+}
+
+.member-profile p {
+  margin: 0.2rem 0 0;
+  color: #7a707d;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.member-profile__interests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.member-profile__interests li {
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  color: #5b2b77;
+  background: #f3ecf6;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.member-profile__contact {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.member-profile__contact h2 {
+  margin: 0;
+  color: #5b2b77;
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.member-profile__contact .contact-methods {
+  margin-top: 0;
+}
+
+.member-profile__contact > p {
+  margin: 0;
+  color: #8a8090;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.member-profile__contact a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: #c9b8d1;
+  text-underline-offset: 0.15em;
+}
+
 .season-badge__share,
 .member-profile__share {
   display: flex;

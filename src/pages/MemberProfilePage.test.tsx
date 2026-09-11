@@ -3,11 +3,15 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { MemberProfilePage } from './MemberProfilePage'
 import { demoData } from '../data/demoData'
+import type { DemoDataSet } from '../domain/types'
 
-function renderProfile(memberId = 'member-sergio') {
-  const member = demoData.members.find(({ id }) => id === memberId)!
+function renderProfile(
+  memberId = 'member-sergio',
+  data: DemoDataSet = demoData,
+) {
+  const member = data.members.find(({ id }) => id === memberId)!
 
-  render(<MemberProfilePage data={demoData} member={member} onBack={vi.fn()} />)
+  render(<MemberProfilePage data={data} member={member} onBack={vi.fn()} />)
 
   return member
 }
@@ -63,6 +67,48 @@ describe('MemberProfilePage', () => {
     expect(
       screen.getByRole('button', { name: /Copiar ficha/ }),
     ).toBeInTheDocument()
+  })
+
+  it('shows a WhatsApp the member chose to share, to every member', () => {
+    renderProfile('member-marta')
+
+    const contact = screen.getByRole('region', { name: 'Contacto' })
+
+    expect(contact).toHaveTextContent('Disponible en el grupo CRC Delorean')
+    expect(contact).toHaveTextContent(
+      'Visible para todos los miembros validados',
+    )
+    expect(within(contact).queryByRole('link')).toBeNull()
+  })
+
+  it('turns a WhatsApp number into a link, and only a number', () => {
+    const data = structuredClone(demoData) as DemoDataSet
+    const marta = data.members.find(({ id }) => id === 'member-marta')!
+    marta.contactMethods = [
+      { kind: 'whatsapp', label: 'WhatsApp', value: '+34 600 12 34 56' },
+    ]
+
+    renderProfile('member-marta', data)
+
+    expect(
+      within(screen.getByRole('region', { name: 'Contacto' })).getByRole(
+        'link',
+        { name: '+34 600 12 34 56' },
+      ),
+    ).toHaveAttribute('href', 'https://wa.me/34600123456')
+  })
+
+  it('keeps email and Discord off the public profile', () => {
+    renderProfile('member-alex')
+
+    expect(screen.queryByRole('region', { name: 'Contacto' })).toBeNull()
+    expect(screen.queryByText(/Discord/)).toBeNull()
+  })
+
+  it('shows nothing when the member shared no WhatsApp', () => {
+    renderProfile('member-carla')
+
+    expect(screen.queryByRole('region', { name: 'Contacto' })).toBeNull()
   })
 
   it('lists what the member follows', () => {

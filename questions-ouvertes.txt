@@ -1,5 +1,5 @@
 QUESTIONS OUVERTES — APPLICATION COMMUNAUTAIRE MTG
-Mise à jour : 28 août 2026
+Mise à jour : 11 septembre 2026
 
 Ce document contient uniquement les questions qui restent à trancher.
 Les sujets économiques sont conservés à part, puisqu'ils seront étudiés dans un second temps.
@@ -22,9 +22,9 @@ Les sujets économiques sont conservés à part, puisqu'ils seront étudiés dan
 
 7. Le joueur utilisera-t-il son véritable nom, un pseudonyme, ou les deux ?
 
-8. Quelles coordonnées pourra-t-il choisir de rendre visibles lorsqu'un autre membre consulte son profil après une correspondance : WhatsApp, téléphone, e-mail, Discord ou aucune coordonnée directe ?
+8. Tranché pour WhatsApp le 11 septembre 2026 : le membre peut l'indiquer s'il le souhaite, et il est alors visible par tous les membres validés sur sa fiche. Reste à trancher pour le téléphone, l'e-mail et Discord, qui ne sont montrés aujourd'hui qu'en cas de correspondance de cartes.
 
-9. Les coordonnées seront-elles visibles par tous les membres validés, ou uniquement par les personnes ayant une correspondance de cartes ?
+9. Voir la question 8 : tranché pour WhatsApp (tous les membres validés), encore ouvert pour les autres coordonnées.
 
 10. Faut-il permettre de signaler et de bloquer un membre, une annonce ou un comportement ?
 
