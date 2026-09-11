@@ -74,7 +74,7 @@ describe('SeasonBadgesPanel', () => {
     fireEvent.click(within(row).getByRole('button'))
 
     expect(row).toHaveTextContent(
-      'Ferocidad: palabra de habilidad sin texto de reglas fijo; en sus cartas suele activarse si controlas una criatura con fuerza 4 o mayor.',
+      'Ferocidad: se activa si controlas una criatura con fuerza 4 o más.',
     )
     expect(
       within(row).getByRole('list', { name: 'Quién tiene Ferocious' }),

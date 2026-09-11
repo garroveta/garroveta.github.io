@@ -76,7 +76,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'saga',
     name: 'Saga',
     reference:
-      'Saga: subtipo de encantamiento cuyas habilidades de capítulo actúan a lo largo de los turnos para contar una historia.',
+      'Saga: un encantamiento que cuenta su historia por capítulos, a lo largo de varios turnos.',
     family: 'attendance',
     counter: 'played',
     target: 30,
@@ -85,7 +85,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'ferocious',
     name: 'Ferocious',
     reference:
-      'Ferocidad: palabra de habilidad sin texto de reglas fijo; en sus cartas suele activarse si controlas una criatura con fuerza 4 o mayor.',
+      'Ferocidad: se activa si controlas una criatura con fuerza 4 o más.',
     family: 'top4',
     counter: 'topFour',
     target: 4,
@@ -139,7 +139,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'legendary',
     name: 'Legendary',
     reference:
-      'Legendario — regla de leyendas: si un jugador controla dos o más permanentes legendarios con el mismo nombre, todos salvo uno van al cementerio.',
+      'Legendario: solo puedes controlar una carta legendaria con ese nombre a la vez.',
     family: 'titles',
     counter: 'titles',
     target: 10,
@@ -148,7 +148,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'delirium',
     name: 'Delirium',
     reference:
-      'Delirio: palabra de habilidad sin texto de reglas fijo; en sus cartas suele activarse con cuatro o más tipos de carta en tu cementerio.',
+      'Delirio: se activa con cuatro o más tipos de carta en tu cementerio.',
     family: 'formats',
     counter: 'formats',
     target: 4,
@@ -157,7 +157,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'domain',
     name: 'Domain',
     reference:
-      'Dominio: palabra de habilidad sin texto de reglas fijo; en sus cartas suele contar los tipos de tierra básica que controlas.',
+      'Dominio: cuenta los tipos de tierra básica que controlas, hasta cinco.',
     family: 'formats',
     counter: 'formats',
     target: 5,
@@ -174,7 +174,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'melee',
     name: 'Melee',
     reference:
-      'Reyerta — nombre oficial en español de Melee. (Siempre que esta criatura ataque, obtiene +1/+1 hasta el final del turno por cada oponente al que atacaste este combate.)',
+      'Reyerta. (Siempre que esta criatura ataque, obtiene +1/+1 hasta el final del turno por cada oponente al que atacaste este combate.)',
     family: 'field',
     counter: 'bigWins',
     target: 1,
@@ -183,7 +183,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'paragon',
     name: 'Paragon',
     reference:
-      'Paragon no aparece en las Reglas Completas: no es una habilidad ni una palabra de habilidad oficial, solo describe a las criaturas que refuerzan a las de su propio tipo.',
+      'Paragon no es una habilidad: son las criaturas que refuerzan a las de su tipo.',
     family: 'season',
     finalRank: 3,
   },
@@ -191,7 +191,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'monarch',
     name: 'Monarch',
     reference:
-      'El Monarca: roba una carta al comienzo de su paso final; quien le inflige daño de combate le arrebata el título.',
+      'El Monarca: robas una carta cada turno hasta que un rival te inflija daño de combate y te arrebate el título.',
     family: 'season',
     finalRank: 1,
   },
