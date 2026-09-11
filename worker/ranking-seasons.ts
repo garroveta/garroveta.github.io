@@ -4,10 +4,8 @@ import {
   authorizeApprovedMember,
 } from './authorization'
 import { ApiRequestError, apiError, jsonResponse, readJsonBody } from './http'
-import {
-  parseStoredBadgeSettings,
-  snapshotBadgeSettings,
-} from './badge-settings'
+import { parseStoredBadgeSettings } from './badge-settings'
+import { snapshotBadgeSettings } from '../src/domain/badges'
 
 const RESOURCE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$/
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/

@@ -14,18 +14,17 @@ import type { CommunityBadgeSettings, DemoDataSet } from '../domain/types'
 
 function renderPanel(
   onSave?: (settings: CommunityBadgeSettings) => Promise<void>,
+  data: DemoDataSet = demoData,
 ) {
   let saved: DemoDataSet | undefined
   const onDataChange = vi.fn((updater: DemoDataUpdater) => {
     saved =
-      typeof updater === 'function'
-        ? (updater(demoData) as DemoDataSet)
-        : updater
+      typeof updater === 'function' ? (updater(data) as DemoDataSet) : updater
   })
 
   render(
     <BadgeSettingsPanel
-      data={demoData}
+      data={data}
       onDataChange={onDataChange}
       onSave={onSave}
     />,
@@ -41,6 +40,23 @@ function rowOf(name: string) {
 }
 
 describe('BadgeSettingsPanel', () => {
+  it('pre-fills every target from the catalogue when nothing was saved yet', () => {
+    // What the server returns for a community that never opened this panel:
+    // an empty override array, not one entry per badge.
+    const freshData: DemoDataSet = {
+      ...demoData,
+      badgeSettings: { badges: [] },
+    }
+
+    renderPanel(undefined, freshData)
+
+    const ferocious = within(rowOf('Ferocious')).getByLabelText('Objetivo')
+    const monarch = within(rowOf('Monarch')).queryByLabelText('Objetivo')
+
+    expect(ferocious).toHaveValue(4)
+    expect(monarch).toBeNull()
+  })
+
   it('says out loud that the settings never leave the device', () => {
     renderPanel()
 

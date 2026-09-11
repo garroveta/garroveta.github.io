@@ -9,6 +9,7 @@ import {
   getDefaultBadgeSettings,
   isCommunityBadgeSettingsValid,
   resolveSeasonBadges,
+  snapshotBadgeSettings,
   type BadgeFamily,
 } from '../domain/badges'
 import { updateCommunityBadgeSettings } from '../data/rankingBadgeSettings'
@@ -48,8 +49,10 @@ export function BadgeSettingsPanel({
   onDataChange,
   onSave,
 }: BadgeSettingsPanelProps) {
-  const [badges, setBadges] = useState<CommunityBadgeSetting[]>(
-    () => data.badgeSettings.badges,
+  // An override list can be empty ("use the defaults") without every field
+  // in the form being blank: the resolved snapshot fills each one in.
+  const [badges, setBadges] = useState<CommunityBadgeSetting[]>(() =>
+    snapshotBadgeSettings(data.badgeSettings),
   )
   const [status, setStatus] = useState<
     'error' | 'idle' | 'invalid' | 'saved' | 'saving'

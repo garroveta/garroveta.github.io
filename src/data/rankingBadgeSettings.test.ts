@@ -6,6 +6,7 @@ import {
   getDefaultBadgeSettings,
   isCommunityBadgeSettingsValid,
   resolveSeasonBadges,
+  snapshotBadgeSettings,
 } from '../domain/badges'
 import { getMemberSeasonBadges } from './rankingBadges'
 import { updateCommunityBadgeSettings } from './rankingBadgeSettings'
@@ -131,5 +132,40 @@ describe('rankingBadgeSettings', () => {
       unlockedAt: undefined,
       progress: { current: 7, target: 99 },
     })
+  })
+
+  it('fills every badge in from the catalogue when there is no override yet', () => {
+    // What a community that never saved settings has stored: an empty array,
+    // meaning "use the defaults" — not one entry per badge.
+    const snapshot = snapshotBadgeSettings({ badges: [] })
+
+    expect(snapshot).toHaveLength(SEASON_BADGES.length)
+    expect(snapshot).toEqual(getDefaultBadgeSettings().badges)
+    expect(snapshot.find(({ id }) => id === 'ferocious')).toEqual({
+      id: 'ferocious',
+      name: 'Ferocious',
+      target: 4,
+    })
+    expect(snapshot.find(({ id }) => id === 'monarch')).toEqual({
+      id: 'monarch',
+      name: 'Monarch',
+    })
+  })
+
+  it('keeps a saved override in the snapshot, not just the catalogue value', () => {
+    const settings = settingsWith('ferocious', { name: 'Bestial', target: 6 })
+    const snapshot = snapshotBadgeSettings(settings)
+
+    expect(snapshot.find(({ id }) => id === 'ferocious')).toEqual({
+      id: 'ferocious',
+      name: 'Bestial',
+      target: 6,
+    })
+  })
+
+  it('resolves undefined the same way as an empty override list', () => {
+    expect(snapshotBadgeSettings(undefined)).toEqual(
+      snapshotBadgeSettings({ badges: [] }),
+    )
   })
 })

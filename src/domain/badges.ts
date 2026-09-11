@@ -1,4 +1,4 @@
-import type { CommunityBadgeSettings } from './types'
+import type { CommunityBadgeSetting, CommunityBadgeSettings } from './types'
 
 export type BadgeFamily =
   'attendance' | 'top4' | 'titles' | 'formats' | 'field' | 'season'
@@ -267,6 +267,21 @@ export function resolveSeasonBadges(
 
     return { ...resolved, description: describeBadge(resolved) }
   })
+}
+
+/**
+ * The full list a season freezes: every badge with the name and threshold in
+ * force, so a later change of settings — or of the code catalogue — can never
+ * take back what the season handed out. Also the right way to initialize an
+ * editable form: an empty override array means "use the defaults", and this
+ * fills them in instead of leaving every field blank.
+ */
+export function snapshotBadgeSettings(
+  settings?: CommunityBadgeSettings,
+): CommunityBadgeSetting[] {
+  return resolveSeasonBadges(settings).map(({ id, name, target }) =>
+    target === undefined ? { id, name } : { id, name, target },
+  )
 }
 
 const MAX_NAME_LENGTH = 40
