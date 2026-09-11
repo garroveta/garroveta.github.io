@@ -18,6 +18,7 @@ import {
   saveCommunitySettings,
   type PersistedCommunitySettings,
 } from './api/communitySettings'
+import { saveCommunityBadgeSettings } from './api/communityBadgeSettings'
 import { saveCommunityRegistrationSettings } from './api/communityRegistrationSettings'
 import {
   createCommunityReferential,
@@ -47,6 +48,7 @@ import { useCommunityEvents } from './hooks/useCommunityEvents'
 import { useCommunityCommunications } from './hooks/useCommunityCommunications'
 import { useCommunitySettings } from './hooks/useCommunitySettings'
 import { useCommunityReferentials } from './hooks/useCommunityReferentials'
+import { useCommunityBadgeSettings } from './hooks/useCommunityBadgeSettings'
 import { useCommunityRegistrationSettings } from './hooks/useCommunityRegistrationSettings'
 import { useRankingSeasons } from './hooks/useRankingSeasons'
 import { useEventStandings } from './hooks/useEventStandings'
@@ -193,6 +195,17 @@ export function App() {
     enabled: Boolean(approvedMembership),
     onLoaded: replaceRegistrationSettings,
   })
+  const replaceBadgeSettings = useCallback(
+    (badgeSettings: DemoDataSet['badgeSettings']) => {
+      updateData((currentData) => ({ ...currentData, badgeSettings }))
+    },
+    [updateData],
+  )
+  const communityBadgeSettings = useCommunityBadgeSettings({
+    communityId: data.community.id,
+    enabled: Boolean(approvedMembership),
+    onLoaded: replaceBadgeSettings,
+  })
   const replaceRankingSeasons = useCallback(
     (rankingSeasons: DemoDataSet['rankingSeasons']) => {
       updateData((currentData) => ({ ...currentData, rankingSeasons }))
@@ -235,6 +248,7 @@ export function App() {
     rankingSeasons,
     eventStandings,
     communityMembersFeed,
+    communityBadgeSettings,
   ] satisfies DataFeed[]
   const homeFeeds = (
     effectiveRole === 'gerente'
@@ -789,6 +803,17 @@ export function App() {
               )
               replaceCommunitySettings(community)
             }}
+            onSaveBadgeSettings={
+              approvedMembership
+                ? async (input) => {
+                    const { badgeSettings } = await saveCommunityBadgeSettings(
+                      data.community.id,
+                      input,
+                    )
+                    replaceBadgeSettings(badgeSettings)
+                  }
+                : undefined
+            }
             onSaveRegistrationSettings={async (input) => {
               const { registrationSettings } =
                 await saveCommunityRegistrationSettings(

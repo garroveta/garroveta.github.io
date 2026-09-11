@@ -79,6 +79,14 @@ const communitySettingsApiMocks = vi.hoisted(() => ({
 const communityRegistrationSettingsApiMocks = vi.hoisted(() => ({
   saveCommunityRegistrationSettings: vi.fn(),
 }))
+const communityBadgeSettingsApiMocks = vi.hoisted(() => ({
+  saveCommunityBadgeSettings: vi.fn(),
+}))
+const communityBadgeSettingsHookMocks = vi.hoisted(() => ({
+  error: null as unknown,
+  reload: vi.fn(),
+  status: 'ready' as CommunitySettingsStatus,
+}))
 const rankingSeasonsApiMocks = vi.hoisted(() => ({
   activateCommunityRankingSeason: vi.fn(),
   closeCommunityRankingSeason: vi.fn(),
@@ -163,6 +171,10 @@ vi.mock('./hooks/useCommunitySettings', () => ({
 }))
 vi.mock('./hooks/useCommunityReferentials', () => ({
   useCommunityReferentials: () => communityReferentialsHookMocks,
+}))
+vi.mock('./api/communityBadgeSettings', () => communityBadgeSettingsApiMocks)
+vi.mock('./hooks/useCommunityBadgeSettings', () => ({
+  useCommunityBadgeSettings: () => communityBadgeSettingsHookMocks,
 }))
 vi.mock('./hooks/useCommunityRegistrationSettings', () => ({
   useCommunityRegistrationSettings: () =>
@@ -319,6 +331,8 @@ describe('App', () => {
     communitySettingsHookMocks.status = 'ready'
     communityReferentialsHookMocks.status = 'ready'
     communityRegistrationSettingsHookMocks.status = 'ready'
+    communityBadgeSettingsHookMocks.status = 'ready'
+    communityBadgeSettingsHookMocks.error = null
     rankingSeasonsHookMocks.status = 'ready'
     rankingSeasonsHookMocks.error = null
     eventStandingsHookMocks.status = 'ready'

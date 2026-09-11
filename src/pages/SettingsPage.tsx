@@ -32,6 +32,7 @@ import type { CommunityReferentialsStatus } from '../hooks/useCommunityReferenti
 import type { CommunityRegistrationSettingsStatus } from '../hooks/useCommunityRegistrationSettings'
 import type { RankingSeasonsStatus } from '../hooks/useRankingSeasons'
 import type {
+  CommunityBadgeSettings,
   CommunityRegistrationSettings,
   CommunityRankingPoints,
 } from '../domain/types'
@@ -77,6 +78,7 @@ type SettingsPageProps = {
     optionIds: string[],
   ) => Promise<void>
   onSaveCommunitySettings: (input: CommunitySettingsInput) => Promise<void>
+  onSaveBadgeSettings?: (input: CommunityBadgeSettings) => Promise<void>
   onSaveRegistrationSettings: (
     input: CommunityRegistrationSettings,
   ) => Promise<void>
@@ -117,6 +119,7 @@ export function SettingsPage({
   onDeleteCommunityOption,
   onReorderCommunityOptions,
   onSaveCommunitySettings,
+  onSaveBadgeSettings,
   onSaveRegistrationSettings,
   onUpdateCommunityOption,
   onViewNewsPost,
@@ -288,7 +291,11 @@ export function SettingsPage({
           persistenceError={communicationPersistenceError}
         />
       ) : activeSection === 'insignias' ? (
-        <BadgeSettingsPanel data={data} onDataChange={onDataChange} />
+        <BadgeSettingsPanel
+          data={data}
+          onDataChange={onDataChange}
+          onSave={onSaveBadgeSettings}
+        />
       ) : (
         <RankingSettingsPanel
           data={data}

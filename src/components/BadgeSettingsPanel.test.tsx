@@ -1,12 +1,20 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { BadgeSettingsPanel } from './BadgeSettingsPanel'
 import { demoData } from '../data/demoData'
 import type { DemoDataUpdater } from '../data/demoRepository'
-import type { DemoDataSet } from '../domain/types'
+import type { CommunityBadgeSettings, DemoDataSet } from '../domain/types'
 
-function renderPanel() {
+function renderPanel(
+  onSave?: (settings: CommunityBadgeSettings) => Promise<void>,
+) {
   let saved: DemoDataSet | undefined
   const onDataChange = vi.fn((updater: DemoDataUpdater) => {
     saved =
@@ -15,7 +23,13 @@ function renderPanel() {
         : updater
   })
 
-  render(<BadgeSettingsPanel data={demoData} onDataChange={onDataChange} />)
+  render(
+    <BadgeSettingsPanel
+      data={demoData}
+      onDataChange={onDataChange}
+      onSave={onSave}
+    />,
+  )
 
   return { onDataChange, getSaved: () => saved }
 }
@@ -31,6 +45,53 @@ describe('BadgeSettingsPanel', () => {
     renderPanel()
 
     expect(screen.getByRole('note')).toHaveTextContent(/Función simulada/)
+  })
+
+  it('drops the simulation notice once a server is behind it', () => {
+    renderPanel(vi.fn().mockResolvedValue(undefined))
+
+    expect(screen.queryByRole('note')).toBeNull()
+  })
+
+  it('sends the settings to the server, then keeps them locally', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    const { getSaved } = renderPanel(onSave)
+    const row = rowOf('Ferocious')
+
+    fireEvent.change(within(row).getByLabelText('Objetivo'), {
+      target: { value: '6' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar insignias' }))
+
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Insignias guardadas.',
+      ),
+    )
+    expect(onSave).toHaveBeenCalledWith({
+      badges: expect.arrayContaining([
+        { id: 'ferocious', name: 'Ferocious', target: 6 },
+      ]),
+    })
+    expect(
+      getSaved()?.badgeSettings.badges.find(({ id }) => id === 'ferocious')
+        ?.target,
+    ).toBe(6)
+  })
+
+  it('keeps the local copy untouched when the server refuses', async () => {
+    const { onDataChange } = renderPanel(
+      vi.fn().mockRejectedValue(new Error('boom')),
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar insignias' }))
+
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(
+        /No se han podido guardar/,
+      ),
+    )
+    expect(onDataChange).not.toHaveBeenCalled()
   })
 
   it('rewrites the description as the target changes', () => {
@@ -64,7 +125,7 @@ describe('BadgeSettingsPanel', () => {
     expect(row).toHaveTextContent('Lo decide la clasificación final')
   })
 
-  it('saves a renamed badge with its new target', () => {
+  it('saves a renamed badge with its new target', async () => {
     const { getSaved } = renderPanel()
     const row = rowOf('Ferocious')
 
@@ -76,15 +137,17 @@ describe('BadgeSettingsPanel', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Guardar insignias' }))
 
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Insignias guardadas en este dispositivo.',
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Insignias guardadas en este dispositivo.',
+      ),
     )
     expect(
       getSaved()?.badgeSettings.badges.find(({ id }) => id === 'ferocious'),
     ).toEqual({ id: 'ferocious', name: 'Bestial', target: 6 })
   })
 
-  it('refuses to save an empty target and says what to fix', () => {
+  it('refuses to save an empty target and says what to fix', async () => {
     const { onDataChange } = renderPanel()
 
     fireEvent.change(within(rowOf('Ferocious')).getByLabelText('Objetivo'), {
@@ -92,10 +155,12 @@ describe('BadgeSettingsPanel', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Guardar insignias' }))
 
-    expect(onDataChange).not.toHaveBeenCalled()
-    expect(screen.getByRole('status')).toHaveTextContent(
-      /cada insignia necesita un nombre y un objetivo/,
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(
+        /cada insignia necesita un nombre y un objetivo/,
+      ),
     )
+    expect(onDataChange).not.toHaveBeenCalled()
   })
 
   it('restores the shipped catalogue', () => {
