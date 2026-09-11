@@ -128,7 +128,7 @@ describe('BadgeSettingsPanel', () => {
     renderPanel()
 
     expect(rowOf('Ferocious')).toHaveTextContent(
-      'Ferocidad: se activa si controlas una criatura con fuerza 4 o más.',
+      'Ferocidad: palabra de habilidad sin texto de reglas fijo; en sus cartas suele activarse si controlas una criatura con fuerza 4 o mayor.',
     )
   })
 

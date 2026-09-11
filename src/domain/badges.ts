@@ -38,12 +38,27 @@ export type ResolvedBadge = BadgeDefinition & { description: string }
  * in one place.
  *
  * Names stay gender neutral: every badge is worn by any member.
+ *
+ * `reference` is the Spanish reminder text as printed on real cards
+ * (in parentheses), pulled from current, non-token printings via the
+ * Scryfall API — e.g. https://api.scryfall.com/cards/search?q=keyword:
+ * vigilance+lang:es — and cross-checked across several recent cards per
+ * keyword so a one-off variant reminder isn't mistaken for the norm.
+ * Six badges have no such text because no single card carries it:
+ * Ferocious, Delirium and Domain are ability words (Comprehensive Rules
+ * 207.2c) whose effect is spelled out fresh on every card; Saga's
+ * reminder embeds its own final chapter number, so no one card's wording
+ * generalizes; the legend rule and the Monarch are background rules,
+ * never printed as a single reminder. Their entries describe the rule in
+ * plain prose instead (Comprehensive Rules 704.5j and 724). Paragon is
+ * not an official term at all — no keyword, no ability word, nothing in
+ * the Comprehensive Rules — and says so.
  */
 export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'vigilance',
     name: 'Vigilance',
-    reference: 'Vigilancia: atacar no hace que la criatura se gire.',
+    reference: 'Vigilancia. (Esta criatura no se gira al atacar.)',
     family: 'attendance',
     counter: 'played',
     target: 6,
@@ -52,7 +67,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'persist',
     name: 'Persist',
     reference:
-      'Persistir: al morir sin contadores -1/-1, vuelve al campo de batalla con uno.',
+      'Persistir. (Cuando esta criatura muera, si no tenía contadores -1/-1 sobre ella, regrésala al campo de batalla bajo el control de su propietario con un contador -1/-1 sobre ella.)',
     family: 'attendance',
     counter: 'played',
     target: 15,
@@ -61,7 +76,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'saga',
     name: 'Saga',
     reference:
-      'Saga: un encantamiento que cuenta su historia por capítulos, un contador por turno.',
+      'Saga: subtipo de encantamiento cuyas habilidades de capítulo actúan a lo largo de los turnos para contar una historia.',
     family: 'attendance',
     counter: 'played',
     target: 30,
@@ -70,7 +85,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'ferocious',
     name: 'Ferocious',
     reference:
-      'Ferocidad: se activa si controlas una criatura con fuerza 4 o más.',
+      'Ferocidad: palabra de habilidad sin texto de reglas fijo; en sus cartas suele activarse si controlas una criatura con fuerza 4 o mayor.',
     family: 'top4',
     counter: 'topFour',
     target: 4,
@@ -79,7 +94,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'citys-blessing',
     name: "City's Blessing",
     reference:
-      'La bendición de la ciudad: la obtienes al ascender, con diez o más permanentes.',
+      'Ascender. (Si controlas diez o más permanentes, obtienes la bendición de la ciudad durante el resto del juego.)',
     family: 'top4',
     counter: 'topFour',
     target: 10,
@@ -88,7 +103,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'prowess',
     name: 'Prowess',
     reference:
-      'Destreza: cada hechizo que no sea de criatura le da +1/+1 hasta el final del turno.',
+      'Destreza. (Siempre que lances un hechizo que no sea de criatura, esta criatura obtiene +1/+1 hasta el final del turno.)',
     family: 'top4',
     counter: 'topFourStreak',
     target: 3,
@@ -97,7 +112,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'storm',
     name: 'Storm',
     reference:
-      'Tormenta: el hechizo se copia por cada hechizo lanzado antes que él este turno.',
+      'Tormenta. (Cuando lances este hechizo, cópialo por cada hechizo lanzado antes que él en este turno. Puedes elegir nuevos objetivos para las copias.)',
     family: 'top4',
     counter: 'topFourStreak',
     target: 6,
@@ -106,7 +121,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'deathtouch',
     name: 'Deathtouch',
     reference:
-      'Toque mortal: cualquier daño que inflija a una criatura basta para destruirla.',
+      'Toque mortal. (Cualquier cantidad de daño que esto haga a una criatura es suficiente para destruirla.)',
     family: 'titles',
     counter: 'titles',
     target: 3,
@@ -115,7 +130,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'annihilator',
     name: 'Annihilator',
     reference:
-      'Aniquilador: al atacar, el defensor sacrifica esa cantidad de permanentes.',
+      'Aniquilador N. (Siempre que esta criatura ataque, el jugador defensor sacrifica N permanentes.)',
     family: 'titles',
     counter: 'titles',
     target: 6,
@@ -124,7 +139,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'legendary',
     name: 'Legendary',
     reference:
-      'Legendaria: solo puedes controlar una carta legendaria con el mismo nombre.',
+      'Legendario — regla de leyendas: si un jugador controla dos o más permanentes legendarios con el mismo nombre, todos salvo uno van al cementerio.',
     family: 'titles',
     counter: 'titles',
     target: 10,
@@ -133,7 +148,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'delirium',
     name: 'Delirium',
     reference:
-      'Delirio: se activa con cuatro o más tipos de carta en tu cementerio.',
+      'Delirio: palabra de habilidad sin texto de reglas fijo; en sus cartas suele activarse con cuatro o más tipos de carta en tu cementerio.',
     family: 'formats',
     counter: 'formats',
     target: 4,
@@ -142,7 +157,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'domain',
     name: 'Domain',
     reference:
-      'Dominio: cuenta los tipos de tierra básica que controlas, hasta cinco.',
+      'Dominio: palabra de habilidad sin texto de reglas fijo; en sus cartas suele contar los tipos de tierra básica que controlas.',
     family: 'formats',
     counter: 'formats',
     target: 5,
@@ -150,8 +165,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
   {
     id: 'changeling',
     name: 'Changeling',
-    reference:
-      'Cambiaformas: la carta es de todos los tipos de criatura a la vez.',
+    reference: 'Cambiaformas. (Esta carta es de todos los tipos de criatura.)',
     family: 'formats',
     counter: 'titleFormats',
     target: 2,
@@ -160,7 +174,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'melee',
     name: 'Melee',
     reference:
-      'Cuerpo a cuerpo: +1/+1 por cada oponente al que hayas atacado este turno.',
+      'Reyerta — nombre oficial en español de Melee. (Siempre que esta criatura ataque, obtiene +1/+1 hasta el final del turno por cada oponente al que atacaste este combate.)',
     family: 'field',
     counter: 'bigWins',
     target: 1,
@@ -169,7 +183,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'paragon',
     name: 'Paragon',
     reference:
-      'Paragon no es una habilidad: son las criaturas que refuerzan a las de su tipo.',
+      'Paragon no aparece en las Reglas Completas: no es una habilidad ni una palabra de habilidad oficial, solo describe a las criaturas que refuerzan a las de su propio tipo.',
     family: 'season',
     finalRank: 3,
   },
@@ -177,7 +191,7 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     id: 'monarch',
     name: 'Monarch',
     reference:
-      'El monarca: robas una carta cada turno hasta que alguien te inflija daño de combate.',
+      'El Monarca: roba una carta al comienzo de su paso final; quien le inflige daño de combate le arrebata el título.',
     family: 'season',
     finalRank: 1,
   },
