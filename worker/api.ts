@@ -13,6 +13,10 @@ import {
   matchCommunicationRoute,
 } from './communications'
 import {
+  handleBadgeSettingsApiRequest,
+  matchBadgeSettingsRoute,
+} from './badge-settings'
+import {
   handleCommunitySettingsApiRequest,
   matchCommunitySettingsRoute,
 } from './community-settings'
@@ -116,6 +120,19 @@ export function handleApiRequest({
         request,
       },
       communitySettingsRoute,
+    )
+  }
+
+  const badgeSettingsRoute = matchBadgeSettingsRoute(requestUrl.pathname)
+
+  if (badgeSettingsRoute) {
+    return handleBadgeSettingsApiRequest(
+      {
+        context,
+        env,
+        request,
+      },
+      badgeSettingsRoute,
     )
   }
 
