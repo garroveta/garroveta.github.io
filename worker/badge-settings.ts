@@ -4,7 +4,10 @@ import {
   authorizeApprovedMember,
 } from './authorization'
 import { ApiRequestError, apiError, jsonResponse, readJsonBody } from './http'
-import { isCommunityBadgeSettingsValid } from '../src/domain/badges'
+import {
+  isCommunityBadgeSettingsValid,
+  resolveSeasonBadges,
+} from '../src/domain/badges'
 import type {
   CommunityBadgeSetting,
   CommunityBadgeSettings,
@@ -87,6 +90,19 @@ export function parseStoredBadgeSettings(
   } catch {
     return { badges: [] }
   }
+}
+
+/**
+ * The full list a season freezes: every badge with the name and threshold in
+ * force, so a later change of settings — or of the code catalogue — can never
+ * take back what the season handed out.
+ */
+export function snapshotBadgeSettings(
+  settings: CommunityBadgeSettings,
+): CommunityBadgeSetting[] {
+  return resolveSeasonBadges(settings).map(({ id, name, target }) =>
+    target === undefined ? { id, name } : { id, name, target },
+  )
 }
 
 export function matchBadgeSettingsRoute(

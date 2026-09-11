@@ -4,6 +4,10 @@ import {
   authorizeApprovedMember,
 } from './authorization'
 import { ApiRequestError, apiError, jsonResponse, readJsonBody } from './http'
+import {
+  parseStoredBadgeSettings,
+  snapshotBadgeSettings,
+} from './badge-settings'
 
 const RESOURCE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$/
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
@@ -47,6 +51,7 @@ interface RankingSeasonInput {
 }
 
 interface RankingSeasonRow {
+  badges: string | null
   community_id: string
   eligible_member_ids: string | null
   ends_on: string
@@ -191,6 +196,9 @@ function toRankingSeason(row: RankingSeasonRow) {
           ) as string[],
         }
       : {}),
+    ...(row.badges
+      ? { badges: parseStoredBadgeSettings(row.badges).badges }
+      : {}),
     id: row.id,
     name: row.name,
     points: {
@@ -280,7 +288,8 @@ async function listRankingSeasons(
       points_fifth,
       points_sixth_to_tenth,
       points_participation,
-      eligible_member_ids
+      eligible_member_ids,
+      badges
     from community_ranking_season
     where community_id = ?
     order by starts_on desc`,
@@ -367,7 +376,8 @@ async function createRankingSeason(
       points_fifth,
       points_sixth_to_tenth,
       points_participation,
-      eligible_member_ids`,
+      eligible_member_ids,
+      badges`,
   )
     .bind(
       id,
@@ -433,7 +443,8 @@ async function updateRankingSeasonPoints(
       points_fifth,
       points_sixth_to_tenth,
       points_participation,
-      eligible_member_ids`,
+      eligible_member_ids,
+      badges`,
   )
     .bind(
       points.first,
@@ -545,7 +556,8 @@ async function activateRankingSeason(
       points_fifth,
       points_sixth_to_tenth,
       points_participation,
-      eligible_member_ids`,
+      eligible_member_ids,
+      badges`,
   )
     .bind(now, seasonId, communityId)
     .first<RankingSeasonRow>()
@@ -573,11 +585,24 @@ async function closeRankingSeason(
     .bind(communityId)
     .all<{ id: string }>()
   const eligibleMemberIds = JSON.stringify(eligibleMembers.map(({ id }) => id))
+  const community = await requestContext.env.DB.prepare(
+    `select badge_settings from community where id = ? limit 1`,
+  )
+    .bind(communityId)
+    .first<{ badge_settings: string }>()
+  // A season that never had its badges frozen on a settings save gets them
+  // frozen now; one that had keeps them, whatever the settings say today.
+  const frozenBadges = JSON.stringify(
+    snapshotBadgeSettings(parseStoredBadgeSettings(community?.badge_settings)),
+  )
   const now = new Date().toISOString()
 
   const closed = await requestContext.env.DB.prepare(
     `update community_ranking_season
-    set status = 'closed', eligible_member_ids = ?, updated_at = ?
+    set status = 'closed',
+        eligible_member_ids = ?,
+        badges = coalesce(badges, ?),
+        updated_at = ?
     where id = ? and community_id = ? and status = 'active'
     returning
       id,
@@ -593,9 +618,10 @@ async function closeRankingSeason(
       points_fifth,
       points_sixth_to_tenth,
       points_participation,
-      eligible_member_ids`,
+      eligible_member_ids,
+      badges`,
   )
-    .bind(eligibleMemberIds, now, seasonId, communityId)
+    .bind(eligibleMemberIds, frozenBadges, now, seasonId, communityId)
     .first<RankingSeasonRow>()
 
   if (!closed) {

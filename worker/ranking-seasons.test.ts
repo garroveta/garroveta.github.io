@@ -7,6 +7,7 @@ import {
   type MemberAuthorizationResult,
 } from './authorization'
 import { type AuthEnv } from './auth'
+import { getDefaultBadgeSettings } from '../src/domain/badges'
 import {
   handleRankingSeasonApiRequest,
   matchRankingSeasonRoute,
@@ -362,12 +363,15 @@ describe('Ranking season API', () => {
     })
   })
 
-  it('closes the active season and freezes approved members', async () => {
+  it('closes the active season, freezing members and badges', async () => {
+    const frozenBadges = getDefaultBadgeSettings().badges
     const { context, statements } = createContext({
       allResults: [[{ id: 'member-alex' }, { id: 'member-marta' }]],
       firstResults: [
+        { badge_settings: '[]' },
         {
           ...persistedSeason,
+          badges: JSON.stringify(frozenBadges),
           eligible_member_ids: JSON.stringify(['member-alex', 'member-marta']),
           id: 'season-2026',
           status: 'closed',
@@ -381,16 +385,34 @@ describe('Ranking season API', () => {
     expect(response.status).toBe(200)
     await expect(response.json()).resolves.toMatchObject({
       season: {
+        badges: frozenBadges,
         eligibleMemberIds: ['member-alex', 'member-marta'],
         status: 'closed',
       },
     })
-    expect(statements[1]?.bind).toHaveBeenCalledWith(
+    expect(statements[2]?.bind).toHaveBeenCalledWith(
       JSON.stringify(['member-alex', 'member-marta']),
+      JSON.stringify(frozenBadges),
       expect.any(String),
       'season-2026',
       'community-crc-delorean',
     )
+  })
+
+  it('never overwrites badges a season already froze', async () => {
+    const { context, prepare } = createContext({
+      allResults: [[]],
+      firstResults: [{ badge_settings: '[]' }, null],
+      method: 'POST',
+    })
+
+    await handleRankingSeasonApiRequest(context, closeRoute)
+
+    const closingSql = (prepare.mock.calls as unknown[][])
+      .map(([sql]) => String(sql))
+      .find((sql) => sql.includes("status = 'closed'"))
+
+    expect(closingSql).toContain('badges = coalesce(badges, ?)')
   })
 
   it('refuses to close a season that is not active', async () => {
