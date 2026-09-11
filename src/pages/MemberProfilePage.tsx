@@ -2,6 +2,9 @@ import { ArrowLeft } from 'lucide-react'
 
 import { MemberSeasonPanel } from '../components/MemberSeasonPanel'
 import { SeasonBadgesPanel } from '../components/SeasonBadgesPanel'
+import { ShareActions } from '../components/ShareActions'
+import { formatMemberProfileForWhatsApp } from '../data/memberSharing'
+import { getMemberSeasonBadges } from '../data/rankingBadges'
 import { getMemberSeasonSummary } from '../data/rankingMemberSeason'
 import type {
   CommunityMember,
@@ -41,10 +44,29 @@ export function MemberProfilePage({
         seasonId: season.id,
       })
     : undefined
+  const badges = season
+    ? getMemberSeasonBadges(data, member.id, {
+        gameId: 'game-mtg',
+        seasonId: season.id,
+      })
+    : undefined
   const games = data.games.filter(({ id }) =>
     member.favoriteGameIds.includes(id),
   )
   const tags = data.tags.filter(({ id }) => member.tagIds.includes(id))
+  const profileUrl = new URL(window.location.href)
+  profileUrl.hash = `miembro?id=${encodeURIComponent(member.id)}`
+  const shareText =
+    season && badges
+      ? formatMemberProfileForWhatsApp({
+          badges,
+          communityName: data.community.name,
+          member,
+          profileUrl: profileUrl.toString(),
+          season,
+          summary,
+        })
+      : ''
 
   return (
     <div className="page member-profile-page">
@@ -66,6 +88,17 @@ export function MemberProfilePage({
           </p>
         </div>
       </header>
+
+      {shareText ? (
+        <ShareActions
+          className="member-profile__share"
+          copiedLabel="Ficha copiada"
+          copyLabel="Copiar ficha"
+          copySuccessMessage="Ficha copiada. Ya puedes pegarla en WhatsApp."
+          shareLabel="Compartir ficha"
+          shareText={shareText}
+        />
+      ) : null}
 
       {games.length > 0 || tags.length > 0 ? (
         <ul className="member-profile__interests" aria-label="Intereses">

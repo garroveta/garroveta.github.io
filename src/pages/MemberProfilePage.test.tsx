@@ -54,6 +54,17 @@ describe('MemberProfilePage', () => {
     ).toBeInTheDocument()
   })
 
+  it('offers to share the profile with its badges showcased', () => {
+    renderProfile()
+
+    expect(
+      screen.getByRole('button', { name: /Compartir ficha/ }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /Copiar ficha/ }),
+    ).toBeInTheDocument()
+  })
+
   it('lists what the member follows', () => {
     renderProfile()
 
