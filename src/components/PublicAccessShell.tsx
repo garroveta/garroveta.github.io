@@ -25,7 +25,10 @@ export function PublicAccessShell({
             {community.logoUrl ? <img src={community.logoUrl} alt="" /> : 'G'}
           </span>
           <span className="brand__text">
-            <strong>Garroveta</strong>
+            <span className="brand__name">
+              <strong>Garroveta</strong>
+              <span className="brand__beta">Beta</span>
+            </span>
             <small>
               {community.name} · {community.city}
             </small>

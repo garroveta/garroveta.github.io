@@ -102,9 +102,28 @@ a {
   gap: 0.08rem;
 }
 
+.brand__name {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .brand__text strong {
   font-size: 0.95rem;
   letter-spacing: -0.015em;
+}
+
+.brand__beta {
+  padding: 0.1rem 0.28rem;
+  border: 1px solid #d6c5dd;
+  border-radius: 999px;
+  color: #694477;
+  background: #f4eef7;
+  font-size: 0.47rem;
+  font-weight: 850;
+  letter-spacing: 0.07em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .brand__text small {
