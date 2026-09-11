@@ -5,7 +5,7 @@
 - Rédiger les textes visibles dans l’application en espagnol.
 - Corriger naturellement les formulations espagnoles lorsque nécessaire.
 - Nommer les insignias avec les mots-clés anglais de Magic ; leurs descriptions restent en espagnol.
-- Avant de créer l’illustration d’une insignia, vérifier ses références dans les sources officielles Magic récentes.
+- Avant de créer l’illustration d’une insignia, vérifier ses références dans les sources officielles Magic ; les anciennes références officielles valent autant que les récentes.
 - Conserver les masters d’insignias dans `.local-assets/badges/`, ignoré par Git, et n’ajouter dans `public/badges/` que des PNG optimisés en 192 × 192 pour leur affichage à 48 px.
 
 ## Méthode de travail
