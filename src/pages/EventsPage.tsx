@@ -1555,6 +1555,8 @@ export function EventsPage({
     useState<string>()
   const [managedImportEventId, setManagedImportEventId] = useState<string>()
   const [pendingDeleteEventId, setPendingDeleteEventId] = useState<string>()
+  const [showAllManagerPastEvents, setShowAllManagerPastEvents] =
+    useState(false)
   const [publicationMessage, setPublicationMessage] = useState('')
   const [publishedEvent, setPublishedEvent] = useState<CommunityEvent>()
   const [operationError, setOperationError] = useState('')
@@ -1593,10 +1595,15 @@ export function EventsPage({
     const item = getEventById(data, currentMember.id, event.id)
     return item ? [item] : []
   })
+  const managerPastEvents = showAllManagerPastEvents
+    ? completeAgenda.past
+    : completeAgenda.past.slice(0, 8)
+  const hiddenManagerPastEventCount =
+    completeAgenda.past.length - managerPastEvents.length
   const managerEvents = [
     ...hiddenManagerEvents,
     ...completeAgenda.upcoming,
-    ...completeAgenda.past.slice(0, 8),
+    ...managerPastEvents,
   ]
   const importedStanding = importedStandingId
     ? data.eventStandings.find(({ id }) => id === importedStandingId)
@@ -1833,48 +1840,63 @@ export function EventsPage({
               }}
             />
           ) : (
-            <div className="manager-event-list">
-              {managerEvents.map((item) => (
-                <ManagerEventRow
-                  item={item}
-                  isDeletePending={pendingDeleteEventId === item.event.id}
-                  key={item.event.id}
-                  onDelete={deleteEvent}
-                  onDeleteCancel={() => setPendingDeleteEventId(undefined)}
-                  onDeleteRequest={setPendingDeleteEventId}
-                  onDuplicate={(eventId) => {
-                    closeManagerPanels()
-                    setPublicationMessage('')
-                    setImportedStandingId(undefined)
-                    setPublishedEvent(undefined)
-                    setDuplicatingEventId(eventId)
-                    setIsComposerOpen(true)
-                  }}
-                  onEdit={(eventId) => {
-                    closeManagerPanels()
-                    setPublicationMessage('')
-                    setImportedStandingId(undefined)
-                    setPublishedEvent(undefined)
-                    setEditingEventId(eventId)
-                    setIsComposerOpen(true)
-                  }}
-                  onImport={(eventId) => {
-                    closeManagerPanels()
-                    setPublicationMessage('')
-                    setImportedStandingId(undefined)
-                    setPublishedEvent(undefined)
-                    setManagedImportEventId(eventId)
-                  }}
-                  onParticipants={(eventId) => {
-                    setManagedImportEventId(undefined)
-                    setManagedParticipantEventId((currentEventId) =>
-                      currentEventId === eventId ? undefined : eventId,
-                    )
-                    setPendingDeleteEventId(undefined)
-                  }}
-                />
-              ))}
-            </div>
+            <>
+              <div className="manager-event-list">
+                {managerEvents.map((item) => (
+                  <ManagerEventRow
+                    item={item}
+                    isDeletePending={pendingDeleteEventId === item.event.id}
+                    key={item.event.id}
+                    onDelete={deleteEvent}
+                    onDeleteCancel={() => setPendingDeleteEventId(undefined)}
+                    onDeleteRequest={setPendingDeleteEventId}
+                    onDuplicate={(eventId) => {
+                      closeManagerPanels()
+                      setPublicationMessage('')
+                      setImportedStandingId(undefined)
+                      setPublishedEvent(undefined)
+                      setDuplicatingEventId(eventId)
+                      setIsComposerOpen(true)
+                    }}
+                    onEdit={(eventId) => {
+                      closeManagerPanels()
+                      setPublicationMessage('')
+                      setImportedStandingId(undefined)
+                      setPublishedEvent(undefined)
+                      setEditingEventId(eventId)
+                      setIsComposerOpen(true)
+                    }}
+                    onImport={(eventId) => {
+                      closeManagerPanels()
+                      setPublicationMessage('')
+                      setImportedStandingId(undefined)
+                      setPublishedEvent(undefined)
+                      setManagedImportEventId(eventId)
+                    }}
+                    onParticipants={(eventId) => {
+                      setManagedImportEventId(undefined)
+                      setManagedParticipantEventId((currentEventId) =>
+                        currentEventId === eventId ? undefined : eventId,
+                      )
+                      setPendingDeleteEventId(undefined)
+                    }}
+                  />
+                ))}
+              </div>
+              {hiddenManagerPastEventCount > 0 || showAllManagerPastEvents ? (
+                <button
+                  className="manager-event-history-toggle"
+                  type="button"
+                  onClick={() =>
+                    setShowAllManagerPastEvents((isExpanded) => !isExpanded)
+                  }
+                >
+                  {showAllManagerPastEvents
+                    ? 'Mostrar menos eventos pasados'
+                    : `Mostrar ${hiddenManagerPastEventCount} eventos anteriores`}
+                </button>
+              ) : null}
+            </>
           )}
           <div
             className="manager-event-actions-legend"

@@ -3120,6 +3120,37 @@ describe('App', () => {
     })
   })
 
+  it('lets a manager reveal the complete event history', () => {
+    createLocalDemoRepository(window.localStorage).save({
+      ...demoData,
+      events: demoData.events.map((event) => ({
+        ...event,
+        status: 'completed' as const,
+      })),
+    })
+    authenticateAsManager()
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getAllByRole('link', { name: /Eventos/ }).at(-1)!)
+
+    const initiallyVisibleEvents = screen.getAllByRole('heading', { level: 3 })
+    expect(initiallyVisibleEvents).toHaveLength(8)
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Mostrar \d+ eventos anteriores/,
+      }),
+    )
+
+    expect(screen.getAllByRole('heading', { level: 3 }).length).toBeGreaterThan(
+      initiallyVisibleEvents.length,
+    )
+    expect(
+      screen.getByRole('button', { name: 'Mostrar menos eventos pasados' }),
+    ).toBeInTheDocument()
+  })
+
   it('lets a manager inspect registrations and release a participant place', async () => {
     communityEventApiMocks.listPersistedEventRegistrations
       .mockResolvedValueOnce({
