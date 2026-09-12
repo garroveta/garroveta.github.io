@@ -26,16 +26,32 @@ describe('MemberSeasonPanel', () => {
     expect(screen.getByText('47 puntos')).toBeInTheDocument()
     expect(screen.getByText('Temporada 2026')).toBeInTheDocument()
     expect(screen.getByText('+2 puestos')).toBeInTheDocument()
-    expect(screen.getByText('Lideras la clasificación')).toBeInTheDocument()
-    expect(screen.getByText('6 de 6 eventos puntuables')).toBeInTheDocument()
+    const facts = within(
+      screen.getByRole('list', { name: 'Resumen de la temporada' }),
+    )
+    expect(
+      facts.getByRole('listitem', { name: 'Lideras la clasificación' }),
+    ).toBeInTheDocument()
+    expect(
+      facts.getByRole('listitem', {
+        name: '6 de 6 eventos puntuables',
+      }),
+    ).toBeInTheDocument()
   })
 
   it('shows both gaps and the next placement worth playing for', () => {
     render(<MemberSeasonPanel summary={summaryOf('member-sergio')} />)
 
     expect(screen.getByText('−1 puesto')).toBeInTheDocument()
-    expect(screen.getByText(/A 1 punto de la posición 1/)).toBeInTheDocument()
-    expect(screen.getByText(/4 puntos sobre la posición 3/)).toBeInTheDocument()
+    const facts = within(
+      screen.getByRole('list', { name: 'Resumen de la temporada' }),
+    )
+    expect(
+      facts.getByRole('listitem', { name: 'A 1 punto de la posición 1' }),
+    ).toBeInTheDocument()
+    expect(
+      facts.getByRole('listitem', { name: '4 puntos sobre la posición 3' }),
+    ).toBeInTheDocument()
     expect(
       screen.getByText('Con un top 10 subirías a la posición 1'),
     ).toBeInTheDocument()

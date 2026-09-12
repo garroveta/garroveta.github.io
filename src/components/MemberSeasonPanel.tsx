@@ -102,28 +102,57 @@ export function MemberSeasonPanel({
 
       {density === 'full' && player ? (
         <>
-          <ul className="member-season__facts">
-            <li>
-              {player.eventsPlayed} de {summary.seasonEvents} eventos puntuables
+          <ul
+            className="member-season__facts"
+            aria-label="Resumen de la temporada"
+          >
+            <li
+              aria-label={`${player.eventsPlayed} de ${summary.seasonEvents} eventos puntuables`}
+            >
+              <span>Eventos</span>
+              <strong>
+                {player.eventsPlayed} de {summary.seasonEvents}
+              </strong>
+              <small>puntuables</small>
             </li>
             {summary.pointsToPlaceAbove === undefined ? (
-              <li>
-                {isSelf
-                  ? 'Lideras la clasificación'
-                  : 'Lidera la clasificación'}
+              <li
+                aria-label={
+                  isSelf
+                    ? 'Lideras la clasificación'
+                    : 'Lidera la clasificación'
+                }
+              >
+                <span>Situación</span>
+                <strong>Líder</strong>
+                <small>de la clasificación</small>
               </li>
             ) : (
-              <li>
-                A {summary.pointsToPlaceAbove}{' '}
-                {summary.pointsToPlaceAbove === 1 ? 'punto' : 'puntos'} de la
-                posición {player.rank - 1}
+              <li
+                aria-label={`A ${summary.pointsToPlaceAbove} ${
+                  summary.pointsToPlaceAbove === 1 ? 'punto' : 'puntos'
+                } de la posición ${player.rank - 1}`}
+              >
+                <span>Objetivo</span>
+                <strong>
+                  {summary.pointsToPlaceAbove}{' '}
+                  {summary.pointsToPlaceAbove === 1 ? 'punto' : 'puntos'}
+                </strong>
+                <small>para la posición {player.rank - 1}</small>
               </li>
             )}
             {summary.pointsOverPlaceBelow === undefined ? null : (
-              <li>
-                {summary.pointsOverPlaceBelow}{' '}
-                {summary.pointsOverPlaceBelow === 1 ? 'punto' : 'puntos'} sobre
-                la posición {player.rank + 1}
+              <li
+                aria-label={`${summary.pointsOverPlaceBelow} ${
+                  summary.pointsOverPlaceBelow === 1 ? 'punto' : 'puntos'
+                } sobre la posición ${player.rank + 1}`}
+              >
+                <span>Ventaja</span>
+                <strong>
+                  {summary.pointsOverPlaceBelow}{' '}
+                  {summary.pointsOverPlaceBelow === 1 ? 'punto' : 'puntos'}
+                </strong>
+                <small>sobre la posición {player.rank + 1}</small>
               </li>
             )}
           </ul>

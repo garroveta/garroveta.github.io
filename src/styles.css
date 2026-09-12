@@ -9231,9 +9231,9 @@ a {
 }
 
 .member-season__facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
   margin: 0;
   padding: 0;
   color: #5f5663;
@@ -9243,9 +9243,48 @@ a {
 }
 
 .member-season__facts li {
-  padding: 0.35rem 0.5rem;
-  border-radius: 0.55rem;
-  background: #f6f2f7;
+  display: grid;
+  align-content: center;
+  gap: 0.08rem;
+  min-width: 0;
+  min-height: 3.6rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #ebe3ed;
+  border-radius: 0.7rem;
+  background: #faf7fb;
+}
+
+.member-season__facts li:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+.member-season__facts li > span {
+  color: #897e8d;
+  font-size: 0.58rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.member-season__facts li > strong {
+  overflow: hidden;
+  color: #3b3140;
+  font-size: 0.86rem;
+  font-weight: 850;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.member-season__facts li > small {
+  overflow: hidden;
+  color: #796f7d;
+  font-size: 0.64rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .member-season__best,
@@ -9359,6 +9398,14 @@ a {
     justify-items: start;
     padding-bottom: 0.05rem;
     text-align: left;
+  }
+
+  .member-season__facts {
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  }
+
+  .member-season__facts li:last-child:nth-child(odd) {
+    grid-column: auto;
   }
 }
 
