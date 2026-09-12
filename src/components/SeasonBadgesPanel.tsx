@@ -46,10 +46,9 @@ export function SeasonBadgesPanel({
   const seasons = data.rankingSeasons
     .filter(({ status }) => status !== 'upcoming')
     .sort((first, second) => second.startsOn.localeCompare(first.startsOn))
-  const games = data.games.filter(
-    ({ category }) => category !== 'role_playing_game',
-  )
-  const [gameId, setGameId] = useState('game-mtg')
+  // Badges only exist for MTG today: the whole catalogue is written in
+  // Magic's own keywords, so there is no game picker to show.
+  const gameId = 'game-mtg'
   const [seasonId, setSeasonId] = useState(
     seasons.find(({ status }) => status === 'active')?.id ??
       seasons[0]?.id ??
@@ -191,19 +190,6 @@ export function SeasonBadgesPanel({
               <option key={season.id} value={season.id}>
                 {season.name}
                 {season.status === 'active' ? ' · Activa' : ''}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="form-field">
-          <span>Juego</span>
-          <select
-            value={gameId}
-            onChange={(event) => setGameId(event.target.value)}
-          >
-            {games.map((game) => (
-              <option key={game.id} value={game.id}>
-                {game.shortName}
               </option>
             ))}
           </select>

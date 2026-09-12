@@ -54,6 +54,7 @@ Avant chaque commit :
 
 - L’interface est destinée à la communauté de CRC Delorean à Inca.
 - La section Cartas concerne uniquement Magic: The Gathering pour le moment.
+- Les saisons de ranking et les insignias ne concernent que Magic: The Gathering pour le moment.
 - Les échanges et paiements restent organisés librement entre les membres.
 - L’accès à la communauté est privé.
 - L’inscription utilise une invitation et un code OTP, sans mot de passe.
