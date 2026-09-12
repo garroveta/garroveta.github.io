@@ -220,10 +220,8 @@ export function AccountPreferencesForm({
         <fieldset className="registration-choice-group contact-methods-group">
           <legend>Cómo pueden contactarte</legend>
           <p>
-            Tu WhatsApp aparece en tu ficha para todos los miembros validados.
-            El correo y Discord solo se muestran a un miembro cuando hay una
-            coincidencia entre vuestras listas de cartas. Deja en blanco lo que
-            no quieras compartir.
+            Lo que indiques aquí aparece en tu ficha para todos los miembros
+            validados. Deja en blanco lo que no quieras compartir.
           </p>
           <div className="contact-methods-fields">
             {contactKinds.map(({ kind, label }) => (

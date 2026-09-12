@@ -1,15 +1,12 @@
 import {
   ArrowLeft,
   AlertCircle,
-  AtSign,
   Check,
   CheckCircle2,
   FileText,
   Layers3,
   ListChecks,
   LoaderCircle,
-  Mail,
-  MessageCircle,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -25,6 +22,7 @@ import type { ChangeEvent, FormEvent } from 'react'
 import { useMemo, useState } from 'react'
 
 import { CardImagePreview } from '../components/CardImagePreview'
+import { ContactMethodList } from '../components/ContactMethodList'
 import { MarketplaceReservationSheet } from '../components/MarketplaceReservationSheet'
 import { ShareActions } from '../components/ShareActions'
 import { MarketplaceSection } from '../components/cards/MarketplaceSection'
@@ -703,12 +701,6 @@ function MatchDetail({
 }) {
   const [isCardPreviewOpen, setIsCardPreviewOpen] = useState(false)
   const [isReservationSheetOpen, setIsReservationSheetOpen] = useState(false)
-  const contactIcons = {
-    whatsapp: MessageCircle,
-    email: Mail,
-    discord: AtSign,
-  }
-
   return (
     <div className="page">
       <button className="back-button" type="button" onClick={onBack}>
@@ -792,31 +784,9 @@ function MatchDetail({
             </span>
           </p>
 
-          <div className="contact-methods">
-            {item.seller.contactMethods.map((contactMethod) => {
-              const ContactIcon = contactIcons[contactMethod.kind]
+          <ContactMethodList contactMethods={item.seller.contactMethods} />
 
-              return (
-                <div key={`${contactMethod.kind}-${contactMethod.value}`}>
-                  <ContactIcon aria-hidden="true" size={18} />
-                  <span>
-                    <small>{contactMethod.label}</small>
-                    <strong>{contactMethod.value}</strong>
-                  </span>
-                </div>
-              )
-            })}
-            {item.seller.contactMethods.length === 0 ? (
-              <p className="contact-methods__empty">
-                Este miembro no ha indicado ninguna forma de contacto.
-              </p>
-            ) : null}
-          </div>
-
-          <p>
-            Estos datos solo se muestran porque existe una coincidencia entre
-            vuestras listas.
-          </p>
+          <p>Los mismos datos que muestra su ficha de miembro.</p>
         </section>
 
         {deal ? (

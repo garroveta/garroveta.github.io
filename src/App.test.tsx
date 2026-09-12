@@ -4272,7 +4272,7 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
-  it('opens a match and reveals the seller contact authorized for it', () => {
+  it('opens a match and shows the seller contact, the same as their profile', () => {
     render(<App />)
 
     fireEvent.click(screen.getAllByRole('link', { name: /Cartas/ }).at(-1)!)
@@ -4290,7 +4290,7 @@ describe('App', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('diego-modern')).toBeInTheDocument()
     expect(
-      screen.getByText(/solo se muestran porque existe una coincidencia/),
+      screen.getByText(/Los mismos datos que muestra su ficha de miembro/),
     ).toBeInTheDocument()
     expect(
       screen.getByText(/Datos de demostración: todavía no se pueden rellenar/),

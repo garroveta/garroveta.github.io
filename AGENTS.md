@@ -61,7 +61,7 @@ Avant chaque commit :
 - Les inscriptions aux événements sont optionnelles et principalement réservées aux événements MTG.
 - Une saison de ranking clôturée est figée : une activation ultérieure de membre ne modifie ni ses participants éligibles ni son barème.
 - Dans la saison active, l’activation ou le renommage d’un membre rattache rétroactivement ses résultats non liés uniquement lorsque son nom correspond sans ambiguïté.
-- Un membre peut indiquer son WhatsApp s’il le souhaite ; il est alors visible par tous les membres validés sur sa fiche. Le courriel et Discord ne sont montrés qu’en cas de correspondance de cartes.
+- Les coordonnées qu’un membre choisit d’indiquer (WhatsApp, courriel, Discord) sont visibles par tous les membres validés sur sa fiche ; aucune correspondance de cartes n’est requise.
 - Les communications créées par le gérant alimentent la section Noticias.
 - Les données du prototype sont locales et couvrent plusieurs cas réalistes.
 
