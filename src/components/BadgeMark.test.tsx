@@ -71,7 +71,7 @@ describe('BadgeMark', () => {
 
     expect(artworkOf(container)).toHaveAttribute(
       'src',
-      '/badges/large/monarch.png',
+      '/badges/large/monarch.webp',
     )
 
     fireEvent.error(artworkOf(container)!)

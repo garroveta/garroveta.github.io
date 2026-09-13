@@ -89,9 +89,11 @@ export function BadgeMark({
       {hasArtwork ? (
         <img
           className="badge-mark__art"
-          src={`${import.meta.env.BASE_URL}badges/${
-            artworkSource === 'large' ? 'large/' : ''
-          }${badgeId}.png`}
+          src={
+            artworkSource === 'large'
+              ? `${import.meta.env.BASE_URL}badges/large/${badgeId}.webp`
+              : `${import.meta.env.BASE_URL}badges/${badgeId}.png`
+          }
           alt=""
           loading="lazy"
           onError={() =>
