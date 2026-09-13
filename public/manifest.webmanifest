@@ -1,0 +1,21 @@
+{
+  "name": "Garroveta · CRC Delorean",
+  "short_name": "Garroveta",
+  "description": "Eventos, noticias e intercambios de la comunidad de juegos de CRC Delorean en Inca.",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#e9e6e1",
+  "theme_color": "#5b2b77",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
