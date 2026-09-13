@@ -10247,10 +10247,24 @@ a {
 
 .ranking-season-management__heading {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.65rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.5rem 0.65rem;
   padding: 0.8rem 0.9rem;
+}
+
+.ranking-season-management__heading button {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 26rem) {
+  .ranking-season-management__heading {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .ranking-season-management__heading button {
+    grid-column: auto;
+  }
 }
 
 .ranking-season-management__heading > span {
