@@ -57,6 +57,7 @@ export function BadgePreview({ badge, onClose }: BadgePreviewProps) {
           label={`${definition.name}, ampliada`}
           progress={progress}
           unlocked={unlocked}
+          variant="large"
         />
         <div>
           <h2 id="badge-preview-title">{definition.name}</h2>

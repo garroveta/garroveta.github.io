@@ -10,6 +10,12 @@ type BadgeMarkProps = {
   glyph?: string
   progress?: { current: number; target: number }
   unlocked: boolean
+  /**
+   * `large` asks for the 640 px file meant for the preview dialog and falls
+   * back to the 192 px one when it does not exist yet, so a badge can ship
+   * with its small artwork only.
+   */
+  variant?: 'default' | 'large'
 }
 
 /**
@@ -27,9 +33,13 @@ export function BadgeMark({
   glyph,
   progress,
   unlocked,
+  variant = 'default',
 }: BadgeMarkProps) {
   const titleId = useId()
-  const [hasArtwork, setHasArtwork] = useState(true)
+  const [artworkSource, setArtworkSource] = useState<
+    'large' | 'default' | 'none'
+  >(variant === 'large' ? 'large' : 'default')
+  const hasArtwork = artworkSource !== 'none'
   const ratio =
     unlocked || !progress
       ? 1
@@ -79,10 +89,16 @@ export function BadgeMark({
       {hasArtwork ? (
         <img
           className="badge-mark__art"
-          src={`${import.meta.env.BASE_URL}badges/${badgeId}.png`}
+          src={`${import.meta.env.BASE_URL}badges/${
+            artworkSource === 'large' ? 'large/' : ''
+          }${badgeId}.png`}
           alt=""
           loading="lazy"
-          onError={() => setHasArtwork(false)}
+          onError={() =>
+            setArtworkSource((current) =>
+              current === 'large' ? 'default' : 'none',
+            )
+          }
         />
       ) : null}
 

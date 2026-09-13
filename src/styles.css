@@ -6918,7 +6918,7 @@ a {
 }
 
 .badge-preview__panel .badge-mark {
-  --badge-mark-size: min(16rem, 60vw);
+  --badge-mark-size: min(20rem, 76vw);
 }
 
 .badge-preview__panel h2 {

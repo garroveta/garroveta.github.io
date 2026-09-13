@@ -64,6 +64,25 @@ describe('BadgeMark', () => {
     expect(container.firstElementChild).toHaveAttribute('data-artwork', 'false')
   })
 
+  it('asks for the large file in the preview, then steps down twice', () => {
+    const { container } = render(
+      <BadgeMark badgeId="monarch" label="Monarch" unlocked variant="large" />,
+    )
+
+    expect(artworkOf(container)).toHaveAttribute(
+      'src',
+      '/badges/large/monarch.png',
+    )
+
+    fireEvent.error(artworkOf(container)!)
+
+    expect(artworkOf(container)).toHaveAttribute('src', '/badges/monarch.png')
+
+    fireEvent.error(artworkOf(container)!)
+
+    expect(artworkOf(container)).toBeNull()
+  })
+
   it('names the badge for assistive technology', () => {
     render(
       <BadgeMark badgeId="monarch" label="Monarch, desbloqueada" unlocked />,
