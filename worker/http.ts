@@ -1,5 +1,9 @@
 const LOCAL_APP_ORIGIN = 'http://localhost:5173'
-const API_ALLOWED_METHODS = ['DELETE', 'GET', 'PATCH', 'POST'] as const
+// Every HTTP method any route handler actually uses must be listed here too,
+// or the browser's CORS preflight silently blocks it before the request ever
+// reaches that handler — the request then fails as a CORS error, not as
+// whatever status the handler would have returned.
+const API_ALLOWED_METHODS = ['DELETE', 'GET', 'PATCH', 'POST', 'PUT'] as const
 
 interface CorsEnv {
   APP_ORIGIN: string

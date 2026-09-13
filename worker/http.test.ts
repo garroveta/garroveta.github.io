@@ -57,7 +57,7 @@ describe('Worker HTTP helpers', () => {
 
     expect(response.status).toBe(204)
     expect(response.headers.get('Access-Control-Allow-Methods')).toBe(
-      'DELETE, GET, PATCH, POST',
+      'DELETE, GET, PATCH, POST, PUT',
     )
   })
 
