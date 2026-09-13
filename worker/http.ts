@@ -62,6 +62,11 @@ export function createPreflightResponse(allowedOrigin: string) {
       'Access-Control-Allow-Methods': API_ALLOWED_METHODS.join(', '),
       'Access-Control-Allow-Origin': allowedOrigin,
       'Access-Control-Max-Age': '86400',
+      // The browser is told it may cache this for a day (that part is fine
+      // and intentional); a shared cache in front of the Worker must not —
+      // otherwise a method or header added here stays invisible to anyone
+      // hitting that cache until it expires on its own schedule.
+      'Cache-Control': 'no-store',
       Vary: 'Origin',
     },
     status: 204,

@@ -61,6 +61,12 @@ describe('Worker HTTP helpers', () => {
     )
   })
 
+  it('never lets a shared cache serve a stale preflight', () => {
+    const response = createPreflightResponse(env.APP_ORIGIN)
+
+    expect(response.headers.get('Cache-Control')).toBe('no-store')
+  })
+
   it('returns non-cacheable JSON errors', async () => {
     const response = apiError(403, 'origin_not_allowed', 'Origin rejected.')
 
