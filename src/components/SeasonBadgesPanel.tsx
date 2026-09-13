@@ -15,11 +15,6 @@ import type { DemoDataSet } from '../domain/types'
 /** Enough to see what is within reach without turning the rest into a wall. */
 const VISIBLE_IN_PROGRESS = 3
 
-const seasonGlyphs: Record<string, string> = {
-  monarch: '♛',
-  paragon: '✦',
-}
-
 const unlockDateFormatter = new Intl.DateTimeFormat('es-ES', {
   day: '2-digit',
   month: 'short',
@@ -104,7 +99,6 @@ export function SeasonBadgesPanel({
             onClick={() =>
               setPreview({
                 definition,
-                glyph: seasonGlyphs[definition.id],
                 progress,
                 unlocked: Boolean(unlockedAt),
               })
@@ -112,7 +106,6 @@ export function SeasonBadgesPanel({
           >
             <BadgeMark
               badgeId={definition.id}
-              glyph={seasonGlyphs[definition.id]}
               label={`${definition.name}${unlockedAt ? ', desbloqueada' : ''}`}
               progress={progress}
               unlocked={Boolean(unlockedAt)}

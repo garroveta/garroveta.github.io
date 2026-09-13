@@ -2,11 +2,6 @@ import { BadgeMark } from './BadgeMark'
 import type { BadgePreviewSubject } from './BadgePreview'
 import type { SeasonBadgeBoard } from '../data/rankingBadges'
 
-const seasonGlyphs: Record<string, string> = {
-  monarch: '♛',
-  paragon: '✦',
-}
-
 type CommunityBadgesBoardProps = {
   board: SeasonBadgeBoard
   onOpenMember?: (memberId: string) => void
@@ -49,14 +44,12 @@ export function CommunityBadgesBoard({
                   onClick={() =>
                     onPreview?.({
                       definition,
-                      glyph: seasonGlyphs[definition.id],
                       unlocked: true,
                     })
                   }
                 >
                   <BadgeMark
                     badgeId={definition.id}
-                    glyph={seasonGlyphs[definition.id]}
                     label={definition.name}
                     unlocked
                   />
@@ -106,7 +99,6 @@ export function CommunityBadgesBoard({
                   onClick={() =>
                     onPreview?.({
                       definition,
-                      glyph: seasonGlyphs[definition.id],
                       progress: definition.target
                         ? { current: 0, target: definition.target }
                         : undefined,
@@ -116,7 +108,6 @@ export function CommunityBadgesBoard({
                 >
                   <BadgeMark
                     badgeId={definition.id}
-                    glyph={seasonGlyphs[definition.id]}
                     label={definition.name}
                     progress={
                       definition.target
