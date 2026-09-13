@@ -9579,11 +9579,13 @@ a {
 }
 
 .badge-mark {
+  --badge-mark-size: 3.5rem;
+
   position: relative;
   display: inline-flex;
   flex: none;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: var(--badge-mark-size);
+  height: var(--badge-mark-size);
 }
 
 .badge-mark__frame,
@@ -9625,7 +9627,7 @@ a {
 .badge-mark__art {
   width: 100%;
   height: 100%;
-  padding: 0.15rem;
+  padding: calc(var(--badge-mark-size) * 0.055);
   border-radius: 50%;
   object-fit: contain;
 }
@@ -9640,7 +9642,7 @@ a {
   display: grid;
   place-items: center;
   color: #5b2b77;
-  font-size: 0.95rem;
+  font-size: calc(var(--badge-mark-size) * 0.34);
   font-weight: 850;
 }
 
@@ -9972,8 +9974,12 @@ a {
 .community-badge__summary {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 0.6rem;
+  gap: 0.75rem;
   align-items: center;
+}
+
+.community-badge__summary .badge-mark {
+  --badge-mark-size: 4.5rem;
 }
 
 .community-badge__identity {
