@@ -9630,26 +9630,23 @@ a {
   inset: 0;
 }
 
+/* Neutral on purpose: the disc is a mount for the artwork, not a brand chip. */
 .badge-mark__disc {
-  fill: #f3ecf6;
+  fill: #eeebe9;
 }
 
 .badge-mark[data-unlocked='true'] .badge-mark__disc {
-  fill: #5b2b77;
-}
-
-.badge-mark[data-unlocked='true'][data-artwork='true'] .badge-mark__disc {
-  fill: #2f2733;
+  fill: #2b2a2c;
 }
 
 .badge-mark__track {
   fill: none;
-  stroke: #e4d9e9;
+  stroke: #ded9d4;
   stroke-width: 3;
 }
 
 .badge-mark[data-unlocked='true'] .badge-mark__track {
-  stroke: #5b2b77;
+  stroke: #2b2a2c;
 }
 
 .badge-mark__ring {
@@ -9688,8 +9685,8 @@ a {
 /* Over a silhouette the number needs its own ground to stay readable. */
 .badge-mark[data-artwork='true'][data-unlocked='false'] .badge-mark__value {
   text-shadow:
-    0 0 0.35rem #f3ecf6,
-    0 0 0.15rem #f3ecf6;
+    0 0 0.35rem #eeebe9,
+    0 0 0.15rem #eeebe9;
 }
 
 .season-badges {
