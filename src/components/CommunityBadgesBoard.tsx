@@ -1,4 +1,5 @@
 import { BadgeMark } from './BadgeMark'
+import type { BadgePreviewSubject } from './BadgePreview'
 import type { SeasonBadgeBoard } from '../data/rankingBadges'
 
 const seasonGlyphs: Record<string, string> = {
@@ -9,6 +10,7 @@ const seasonGlyphs: Record<string, string> = {
 type CommunityBadgesBoardProps = {
   board: SeasonBadgeBoard
   onOpenMember?: (memberId: string) => void
+  onPreview?: (badge: BadgePreviewSubject) => void
 }
 
 /**
@@ -19,6 +21,7 @@ type CommunityBadgesBoardProps = {
 export function CommunityBadgesBoard({
   board,
   onOpenMember,
+  onPreview,
 }: CommunityBadgesBoardProps) {
   const claimed = board.badges
     .filter(({ holders }) => holders.length > 0)
@@ -39,12 +42,25 @@ export function CommunityBadgesBoard({
           {claimed.map(({ definition, holders }) => (
             <li className="community-badge" key={definition.id}>
               <div className="community-badge__summary">
-                <BadgeMark
-                  badgeId={definition.id}
-                  glyph={seasonGlyphs[definition.id]}
-                  label={definition.name}
-                  unlocked
-                />
+                <button
+                  type="button"
+                  className="badge-mark-button"
+                  aria-label={`Ver ${definition.name} en grande`}
+                  onClick={() =>
+                    onPreview?.({
+                      definition,
+                      glyph: seasonGlyphs[definition.id],
+                      unlocked: true,
+                    })
+                  }
+                >
+                  <BadgeMark
+                    badgeId={definition.id}
+                    glyph={seasonGlyphs[definition.id]}
+                    label={definition.name}
+                    unlocked
+                  />
+                </button>
                 <span className="community-badge__identity">
                   <strong>{definition.name}</strong>
                   <small>{definition.description}</small>
@@ -83,17 +99,33 @@ export function CommunityBadgesBoard({
           >
             {unclaimed.map(({ definition }) => (
               <li key={definition.id}>
-                <BadgeMark
-                  badgeId={definition.id}
-                  glyph={seasonGlyphs[definition.id]}
-                  label={definition.name}
-                  progress={
-                    definition.target
-                      ? { current: 0, target: definition.target }
-                      : undefined
+                <button
+                  type="button"
+                  className="badge-mark-button"
+                  aria-label={`Ver ${definition.name} en grande`}
+                  onClick={() =>
+                    onPreview?.({
+                      definition,
+                      glyph: seasonGlyphs[definition.id],
+                      progress: definition.target
+                        ? { current: 0, target: definition.target }
+                        : undefined,
+                      unlocked: false,
+                    })
                   }
-                  unlocked={false}
-                />
+                >
+                  <BadgeMark
+                    badgeId={definition.id}
+                    glyph={seasonGlyphs[definition.id]}
+                    label={definition.name}
+                    progress={
+                      definition.target
+                        ? { current: 0, target: definition.target }
+                        : undefined
+                    }
+                    unlocked={false}
+                  />
+                </button>
                 <span>
                   <strong>{definition.name}</strong>
                   <small>{definition.description}</small>

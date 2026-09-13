@@ -11,8 +11,17 @@ function renderPanel(memberId = 'member-sergio', data: DemoDataSet = demoData) {
 
 function badgeRow(name: string) {
   return screen
-    .getByRole('button', { name: new RegExp(name) })
+    .getByRole('button', { name: new RegExp(`^${name}`) })
     .closest<HTMLElement>('.season-badge')!
+}
+
+/** The row holds two buttons: the mark (preview) and the details (expand). */
+function expand(row: HTMLElement) {
+  fireEvent.click(
+    within(row)
+      .getAllByRole('button')
+      .find((button) => button.hasAttribute('aria-expanded'))!,
+  )
 }
 
 describe('SeasonBadgesPanel', () => {
@@ -71,7 +80,7 @@ describe('SeasonBadgesPanel', () => {
 
     expect(row).not.toHaveTextContent('Ferocidad')
 
-    fireEvent.click(within(row).getByRole('button'))
+    expand(row)
 
     expect(row).toHaveTextContent(
       'Ferocidad: se activa si controlas una criatura con fuerza 4 o más.',
@@ -96,7 +105,7 @@ describe('SeasonBadgesPanel', () => {
 
     const row = badgeRow('Legendary')
 
-    fireEvent.click(within(row).getByRole('button'))
+    expand(row)
 
     expect(row).toHaveTextContent('Nadie la tiene todavía')
   })
@@ -106,7 +115,7 @@ describe('SeasonBadgesPanel', () => {
 
     const unlocked = badgeRow('Ferocious')
 
-    fireEvent.click(within(unlocked).getAllByRole('button')[0])
+    expand(unlocked)
 
     expect(
       within(unlocked).getByRole('button', { name: /Compartir insignia/ }),
@@ -114,11 +123,49 @@ describe('SeasonBadgesPanel', () => {
 
     const locked = badgeRow('Deathtouch')
 
-    fireEvent.click(within(locked).getAllByRole('button')[0])
+    expand(locked)
 
     expect(
       within(locked).queryByRole('button', { name: /Compartir insignia/ }),
     ).toBeNull()
+  })
+
+  it('opens the badge large when its mark is tapped, and closes on Escape', () => {
+    renderPanel()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Ver Ferocious en grande' }),
+    )
+
+    const dialog = screen.getByRole('dialog', { name: 'Ferocious' })
+
+    expect(dialog).toHaveTextContent('Termina 4 veces en el Top 4')
+    expect(dialog).toHaveTextContent(
+      'Ferocidad: se activa si controlas una criatura con fuerza 4 o más.',
+    )
+    expect(
+      within(dialog).getByRole('img', { name: 'Ferocious, ampliada' }),
+    ).toBeInTheDocument()
+
+    fireEvent.keyDown(document, { key: 'Escape' })
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('shows the distance in the preview of a locked badge', () => {
+    renderPanel()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Ver Deathtouch en grande' }),
+    )
+
+    expect(
+      screen.getByRole('dialog', { name: 'Deathtouch' }),
+    ).toHaveTextContent('2 de 3')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar insignia' }))
+
+    expect(screen.queryByRole('dialog')).toBeNull()
   })
 
   it('keeps the locked badges folded until asked', () => {

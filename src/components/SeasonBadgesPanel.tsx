@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import { BadgeMark } from './BadgeMark'
+import { BadgePreview, type BadgePreviewSubject } from './BadgePreview'
 import { CommunityBadgesBoard } from './CommunityBadgesBoard'
 import { ShareActions } from './ShareActions'
 import { formatBadgeUnlockForWhatsApp } from '../data/badgeSharing'
@@ -57,6 +58,7 @@ export function SeasonBadgesPanel({
   )
   const [openBadgeId, setOpenBadgeId] = useState<string>()
   const [view, setView] = useState<'mine' | 'community'>('mine')
+  const [preview, setPreview] = useState<BadgePreviewSubject>()
   const [showEveryLocked, setShowEveryLocked] = useState(false)
 
   const scope = { gameId, seasonId }
@@ -94,34 +96,50 @@ export function SeasonBadgesPanel({
 
     return (
       <li className="season-badge" key={definition.id}>
-        <button
-          type="button"
-          className="season-badge__summary"
-          aria-expanded={isOpen}
-          onClick={() => setOpenBadgeId(isOpen ? undefined : definition.id)}
-        >
-          <BadgeMark
-            badgeId={definition.id}
-            glyph={seasonGlyphs[definition.id]}
-            label={`${definition.name}${unlockedAt ? ', desbloqueada' : ''}`}
-            progress={progress}
-            unlocked={Boolean(unlockedAt)}
-          />
-          <span className="season-badge__identity">
-            <strong>{definition.name}</strong>
-            <small>{definition.description}</small>
-          </span>
-          <span className="season-badge__stat">
-            {progress && !unlockedAt ? (
-              <em>
-                {progress.current}/{progress.target}
-              </em>
-            ) : null}
-            <small>
-              {holders.length} de {players}
-            </small>
-          </span>
-        </button>
+        <div className="season-badge__summary">
+          <button
+            type="button"
+            className="badge-mark-button"
+            aria-label={`Ver ${definition.name} en grande`}
+            onClick={() =>
+              setPreview({
+                definition,
+                glyph: seasonGlyphs[definition.id],
+                progress,
+                unlocked: Boolean(unlockedAt),
+              })
+            }
+          >
+            <BadgeMark
+              badgeId={definition.id}
+              glyph={seasonGlyphs[definition.id]}
+              label={`${definition.name}${unlockedAt ? ', desbloqueada' : ''}`}
+              progress={progress}
+              unlocked={Boolean(unlockedAt)}
+            />
+          </button>
+          <button
+            type="button"
+            className="season-badge__details"
+            aria-expanded={isOpen}
+            onClick={() => setOpenBadgeId(isOpen ? undefined : definition.id)}
+          >
+            <span className="season-badge__identity">
+              <strong>{definition.name}</strong>
+              <small>{definition.description}</small>
+            </span>
+            <span className="season-badge__stat">
+              {progress && !unlockedAt ? (
+                <em>
+                  {progress.current}/{progress.target}
+                </em>
+              ) : null}
+              <small>
+                {holders.length} de {players}
+              </small>
+            </span>
+          </button>
+        </div>
 
         {isOpen ? (
           <div className="season-badge__detail">
@@ -239,7 +257,11 @@ export function SeasonBadgesPanel({
       </div>
 
       {view === 'community' ? (
-        <CommunityBadgesBoard board={board} onOpenMember={onOpenMember} />
+        <CommunityBadgesBoard
+          board={board}
+          onOpenMember={onOpenMember}
+          onPreview={setPreview}
+        />
       ) : null}
 
       {view === 'mine' && unlocked.length > 0 ? (
@@ -276,6 +298,10 @@ export function SeasonBadgesPanel({
             </button>
           ) : null}
         </>
+      ) : null}
+
+      {preview ? (
+        <BadgePreview badge={preview} onClose={() => setPreview(undefined)} />
       ) : null}
     </section>
   )

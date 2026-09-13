@@ -6908,6 +6908,41 @@ a {
   outline-offset: 2px;
 }
 
+.badge-preview__panel {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  width: min(100%, 24rem);
+  padding: 1.5rem 1rem 1.25rem;
+  text-align: center;
+}
+
+.badge-preview__panel .badge-mark {
+  --badge-mark-size: min(16rem, 60vw);
+}
+
+.badge-preview__panel h2 {
+  margin: 0.4rem 0 0;
+  font-size: 1.3rem;
+}
+
+.badge-preview__panel p {
+  color: #5f5663;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.badge-preview__progress {
+  color: #1f6b45;
+}
+
+.badge-preview__reference {
+  margin-top: 0.5rem;
+  color: #8a8090;
+  font-style: italic;
+  font-weight: 600;
+}
+
 .market-card {
   padding: 1rem;
   border: 1px solid #e4ded8;
@@ -9716,15 +9751,39 @@ a {
 
 .season-badge__summary {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 0.6rem;
   align-items: center;
-  width: 100%;
   padding: 0.55rem 0.65rem;
+}
+
+.season-badge__details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: center;
+  min-width: 0;
+  padding: 0;
   border: none;
   background: none;
   text-align: left;
   cursor: pointer;
+}
+
+/* A mark you can tap: no chrome of its own, the mark is the button. */
+.badge-mark-button {
+  display: inline-flex;
+  flex: none;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+
+.badge-mark-button:focus-visible {
+  outline: 3px solid #5b2b77;
+  outline-offset: 3px;
 }
 
 .season-badge__identity {

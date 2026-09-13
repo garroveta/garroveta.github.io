@@ -79,7 +79,32 @@ describe('CommunityBadgesBoard', () => {
     })
 
     expect(unclaimed).toHaveTextContent('Legendary')
-    expect(within(unclaimed).queryByRole('button')).toBeNull()
+    // Only the marks are tappable there: no holder to open.
+    expect(
+      within(unclaimed)
+        .getAllByRole('button')
+        .every((button) =>
+          button.getAttribute('aria-label')?.startsWith('Ver '),
+        ),
+    ).toBe(true)
+  })
+})
+
+describe('CommunityBadgesBoard preview', () => {
+  it('hands the tapped badge to the preview, unlocked on the board', () => {
+    const onPreview = vi.fn()
+    render(<CommunityBadgesBoard board={board} onPreview={onPreview} />)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Ver Ferocious en grande' }),
+    )
+
+    expect(onPreview).toHaveBeenCalledWith(
+      expect.objectContaining({
+        definition: expect.objectContaining({ id: 'ferocious' }),
+        unlocked: true,
+      }),
+    )
   })
 })
 
