@@ -275,6 +275,7 @@ describe('Ranking season API', () => {
     })
     expect(statements[0]?.bind).toHaveBeenCalledWith(
       'community-crc-delorean',
+      '',
       '2027-12-31',
       '2027-01-01',
     )
@@ -456,10 +457,10 @@ describe('Ranking season API', () => {
     expect(response.status).toBe(409)
   })
 
-  it('updates the points of an editable season', async () => {
+  it('updates the points of an editable season, keeping its dates', async () => {
     const { context, statements } = createContext({
       body: { points: seasonInput.points },
-      firstResults: [persistedSeason],
+      firstResults: [persistedSeason, persistedSeason],
       method: 'PATCH',
     })
 
@@ -469,7 +470,11 @@ describe('Ranking season API', () => {
     await expect(response.json()).resolves.toMatchObject({
       season: { points: seasonInput.points },
     })
-    expect(statements[0]?.bind).toHaveBeenCalledWith(
+    // No overlap lookup when the dates did not move: read, then write.
+    expect(statements).toHaveLength(2)
+    expect(statements[1]?.bind).toHaveBeenCalledWith(
+      '2027-01-01',
+      '2027-12-31',
       10,
       8,
       6,
@@ -483,7 +488,106 @@ describe('Ranking season API', () => {
     )
   })
 
-  it('refuses to update the points of a closed season', async () => {
+  it('moves the end of a season when nothing else claims the new dates', async () => {
+    const { context, statements } = createContext({
+      body: { endsOn: '2028-03-31' },
+      firstResults: [
+        { ...persistedSeason, status: 'active' },
+        null,
+        { ...persistedSeason, ends_on: '2028-03-31', status: 'active' },
+      ],
+      method: 'PATCH',
+    })
+
+    const response = await handleRankingSeasonApiRequest(context, seasonRoute)
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toMatchObject({
+      season: { endsOn: '2028-03-31', startsOn: '2027-01-01' },
+    })
+    // The overlap lookup must ignore the season being edited.
+    expect(statements[1]?.bind).toHaveBeenCalledWith(
+      'community-crc-delorean',
+      'season-2027',
+      '2028-03-31',
+      '2027-01-01',
+    )
+    // Points untouched: the write carries the stored ones.
+    expect(statements[2]?.bind).toHaveBeenCalledWith(
+      '2027-01-01',
+      '2028-03-31',
+      10,
+      8,
+      6,
+      5,
+      4,
+      3,
+      1,
+      expect.any(String),
+      'season-2027',
+      'community-crc-delorean',
+    )
+  })
+
+  it('refuses dates that would overlap another season', async () => {
+    const { context, statements } = createContext({
+      body: { startsOn: '2026-11-01' },
+      firstResults: [persistedSeason, { id: 'season-2026' }],
+      method: 'PATCH',
+    })
+
+    const response = await handleRankingSeasonApiRequest(context, seasonRoute)
+
+    expect(response.status).toBe(409)
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: 'ranking_season_overlap' },
+    })
+    expect(statements).toHaveLength(2)
+  })
+
+  it('refuses a start after the end, merged with the stored dates', async () => {
+    const { context, statements } = createContext({
+      body: { startsOn: '2028-01-01' },
+      firstResults: [persistedSeason],
+      method: 'PATCH',
+    })
+
+    const response = await handleRankingSeasonApiRequest(context, seasonRoute)
+
+    expect(response.status).toBe(400)
+    expect(statements).toHaveLength(1)
+  })
+
+  it('refuses an empty update or a malformed date', async () => {
+    for (const body of [{}, { endsOn: '31/12/2027' }]) {
+      const { context } = createContext({
+        body,
+        firstResults: [persistedSeason],
+        method: 'PATCH',
+      })
+
+      const response = await handleRankingSeasonApiRequest(context, seasonRoute)
+
+      expect(response.status).toBe(400)
+    }
+  })
+
+  it('refuses to edit a closed season at all', async () => {
+    const { context, statements } = createContext({
+      body: { endsOn: '2028-03-31', points: seasonInput.points },
+      firstResults: [
+        { ...persistedSeason, eligible_member_ids: '[]', status: 'closed' },
+      ],
+      method: 'PATCH',
+    })
+
+    const response = await handleRankingSeasonApiRequest(context, seasonRoute)
+
+    expect(response.status).toBe(409)
+    expect(statements).toHaveLength(1)
+  })
+
+  it('reports a season that does not exist', async () => {
     const { context } = createContext({
       body: { points: seasonInput.points },
       firstResults: [null],
@@ -492,6 +596,6 @@ describe('Ranking season API', () => {
 
     const response = await handleRankingSeasonApiRequest(context, seasonRoute)
 
-    expect(response.status).toBe(409)
+    expect(response.status).toBe(404)
   })
 })

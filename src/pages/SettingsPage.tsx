@@ -34,9 +34,11 @@ import type { RankingSeasonsStatus } from '../hooks/useRankingSeasons'
 import type {
   CommunityBadgeSettings,
   CommunityRegistrationSettings,
-  CommunityRankingPoints,
 } from '../domain/types'
-import type { RankingSeasonWriteInput } from '../api/rankingSeasons'
+import type {
+  RankingSeasonUpdateInput,
+  RankingSeasonWriteInput,
+} from '../api/rankingSeasons'
 import { DataStateView } from '../components/DataStateView'
 import type { SettingsSection } from './settingsSections'
 
@@ -64,9 +66,9 @@ type SettingsPageProps = {
   onCloseRankingSeason: (seasonId: string) => Promise<void>
   onCreateRankingSeason: (input: RankingSeasonWriteInput) => Promise<void>
   onDeleteRankingSeason: (seasonId: string) => Promise<void>
-  onSaveRankingSeasonPoints: (
+  onUpdateRankingSeason: (
     seasonId: string,
-    points: CommunityRankingPoints,
+    input: RankingSeasonUpdateInput,
   ) => Promise<void>
   onCreateCommunityOption: (input: CommunityOptionInput) => Promise<void>
   onDeleteCommunityOption: (
@@ -114,7 +116,7 @@ export function SettingsPage({
   onCloseRankingSeason,
   onCreateRankingSeason,
   onDeleteRankingSeason,
-  onSaveRankingSeasonPoints,
+  onUpdateRankingSeason,
   onCreateCommunityOption,
   onDeleteCommunityOption,
   onReorderCommunityOptions,
@@ -305,7 +307,7 @@ export function SettingsPage({
           onDataChange={onDataChange}
           onDeleteSeason={onDeleteRankingSeason}
           onReloadSeasons={onReloadRankingSeasons}
-          onSaveSeasonPoints={onSaveRankingSeasonPoints}
+          onUpdateSeason={onUpdateRankingSeason}
           seasonsError={rankingSeasonsError}
           seasonsStatus={rankingSeasonsStatus}
         />

@@ -171,16 +171,50 @@ function parseRankingSeasonInput(value: unknown): RankingSeasonInput {
   }
 }
 
-function parsePointsUpdateInput(value: unknown): RankingSeasonPoints {
-  if (!isRecord(value) || !('points' in value)) {
+interface RankingSeasonUpdateInput {
+  endsOn?: string
+  points?: RankingSeasonPoints
+  startsOn?: string
+}
+
+function parseSeasonUpdateInput(value: unknown): RankingSeasonUpdateInput {
+  if (!isRecord(value)) {
     throw new ApiRequestError(
       400,
       'ranking_season_invalid',
-      'The request body must contain points.',
+      'The request body must be a JSON object.',
     )
   }
 
-  return parsePoints(value.points)
+  const input: RankingSeasonUpdateInput = {}
+
+  if ('points' in value) {
+    input.points = parsePoints(value.points)
+  }
+
+  for (const field of ['startsOn', 'endsOn'] as const) {
+    if (field in value) {
+      if (!isCalendarDate(value[field])) {
+        throw new ApiRequestError(
+          400,
+          'ranking_season_invalid',
+          `${field} must be a calendar date in YYYY-MM-DD format.`,
+        )
+      }
+
+      input[field] = value[field]
+    }
+  }
+
+  if (Object.keys(input).length === 0) {
+    throw new ApiRequestError(
+      400,
+      'ranking_season_invalid',
+      'The request body must contain points, startsOn or endsOn.',
+    )
+  }
+
+  return input
 }
 
 function toRankingSeason(row: RankingSeasonRow) {
@@ -303,17 +337,19 @@ async function findOverlappingSeason(
   communityId: string,
   startsOn: string,
   endsOn: string,
+  exceptSeasonId = '',
 ) {
   return db
     .prepare(
       `select id
       from community_ranking_season
       where community_id = ?
+        and id != ?
         and starts_on <= ?
         and ends_on >= ?
       limit 1`,
     )
-    .bind(communityId, endsOn, startsOn)
+    .bind(communityId, exceptSeasonId, endsOn, startsOn)
     .first<{ id: string }>()
 }
 
@@ -406,19 +442,101 @@ async function createRankingSeason(
   return jsonResponse({ season: toRankingSeason(created) }, { status: 201 })
 }
 
-async function updateRankingSeasonPoints(
+/**
+ * Points and dates of a season that is not closed. Dates are the only thing
+ * that decides which results belong to a season, so moving them re-scopes the
+ * ranking on the spot; the overlap rule keeps a result from ever belonging to
+ * two seasons, which is also what stops an active season from reaching back
+ * into a closed one.
+ */
+async function updateRankingSeason(
   requestContext: RankingSeasonRequestContext,
   communityId: string,
   seasonId: string,
 ) {
-  const points = parsePointsUpdateInput(
+  const input = parseSeasonUpdateInput(
     await readJsonBody(requestContext.request),
   )
+  const current = await requestContext.env.DB.prepare(
+    `select
+      id,
+      community_id,
+      name,
+      starts_on,
+      ends_on,
+      status,
+      points_first,
+      points_second,
+      points_third,
+      points_fourth,
+      points_fifth,
+      points_sixth_to_tenth,
+      points_participation,
+      eligible_member_ids,
+      badges
+    from community_ranking_season
+    where id = ? and community_id = ?`,
+  )
+    .bind(seasonId, communityId)
+    .first<RankingSeasonRow>()
+
+  if (!current) {
+    return apiError(404, 'ranking_season_not_found', 'Season not found.')
+  }
+
+  if (current.status === 'closed') {
+    return apiError(
+      409,
+      'ranking_season_not_editable',
+      'This ranking season cannot be edited.',
+    )
+  }
+
+  const startsOn = input.startsOn ?? current.starts_on
+  const endsOn = input.endsOn ?? current.ends_on
+
+  if (startsOn > endsOn) {
+    return apiError(
+      400,
+      'ranking_season_invalid',
+      'startsOn must not be after endsOn.',
+    )
+  }
+
+  if (startsOn !== current.starts_on || endsOn !== current.ends_on) {
+    const overlapping = await findOverlappingSeason(
+      requestContext.env.DB,
+      communityId,
+      startsOn,
+      endsOn,
+      seasonId,
+    )
+
+    if (overlapping) {
+      return apiError(
+        409,
+        'ranking_season_overlap',
+        'This period overlaps an existing ranking season.',
+      )
+    }
+  }
+
+  const points = input.points ?? {
+    first: current.points_first,
+    second: current.points_second,
+    third: current.points_third,
+    fourth: current.points_fourth,
+    fifth: current.points_fifth,
+    sixthToTenth: current.points_sixth_to_tenth,
+    participation: current.points_participation,
+  }
   const now = new Date().toISOString()
 
   const updated = await requestContext.env.DB.prepare(
     `update community_ranking_season
-    set points_first = ?,
+    set starts_on = ?,
+        ends_on = ?,
+        points_first = ?,
         points_second = ?,
         points_third = ?,
         points_fourth = ?,
@@ -445,6 +563,8 @@ async function updateRankingSeasonPoints(
       badges`,
   )
     .bind(
+      startsOn,
+      endsOn,
       points.first,
       points.second,
       points.third,
@@ -703,7 +823,7 @@ export async function handleRankingSeasonApiRequest(
           route.communityId,
           route.seasonId!,
         )
-      : await updateRankingSeasonPoints(
+      : await updateRankingSeason(
           requestContext,
           route.communityId,
           route.seasonId!,

@@ -31,7 +31,7 @@ import {
   closeCommunityRankingSeason,
   createCommunityRankingSeason,
   deleteCommunityRankingSeason,
-  updateCommunityRankingSeasonPoints,
+  updateCommunityRankingSeason,
 } from './api/rankingSeasons'
 import { saveCommunityEventStanding } from './api/eventStandings'
 import type { DemoRole } from './app/demoRoles'
@@ -750,11 +750,11 @@ export function App() {
                 ),
               }))
             }}
-            onSaveRankingSeasonPoints={async (seasonId, points) => {
-              const { season } = await updateCommunityRankingSeasonPoints(
+            onUpdateRankingSeason={async (seasonId, input) => {
+              const { season } = await updateCommunityRankingSeason(
                 data.community.id,
                 seasonId,
-                points,
+                input,
               )
               updateData((currentData) => ({
                 ...currentData,

@@ -10334,6 +10334,42 @@ a {
   font-size: 0.62rem;
 }
 
+/* The identity block hosts the date editor in place of its date line. */
+.ranking-season-dates {
+  display: grid;
+  gap: 0.45rem 0.6rem;
+  margin-top: 0.4rem;
+}
+
+@media (min-width: 36rem) {
+  .ranking-season-dates {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.ranking-season-dates .form-field span {
+  margin-top: 0;
+  color: #504653;
+  font-size: 0.64rem;
+  font-weight: 700;
+}
+
+.ranking-season-dates__note,
+.ranking-season-dates .ranking-season-confirmation {
+  grid-column: 1 / -1;
+}
+
+.ranking-season-dates__note {
+  margin: 0;
+  color: #7a4a17;
+  font-size: 0.64rem;
+}
+
+.ranking-season-dates .ranking-season-confirmation button:first-of-type {
+  border-color: #5b2b77;
+  color: #5b2b77;
+}
+
 .ranking-season-status {
   justify-self: start;
   display: inline-flex;

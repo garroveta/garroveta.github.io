@@ -92,7 +92,7 @@ const rankingSeasonsApiMocks = vi.hoisted(() => ({
   closeCommunityRankingSeason: vi.fn(),
   createCommunityRankingSeason: vi.fn(),
   deleteCommunityRankingSeason: vi.fn(),
-  updateCommunityRankingSeasonPoints: vi.fn(),
+  updateCommunityRankingSeason: vi.fn(),
 }))
 const communityReferentialsApiMocks = vi.hoisted(() => ({
   createCommunityReferential: vi.fn(),
@@ -1217,14 +1217,12 @@ describe('App', () => {
     const activeSeason = demoData.rankingSeasons.find(
       ({ status }) => status === 'active',
     )!
-    rankingSeasonsApiMocks.updateCommunityRankingSeasonPoints.mockResolvedValue(
-      {
-        season: {
-          ...activeSeason,
-          points: { ...activeSeason.points, first: 12 },
-        },
+    rankingSeasonsApiMocks.updateCommunityRankingSeason.mockResolvedValue({
+      season: {
+        ...activeSeason,
+        points: { ...activeSeason.points, first: 12 },
       },
-    )
+    })
     render(<App />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
@@ -1246,12 +1244,10 @@ describe('App', () => {
       await screen.findByText('Configuración guardada.'),
     ).toBeInTheDocument()
     expect(
-      rankingSeasonsApiMocks.updateCommunityRankingSeasonPoints,
-    ).toHaveBeenCalledWith(
-      'community-crc-delorean',
-      activeSeason.id,
-      expect.objectContaining({ first: 12 }),
-    )
+      rankingSeasonsApiMocks.updateCommunityRankingSeason,
+    ).toHaveBeenCalledWith('community-crc-delorean', activeSeason.id, {
+      points: expect.objectContaining({ first: 12 }),
+    })
     expect(
       createLocalDemoRepository(window.localStorage).load().rankingSettings,
     ).toMatchObject({
@@ -1273,6 +1269,90 @@ describe('App', () => {
     expect(
       screen.getAllByLabelText('Más 12 puntos comunidad'),
     ).not.toHaveLength(0)
+  })
+
+  it('lets the manager move the dates of the active season', async () => {
+    authenticateAsManager()
+    const activeSeason = demoData.rankingSeasons.find(
+      ({ status }) => status === 'active',
+    )!
+    rankingSeasonsApiMocks.updateCommunityRankingSeason.mockResolvedValue({
+      season: { ...activeSeason, endsOn: '2026-12-31' },
+    })
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Ranking' }))
+
+    const row = screen
+      .getAllByText(activeSeason.name)
+      .map((element) => element.closest('.ranking-season-row'))
+      .find((candidate): candidate is HTMLElement => candidate !== null)!
+    fireEvent.click(within(row).getByRole('button', { name: 'Editar fechas' }))
+
+    expect(
+      within(row).getByText(
+        'Los resultados se recalcularán con las nuevas fechas.',
+      ),
+    ).toBeInTheDocument()
+
+    fireEvent.change(
+      within(row).getByLabelText(`${activeSeason.name}: fecha de fin`),
+      { target: { value: '2026-12-31' } },
+    )
+    fireEvent.click(within(row).getByRole('button', { name: 'Guardar fechas' }))
+
+    await waitFor(() =>
+      expect(
+        rankingSeasonsApiMocks.updateCommunityRankingSeason,
+      ).toHaveBeenCalledWith('community-crc-delorean', activeSeason.id, {
+        startsOn: activeSeason.startsOn,
+        endsOn: '2026-12-31',
+      }),
+    )
+    expect(
+      await within(row).findByText(
+        `Del ${activeSeason.startsOn} al 2026-12-31`,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      createLocalDemoRepository(window.localStorage)
+        .load()
+        .rankingSeasons.find(({ id }) => id === activeSeason.id)?.endsOn,
+    ).toBe('2026-12-31')
+  })
+
+  it('keeps a start after the end from reaching the server', async () => {
+    authenticateAsManager()
+    const activeSeason = demoData.rankingSeasons.find(
+      ({ status }) => status === 'active',
+    )!
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Ranking' }))
+
+    const row = screen
+      .getAllByText(activeSeason.name)
+      .map((element) => element.closest('.ranking-season-row'))
+      .find((candidate): candidate is HTMLElement => candidate !== null)!
+    fireEvent.click(within(row).getByRole('button', { name: 'Editar fechas' }))
+    fireEvent.change(
+      within(row).getByLabelText(`${activeSeason.name}: fecha de inicio`),
+      { target: { value: '2030-01-01' } },
+    )
+    fireEvent.click(within(row).getByRole('button', { name: 'Guardar fechas' }))
+
+    expect(
+      await screen.findByText(
+        'La fecha de inicio no puede ser posterior a la de fin.',
+      ),
+    ).toBeInTheDocument()
+    expect(
+      rankingSeasonsApiMocks.updateCommunityRankingSeason,
+    ).not.toHaveBeenCalled()
   })
 
   it('lets the manager configure registration defaults for new MTG events', async () => {

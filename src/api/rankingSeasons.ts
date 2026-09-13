@@ -42,15 +42,20 @@ export function createCommunityRankingSeason(
   )
 }
 
-export function updateCommunityRankingSeasonPoints(
+/** Any subset; the Worker keeps whatever is left out. */
+export type RankingSeasonUpdateInput = Partial<
+  Pick<RankingSeasonWriteInput, 'startsOn' | 'endsOn' | 'points'>
+>
+
+export function updateCommunityRankingSeason(
   communityId: string,
   seasonId: string,
-  points: CommunityRankingPoints,
+  input: RankingSeasonUpdateInput,
 ) {
   return apiRequest<{ season: CommunityRankingSeason }>(
     rankingSeasonPath(communityId, seasonId),
     {
-      body: JSON.stringify({ points }),
+      body: JSON.stringify(input),
       method: 'PATCH',
     },
   )

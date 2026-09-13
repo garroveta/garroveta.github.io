@@ -2,7 +2,10 @@ import { Save, Settings2, Trophy } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 
 import { describeApiError } from '../api/errorPresentation'
-import type { RankingSeasonWriteInput } from '../api/rankingSeasons'
+import type {
+  RankingSeasonUpdateInput,
+  RankingSeasonWriteInput,
+} from '../api/rankingSeasons'
 import type { DemoDataUpdater } from '../data/demoRepository'
 import type { RankingSeasonsStatus } from '../hooks/useRankingSeasons'
 import type { CommunityRankingPoints, DemoDataSet } from '../domain/types'
@@ -18,9 +21,9 @@ type RankingSettingsPanelProps = {
   onDataChange: (updater: DemoDataUpdater) => void
   onDeleteSeason: (seasonId: string) => Promise<void>
   onReloadSeasons: () => void
-  onSaveSeasonPoints: (
+  onUpdateSeason: (
     seasonId: string,
-    points: CommunityRankingPoints,
+    input: RankingSeasonUpdateInput,
   ) => Promise<void>
   seasonsError: unknown
   seasonsStatus: RankingSeasonsStatus
@@ -99,7 +102,7 @@ export function RankingSettingsPanel({
   onDataChange,
   onDeleteSeason,
   onReloadSeasons,
-  onSaveSeasonPoints,
+  onUpdateSeason,
   seasonsError,
   seasonsStatus,
 }: RankingSettingsPanelProps) {
@@ -129,6 +132,11 @@ export function RankingSettingsPanel({
   const [createError, setCreateError] = useState('')
   const [pendingCloseSeasonId, setPendingCloseSeasonId] = useState<string>()
   const [pendingDeleteSeasonId, setPendingDeleteSeasonId] = useState<string>()
+  const [editingDates, setEditingDates] = useState<{
+    seasonId: string
+    startsOn: string
+    endsOn: string
+  }>()
   const [pendingActionSeasonId, setPendingActionSeasonId] = useState<string>()
   const [actionError, setActionError] = useState('')
   const [requiresReauthentication, setRequiresReauthentication] = useState<
@@ -161,7 +169,7 @@ export function RankingSettingsPanel({
 
     try {
       if (activeSeason) {
-        await onSaveSeasonPoints(activeSeason.id, points)
+        await onUpdateSeason(activeSeason.id, { points })
       }
 
       onDataChange((currentData) => ({
@@ -262,6 +270,42 @@ export function RankingSettingsPanel({
       handleActionError(
         error,
         'No se ha podido activar la temporada. Inténtalo de nuevo.',
+      )
+    } finally {
+      setPendingActionSeasonId(undefined)
+    }
+  }
+
+  async function saveDates() {
+    if (!editingDates || editingDates.startsOn > editingDates.endsOn) {
+      setActionError('La fecha de inicio no puede ser posterior a la de fin.')
+      return
+    }
+
+    setActionError('')
+    setPendingActionSeasonId(editingDates.seasonId)
+
+    try {
+      await onUpdateSeason(editingDates.seasonId, {
+        startsOn: editingDates.startsOn,
+        endsOn: editingDates.endsOn,
+      })
+      setEditingDates(undefined)
+    } catch (error) {
+      const presentation = describeApiError(error)
+
+      if (
+        presentation.kind === 'session_expired' ||
+        presentation.kind === 'access_denied'
+      ) {
+        setRequiresReauthentication(presentation.kind)
+        return
+      }
+
+      setActionError(
+        presentation.kind === 'network'
+          ? presentation.description
+          : 'Las fechas se solapan con otra temporada existente.',
       )
     } finally {
       setPendingActionSeasonId(undefined)
@@ -457,9 +501,71 @@ export function RankingSettingsPanel({
                   <div className="ranking-season-row" key={season.id}>
                     <div className="ranking-season-row__identity">
                       <strong>{season.name}</strong>
-                      <span>
-                        Del {season.startsOn} al {season.endsOn}
-                      </span>
+                      {editingDates?.seasonId === season.id ? (
+                        <form
+                          className="ranking-season-dates"
+                          onSubmit={(event) => {
+                            event.preventDefault()
+                            void saveDates()
+                          }}
+                        >
+                          <label className="form-field">
+                            <span>Inicio</span>
+                            <input
+                              aria-label={`${season.name}: fecha de inicio`}
+                              type="date"
+                              required
+                              value={editingDates.startsOn}
+                              onChange={(event) =>
+                                setEditingDates({
+                                  ...editingDates,
+                                  startsOn: event.target.value,
+                                })
+                              }
+                            />
+                          </label>
+                          <label className="form-field">
+                            <span>Fin</span>
+                            <input
+                              aria-label={`${season.name}: fecha de fin`}
+                              type="date"
+                              required
+                              value={editingDates.endsOn}
+                              onChange={(event) =>
+                                setEditingDates({
+                                  ...editingDates,
+                                  endsOn: event.target.value,
+                                })
+                              }
+                            />
+                          </label>
+                          {season.status === 'active' ? (
+                            <p className="ranking-season-dates__note">
+                              Los resultados se recalcularán con las nuevas
+                              fechas.
+                            </p>
+                          ) : null}
+                          <div className="ranking-season-confirmation">
+                            <button type="submit" disabled={isPending}>
+                              {isPending ? 'Guardando…' : 'Guardar fechas'}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isPending}
+                              onClick={() => {
+                                setActionError('')
+                                setEditingDates(undefined)
+                              }}
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        <span>
+                          Del {season.startsOn} al {season.endsOn}
+                        </span>
+                      )}
                     </div>
                     <span
                       className="ranking-season-status"
@@ -514,6 +620,20 @@ export function RankingSettingsPanel({
                             >
                               Eliminar
                             </button>
+                            <button
+                              className="secondary-button"
+                              type="button"
+                              disabled={isPending}
+                              onClick={() =>
+                                setEditingDates({
+                                  seasonId: season.id,
+                                  startsOn: season.startsOn,
+                                  endsOn: season.endsOn,
+                                })
+                              }
+                            >
+                              Editar fechas
+                            </button>
                           </>
                         )
                       ) : season.status === 'active' ? (
@@ -540,18 +660,34 @@ export function RankingSettingsPanel({
                             </button>
                           </div>
                         ) : (
-                          <button
-                            className="secondary-button"
-                            type="button"
-                            disabled={isPending}
-                            onClick={() => setPendingCloseSeasonId(season.id)}
-                          >
-                            {isPending
-                              ? 'Cerrando…'
-                              : upcomingSeasons.length === 1
-                                ? `Cerrar y activar «${upcomingSeasons[0]!.name}»`
-                                : 'Cerrar temporada'}
-                          </button>
+                          <>
+                            <button
+                              className="secondary-button"
+                              type="button"
+                              disabled={isPending}
+                              onClick={() => setPendingCloseSeasonId(season.id)}
+                            >
+                              {isPending
+                                ? 'Cerrando…'
+                                : upcomingSeasons.length === 1
+                                  ? `Cerrar y activar «${upcomingSeasons[0]!.name}»`
+                                  : 'Cerrar temporada'}
+                            </button>
+                            <button
+                              className="secondary-button"
+                              type="button"
+                              disabled={isPending}
+                              onClick={() =>
+                                setEditingDates({
+                                  seasonId: season.id,
+                                  startsOn: season.startsOn,
+                                  endsOn: season.endsOn,
+                                })
+                              }
+                            >
+                              Editar fechas
+                            </button>
+                          </>
                         )
                       ) : season.status === 'closed' ? (
                         <span className="ranking-season-row__frozen-note">

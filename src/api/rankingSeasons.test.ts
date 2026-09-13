@@ -6,7 +6,7 @@ import {
   createCommunityRankingSeason,
   deleteCommunityRankingSeason,
   listCommunityRankingSeasons,
-  updateCommunityRankingSeasonPoints,
+  updateCommunityRankingSeason,
 } from './rankingSeasons'
 
 const communityId = 'community-crc-delorean'
@@ -68,18 +68,30 @@ describe('ranking seasons API', () => {
     )
   })
 
-  it('updates the points of a season with a PATCH request', async () => {
+  it('updates the points or the dates of a season with a PATCH request', async () => {
     const fetchMock = mockJsonResponse({
       season: { id: 'season-2027', ...seasonInput, status: 'active' },
     })
     vi.stubGlobal('fetch', fetchMock)
 
-    await updateCommunityRankingSeasonPoints(communityId, 'season-2027', points)
+    await updateCommunityRankingSeason(communityId, 'season-2027', { points })
+    await updateCommunityRankingSeason(communityId, 'season-2027', {
+      endsOn: '2028-03-31',
+    })
 
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
       expect.stringContaining('/ranking-seasons/season-2027'),
       expect.objectContaining({
         body: JSON.stringify({ points }),
+        method: 'PATCH',
+      }),
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('/ranking-seasons/season-2027'),
+      expect.objectContaining({
+        body: JSON.stringify({ endsOn: '2028-03-31' }),
         method: 'PATCH',
       }),
     )
