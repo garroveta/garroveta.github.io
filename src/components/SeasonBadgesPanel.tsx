@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import { BadgeMark } from './BadgeMark'
+import { CommunityBadgesBoard } from './CommunityBadgesBoard'
 import { ShareActions } from './ShareActions'
 import { formatBadgeUnlockForWhatsApp } from '../data/badgeSharing'
 import {
@@ -55,6 +56,7 @@ export function SeasonBadgesPanel({
       '',
   )
   const [openBadgeId, setOpenBadgeId] = useState<string>()
+  const [view, setView] = useState<'mine' | 'community'>('mine')
   const [showEveryLocked, setShowEveryLocked] = useState(false)
 
   const scope = { gameId, seasonId }
@@ -196,17 +198,51 @@ export function SeasonBadgesPanel({
         </label>
       </div>
 
+      {isSelf ? (
+        <div
+          className="ranking-segmented season-badges__view"
+          aria-label="Vista de insignias"
+        >
+          <button
+            type="button"
+            aria-pressed={view === 'mine'}
+            onClick={() => setView('mine')}
+          >
+            Mi colección
+          </button>
+          <button
+            type="button"
+            aria-pressed={view === 'community'}
+            onClick={() => setView('community')}
+          >
+            Toda la comunidad
+          </button>
+        </div>
+      ) : null}
+
       <div className="season-badges__heading">
         <div>
-          <span>{isSelf ? 'Tu colección' : 'Su colección'}</span>
+          <span>
+            {view === 'community'
+              ? 'Quién tiene cada insignia'
+              : isSelf
+                ? 'Tu colección'
+                : 'Su colección'}
+          </span>
           <h2 id="season-badges-title">
-            {unlocked.length} de {memberBadges.length}
+            {view === 'community'
+              ? `${players} ${players === 1 ? 'jugador' : 'jugadores'}`
+              : `${unlocked.length} de ${memberBadges.length}`}
           </h2>
         </div>
         <p>{season.name}</p>
       </div>
 
-      {unlocked.length > 0 ? (
+      {view === 'community' ? (
+        <CommunityBadgesBoard board={board} onOpenMember={onOpenMember} />
+      ) : null}
+
+      {view === 'mine' && unlocked.length > 0 ? (
         <>
           <h3>Desbloqueadas</h3>
           <ul
@@ -218,7 +254,7 @@ export function SeasonBadgesPanel({
         </>
       ) : null}
 
-      {inProgress.length > 0 ? (
+      {view === 'mine' && inProgress.length > 0 ? (
         <>
           <h3>En progreso</h3>
           <ul

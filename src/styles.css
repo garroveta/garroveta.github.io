@@ -9936,6 +9936,140 @@ a {
   font-weight: 700;
 }
 
+.season-badges__view {
+  justify-self: start;
+}
+
+.community-badges {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.community-badges__empty {
+  margin: 0;
+  color: #7a707d;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.community-badges__list {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.community-badge {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.6rem 0.65rem;
+  border: 1px solid #e6dee9;
+  border-radius: 0.85rem;
+  background: #fff;
+}
+
+.community-badge__summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.community-badge__identity {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.community-badge__identity strong {
+  color: #2f2733;
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.community-badge__identity small {
+  color: #7a707d;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.community-badge__rarity {
+  color: #8a8090;
+  font-size: 0.66rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.community-badge__holders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.community-badge__holders button {
+  padding: 0.25rem 0.55rem;
+  border: none;
+  border-radius: 999px;
+  color: #5b2b77;
+  background: #f3ecf6;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.community-badge__holders button:disabled {
+  cursor: default;
+}
+
+.community-badges h3 {
+  margin: 0.2rem 0 0;
+  color: #5b2b77;
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.community-badges__unclaimed {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.community-badges__unclaimed li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.35rem 0.1rem;
+}
+
+.community-badges__unclaimed span {
+  display: grid;
+  gap: 0.05rem;
+  min-width: 0;
+}
+
+.community-badges__unclaimed strong {
+  color: #4a414d;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.community-badges__unclaimed small {
+  color: #8a8090;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
 .season-badges__toggle {
   justify-self: start;
   padding: 0.15rem 0;
