@@ -1,24 +1,27 @@
 import { X } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, type ReactNode } from 'react'
 
 import { BadgeMark } from './BadgeMark'
-import type { ResolvedBadge } from '../domain/badges'
+import type { BadgeTier, ResolvedBadge } from '../domain/badges'
 
 export type BadgePreviewSubject = {
   definition: ResolvedBadge
   unlocked: boolean
   progress?: { current: number; target: number }
   glyph?: string
+  tier?: BadgeTier
 }
 
 type BadgePreviewProps = {
   badge: BadgePreviewSubject
   onClose: () => void
+  /** Whatever the opener can offer on this badge, typically sharing it. */
+  actions?: ReactNode
 }
 
 /** The badge at a size where the artwork can actually be looked at. */
-export function BadgePreview({ badge, onClose }: BadgePreviewProps) {
-  const { definition, glyph, progress, unlocked } = badge
+export function BadgePreview({ actions, badge, onClose }: BadgePreviewProps) {
+  const { definition, glyph, progress, tier, unlocked } = badge
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -56,6 +59,7 @@ export function BadgePreview({ badge, onClose }: BadgePreviewProps) {
           glyph={glyph}
           label={`${definition.name}, ampliada`}
           progress={progress}
+          tier={tier}
           unlocked={unlocked}
           variant="large"
         />
@@ -68,6 +72,7 @@ export function BadgePreview({ badge, onClose }: BadgePreviewProps) {
             </p>
           ) : null}
           <p className="badge-preview__reference">{definition.reference}</p>
+          {actions}
         </div>
       </div>
     </div>

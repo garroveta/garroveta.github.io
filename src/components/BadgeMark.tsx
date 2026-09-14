@@ -80,7 +80,12 @@ export function BadgeMark({
           cy={SIZE / 2}
           r={RADIUS}
         />
-        {unlocked || ratio === 0 ? null : (
+        {/*
+          No arc without a measurable distance: a badge the season's closing
+          decides (Monarch, Paragon) has no progress to draw, and a full ring
+          would read as "already earned".
+        */}
+        {unlocked || !progress || ratio === 0 ? null : (
           <circle
             className="badge-mark__ring"
             cx={SIZE / 2}

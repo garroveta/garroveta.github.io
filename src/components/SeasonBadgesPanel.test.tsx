@@ -9,6 +9,11 @@ function renderPanel(memberId = 'member-sergio', data: DemoDataSet = demoData) {
   render(<SeasonBadgesPanel data={data} memberId={memberId} />)
 }
 
+/** Every rung lives in the catalogue, folded away until asked for. */
+function openCatalogue() {
+  fireEvent.click(screen.getByRole('button', { name: 'Ver todo el catálogo' }))
+}
+
 function badgeRow(name: string) {
   return screen
     .getByRole('button', { name: new RegExp(`^${name}`) })
@@ -25,56 +30,92 @@ function expand(row: HTMLElement) {
 }
 
 describe('SeasonBadgesPanel', () => {
-  it('leads with the collection count, not with an empty trophy case', () => {
+  it('counts what is held rather than what is missing', () => {
     renderPanel()
 
-    expect(screen.getByRole('heading', { name: '4 de 16' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: '4 insignias' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('1 oro · 2 plata · 1 bronce')).toBeInTheDocument()
     expect(screen.getByText('Tu colección')).toBeInTheDocument()
   })
 
-  it('separates what is unlocked from what is still coming', () => {
+  it('shows the earned badges as a case, not as rows', () => {
     renderPanel()
 
+    const vitrine = within(
+      screen.getByRole('list', { name: 'Insignias desbloqueadas' }),
+    )
+
+    expect(vitrine.getAllByRole('listitem')).toHaveLength(4)
     expect(
-      within(
-        screen.getByRole('list', { name: 'Insignias desbloqueadas' }),
-      ).getAllByRole('listitem'),
-    ).toHaveLength(4)
-    expect(
-      within(
-        screen.getByRole('list', { name: 'Insignias en progreso' }),
-      ).getAllByRole('listitem'),
-    ).toHaveLength(3)
+      vitrine.getByRole('button', { name: 'Ver Ferocious en grande' }),
+    ).toBeInTheDocument()
   })
 
-  it('puts the closest badges first so a newcomer never faces a wall', () => {
+  it('offers one next rung per ladder, closest first', () => {
     renderPanel()
 
-    fireEvent.click(
-      screen.getByRole('button', { name: /Ver las 12 insignias en progreso/ }),
-    )
+    const rows = within(
+      screen.getByRole('list', { name: 'Tu próximo paso' }),
+    ).getAllByRole('listitem')
+    const ratios = rows.map((row) => {
+      const counter = within(row).queryByText(/^\d+ de \d+$/)
+      const [current, target] = (counter?.textContent ?? '0 de 1')
+        .split(' de ')
+        .map(Number)
 
-    const ratios = within(
-      screen.getByRole('list', { name: 'Insignias en progreso' }),
-    )
-      .getAllByRole('listitem')
-      .map((row) => {
-        const counter = within(row).queryByText(/^\d+\/\d+$/)
-        const [current, target] = (counter?.textContent ?? '0/1')
-          .split('/')
-          .map(Number)
+      return current / target
+    })
 
-        return current / target
-      })
-
-    expect(ratios[0]).toBeGreaterThan(0.5)
+    // One per ladder that still has a rung to climb, never two from the same.
+    expect(rows).toHaveLength(7)
     expect(
       ratios.every((ratio, index) => index === 0 || ratios[index - 1] >= ratio),
     ).toBe(true)
   })
 
+  it('names the ladder a next rung belongs to', () => {
+    renderPanel()
+
+    const topFour = within(
+      screen.getByRole('list', { name: 'Tu próximo paso' }),
+    )
+      .getAllByRole('listitem')
+      .find((row) => row.textContent?.includes("City's Blessing"))!
+
+    // Ferocious is already held, so the ladder points at the rung above it.
+    expect(topFour).toHaveTextContent('Top 4')
+    expect(topFour).toHaveTextContent('7 de 10')
+  })
+
+  it('says which ladders are finished', () => {
+    renderPanel()
+
+    expect(screen.getByText(/^Completas:/)).toHaveTextContent(
+      'Completas: Torneos grandes',
+    )
+  })
+
+  it('keeps the whole catalogue folded until asked, grouped by ladder', () => {
+    renderPanel()
+
+    expect(screen.queryByText('Legendary')).toBeNull()
+
+    openCatalogue()
+
+    expect(
+      screen.getByRole('list', { name: 'Insignias de eventos jugados' }),
+    ).toBeInTheDocument()
+    expect(document.querySelectorAll('.season-badge')).toHaveLength(16)
+    expect(
+      screen.getByRole('button', { name: 'Ocultar el catálogo' }),
+    ).toHaveAttribute('aria-expanded', 'true')
+  })
+
   it('opens a badge on its rule and on who already has it', () => {
     renderPanel()
+    openCatalogue()
 
     const row = badgeRow('Ferocious')
 
@@ -90,18 +131,16 @@ describe('SeasonBadgesPanel', () => {
     ).toBeInTheDocument()
   })
 
-  it('shows the rarity of every badge', () => {
+  it('shows the rarity of every badge in the catalogue', () => {
     renderPanel()
+    openCatalogue()
 
     expect(badgeRow('Ferocious')).toHaveTextContent('4 de 15')
   })
 
   it('invites the first holder when nobody has the badge', () => {
     renderPanel()
-
-    fireEvent.click(
-      screen.getByRole('button', { name: /Ver las 12 insignias en progreso/ }),
-    )
+    openCatalogue()
 
     const row = badgeRow('Legendary')
 
@@ -110,23 +149,31 @@ describe('SeasonBadgesPanel', () => {
     expect(row).toHaveTextContent('Nadie la tiene todavía')
   })
 
-  it('offers to share a badge only once it is unlocked', () => {
+  it('offers to share a badge from its dialog, only once it is unlocked', () => {
     renderPanel()
 
-    const unlocked = badgeRow('Ferocious')
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Ver Ferocious en grande' }),
+    )
 
-    expand(unlocked)
+    const held = screen.getByRole('dialog', { name: 'Ferocious' })
 
     expect(
-      within(unlocked).getByRole('button', { name: /Compartir insignia/ }),
+      within(held).getByRole('button', { name: /Compartir insignia/ }),
     ).toBeInTheDocument()
 
-    const locked = badgeRow('Deathtouch')
-
-    expand(locked)
+    fireEvent.click(
+      within(held).getByRole('button', { name: 'Cerrar insignia' }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Ver Deathtouch en grande' }),
+    )
 
     expect(
-      within(locked).queryByRole('button', { name: /Compartir insignia/ }),
+      within(screen.getByRole('dialog', { name: 'Deathtouch' })).queryByRole(
+        'button',
+        { name: /Compartir insignia/ },
+      ),
     ).toBeNull()
   })
 
@@ -166,22 +213,5 @@ describe('SeasonBadgesPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar insignia' }))
 
     expect(screen.queryByRole('dialog')).toBeNull()
-  })
-
-  it('keeps the locked badges folded until asked', () => {
-    renderPanel()
-
-    const toggle = screen.getByRole('button', {
-      name: /Ver las 12 insignias en progreso/,
-    })
-
-    fireEvent.click(toggle)
-
-    expect(
-      within(
-        screen.getByRole('list', { name: 'Insignias en progreso' }),
-      ).getAllByRole('listitem'),
-    ).toHaveLength(12)
-    expect(toggle).toHaveAttribute('aria-expanded', 'true')
   })
 })

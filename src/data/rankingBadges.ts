@@ -1,8 +1,10 @@
 import {
   CROWDED_FIELD,
   RANKED_FIELD,
+  getBadgeLadders,
   resolveSeasonBadges,
   type BadgeCounter,
+  type BadgeTier,
   type ResolvedBadge,
 } from '../domain/badges'
 import type {
@@ -26,6 +28,16 @@ export type MemberBadge = {
   definition: ResolvedBadge
   unlockedAt?: string
   progress?: { current: number; target: number }
+}
+
+export type MemberLadderStep = MemberBadge & { tier: BadgeTier }
+
+export type MemberBadgeLadder = {
+  id: string
+  label: string
+  steps: MemberLadderStep[]
+  /** The rung to aim at next, absent once every rung is held. */
+  next?: MemberLadderStep
 }
 
 export type BadgeHolder = {
@@ -297,5 +309,36 @@ export function getBadgeUnlocksForEvent(
     holders
       .filter((holder) => holder.eventId === eventId)
       .map(({ member, unlockedAt }) => ({ definition, member, unlockedAt })),
+  )
+}
+
+/**
+ * One member's badges as ladders rather than as a flat list, with the rung
+ * they are climbing towards singled out. A member does not need to read
+ * sixteen locked badges: they need the next step of each thing they are
+ * already doing.
+ */
+export function getMemberBadgeLadders(
+  memberBadges: MemberBadge[],
+): MemberBadgeLadder[] {
+  const byId = new Map(
+    memberBadges.map((badge) => [badge.definition.id, badge]),
+  )
+
+  return getBadgeLadders(memberBadges.map(({ definition }) => definition)).map(
+    ({ id, label, steps }) => {
+      const climbed = steps.flatMap(({ badge, tier }) => {
+        const memberBadge = byId.get(badge.id)
+
+        return memberBadge ? [{ ...memberBadge, tier }] : []
+      })
+
+      return {
+        id,
+        label,
+        steps: climbed,
+        next: climbed.find(({ unlockedAt }) => !unlockedAt),
+      }
+    },
   )
 }

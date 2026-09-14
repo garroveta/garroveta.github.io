@@ -6,6 +6,7 @@ import { CommunityBadgesBoard } from './CommunityBadgesBoard'
 import { ShareActions } from './ShareActions'
 import { formatBadgeUnlockForWhatsApp } from '../data/badgeSharing'
 import {
+  getMemberBadgeLadders,
   getMemberSeasonBadges,
   getSeasonBadgeBoard,
   type MemberBadge,
@@ -13,8 +14,11 @@ import {
 import { getBadgeTiers } from '../domain/badges'
 import type { DemoDataSet } from '../domain/types'
 
-/** Enough to see what is within reach without turning the rest into a wall. */
-const VISIBLE_IN_PROGRESS = 3
+const TIER_LABELS = {
+  bronze: 'bronce',
+  silver: 'plata',
+  gold: 'oro',
+} as const
 
 const unlockDateFormatter = new Intl.DateTimeFormat('es-ES', {
   day: '2-digit',
@@ -79,12 +83,50 @@ export function SeasonBadgesPanel({
   )
   const tiers = getBadgeTiers(memberBadges.map(({ definition }) => definition))
   const unlocked = memberBadges.filter(({ unlockedAt }) => unlockedAt)
-  const inProgress = memberBadges
-    .filter(({ unlockedAt }) => !unlockedAt)
-    .sort((first, second) => distanceOf(second) - distanceOf(first))
-  const visibleInProgress = showEveryLocked
-    ? inProgress
-    : inProgress.slice(0, VISIBLE_IN_PROGRESS)
+  const ladders = getMemberBadgeLadders(memberBadges)
+  // Closest first: the next rung should read as reachable, not as a wall.
+  const nextRungs = ladders
+    .flatMap((ladder) => (ladder.next ? [{ ladder, step: ladder.next }] : []))
+    .sort((first, second) => distanceOf(second.step) - distanceOf(first.step))
+  const completedLadders = ladders.filter(
+    ({ next, steps }) => !next && steps.length > 0,
+  )
+  const earnedTiers = (['gold', 'silver', 'bronze'] as const)
+    .map((tier) => ({
+      tier,
+      count: unlocked.filter(
+        ({ definition }) => tiers.get(definition.id) === tier,
+      ).length,
+    }))
+    .filter(({ count }) => count > 0)
+
+  /**
+   * The vitrine opens a badge in the dialog, so sharing has to live there too
+   * rather than only inside an expanded catalogue row.
+   */
+  function shareActionsFor(badgeId: string) {
+    const held = unlocked.find(({ definition }) => definition.id === badgeId)
+
+    return isSelf && held?.unlockedAt && member ? (
+      <ShareActions
+        className="season-badge__share"
+        copiedLabel="Insignia copiada"
+        copyLabel="Copiar"
+        copySuccessMessage="Insignia copiada. Ya puedes pegarla en WhatsApp."
+        shareLabel="Compartir insignia"
+        shareText={formatBadgeUnlockForWhatsApp({
+          badgeUrl: badgesUrl.toString(),
+          communityName: data.community.name,
+          season,
+          unlock: {
+            definition: held.definition,
+            member,
+            unlockedAt: held.unlockedAt,
+          },
+        })}
+      />
+    ) : null
+  }
 
   function renderBadge(badge: MemberBadge) {
     const { definition, progress, unlockedAt } = badge
@@ -246,8 +288,17 @@ export function SeasonBadgesPanel({
           <h2 id="season-badges-title">
             {view === 'community'
               ? `${players} ${players === 1 ? 'jugador' : 'jugadores'}`
-              : `${unlocked.length} de ${memberBadges.length}`}
+              : `${unlocked.length} ${
+                  unlocked.length === 1 ? 'insignia' : 'insignias'
+                }`}
           </h2>
+          {view === 'mine' && earnedTiers.length > 0 ? (
+            <small className="season-badges__tiers">
+              {earnedTiers
+                .map(({ count, tier }) => `${count} ${TIER_LABELS[tier]}`)
+                .join(' · ')}
+            </small>
+          ) : null}
         </div>
         <p>{season.name}</p>
       </div>
@@ -262,42 +313,129 @@ export function SeasonBadgesPanel({
 
       {view === 'mine' && unlocked.length > 0 ? (
         <>
-          <h3>Desbloqueadas</h3>
-          <ul
-            className="season-badges__list"
-            aria-label="Insignias desbloqueadas"
-          >
-            {unlocked.map(renderBadge)}
+          <h3>Vitrina</h3>
+          <ul className="badge-case" aria-label="Insignias desbloqueadas">
+            {unlocked.map(({ definition }) => (
+              <li key={definition.id}>
+                <button
+                  type="button"
+                  className="badge-case__item"
+                  aria-label={`Ver ${definition.name} en grande`}
+                  onClick={() =>
+                    setPreview({
+                      definition,
+                      tier: tiers.get(definition.id),
+                      unlocked: true,
+                    })
+                  }
+                >
+                  <BadgeMark
+                    badgeId={definition.id}
+                    label={definition.name}
+                    tier={tiers.get(definition.id)}
+                    unlocked
+                  />
+                  <span>{definition.name}</span>
+                </button>
+              </li>
+            ))}
           </ul>
         </>
       ) : null}
 
-      {view === 'mine' && inProgress.length > 0 ? (
+      {view === 'mine' && nextRungs.length > 0 ? (
         <>
-          <h3>En progreso</h3>
-          <ul
-            className="season-badges__list"
-            aria-label="Insignias en progreso"
-          >
-            {visibleInProgress.map(renderBadge)}
+          <h3>Tu próximo paso</h3>
+          <ul className="badge-next" aria-label="Tu próximo paso">
+            {nextRungs.map(({ ladder, step }) => (
+              <li key={ladder.id}>
+                <button
+                  type="button"
+                  className="badge-mark-button"
+                  aria-label={`Ver ${step.definition.name} en grande`}
+                  onClick={() =>
+                    setPreview({
+                      definition: step.definition,
+                      progress: step.progress,
+                      tier: step.tier,
+                      unlocked: false,
+                    })
+                  }
+                >
+                  <BadgeMark
+                    badgeId={step.definition.id}
+                    label={step.definition.name}
+                    progress={step.progress}
+                    tier={step.tier}
+                    unlocked={false}
+                  />
+                </button>
+                <span className="badge-next__identity">
+                  <small className="badge-next__ladder">{ladder.label}</small>
+                  <strong>{step.definition.name}</strong>
+                  <small>{step.definition.description}</small>
+                </span>
+                {step.progress ? (
+                  <span className="badge-next__progress">
+                    <span className="badge-next__bar" aria-hidden="true">
+                      <span
+                        style={{
+                          width: `${Math.round(
+                            (step.progress.current / step.progress.target) *
+                              100,
+                          )}%`,
+                        }}
+                      />
+                    </span>
+                    <small>
+                      {step.progress.current} de {step.progress.target}
+                    </small>
+                  </span>
+                ) : null}
+              </li>
+            ))}
           </ul>
-          {inProgress.length > VISIBLE_IN_PROGRESS ? (
-            <button
-              className="season-badges__toggle"
-              type="button"
-              aria-expanded={showEveryLocked}
-              onClick={() => setShowEveryLocked((current) => !current)}
-            >
-              {showEveryLocked
-                ? 'Ver solo las más cercanas'
-                : `Ver las ${inProgress.length} insignias en progreso`}
-            </button>
-          ) : null}
+        </>
+      ) : null}
+
+      {view === 'mine' && completedLadders.length > 0 ? (
+        <p className="badge-next__done">
+          Completas: {completedLadders.map(({ label }) => label).join(' · ')}
+        </p>
+      ) : null}
+
+      {view === 'mine' ? (
+        <>
+          <button
+            className="season-badges__toggle"
+            type="button"
+            aria-expanded={showEveryLocked}
+            onClick={() => setShowEveryLocked((current) => !current)}
+          >
+            {showEveryLocked ? 'Ocultar el catálogo' : 'Ver todo el catálogo'}
+          </button>
+          {showEveryLocked
+            ? ladders.map(({ id, label, steps }) => (
+                <section className="community-badge-ladder" key={id}>
+                  <h3>{label}</h3>
+                  <ul
+                    className="season-badges__list"
+                    aria-label={`Insignias de ${label.toLowerCase()}`}
+                  >
+                    {steps.map(renderBadge)}
+                  </ul>
+                </section>
+              ))
+            : null}
         </>
       ) : null}
 
       {preview ? (
-        <BadgePreview badge={preview} onClose={() => setPreview(undefined)} />
+        <BadgePreview
+          actions={shareActionsFor(preview.definition.id)}
+          badge={preview}
+          onClose={() => setPreview(undefined)}
+        />
       ) : null}
     </section>
   )

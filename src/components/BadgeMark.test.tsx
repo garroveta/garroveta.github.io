@@ -92,4 +92,25 @@ describe('BadgeMark', () => {
       screen.getByRole('img', { name: 'Monarch, desbloqueada' }),
     ).toBeInTheDocument()
   })
+
+  it('draws no progress arc when there is no distance to measure', () => {
+    // Monarch and Paragon are decided by the season's closing: a full ring
+    // would read as "already earned".
+    const { container } = render(
+      <BadgeMark badgeId="monarch" label="Monarch" unlocked={false} />,
+    )
+
+    expect(container.querySelector('.badge-mark__ring')).toBeNull()
+
+    const { container: climbing } = render(
+      <BadgeMark
+        badgeId="saga"
+        label="Saga"
+        progress={{ current: 3, target: 30 }}
+        unlocked={false}
+      />,
+    )
+
+    expect(climbing.querySelector('.badge-mark__ring')).not.toBeNull()
+  })
 })
