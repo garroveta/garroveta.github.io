@@ -266,6 +266,7 @@ function EventComposer({
   const [tagIds, setTagIds] = useState<string[]>(sourceEvent?.tagIds ?? [])
   const [saveError, setSaveError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const isMagicEvent = gameId === 'game-mtg'
   const availableFormats = data.competitionFormats.filter(
     (format) =>
       format.gameId === gameId &&
@@ -423,8 +424,12 @@ function EventComposer({
             <select
               value={formatId}
               onChange={(event) => setFormatId(event.target.value)}
+              required={isMagicEvent}
             >
-              <option value="">Sin formato</option>
+              {/* Optional only outside MTG: the Worker requires a format on
+                  every MTG event, so offering "Sin formato" there just
+                  produced a rejection at submit. */}
+              {isMagicEvent ? null : <option value="">Sin formato</option>}
               {availableFormats.map((format) => (
                 <option key={format.id} value={format.id}>
                   {format.name}

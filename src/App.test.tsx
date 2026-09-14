@@ -2304,6 +2304,32 @@ describe('App', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('never offers a formatless MTG event, but allows one for other games', async () => {
+    authenticateAsManager()
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Eventos' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Nuevo evento' }))
+
+    const formatField = screen.getByLabelText('Formato')
+
+    expect(formatField).toBeRequired()
+    expect(
+      within(formatField).queryByRole('option', { name: 'Sin formato' }),
+    ).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Juego'), {
+      target: { value: 'game-one-piece' },
+    })
+
+    expect(screen.getByLabelText('Formato')).not.toBeRequired()
+    expect(
+      within(screen.getByLabelText('Formato')).getByRole('option', {
+        name: 'Sin formato',
+      }),
+    ).toBeInTheDocument()
+  })
+
   it('registers an invited member with an OTP and no password', async () => {
     window.location.hash = `#registro?invite=${validInvitationToken}`
     render(<App />)
