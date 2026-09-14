@@ -1212,6 +1212,33 @@ describe('App', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('tells the manager which results found nobody, folded by default', () => {
+    authenticateAsManager()
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir configuración' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Ranking' }))
+
+    const orphans = screen.getByRole('list', { name: 'Nombres sin miembro' })
+
+    // The imported summer events left names no member answers to; they score
+    // for nobody until the name matches.
+    expect(
+      screen.getByRole('heading', {
+        name: /resultados de la temporada activa/,
+      }),
+    ).toBeInTheDocument()
+    expect(within(orphans).getAllByRole('listitem')).toHaveLength(6)
+
+    const toggle = screen.getByRole('button', { name: /Ver los \d+ nombres/ })
+
+    fireEvent.click(toggle)
+
+    expect(within(orphans).getAllByRole('listitem').length).toBeGreaterThan(6)
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+  })
+
   it('lets the manager configure the community ranking barometer', async () => {
     authenticateAsManager()
     const activeSeason = demoData.rankingSeasons.find(

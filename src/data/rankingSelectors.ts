@@ -7,6 +7,7 @@ import type {
   DemoDataSet,
   EventStanding,
 } from '../domain/types'
+import { normalizeEventLinkPlayerName } from './eventStandingImport'
 import { getCommunityPoints } from './rankingSettings'
 import {
   getEligibleRankingMemberIds,
@@ -193,4 +194,55 @@ export function getCommunityLeaderboard(
         first.member.displayName.localeCompare(second.member.displayName, 'es'),
     )
     .map((player, index) => ({ ...player, rank: index + 1 }))
+}
+
+export type UnlinkedSeasonResult = {
+  /** The spelling as it came from the standings, most recent one first seen. */
+  displayName: string
+  results: number
+}
+
+/**
+ * Names that scored in the season without any member behind them. Every one of
+ * these is a result nobody sees in their ranking or their badges, and the fix
+ * is always the same: the member registers under that exact name, or a manager
+ * corrects their visible name.
+ *
+ * Grouped by the matcher's own normalisation, so a name spelled with different
+ * accents or punctuation across two events counts as one person rather than
+ * two.
+ */
+export function getUnlinkedSeasonResults(
+  data: DemoDataSet,
+  filters: RankingFilters,
+): UnlinkedSeasonResult[] {
+  const byName = new Map<string, UnlinkedSeasonResult>()
+
+  for (const item of getRankingSeasonStandings(data, filters)) {
+    for (const entry of item.standing.entries) {
+      if (entry.memberId) {
+        continue
+      }
+
+      const key = normalizeEventLinkPlayerName(entry.displayName)
+
+      if (!key) {
+        continue
+      }
+
+      const seen = byName.get(key)
+
+      if (seen) {
+        seen.results += 1
+      } else {
+        byName.set(key, { displayName: entry.displayName, results: 1 })
+      }
+    }
+  }
+
+  return [...byName.values()].sort(
+    (first, second) =>
+      second.results - first.results ||
+      first.displayName.localeCompare(second.displayName, 'es'),
+  )
 }

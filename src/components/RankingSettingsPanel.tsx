@@ -7,6 +7,7 @@ import type {
   RankingSeasonWriteInput,
 } from '../api/rankingSeasons'
 import type { DemoDataUpdater } from '../data/demoRepository'
+import { getUnlinkedSeasonResults } from '../data/rankingSelectors'
 import type { RankingSeasonsStatus } from '../hooks/useRankingSeasons'
 import type { CommunityRankingPoints, DemoDataSet } from '../domain/types'
 import { DataStateView } from './DataStateView'
@@ -28,6 +29,9 @@ type RankingSettingsPanelProps = {
   seasonsError: unknown
   seasonsStatus: RankingSeasonsStatus
 }
+
+/** Enough to see the worst offenders without a wall of names. */
+const VISIBLE_UNLINKED = 6
 
 const pointFields = [
   ['first', '1.º'],
@@ -106,6 +110,21 @@ export function RankingSettingsPanel({
   seasonsError,
   seasonsStatus,
 }: RankingSettingsPanelProps) {
+  const activeSeasonId = data.rankingSeasons.find(
+    ({ status }) => status === 'active',
+  )?.id
+
+  // Seasons and badges are MTG only for now, so is this.
+  const unlinkedResults = activeSeasonId
+    ? getUnlinkedSeasonResults(data, {
+        gameId: 'game-mtg',
+        seasonId: activeSeasonId,
+      })
+    : []
+  const unlinkedTotal = unlinkedResults.reduce(
+    (total, { results }) => total + results,
+    0,
+  )
   const activeSeason = data.rankingSeasons.find(
     ({ status }) => status === 'active',
   )
@@ -132,6 +151,7 @@ export function RankingSettingsPanel({
   const [createError, setCreateError] = useState('')
   const [pendingCloseSeasonId, setPendingCloseSeasonId] = useState<string>()
   const [pendingDeleteSeasonId, setPendingDeleteSeasonId] = useState<string>()
+  const [showEveryUnlinked, setShowEveryUnlinked] = useState(false)
   const [editingDates, setEditingDates] = useState<{
     seasonId: string
     startsOn: string
@@ -701,6 +721,54 @@ export function RankingSettingsPanel({
               })}
             </div>
           </section>
+
+          {unlinkedResults.length > 0 ? (
+            <section
+              className="ranking-orphan-results"
+              aria-labelledby="ranking-orphan-results-title"
+            >
+              <div className="ranking-orphan-results__heading">
+                <span>Resultados sin enlazar</span>
+                <h3 id="ranking-orphan-results-title">
+                  {unlinkedTotal}{' '}
+                  {unlinkedTotal === 1 ? 'resultado' : 'resultados'} de la
+                  temporada activa
+                </h3>
+                <p>
+                  Estos nombres puntuaron pero no corresponden a ningún miembro,
+                  así que no cuentan para nadie en la clasificación ni en las
+                  insignias. Se enlazan solos en cuanto el jugador se registra
+                  con ese nombre exacto, o en cuanto corriges su nombre visible
+                  en Miembros.
+                </p>
+              </div>
+              <ul aria-label="Nombres sin miembro">
+                {(showEveryUnlinked
+                  ? unlinkedResults
+                  : unlinkedResults.slice(0, VISIBLE_UNLINKED)
+                ).map(({ displayName, results }) => (
+                  <li key={displayName}>
+                    <strong>{displayName}</strong>
+                    <span>
+                      {results} {results === 1 ? 'resultado' : 'resultados'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {unlinkedResults.length > VISIBLE_UNLINKED ? (
+                <button
+                  className="season-badges__toggle"
+                  type="button"
+                  aria-expanded={showEveryUnlinked}
+                  onClick={() => setShowEveryUnlinked((current) => !current)}
+                >
+                  {showEveryUnlinked
+                    ? 'Ver solo los más frecuentes'
+                    : `Ver los ${unlinkedResults.length} nombres`}
+                </button>
+              ) : null}
+            </section>
+          ) : null}
 
           <form onSubmit={(event) => void saveSettings(event)}>
             {activeSeason ? (

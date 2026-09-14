@@ -6,6 +6,8 @@ import {
   getCommunityLeaderboard,
   getCommunityPoints,
   getLatestEventStandings,
+  getRankingSeasonStandings,
+  getUnlinkedSeasonResults,
 } from './rankingSelectors'
 
 describe('rankingSelectors', () => {
@@ -168,5 +170,79 @@ describe('rankingSelectors', () => {
     expect(ranking.some(({ member }) => member.id === lateMember.id)).toBe(
       false,
     )
+  })
+})
+
+describe('getUnlinkedSeasonResults', () => {
+  const scope = { gameId: 'game-mtg', seasonId: 'ranking-season-2026' }
+
+  /** A season where every result found its member, as the goal state. */
+  function allLinked() {
+    const data = structuredClone(demoData)
+
+    for (const standing of data.eventStandings) {
+      for (const entry of standing.entries) {
+        entry.memberId = entry.memberId ?? 'member-sergio'
+      }
+    }
+
+    return data
+  }
+
+  /** Breaks the match on chosen entries, the way a wrong name does. */
+  function unlink(
+    data: DemoDataSet,
+    standingIndex: number,
+    spellings: string[],
+  ) {
+    const standing = getRankingSeasonStandings(data, scope)[standingIndex]
+      ?.standing
+
+    spellings.forEach((spelling, index) => {
+      const entry = standing?.entries[index]
+
+      if (entry) {
+        entry.displayName = spelling
+        delete entry.memberId
+      }
+    })
+
+    return data
+  }
+
+  it('says nothing while every result has a member behind it', () => {
+    expect(getUnlinkedSeasonResults(allLinked(), scope)).toEqual([])
+  })
+
+  it('counts the results each unmatched name left behind', () => {
+    const data = unlink(allLinked(), 0, ['Pere Riera Coll', 'Aina Tur Mas'])
+
+    expect(getUnlinkedSeasonResults(data, scope)).toEqual([
+      { displayName: 'Aina Tur Mas', results: 1 },
+      { displayName: 'Pere Riera Coll', results: 1 },
+    ])
+  })
+
+  it('reads two spellings of one name as one person, busiest first', () => {
+    const data = unlink(allLinked(), 0, ['Pere Riera Coll', 'Aina Tur Mas'])
+    unlink(data, 1, ['PERE RIERA-COLL'])
+
+    const unlinked = getUnlinkedSeasonResults(data, scope)
+
+    expect(unlinked).toHaveLength(2)
+    expect(unlinked[0]).toMatchObject({ results: 2 })
+    expect(unlinked[0]!.displayName).toMatch(/Pere/i)
+  })
+
+  it('surfaces the imported names the demo season never matched', () => {
+    const unlinked = getUnlinkedSeasonResults(demoData, scope)
+
+    expect(unlinked.length).toBeGreaterThan(0)
+    expect(
+      unlinked.every(
+        (entry, index) =>
+          index === 0 || unlinked[index - 1]!.results >= entry.results,
+      ),
+    ).toBe(true)
   })
 })
