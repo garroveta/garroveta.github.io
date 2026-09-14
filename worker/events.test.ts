@@ -243,6 +243,59 @@ describe('Community event API', () => {
     )
   })
 
+  it('creates an MTG event with no competitive series', async () => {
+    const { context, statements } = createContext({
+      body: { ...eventInput, competitionEventKindId: undefined },
+      firstResults: [{ ...persistedEvent, competition_event_kind_id: null }],
+      method: 'POST',
+    })
+
+    const response = await handleEventApiRequest(context, collectionRoute)
+
+    expect(response.status).toBe(201)
+    const body = (await response.json()) as { event: Record<string, unknown> }
+
+    expect(body.event.id).toBe('event-standard')
+    expect(body.event.competitionEventKindId).toBeUndefined()
+    expect(statements[0]?.bind).toHaveBeenCalledWith(
+      expect.any(String),
+      'community-crc-delorean',
+      'game-mtg',
+      'format-standard',
+      null,
+      'tournament',
+      'FNM Standard',
+      'Tres rondas de Standard.',
+      null,
+      '2026-09-04T16:00:00.000Z',
+      '2026-09-04T21:00:00.000Z',
+      1,
+      1,
+      1,
+      1,
+      16,
+      '["tag-standard"]',
+      'member-manager',
+      expect.any(String),
+      expect.any(String),
+    )
+  })
+
+  it('rejects an MTG event with no format', async () => {
+    const { context, prepare } = createContext({
+      body: { ...eventInput, formatId: undefined },
+      method: 'POST',
+    })
+
+    const response = await handleEventApiRequest(context, collectionRoute)
+
+    expect(response.status).toBe(400)
+    expect(prepare).not.toHaveBeenCalled()
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: 'event_invalid' },
+    })
+  })
+
   it('updates and deletes a manager event', async () => {
     const update = createContext({
       body: { ...eventInput, title: 'FNM Standard actualizado' },

@@ -266,11 +266,16 @@ function parseEventInput(value: unknown): CommunityEventInput {
     'competitionEventKindId',
   )
 
-  if (isMagicEvent && (!formatId || !competitionEventKindId)) {
+  // competitionEventKindId is optional even for MTG events: it tags a
+  // recurring series (FNM, Win a Box…), which not every event belongs to.
+  // The domain type marks it optional (competitionEventKindId?: EntityId)
+  // and the form offers "Sin serie" with no required attribute — only
+  // formatId is actually mandatory here.
+  if (isMagicEvent && !formatId) {
     throw new ApiRequestError(
       400,
       'event_invalid',
-      'MTG events require a format and a competitive event type.',
+      'MTG events require a format.',
     )
   }
 
