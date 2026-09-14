@@ -1,5 +1,7 @@
 import { useId, useState } from 'react'
 
+import type { BadgeTier } from '../domain/badges'
+
 const SIZE = 44
 const RADIUS = 18
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
@@ -16,6 +18,8 @@ type BadgeMarkProps = {
    * with its small artwork only.
    */
   variant?: 'default' | 'large'
+  /** Rung in its ladder: the ring takes the metal, muted while locked. */
+  tier?: BadgeTier
 }
 
 /**
@@ -33,6 +37,7 @@ export function BadgeMark({
   glyph,
   progress,
   unlocked,
+  tier,
   variant = 'default',
 }: BadgeMarkProps) {
   const titleId = useId()
@@ -49,6 +54,7 @@ export function BadgeMark({
     <span
       className="badge-mark"
       data-artwork={hasArtwork}
+      data-tier={tier}
       data-unlocked={unlocked}
       role="img"
       aria-labelledby={titleId}

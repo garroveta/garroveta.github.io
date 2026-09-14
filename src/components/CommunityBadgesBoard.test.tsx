@@ -12,15 +12,8 @@ const board = getSeasonBadgeBoard(demoData, {
 })!
 
 describe('CommunityBadgesBoard', () => {
-  it('names every holder of a badge, rarest badge first', () => {
+  it('names every holder of a badge', () => {
     render(<CommunityBadgesBoard board={board} />)
-
-    const rows = within(
-      screen.getByRole('list', { name: 'Quién tiene cada insignia' }),
-    ).getAllByRole('listitem', { name: '' })
-    const claimed = board.badges.filter(({ holders }) => holders.length > 0)
-
-    expect(rows.length).toBeGreaterThanOrEqual(claimed.length)
 
     const ferocious = within(
       screen.getByRole('list', { name: 'Quién tiene Ferocious' }),
@@ -38,21 +31,45 @@ describe('CommunityBadgesBoard', () => {
     ).toHaveTextContent(`${ferocious.length} de ${board.players}`)
   })
 
-  it('puts the rarest badge before the common one', () => {
+  it('groups the badges into ladders, easiest rung first', () => {
     render(<CommunityBadgesBoard board={board} />)
 
-    const headings = within(
-      screen.getByRole('list', { name: 'Quién tiene cada insignia' }),
+    expect(
+      screen
+        .getAllByRole('heading', { level: 3 })
+        .map((node) => node.textContent),
+    ).toEqual([
+      'Eventos jugados',
+      'Top 4',
+      'Top 4 seguidos',
+      'Victorias',
+      'Formatos jugados',
+      'Formatos ganados',
+      'Torneos grandes',
+      'Clasificación final',
+    ])
+
+    const played = within(
+      screen.getByRole('list', {
+        name: 'Quién tiene las insignias de eventos jugados',
+      }),
     )
       .getAllByRole('strong')
       .map((node) => node.textContent)
-    const counts = headings.map(
-      (name) =>
-        board.badges.find(({ definition }) => definition.name === name)!.holders
-          .length,
-    )
 
-    expect(counts).toEqual([...counts].sort((a, b) => a - b))
+    expect(played).toEqual(['Vigilance', 'Persist', 'Saga'])
+  })
+
+  it('marks the rung of each badge with its metal', () => {
+    const { container } = render(<CommunityBadgesBoard board={board} />)
+    const tierOf = (name: string) =>
+      container
+        .querySelector(`[aria-label="Ver ${name} en grande"] .badge-mark`)
+        ?.getAttribute('data-tier')
+
+    expect(tierOf('Vigilance')).toBe('bronze')
+    expect(tierOf('Persist')).toBe('silver')
+    expect(tierOf('Saga')).toBe('gold')
   })
 
   it('opens a holder on their profile', () => {
@@ -71,22 +88,28 @@ describe('CommunityBadgesBoard', () => {
     )
   })
 
-  it('lists what nobody has yet, compactly', () => {
+  it('keeps a rung nobody holds inside its own ladder', () => {
     render(<CommunityBadgesBoard board={board} />)
 
-    const unclaimed = screen.getByRole('list', {
-      name: 'Insignias que nadie tiene todavía',
+    const titles = screen.getByRole('list', {
+      name: 'Quién tiene las insignias de victorias',
     })
 
-    expect(unclaimed).toHaveTextContent('Legendary')
-    // Only the marks are tappable there: no holder to open.
+    // Legendary has no holder, yet it sits with the other wins rather than
+    // in a list of leftovers: it is the next step, not a reject.
+    expect(titles).toHaveTextContent('Legendary')
     expect(
-      within(unclaimed)
-        .getAllByRole('button')
-        .every((button) =>
-          button.getAttribute('aria-label')?.startsWith('Ver '),
-        ),
-    ).toBe(true)
+      within(titles)
+        .getAllByRole('strong')
+        .find((node) => node.textContent === 'Legendary')
+        ?.closest<HTMLElement>('.community-badge'),
+    ).toHaveTextContent('Sin dueño')
+    expect(
+      screen.queryByRole('list', { name: 'Insignias que nadie tiene todavía' }),
+    ).toBeNull()
+    expect(
+      screen.queryByRole('list', { name: 'Quién tiene Legendary' }),
+    ).toBeNull()
   })
 })
 

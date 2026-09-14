@@ -10,6 +10,7 @@ import {
   getSeasonBadgeBoard,
   type MemberBadge,
 } from '../data/rankingBadges'
+import { getBadgeTiers } from '../domain/badges'
 import type { DemoDataSet } from '../domain/types'
 
 /** Enough to see what is within reach without turning the rest into a wall. */
@@ -76,6 +77,7 @@ export function SeasonBadgesPanel({
   const holdersById = new Map(
     board.badges.map(({ definition, holders }) => [definition.id, holders]),
   )
+  const tiers = getBadgeTiers(memberBadges.map(({ definition }) => definition))
   const unlocked = memberBadges.filter(({ unlockedAt }) => unlockedAt)
   const inProgress = memberBadges
     .filter(({ unlockedAt }) => !unlockedAt)
@@ -108,6 +110,7 @@ export function SeasonBadgesPanel({
               badgeId={definition.id}
               label={`${definition.name}${unlockedAt ? ', desbloqueada' : ''}`}
               progress={progress}
+              tier={tiers.get(definition.id)}
               unlocked={Boolean(unlockedAt)}
             />
           </button>

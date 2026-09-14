@@ -28,6 +28,18 @@ export type BadgeDefinition = {
 /** A definition with the sentence describing its current threshold. */
 export type ResolvedBadge = BadgeDefinition & { description: string }
 
+/** Rank of a badge inside its ladder, the top rung always being gold. */
+export type BadgeTier = 'bronze' | 'silver' | 'gold'
+
+export type BadgeLadderStep = { badge: ResolvedBadge; tier: BadgeTier }
+
+/** One counter's badges, easiest first. */
+export type BadgeLadder = {
+  id: string
+  label: string
+  steps: BadgeLadderStep[]
+}
+
 /**
  * Named in the players' own words: a Magic player finishes in the Top 4, never
  * "on a podium". Kept short on purpose: a badge nobody can name is a badge
@@ -196,6 +208,68 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     finalRank: 1,
   },
 ]
+
+/**
+ * The badges of one counter belong together: Vigilance, Persist and Saga are
+ * not three unrelated goals but three rungs of "events played". Showing them
+ * as one ladder is what keeps sixteen badges from reading as sixteen chores.
+ * Order is fixed here rather than by rarity so the ladder never reshuffles
+ * under a member between two visits.
+ */
+const BADGE_LADDERS: { id: string; label: string; counter?: BadgeCounter }[] = [
+  { id: 'played', label: 'Eventos jugados', counter: 'played' },
+  { id: 'topFour', label: 'Top 4', counter: 'topFour' },
+  { id: 'topFourStreak', label: 'Top 4 seguidos', counter: 'topFourStreak' },
+  { id: 'titles', label: 'Victorias', counter: 'titles' },
+  { id: 'formats', label: 'Formatos jugados', counter: 'formats' },
+  { id: 'titleFormats', label: 'Formatos ganados', counter: 'titleFormats' },
+  { id: 'bigWins', label: 'Torneos grandes', counter: 'bigWins' },
+  { id: 'finalRank', label: 'Clasificación final' },
+]
+
+/** Assigned from the top down, so a two rung ladder is silver then gold. */
+const TIERS_FROM_THE_TOP: BadgeTier[] = ['gold', 'silver', 'bronze']
+
+/**
+ * The catalogue as ladders. Difficulty comes from the thresholds in force, not
+ * from the order they are written in, so a manager who swaps two targets moves
+ * the gold with them instead of leaving it on the easier badge.
+ */
+export function getBadgeLadders(badges: ResolvedBadge[]): BadgeLadder[] {
+  return BADGE_LADDERS.flatMap(({ id, label, counter }) => {
+    const rungs = badges
+      .filter((badge) =>
+        counter ? badge.counter === counter : badge.finalRank !== undefined,
+      )
+      .sort((first, second) =>
+        counter
+          ? (first.target ?? 0) - (second.target ?? 0)
+          : (second.finalRank ?? 0) - (first.finalRank ?? 0),
+      )
+
+    return rungs.length === 0
+      ? []
+      : [
+          {
+            id,
+            label,
+            steps: rungs.map((badge, index) => ({
+              badge,
+              tier: TIERS_FROM_THE_TOP[rungs.length - 1 - index] ?? 'bronze',
+            })),
+          },
+        ]
+  })
+}
+
+/** The same tiers, keyed by badge id, for the views that show a flat list. */
+export function getBadgeTiers(badges: ResolvedBadge[]) {
+  return new Map(
+    getBadgeLadders(badges).flatMap(({ steps }) =>
+      steps.map(({ badge, tier }): [string, BadgeTier] => [badge.id, tier]),
+    ),
+  )
+}
 
 /**
  * A Top 4 only means something once it is not most of the room: a four player

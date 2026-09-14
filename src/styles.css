@@ -9649,6 +9649,34 @@ a {
   stroke: #2b2a2c;
 }
 
+/*
+ * The ring carries the rung: pale while the badge is locked, so the ladder can
+ * be read before anything is earned, and the full metal once it is held.
+ */
+.badge-mark[data-tier='bronze'] .badge-mark__track {
+  stroke: #e3d3c3;
+}
+
+.badge-mark[data-tier='silver'] .badge-mark__track {
+  stroke: #dcdfe3;
+}
+
+.badge-mark[data-tier='gold'] .badge-mark__track {
+  stroke: #e8ddb8;
+}
+
+.badge-mark[data-tier='bronze'][data-unlocked='true'] .badge-mark__track {
+  stroke: #a9713f;
+}
+
+.badge-mark[data-tier='silver'][data-unlocked='true'] .badge-mark__track {
+  stroke: #8d949c;
+}
+
+.badge-mark[data-tier='gold'][data-unlocked='true'] .badge-mark__track {
+  stroke: #b8912a;
+}
+
 .badge-mark__ring {
   fill: none;
   stroke: #1f6b45;
@@ -10098,38 +10126,37 @@ a {
   text-transform: uppercase;
 }
 
-.community-badges__unclaimed {
+.community-badge-ladder {
   display: grid;
   gap: 0.35rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
 }
 
-.community-badges__unclaimed li {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+/*
+ * A rung nobody holds stays in its ladder but takes as little room as it can:
+ * promoting it to a full card is what made the board longer than the flat list
+ * it replaced.
+ */
+.community-badge--empty {
+  padding: 0.15rem 0.3rem;
+  border: none;
+  background: none;
+}
+
+.community-badge--empty .community-badge__summary {
   gap: 0.55rem;
-  align-items: center;
-  padding: 0.35rem 0.1rem;
 }
 
-.community-badges__unclaimed span {
-  display: grid;
-  gap: 0.05rem;
-  min-width: 0;
+.community-badge--empty .community-badge__summary .badge-mark {
+  --badge-mark-size: 2.6rem;
 }
 
-.community-badges__unclaimed strong {
-  color: #4a414d;
-  font-size: 0.8rem;
-  font-weight: 800;
+.community-badge--empty .community-badge__identity strong {
+  color: #574d5b;
+  font-size: 0.78rem;
 }
 
-.community-badges__unclaimed small {
-  color: #8a8090;
-  font-size: 0.68rem;
-  font-weight: 600;
+.community-badge--empty .community-badge__identity small {
+  font-size: 0.66rem;
 }
 
 .season-badges__toggle {
