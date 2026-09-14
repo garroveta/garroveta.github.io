@@ -20,6 +20,7 @@ import {
   listCommunityMembers,
   type ManagedCommunityMember,
 } from '../api/managerMembers'
+import type { EventLinkStandingRow } from '../data/eventLinkImport'
 import { parseEventLinkHtml } from '../data/eventLinkImport'
 import { matchEventLinkMembers } from '../data/eventStandingImport'
 import type {
@@ -48,12 +49,18 @@ export function EventLinkImportPanel({
   onImported,
   onSaveStanding,
 }: EventLinkImportPanelProps) {
+  // EventLink drops its results after a few days, so a wrong link found later
+  // can never be fixed by re-importing: the saved standing is the only copy
+  // left, and it seeds this panel when no new file is loaded.
+  const existingStanding = data.eventStandings.find(
+    ({ eventId }) => eventId === event.id,
+  )
   const [fileName, setFileName] = useState('')
   const [parsedStanding, setParsedStanding] =
     useState<ReturnType<typeof parseEventLinkHtml>['standing']>()
   const [memberIdsByRow, setMemberIdsByRow] = useState<
     Array<string | undefined>
-  >([])
+  >(() => existingStanding?.entries.map(({ memberId }) => memberId) ?? [])
   const [errors, setErrors] = useState<string[]>([])
   const [countsForRanking, setCountsForRanking] = useState(
     event.countsForCommunityRanking ?? true,
@@ -92,17 +99,25 @@ export function EventLinkImportPanel({
         ),
     [members],
   )
-  const existingStanding = data.eventStandings.find(
-    ({ eventId }) => eventId === event.id,
-  )
   const hasCompetitionMetadata = Boolean(
     data.competitionFormats.some(
       ({ id, gameId }) => id === event.formatId && gameId === event.gameId,
     ),
   )
+  // A saved entry is an EventLink row plus its member, and the save overrides
+  // that member anyway, so the entries can be reviewed as rows directly.
+  const reviewRows: EventLinkStandingRow[] | undefined =
+    parsedStanding?.rows ?? existingStanding?.entries
+  /** No new file: the manager is here to correct links, not to replace. */
+  const isCorrecting = !parsedStanding && Boolean(existingStanding)
+  const frozenSeason = data.rankingSeasons.find(
+    ({ id, status }) =>
+      id === existingStanding?.rankingSeasonId && status === 'closed',
+  )
   const linkedCount = memberIdsByRow.filter(Boolean).length
   const assignedMemberIds = new Set(memberIdsByRow.filter(Boolean))
-  const canImport = hasCompetitionMetadata && membersStatus === 'ready'
+  const canImport =
+    hasCompetitionMetadata && membersStatus === 'ready' && !frozenSeason
 
   const readFile = async (file?: File) => {
     setErrors([])
@@ -147,7 +162,7 @@ export function EventLinkImportPanel({
   }
 
   const importStanding = async () => {
-    if (!parsedStanding || !canImport) {
+    if (!reviewRows || !canImport) {
       return
     }
 
@@ -157,20 +172,29 @@ export function EventLinkImportPanel({
     try {
       const standing = await onSaveStanding(event.id, {
         countsForCommunityRanking: countsForRanking,
-        entries: parsedStanding.rows.map((row, index) => ({
+        entries: reviewRows.map((row, index) => ({
           ...row,
           memberId: memberIdsByRow[index],
         })),
-        source: {
-          externalEventId: parsedStanding.externalEventId,
-          roundNumber: parsedStanding.roundNumber,
-          storeId: parsedStanding.storeId,
-        },
+        // Correcting keeps whatever the original import recorded.
+        source: parsedStanding
+          ? {
+              externalEventId: parsedStanding.externalEventId,
+              roundNumber: parsedStanding.roundNumber,
+              storeId: parsedStanding.storeId,
+            }
+          : {
+              externalEventId: existingStanding?.source?.externalEventId,
+              roundNumber: existingStanding?.source?.roundNumber,
+              storeId: existingStanding?.source?.storeId,
+            },
       })
       onImported(
-        existingStanding
-          ? 'La clasificación EventLink se ha sustituido.'
-          : 'La clasificación EventLink se ha importado.',
+        isCorrecting
+          ? 'Los vínculos de la clasificación se han actualizado.'
+          : existingStanding
+            ? 'La clasificación EventLink se ha sustituido.'
+            : 'La clasificación EventLink se ha importado.',
         standing.id,
       )
     } catch {
@@ -199,8 +223,9 @@ export function EventLinkImportPanel({
         <span>Resultados del torneo</span>
         <h3 id="eventlink-import-title">{event.title}</h3>
         <p>
-          Guarda la página de posiciones desde EventLink y súbela aquí. El
-          archivo se analiza localmente y sus scripts no se ejecutan.
+          {isCorrecting
+            ? 'Corrige aquí a qué miembro corresponde cada jugador. Sube un archivo solo si quieres sustituir la clasificación entera.'
+            : 'Guarda la página de posiciones desde EventLink y súbela aquí. El archivo se analiza localmente y sus scripts no se ejecutan.'}
         </p>
       </header>
 
@@ -210,6 +235,16 @@ export function EventLinkImportPanel({
           <p>
             Modifica primero el evento para indicar su formato MTG. Este dato es
             necesario para mostrar el resultado y actualizar el ranking.
+          </p>
+        </div>
+      ) : null}
+
+      {frozenSeason ? (
+        <div className="eventlink-import__messages eventlink-import__messages--error">
+          <AlertTriangle aria-hidden="true" size={18} />
+          <p>
+            La temporada «{frozenSeason.name}» está cerrada, así que su
+            clasificación ya no se puede modificar.
           </p>
         </div>
       ) : null}
@@ -255,34 +290,39 @@ export function EventLinkImportPanel({
         </div>
       ) : null}
 
-      {parsedStanding ? (
+      {reviewRows ? (
         <>
           <div className="eventlink-import__summary">
-            <div>
-              <span>Evento detectado</span>
-              <strong>{parsedStanding.eventTitle ?? 'Sin título'}</strong>
-            </div>
-            <div>
-              <span>Ronda</span>
-              <strong>{parsedStanding.roundNumber ?? '—'}</strong>
-            </div>
+            {parsedStanding ? (
+              <>
+                <div>
+                  <span>Evento detectado</span>
+                  <strong>{parsedStanding.eventTitle ?? 'Sin título'}</strong>
+                </div>
+                <div>
+                  <span>Ronda</span>
+                  <strong>{parsedStanding.roundNumber ?? '—'}</strong>
+                </div>
+              </>
+            ) : null}
             <div>
               <span>Jugadores</span>
-              <strong>{parsedStanding.rows.length}</strong>
+              <strong>{reviewRows.length}</strong>
             </div>
             <div>
               <span>Vinculados</span>
               <strong>
-                {linkedCount}/{parsedStanding.rows.length}
+                {linkedCount}/{reviewRows.length}
               </strong>
             </div>
           </div>
 
-          {parsedStanding.warnings.length > 0 || existingStanding ? (
+          {(parsedStanding?.warnings.length ?? 0) > 0 ||
+          (parsedStanding && existingStanding) ? (
             <div className="eventlink-import__messages">
               <AlertTriangle aria-hidden="true" size={18} />
               <div>
-                {parsedStanding.warnings.map((warning) => (
+                {parsedStanding?.warnings.map((warning) => (
                   <p key={warning}>{warning}</p>
                 ))}
                 {existingStanding ? (
@@ -299,14 +339,18 @@ export function EventLinkImportPanel({
             <div className="eventlink-import__section-heading">
               <div>
                 <span>Correspondencias</span>
-                <h4>Jugadores EventLink</h4>
+                <h4>
+                  {isCorrecting
+                    ? 'Jugadores del torneo'
+                    : 'Jugadores EventLink'}
+                </h4>
               </div>
               <span>
                 <Link2 aria-hidden="true" size={14} /> {linkedCount} vinculados
               </span>
             </div>
             <div className="eventlink-player-list">
-              {parsedStanding.rows.map((row, rowIndex) => {
+              {reviewRows.map((row, rowIndex) => {
                 const selectedMemberId = memberIdsByRow[rowIndex] ?? ''
 
                 return (
@@ -408,9 +452,11 @@ export function EventLinkImportPanel({
               <UsersRound aria-hidden="true" size={17} />
               {isSaving
                 ? 'Guardando…'
-                : existingStanding
-                  ? 'Sustituir clasificación'
-                  : 'Importar clasificación'}
+                : isCorrecting
+                  ? 'Guardar los vínculos'
+                  : existingStanding
+                    ? 'Sustituir clasificación'
+                    : 'Importar clasificación'}
             </button>
           </div>
         </>

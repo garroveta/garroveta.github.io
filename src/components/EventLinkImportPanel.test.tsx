@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { listCommunityMembers } from '../api/managerMembers'
 import { demoData } from '../data/demoData'
+import type { DemoDataSet } from '../domain/types'
 import { EventLinkImportPanel } from './EventLinkImportPanel'
 
 vi.mock('../api/managerMembers', () => ({
@@ -21,6 +22,34 @@ const eventLinkHtml = `
     </tbody>
   </table>
 `
+
+function mockMembers() {
+  vi.mocked(listCommunityMembers).mockResolvedValue({
+    currentMemberId: 'member-lucia',
+    members: demoData.members.map((member) => ({
+      displayName: member.displayName,
+      email: `${member.id}@example.com`,
+      favoriteGameIds: member.favoriteGameIds,
+      id: member.id,
+      joinedAt: member.joinedAt,
+      role: member.role,
+      status: member.status,
+      tagIds: member.tagIds,
+    })),
+  })
+}
+
+/** An event that already carries results, as the season goes on. */
+function eventWithStanding() {
+  const data = structuredClone(demoData) as DemoDataSet
+  const standing = data.eventStandings[0]!
+
+  return {
+    data,
+    event: data.events.find(({ id }) => id === standing.eventId)!,
+    standing,
+  }
+}
 
 describe('EventLinkImportPanel', () => {
   it('previews a saved page, links known members and imports the standing', async () => {
@@ -114,5 +143,116 @@ describe('EventLinkImportPanel', () => {
         'standing-remote-1',
       ),
     )
+  })
+
+  it('opens on the saved standing so a wrong link can be fixed without the file', async () => {
+    mockMembers()
+    const { data, event, standing } = eventWithStanding()
+    const onImported = vi.fn()
+    const onSaveStanding = vi.fn().mockResolvedValue(standing)
+
+    render(
+      <EventLinkImportPanel
+        data={data}
+        event={event}
+        onClose={vi.fn()}
+        onImported={onImported}
+        onSaveStanding={onSaveStanding}
+      />,
+    )
+
+    // EventLink deletes its pages after a few days, so the saved standing is
+    // the only copy left: it seeds the panel with the links already in place.
+    const misfiled = await screen.findByLabelText(
+      `Miembro Garroveta para ${standing.entries[0]!.displayName}`,
+    )
+
+    expect(misfiled).toHaveValue(standing.entries[0]!.memberId)
+
+    fireEvent.change(misfiled, { target: { value: 'member-biel' } })
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Guardar los vínculos' }),
+    )
+
+    await waitFor(() => expect(onSaveStanding).toHaveBeenCalledOnce())
+
+    const [, input] = onSaveStanding.mock.calls[0]!
+
+    // Only the link moved: every other row keeps the member it had.
+    expect(input.entries[0]).toMatchObject({
+      displayName: standing.entries[0]!.displayName,
+      memberId: 'member-biel',
+      rank: standing.entries[0]!.rank,
+    })
+    expect(input.entries[1]).toMatchObject({
+      memberId: standing.entries[1]!.memberId,
+    })
+    expect(input.entries).toHaveLength(standing.entries.length)
+    await waitFor(() =>
+      expect(onImported).toHaveBeenCalledWith(
+        'Los vínculos de la clasificación se han actualizado.',
+        standing.id,
+      ),
+    )
+  })
+
+  it('lets a wrong link go back to nobody', async () => {
+    mockMembers()
+    const { data, event, standing } = eventWithStanding()
+    const onSaveStanding = vi.fn().mockResolvedValue(standing)
+
+    render(
+      <EventLinkImportPanel
+        data={data}
+        event={event}
+        onClose={vi.fn()}
+        onImported={vi.fn()}
+        onSaveStanding={onSaveStanding}
+      />,
+    )
+
+    fireEvent.change(
+      await screen.findByLabelText(
+        `Miembro Garroveta para ${standing.entries[0]!.displayName}`,
+      ),
+      { target: { value: '' } },
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Guardar los vínculos' }),
+    )
+
+    await waitFor(() => expect(onSaveStanding).toHaveBeenCalledOnce())
+
+    // Unlinked on purpose: it goes back to the manager's orphan list and waits
+    // for the right member instead of scoring for the wrong one.
+    expect(onSaveStanding.mock.calls[0]![1].entries[0].memberId).toBeUndefined()
+  })
+
+  it('refuses to touch a standing frozen by a closed season', async () => {
+    mockMembers()
+    const { data, event, standing } = eventWithStanding()
+    const closedSeason = data.rankingSeasons.find(
+      ({ status }) => status === 'closed',
+    )!
+    standing.rankingSeasonId = closedSeason.id
+
+    render(
+      <EventLinkImportPanel
+        data={data}
+        event={event}
+        onClose={vi.fn()}
+        onImported={vi.fn()}
+        onSaveStanding={vi.fn()}
+      />,
+    )
+
+    expect(
+      await screen.findByText(
+        new RegExp(`La temporada «${closedSeason.name}» está cerrada`),
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Guardar los vínculos' }),
+    ).toBeDisabled()
   })
 })
