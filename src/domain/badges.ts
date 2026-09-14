@@ -56,9 +56,10 @@ export type BadgeLadder = {
  * Scryfall API — e.g. https://api.scryfall.com/cards/search?q=keyword:
  * vigilance+lang:es — and cross-checked across several recent cards per
  * keyword so a one-off variant reminder isn't mistaken for the norm.
- * Six badges have no such text because no single card carries it:
- * Ferocious, Delirium and Domain are ability words (Comprehensive Rules
- * 207.2c) whose effect is spelled out fresh on every card; Saga's
+ * Seven badges have no such text because no single card carries it:
+ * Ferocious, Metalcraft, Delirium and Domain are ability words
+ * (Comprehensive Rules 207.2c) whose effect is spelled out fresh on
+ * every card; Saga's
  * reminder embeds its own final chapter number, so no one card's wording
  * generalizes; the legend rule and the Monarch are background rules,
  * never printed as a single reminder. Their entries describe the rule in
@@ -155,6 +156,14 @@ export const SEASON_BADGES: BadgeDefinition[] = [
     family: 'titles',
     counter: 'titles',
     target: 10,
+  },
+  {
+    id: 'metalcraft',
+    name: 'Metalcraft',
+    reference: 'Metalurgia: se activa si controlas tres o más artefactos.',
+    family: 'formats',
+    counter: 'formats',
+    target: 3,
   },
   {
     id: 'delirium',

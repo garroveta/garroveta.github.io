@@ -31,7 +31,7 @@ describe('memberSharing', () => {
     expect(lines[1]).toBe(
       '📊 Temporada 2026 · Posición 1 · 55 puntos comunidad · 8 eventos',
     )
-    expect(lines[2]).toBe('🎖️ Insignias (4 de 16)')
+    expect(lines[2]).toBe('🎖️ Insignias (4 de 17)')
     expect(lines.at(-1)).toBe(`🔗 Ver la ficha: ${profileUrl}`)
   })
 
@@ -65,10 +65,10 @@ describe('memberSharing', () => {
       season,
     })
 
-    expect(card).toContain('🎖️ Insignias (16 de 16)')
+    expect(card).toContain('🎖️ Insignias (17 de 17)')
     expect(
       card.split('\n').filter((line) => line.startsWith('• ')),
     ).toHaveLength(6)
-    expect(card).toContain('• y 11 más')
+    expect(card).toContain('• y 12 más')
   })
 })

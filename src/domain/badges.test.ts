@@ -38,6 +38,13 @@ describe('badge ladders', () => {
       ['citys-blessing', 'gold'],
     ])
     expect(tiersOf('bigWins')).toEqual([['melee', 'gold']])
+    // Metalcraft slots in under Delirium without demoting anything: the
+    // formats ladder reads 3, 4, 5 — each keyword's own number.
+    expect(tiersOf('formats')).toEqual([
+      ['metalcraft', 'bronze'],
+      ['delirium', 'silver'],
+      ['domain', 'gold'],
+    ])
     // The final ranking reads from the widest place to the narrowest.
     expect(tiersOf('finalRank')).toEqual([
       ['paragon', 'silver'],

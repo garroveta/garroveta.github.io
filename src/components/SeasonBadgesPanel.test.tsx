@@ -107,7 +107,7 @@ describe('SeasonBadgesPanel', () => {
     expect(
       screen.getByRole('list', { name: 'Insignias de eventos jugados' }),
     ).toBeInTheDocument()
-    expect(document.querySelectorAll('.season-badge')).toHaveLength(16)
+    expect(document.querySelectorAll('.season-badge')).toHaveLength(17)
     expect(
       screen.getByRole('button', { name: 'Ocultar el catálogo' }),
     ).toHaveAttribute('aria-expanded', 'true')
