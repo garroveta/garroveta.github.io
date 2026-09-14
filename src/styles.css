@@ -3440,12 +3440,6 @@ a {
   gap: 0.8rem;
 }
 
-.account-identity-fields .form-field > small {
-  color: #857c87;
-  font-size: 0.66rem;
-  line-height: 1.4;
-}
-
 .account-identity-fields input[readonly] {
   color: #736b75;
   background: #f3f0f3;
@@ -5603,7 +5597,15 @@ a {
   gap: 0.4rem;
 }
 
+/* Help text under a field, wherever a form-field carries one. */
+.form-field > small {
+  color: #857c87;
+  font-size: 0.66rem;
+  line-height: 1.4;
+}
+
 .form-field > span,
+.form-field > label,
 .composer-tags legend {
   color: #665c69;
   font-size: 0.72rem;

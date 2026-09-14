@@ -202,10 +202,11 @@ export function AccountPreferencesForm({
             </small>
           </label>
 
-          <label className="form-field">
-            <span>Nombre visible</span>
+          <div className="form-field">
+            <label htmlFor="account-display-name">Nombre visible</label>
             <input
               required
+              id="account-display-name"
               autoComplete="name"
               maxLength={80}
               value={draftName}
@@ -213,8 +214,14 @@ export function AccountPreferencesForm({
                 setDraftName(event.target.value)
                 setFeedback(null)
               }}
+              aria-describedby="account-name-help"
             />
-          </label>
+            <small id="account-name-help">
+              Escríbelo igual que en tu cuenta de Wizards, la de la app
+              Companion: <strong>nombre y apellidos</strong>, en ese orden. Así
+              tus resultados de torneo se enlazan automáticamente con tu ficha.
+            </small>
+          </div>
         </div>
 
         <fieldset className="registration-choice-group contact-methods-group">

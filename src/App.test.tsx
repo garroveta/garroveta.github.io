@@ -2026,6 +2026,14 @@ describe('App', () => {
     )
 
     const nameInput = screen.getByLabelText('Nombre visible')
+
+    // EventLink links a result to a member by name, and the match forgives
+    // accents and punctuation but never a missing surname or a different
+    // order, so both name fields have to point at the Wizards account.
+    expect(nameInput).toHaveAccessibleDescription(
+      /igual que en tu cuenta de Wizards.*nombre y apellidos, en ese orden/s,
+    )
+
     const gundamButton = screen.getByRole('button', { name: /Gundam/ })
     const pauperButton = screen.getByRole('button', { name: 'Pauper' })
 
@@ -2368,6 +2376,14 @@ describe('App', () => {
       target: { value: '246810' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Verificar código' }))
+
+    // Same warning as on the profile: a name that does not match the Wizards
+    // account never gets its tournament results attached.
+    expect(
+      await screen.findByLabelText('Nombre visible'),
+    ).toHaveAccessibleDescription(
+      /igual que en tu cuenta de Wizards.*nombre y apellidos, en ese orden/s,
+    )
 
     fireEvent.change(await screen.findByLabelText('Nombre visible'), {
       target: { value: 'Pep Peralta Isern' },

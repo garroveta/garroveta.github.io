@@ -401,16 +401,29 @@ export function RegistrationPage({
               <p>Elige el nombre y los intereses que verá la comunidad.</p>
             </div>
 
-            <label className="form-field">
-              <span>Nombre visible</span>
+            {/*
+              The help sits outside the label on purpose: inside it, it would
+              become part of the field's accessible name instead of its
+              description.
+            */}
+            <div className="form-field">
+              <label htmlFor="registration-display-name">Nombre visible</label>
               <input
                 required
+                id="registration-display-name"
                 autoComplete="name"
-                placeholder="Ej. Marina Valverde"
+                placeholder="Ej. Marina Valverde Soler"
                 value={displayName}
                 onChange={(event) => setDisplayName(event.target.value)}
+                aria-describedby="registration-name-help"
               />
-            </label>
+              <small id="registration-name-help">
+                Escríbelo igual que en tu cuenta de Wizards, la de la app
+                Companion: <strong>nombre y apellidos</strong>, en ese orden.
+                Así tus resultados de torneo se enlazan automáticamente con tu
+                ficha.
+              </small>
+            </div>
 
             <fieldset className="registration-choice-group">
               <legend>Mis juegos</legend>
