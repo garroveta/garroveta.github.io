@@ -5604,6 +5604,12 @@ a {
   line-height: 1.4;
 }
 
+/* A nudge rather than an error: the field is still perfectly valid. */
+.form-field__hint {
+  color: #7a4a17;
+  font-weight: 700;
+}
+
 .form-field > span,
 .form-field > label,
 .composer-tags legend {

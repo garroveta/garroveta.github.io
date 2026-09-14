@@ -12,6 +12,7 @@ import {
 import { ClientApiError } from '../api/client'
 import { describeApiError } from '../api/errorPresentation'
 import { isCommunityOptionActive } from '../data/communityOptions'
+import { hasSurname } from '../data/eventStandingImport'
 import type { Community, CommunityGame, CommunityTag } from '../domain/types'
 import { useEmailOtp } from '../hooks/useEmailOtp'
 
@@ -65,6 +66,9 @@ export function RegistrationPage({
   const [sessionRecoveryMessage, setSessionRecoveryMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [displayName, setDisplayName] = useState('')
+  // A nudge, never a block: some people really do go by a single name.
+  const looksLikeASingleName =
+    displayName.trim().length > 0 && !hasSurname(displayName)
   const [acceptedRules, setAcceptedRules] = useState(false)
   const [selectedGameIds, setSelectedGameIds] = useState<string[]>([])
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(() =>
@@ -415,7 +419,11 @@ export function RegistrationPage({
                 placeholder="Ej. Marina Valverde Soler"
                 value={displayName}
                 onChange={(event) => setDisplayName(event.target.value)}
-                aria-describedby="registration-name-help"
+                aria-describedby={
+                  looksLikeASingleName
+                    ? 'registration-name-help registration-name-hint'
+                    : 'registration-name-help'
+                }
               />
               <small id="registration-name-help">
                 Escríbelo igual que en tu cuenta de Wizards, la de la app
@@ -423,6 +431,12 @@ export function RegistrationPage({
                 Así tus resultados de torneo se enlazan automáticamente con tu
                 ficha.
               </small>
+              {looksLikeASingleName ? (
+                <small className="form-field__hint" id="registration-name-hint">
+                  ¿Te faltan los apellidos? En Companion aparecen junto a tu
+                  nombre.
+                </small>
+              ) : null}
             </div>
 
             <fieldset className="registration-choice-group">

@@ -24,6 +24,16 @@ export function normalizeEventLinkPlayerName(value: string) {
     .toLocaleLowerCase('es')
 }
 
+/**
+ * Whether a display name carries anything beyond a first name. EventLink
+ * always has the surname, so a single word can never be matched — but some
+ * people do go by one name, which is why this only ever feeds a hint and
+ * never blocks a member from naming themselves as they wish.
+ */
+export function hasSurname(displayName: string) {
+  return normalizeEventLinkPlayerName(displayName).includes(' ')
+}
+
 export function matchEventLinkMembers(
   rows: EventLinkStandingRow[],
   members: EventLinkMatchableMember[],

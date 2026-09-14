@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { ParsedEventLinkStanding } from './eventLinkImport'
 import {
+  hasSurname,
   matchEventLinkMembers,
   normalizeEventLinkPlayerName,
 } from './eventStandingImport'
@@ -93,5 +94,20 @@ describe('EventLink member matching', () => {
       memberId: undefined,
       suggestedMemberIds: ['member-sergio', 'member-sergio-duplicate'],
     })
+  })
+})
+
+describe('hasSurname', () => {
+  it('accepts anything EventLink could actually match', () => {
+    expect(hasSurname('Carla Pons Alcover')).toBe(true)
+    expect(hasSurname('Joan Roig de la Fuente')).toBe(true)
+    // The separator does not have to be a space: the matcher normalises it.
+    expect(hasSurname('Pons-Alcover')).toBe(true)
+  })
+
+  it('flags a lone first name, which no standing can ever match', () => {
+    expect(hasSurname('Marina')).toBe(false)
+    expect(hasSurname('  Marina  ')).toBe(false)
+    expect(hasSurname('')).toBe(false)
   })
 })

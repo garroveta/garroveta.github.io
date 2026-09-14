@@ -2013,6 +2013,28 @@ describe('App', () => {
     expect(screen.getByText('1 programados')).toBeInTheDocument()
   })
 
+  it('nudges for a surname without ever refusing the name', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Perfil' }))
+
+    const nameInput = screen.getByLabelText('Nombre visible')
+
+    expect(screen.queryByText(/Te faltan los apellidos/)).toBeNull()
+
+    // EventLink always carries the surname, so a lone first name can never be
+    // matched — the field says so and still accepts it.
+    fireEvent.change(nameInput, { target: { value: 'Sergio' } })
+
+    expect(screen.getByText(/Te faltan los apellidos/)).toBeInTheDocument()
+    expect(nameInput).toBeValid()
+    expect(nameInput).toHaveAccessibleDescription(/Te faltan los apellidos/)
+
+    fireEvent.change(nameInput, { target: { value: 'Sergio Gil' } })
+
+    expect(screen.queryByText(/Te faltan los apellidos/)).toBeNull()
+  })
+
   it('saves account data and preferences together from the profile', async () => {
     render(<App />)
 
@@ -2385,9 +2407,18 @@ describe('App', () => {
       /igual que en tu cuenta de Wizards.*nombre y apellidos, en ese orden/s,
     )
 
+    // The same nudge as on the profile, at the moment it matters most.
+    fireEvent.change(await screen.findByLabelText('Nombre visible'), {
+      target: { value: 'Pep' },
+    })
+
+    expect(screen.getByText(/Te faltan los apellidos/)).toBeInTheDocument()
+
     fireEvent.change(await screen.findByLabelText('Nombre visible'), {
       target: { value: 'Pep Peralta Isern' },
     })
+
+    expect(screen.queryByText(/Te faltan los apellidos/)).toBeNull()
     const completeProfile = screen.getByRole('button', {
       name: 'Completar perfil',
     })

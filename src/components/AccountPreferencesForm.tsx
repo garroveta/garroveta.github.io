@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 
 import { ClientApiError } from '../api/client'
 import { isCommunityOptionActive } from '../data/communityOptions'
+import { hasSurname } from '../data/eventStandingImport'
 import type {
   CommunityGame,
   CommunityTag,
@@ -97,6 +98,9 @@ export function AccountPreferencesForm({
   )
   const activeTags = useMemo(() => tags.filter(isCommunityOptionActive), [tags])
   const [draftName, setDraftName] = useState(displayName)
+  // A nudge, never a block: some people really do go by a single name.
+  const looksLikeASingleName =
+    draftName.trim().length > 0 && !hasSurname(draftName)
   const [selectedGameIds, setSelectedGameIds] = useState(favoriteGameIds)
   const [selectedTagIds, setSelectedTagIds] = useState(tagIds)
   const [contactDraft, setContactDraft] = useState(() =>
@@ -214,13 +218,23 @@ export function AccountPreferencesForm({
                 setDraftName(event.target.value)
                 setFeedback(null)
               }}
-              aria-describedby="account-name-help"
+              aria-describedby={
+                looksLikeASingleName
+                  ? 'account-name-help account-name-hint'
+                  : 'account-name-help'
+              }
             />
             <small id="account-name-help">
               Escríbelo igual que en tu cuenta de Wizards, la de la app
               Companion: <strong>nombre y apellidos</strong>, en ese orden. Así
               tus resultados de torneo se enlazan automáticamente con tu ficha.
             </small>
+            {looksLikeASingleName ? (
+              <small className="form-field__hint" id="account-name-hint">
+                ¿Te faltan los apellidos? En Companion aparecen junto a tu
+                nombre.
+              </small>
+            ) : null}
           </div>
         </div>
 
