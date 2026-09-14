@@ -59,20 +59,68 @@ describe('SeasonBadgesPanel', () => {
     const rows = within(
       screen.getByRole('list', { name: 'Tu próximo paso' }),
     ).getAllByRole('listitem')
-    const ratios = rows.map((row) => {
-      const counter = within(row).queryByText(/^\d+ de \d+$/)
-      const [current, target] = (counter?.textContent ?? '0 de 1')
-        .split(' de ')
-        .map(Number)
+    const ratios = rows
+      .map((row) => within(row).queryByText(/^\d+ de \d+$/)?.textContent)
+      .filter((counter): counter is string => Boolean(counter))
+      .map((counter) => {
+        const [current, target] = counter.split(' de ').map(Number)
 
-      return current / target
-    })
+        return current! / target!
+      })
 
-    // One per ladder that still has a rung to climb, never two from the same.
+    // One per ladder that still has a rung to climb, never two from the same;
+    // Melee is held, so its ladder is done and absent.
     expect(rows).toHaveLength(7)
     expect(
-      ratios.every((ratio, index) => index === 0 || ratios[index - 1] >= ratio),
+      ratios.every(
+        (ratio, index) => index === 0 || ratios[index - 1]! >= ratio,
+      ),
     ).toBe(true)
+  })
+
+  it('reads a live podium place as provisional, never as earned', () => {
+    // Sergio leads the active season, Biel is second, Nora fourth.
+    renderPanel()
+
+    const leader = within(
+      screen.getByRole('list', { name: 'Tu próximo paso' }),
+    ).getAllByRole('listitem')[0]!
+
+    // Already first: the top rung stays the target, to defend until closing.
+    expect(leader).toHaveTextContent('Monarch')
+    expect(leader).toHaveTextContent('Provisional')
+    expect(leader).toHaveTextContent('Vas 1.º de 15 · mantén el puesto')
+    // Provisional is never a badge: the case only holds what was earned.
+    expect(
+      within(
+        screen.getByRole('list', { name: 'Insignias desbloqueadas' }),
+      ).queryByRole('button', { name: /Monarch/ }),
+    ).toBeNull()
+  })
+
+  it('points a podium member at the rung above, and a chaser at the podium', () => {
+    const { unmount } = render(
+      <SeasonBadgesPanel data={demoData} memberId="member-biel" />,
+    )
+    const rungOf = (name: string) =>
+      within(screen.getByRole('list', { name: 'Tu próximo paso' }))
+        .getAllByRole('listitem')
+        .find((row) => row.textContent?.includes(name))
+
+    // Second: Paragon is provisionally held, so the ladder aims at Monarch.
+    expect(rungOf('Monarch')).toHaveTextContent(
+      'Vas 2.º de 15 · te falta 1 puesto',
+    )
+    expect(rungOf('Paragon')).toBeUndefined()
+
+    unmount()
+    render(<SeasonBadgesPanel data={demoData} memberId="member-nora" />)
+
+    // Fourth: the podium itself is still the target.
+    expect(rungOf('Paragon')).toHaveTextContent(
+      'Vas 4.º de 15 · te falta 1 puesto',
+    )
+    expect(rungOf('Paragon')).not.toHaveTextContent('Provisional')
   })
 
   it('names the ladder a next rung belongs to', () => {

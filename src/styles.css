@@ -10251,6 +10251,35 @@ a {
   text-transform: uppercase;
 }
 
+.badge-next__standing {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.2rem;
+}
+
+/* Provisional, never earned: a flat chip, never the metal of a held badge. */
+.badge-next__standing em,
+.season-badge__provisional {
+  padding: 0.05rem 0.4rem;
+  border: 1px dashed #b9a6c2;
+  border-radius: 999px;
+  color: #6b4b79;
+  font-size: 0.6rem;
+  font-style: normal;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.badge-next__standing small {
+  color: #504653;
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
 .badge-next__progress {
   grid-column: 2;
   display: flex;

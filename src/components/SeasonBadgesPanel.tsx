@@ -34,8 +34,16 @@ type SeasonBadgesPanelProps = {
   onOpenMember?: (memberId: string) => void
 }
 
-function distanceOf({ progress }: MemberBadge) {
-  return progress ? progress.current / progress.target : 0
+function distanceOf({ definition, progress, standing }: MemberBadge) {
+  if (progress) {
+    return progress.current / progress.target
+  }
+
+  // A place to climb, not a counter: being 4th with the top 3 in sight is
+  // closer than being 20th, and holding the place already reads as arrived.
+  return standing && definition.finalRank
+    ? Math.min(1, definition.finalRank / standing.currentRank)
+    : 0
 }
 
 export function SeasonBadgesPanel({
@@ -129,7 +137,7 @@ export function SeasonBadgesPanel({
   }
 
   function renderBadge(badge: MemberBadge) {
-    const { definition, progress, unlockedAt } = badge
+    const { definition, progress, standing, unlockedAt } = badge
     const holders = holdersById.get(definition.id) ?? []
     const isOpen = openBadgeId === definition.id
 
@@ -171,6 +179,9 @@ export function SeasonBadgesPanel({
                 <em>
                   {progress.current}/{progress.target}
                 </em>
+              ) : null}
+              {standing?.held && !unlockedAt ? (
+                <em className="season-badge__provisional">Provisional</em>
               ) : null}
               <small>
                 {holders.length} de {players}
@@ -375,6 +386,27 @@ export function SeasonBadgesPanel({
                   <strong>{step.definition.name}</strong>
                   <small>{step.definition.description}</small>
                 </span>
+                {step.standing ? (
+                  <span className="badge-next__standing">
+                    {step.standing.held ? <em>Provisional</em> : null}
+                    <small>
+                      Vas {step.standing.currentRank}.º de{' '}
+                      {step.standing.rankedPlayers}
+                      {step.standing.held
+                        ? ' · mantén el puesto hasta el cierre'
+                        : ` · te ${
+                            step.standing.currentRank -
+                              (step.definition.finalRank ?? 0) ===
+                            1
+                              ? 'falta 1 puesto'
+                              : `faltan ${
+                                  step.standing.currentRank -
+                                  (step.definition.finalRank ?? 0)
+                                } puestos`
+                          }`}
+                    </small>
+                  </span>
+                ) : null}
                 {step.progress ? (
                   <span className="badge-next__progress">
                     <span className="badge-next__bar" aria-hidden="true">

@@ -28,6 +28,12 @@ export type MemberBadge = {
   definition: ResolvedBadge
   unlockedAt?: string
   progress?: { current: number; target: number }
+  /**
+   * Where the member stands right now on a badge the closing decides. Never
+   * an unlock: the season can still take it back, and only `unlockedAt` ever
+   * means the badge is theirs.
+   */
+  standing?: { currentRank: number; rankedPlayers: number; held: boolean }
 }
 
 export type MemberLadderStep = MemberBadge & { tier: BadgeTier }
@@ -272,6 +278,13 @@ export function getMemberSeasonBadges(
 
   const badges = badgesForSeason(data, season)
   const progress = collectProgress(data, scope, season, badges).get(memberId)
+  // A season still running has a live leaderboard: a badge decided at the
+  // closing can at least say where the member stands on it today.
+  const leaderboard =
+    season.status === 'closed' ? [] : getCommunityLeaderboard(data, scope)
+  const currentRank = leaderboard.find(
+    ({ member }) => member.id === memberId,
+  )?.rank
 
   return badges.map((definition) => ({
     definition,
@@ -284,6 +297,14 @@ export function getMemberSeasonBadges(
               definition.target,
             ),
             target: definition.target,
+          }
+        : undefined,
+    standing:
+      definition.finalRank !== undefined && currentRank !== undefined
+        ? {
+            currentRank,
+            rankedPlayers: leaderboard.length,
+            held: currentRank <= definition.finalRank,
           }
         : undefined,
   }))
@@ -333,11 +354,17 @@ export function getMemberBadgeLadders(
         return memberBadge ? [{ ...memberBadge, tier }] : []
       })
 
+      // A rung the member provisionally holds is not a target any more, so the
+      // ladder points at the one above it. When every rung left is already
+      // held provisionally, the top one stays the target: it is a lead to
+      // defend until the closing, never a badge won early.
+      const pending = climbed.filter(({ unlockedAt }) => !unlockedAt)
+
       return {
         id,
         label,
         steps: climbed,
-        next: climbed.find(({ unlockedAt }) => !unlockedAt),
+        next: pending.find(({ standing }) => !standing?.held) ?? pending.at(-1),
       }
     },
   )
