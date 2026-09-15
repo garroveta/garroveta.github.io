@@ -1,7 +1,7 @@
 # Cartas — plan de migración a D1
 
-Estado: etapa 1 terminada, etapas 2 a 6 pendientes
-Fecha: 8 de septiembre de 2026
+Estado: diseño de referencia; el trabajo pendiente está desglosado en [`tareas/`](./tareas/README.md)
+Fecha: 15 de septiembre de 2026
 
 Este documento describe cómo conectar la sección **Cartas** a la base de datos
 D1. Sustituye y desarrolla la sección 9 de [`01-estado-actual.md`](./01-estado-actual.md), que
@@ -211,46 +211,41 @@ hoy hecha en memoria sobre la lista completa en el navegador.
 
 ## 7. Reglas que cambian de naturaleza
 
-Dos cosas que hoy son convenciones de interfaz se convierten en reglas del
-servidor:
+**Las reservas.** Hoy son una convención del prototipo; en el servidor pasan a
+ser una regla de concurrencia. Dos miembros pueden reservar el último ejemplar
+a la vez: hace falta un update condicional (`where quantity - reserved >= ?`)
+comprobando `changes()`, nunca un leer-modificar-escribir.
 
-**Los datos de contacto.** Hoy la interfaz decide mostrarlos solo en el detalle
-de una coincidencia. Eso no es una frontera de seguridad: el endpoint que los
-devuelve debe **comprobar él mismo** que existe una coincidencia entre los dos
-miembros. De lo contrario cualquiera consulta la API y recupera los contactos de
-toda la comunidad.
+**Los datos de contacto ya no forman parte de este plan.** Una versión anterior
+proponía que el servidor solo los devolviera cuando existiera una coincidencia.
+La decisión de producto ha cambiado (`AGENTS.md`): las coordenadas que un
+miembro indica son visibles por **todos los miembros validados** en su ficha
+(`#miembro?id=…`), sin coincidencia de por medio. Ya están en D1
+(`community_member.contact_methods`, migración `0011`) y se editan desde el
+perfil.
 
-**Las reservas.** Dos miembros pueden reservar el último ejemplar a la vez. Hace
-falta un update condicional (`where quantity - reserved >= ?`) comprobando
-`changes()`, nunca un leer-modificar-escribir.
+Consecuencia para Cartas: **no hay ningún endpoint de contactos que escribir**.
+El detalle de una coincidencia reutiliza `ContactMethodList` con el vendedor,
+que será un miembro real en cuanto las ofertas lo sean (tarea T6).
 
 ---
 
 ## 8. Secuencia de trabajo
 
-| #   | Etapa                          | Contenido                                             | Qué entrega                                   |
-| --- | ------------------------------ | ----------------------------------------------------- | --------------------------------------------- |
-| 1   | **Datos de contacto** ✅       | migración `0011`, edición desde el perfil             | cada miembro guarda de verdad sus contactos   |
-| 2   | **Catálogo compartido**        | tabla `card`, alimentada por las importaciones        | el catálogo deja de ser por navegador         |
-| 3   | **Ofertas, búsquedas, listas** | propiedad, paginación en servidor, página compartible | **la comunidad ve por fin las mismas cartas** |
-| 4   | **Coincidencias**              | la consulta de la sección 4 más la tabla de estado    | los avisos pasan a ser reales                 |
-| 5   | **Reservas y operaciones**     | updates condicionales, concurrencia                   | las reservas aguantan entre varias personas   |
-| 6   | **Importación y sync**         | plan calculado y aplicado en el servidor              | la sincronización pasa a ser segura           |
+El desglose en tareas —orden, dependencias, alcance, criterios de aceptación y
+pruebas exigidas de cada una— vive en [`tareas/README.md`](./tareas/README.md),
+para que cada tarea pueda revisarse y comentarse por separado. Este documento
+no lo duplica.
 
-La etapa 1 es deliberadamente pequeña: valida toda la cadena migración →
-worker → api → hook → interfaz sobre un tema de bajo riesgo, antes de abordar la
-etapa 3.
+Dos reglas de secuencia que el desglose respeta:
 
-**Lo que la etapa 1 no hace.** La lectura protegida descrita en la sección 7
-depende de que las coincidencias existan en el servidor, que es la etapa 4. Por
-eso la etapa 1 se limita al **autoservicio**: cada miembro guarda y consulta sus
-propios datos, y nadie lee los de otro. Los contactos que aparecen hoy en el
-detalle de una coincidencia siguen siendo de demostración, y la pantalla lo
-sigue advirtiendo, hasta que la etapa 4 permita comprobarla en el servidor.
+**La entrega de ofertas, búsquedas y listas no debe partirse.** Entregar «las
+ofertas en D1 pero las búsquedas en local» crearía justo el tipo de fractura
+que produjo el falso cero del indicador de Inicio: dos fuentes de verdad que se
+contradicen en silencio.
 
-**La etapa 3 no debe partirse.** Entregar «las ofertas en D1 pero las búsquedas
-en local» crearía justo el tipo de fractura que produjo el falso cero del
-indicador de Inicio: dos fuentes de verdad que se contradicen en silencio.
+**El banco de pruebas va antes que la primera migración de datos.** Ver la
+sección 10 y la tarea T0.
 
 ---
 
