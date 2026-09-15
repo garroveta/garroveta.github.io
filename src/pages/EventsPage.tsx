@@ -4,6 +4,7 @@ import {
   CalendarPlus,
   CalendarDays,
   ChevronRight,
+  ClipboardPaste,
   Clock3,
   Copy,
   Edit3,
@@ -31,6 +32,7 @@ import type {
 import type { EventStandingWriteInput } from '../api/eventStandings'
 import { DataStateView } from '../components/DataStateView'
 import { EventLinkImportPanel } from '../components/EventLinkImportPanel'
+import { WeeklyEventImportPanel } from '../components/WeeklyEventImportPanel'
 import { ShareActions } from '../components/ShareActions'
 import { isCommunityOptionActive } from '../data/communityOptions'
 import {
@@ -60,6 +62,12 @@ import type {
   EventType,
 } from '../domain/types'
 import { buildEventCalendarExport } from '../utils/eventCalendar'
+import {
+  addCalendarDays,
+  buildMadridIso,
+  madridDatePart,
+  madridTimePart,
+} from '../utils/madridEventTime'
 import { formatEventBadgeUnlocksForWhatsApp } from '../data/badgeSharing'
 import { getBadgeUnlocksForEvent } from '../data/rankingBadges'
 import { getRankingSeasonForDate } from '../data/rankingSeasons'
@@ -150,48 +158,8 @@ const compactRegistrationLabels = {
   cancelled: '',
 }
 
-function madridOffsetForDate(date: string) {
-  const offsetName = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Europe/Madrid',
-    timeZoneName: 'longOffset',
-  })
-    .formatToParts(new Date(`${date}T12:00:00Z`))
-    .find(({ type }) => type === 'timeZoneName')
-    ?.value.replace('GMT', '')
-
-  return offsetName || '+01:00'
-}
-
-function buildMadridIso(date: string, time: string) {
-  return `${date}T${time}:00${madridOffsetForDate(date)}`
-}
-
-function madridDatePart(isoDate: string) {
-  return new Intl.DateTimeFormat('sv-SE', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    timeZone: 'Europe/Madrid',
-  }).format(new Date(isoDate))
-}
-
-function madridTimePart(isoDate: string) {
-  return new Intl.DateTimeFormat('en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-    timeZone: 'Europe/Madrid',
-  }).format(new Date(isoDate))
-}
-
 function nextCalendarDate(date: string) {
   return addCalendarDays(date, 1)
-}
-
-function addCalendarDays(date: string, days: number) {
-  const nextDate = new Date(`${date}T12:00:00Z`)
-  nextDate.setUTCDate(nextDate.getUTCDate() + days)
-  return nextDate.toISOString().slice(0, 10)
 }
 
 function EventComposer({
@@ -1554,6 +1522,7 @@ export function EventsPage({
   const [isComposerOpen, setIsComposerOpen] = useState(
     activeRole === 'gerente' && initialManagerAction === 'new',
   )
+  const [isWeeklyImportOpen, setIsWeeklyImportOpen] = useState(false)
   const [editingEventId, setEditingEventId] = useState<string>()
   const [duplicatingEventId, setDuplicatingEventId] = useState<string>()
   const [managedParticipantEventId, setManagedParticipantEventId] =
@@ -1705,6 +1674,7 @@ export function EventsPage({
 
   const closeManagerPanels = () => {
     setIsComposerOpen(false)
+    setIsWeeklyImportOpen(false)
     setEditingEventId(undefined)
     setDuplicatingEventId(undefined)
     setManagedParticipantEventId(undefined)
@@ -1801,21 +1771,35 @@ export function EventsPage({
               <span>Herramientas del gerente</span>
               <h2 id="manager-events-title">Gestión de eventos</h2>
             </div>
-            {!isComposerOpen && !editingEventId ? (
-              <button
-                className="primary-button"
-                type="button"
-                onClick={() => {
-                  closeManagerPanels()
-                  setPublicationMessage('')
-                  setImportedStandingId(undefined)
-                  setPublishedEvent(undefined)
-                  setIsComposerOpen(true)
-                }}
-              >
-                <Plus aria-hidden="true" size={17} />
-                Nuevo evento
-              </button>
+            {!isComposerOpen && !isWeeklyImportOpen && !editingEventId ? (
+              <div className="manager-event-tools__buttons">
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => {
+                    closeManagerPanels()
+                    setPublicationMessage('')
+                    setIsWeeklyImportOpen(true)
+                  }}
+                >
+                  <ClipboardPaste aria-hidden="true" size={17} />
+                  Crear semana con IA
+                </button>
+                <button
+                  className="primary-button"
+                  type="button"
+                  onClick={() => {
+                    closeManagerPanels()
+                    setPublicationMessage('')
+                    setImportedStandingId(undefined)
+                    setPublishedEvent(undefined)
+                    setIsComposerOpen(true)
+                  }}
+                >
+                  <Plus aria-hidden="true" size={17} />
+                  Nuevo evento
+                </button>
+              </div>
             ) : null}
           </div>
           {isComposerOpen ? (
@@ -1843,6 +1827,12 @@ export function EventsPage({
                       : 'El evento ya aparece en la agenda.',
                 )
               }}
+            />
+          ) : isWeeklyImportOpen ? (
+            <WeeklyEventImportPanel
+              data={data}
+              onClose={() => setIsWeeklyImportOpen(false)}
+              onCreateEvent={onCreateEvent}
             />
           ) : (
             <>

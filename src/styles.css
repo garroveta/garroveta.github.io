@@ -3622,10 +3622,23 @@ a {
 
 .manager-event-tools__heading {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 0.8rem;
+}
+
+.manager-event-tools__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  width: 100%;
+}
+
+.manager-event-tools__buttons > button {
+  flex: 1 1 10rem;
+  white-space: nowrap;
 }
 
 .manager-event-tools__heading span {
@@ -4142,6 +4155,168 @@ a {
   border-radius: 1.2rem;
   background: #fff;
   box-shadow: 0 0.8rem 2.2rem rgb(51 43 55 / 7%);
+}
+
+.weekly-event-import {
+  display: grid;
+  gap: 0.9rem;
+  max-width: 48rem;
+  padding: 1rem;
+  border: 1px solid #ded5e1;
+  border-radius: 1.2rem;
+  background: #fff;
+}
+
+.weekly-event-import__heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.weekly-event-import__heading span {
+  color: #826b89;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.weekly-event-import__heading h3 {
+  margin: 0.2rem 0 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.3rem;
+  font-weight: 500;
+}
+
+.weekly-event-import__heading p,
+.weekly-event-import__step p,
+.weekly-event-import__preview p {
+  margin: 0.3rem 0 0;
+  color: #706675;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.weekly-event-import__heading > button {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 0.7rem;
+  background: #f0ecef;
+  cursor: pointer;
+}
+
+.weekly-event-import__step {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.8rem;
+  border: 1px solid #e7dfe9;
+  border-radius: 0.9rem;
+  background: #fbf9fc;
+}
+
+.weekly-event-import__step .form-field input,
+.weekly-event-import__step .form-field textarea {
+  min-width: 0;
+}
+
+.weekly-event-import__step > button,
+.weekly-event-import__preview > button {
+  width: 100%;
+}
+
+.weekly-event-import__preview {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.weekly-event-import__preview h4 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.weekly-event-import__rows,
+.weekly-event-import__errors {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.weekly-event-import__rows li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid #ebe4ed;
+  font-size: 0.74rem;
+}
+
+.weekly-event-import__rows time {
+  color: #654075;
+  font-weight: 800;
+  max-width: 5.5rem;
+  line-height: 1.35;
+}
+
+.weekly-event-import__rows strong {
+  display: block;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+.weekly-event-import__rows small {
+  display: block;
+  line-height: 1.35;
+}
+
+.weekly-event-import__rows small {
+  color: #77717c;
+}
+
+.weekly-event-import__rows em {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: #6c4a79;
+  font-size: 0.66rem;
+  font-style: normal;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.weekly-event-import__rows details {
+  grid-column: 1 / -1;
+  min-width: 0;
+  color: #706675;
+  font-size: 0.7rem;
+}
+
+.weekly-event-import__rows details summary {
+  width: fit-content;
+  color: #623276;
+  cursor: pointer;
+}
+
+.weekly-event-import__rows details p {
+  overflow-wrap: anywhere;
+}
+
+.weekly-event-import__errors li,
+.weekly-event-import__feedback {
+  margin: 0;
+  padding: 0.45rem 0;
+  color: #8a4743;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.weekly-event-import__feedback {
+  color: #623276;
 }
 
 .event-composer__heading {
@@ -12137,6 +12312,10 @@ a {
 }
 
 @media (min-width: 48rem) {
+  .manager-event-tools__buttons {
+    width: auto;
+  }
+
   .market-reservation-sheet {
     padding: 1.5rem;
     place-items: center;
