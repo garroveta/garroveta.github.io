@@ -4,7 +4,7 @@ Estado: etapa 1 terminada, etapas 2 a 6 pendientes
 Fecha: 8 de septiembre de 2026
 
 Este documento describe cómo conectar la sección **Cartas** a la base de datos
-D1. Sustituye y desarrolla la sección 9 de [`cartas.md`](./cartas.md), que
+D1. Sustituye y desarrolla la sección 9 de [`01-estado-actual.md`](./01-estado-actual.md), que
 describe la funcionalidad tal y como funciona hoy, en local.
 
 ---
@@ -41,7 +41,7 @@ escribe nada** en las coincidencias. No hay recálculo. Las únicas escrituras
 son las transiciones de estado, provocadas por una acción explícita sobre una
 coincidencia concreta.
 
-Las seis reglas del emparejamiento (sección 6 de `cartas.md`) son todas
+Las seis reglas del emparejamiento (sección 6 de `01-estado-actual.md`) son todas
 expresables en SQL gracias a dos hechos del modelo actual:
 
 - `acceptedLanguages` y `acceptedFinishes` contienen **exactamente un

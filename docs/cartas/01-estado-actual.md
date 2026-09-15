@@ -375,7 +375,7 @@ trae imagen propia.
 
 El plan de migración completo —modelo de datos, consulta de emparejamiento,
 secuencia de trabajo y riesgos— está en
-[`cartas-backend.md`](./cartas-backend.md).
+[`02-plan-backend.md`](./02-plan-backend.md).
 
 ## 10. Archivos y pruebas
 
