@@ -20,6 +20,38 @@ const source = JSON.stringify({
 })
 
 describe('WeeklyEventImportPanel', () => {
+  it('copies the selected week and the manager adjustments for the AI', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    })
+    render(
+      <WeeklyEventImportPanel
+        data={demoData}
+        onClose={vi.fn()}
+        onCreateEvent={vi.fn()}
+      />,
+    )
+    fireEvent.change(
+      screen.getByLabelText('Ajustes para esta semana (opcional)'),
+      {
+        target: { value: 'Añadir mesa de pintura el miércoles a las 17:00.' },
+      },
+    )
+    fireEvent.click(screen.getByText('Copiar instrucciones para la IA'))
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1))
+    expect(writeText.mock.calls[0][0]).toContain(
+      'Añadir mesa de pintura el miércoles a las 17:00.',
+    )
+    expect(writeText.mock.calls[0][0]).toContain('weekStart debe ser lunes.')
+    expect(
+      await screen.findByText(
+        'Instrucciones copiadas. Pégalas en tu asistente de IA.',
+      ),
+    ).toBeInTheDocument()
+  })
+
   it('requires review and confirmation before creating events', async () => {
     const onCreateEvent = vi.fn().mockResolvedValue({ id: 'event-created' })
     render(

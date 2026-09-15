@@ -24,6 +24,7 @@ export function WeeklyEventImportPanel({
   onCreateEvent,
 }: WeeklyEventImportPanelProps) {
   const [weekStart, setWeekStart] = useState(nextWeekMonday)
+  const [weeklyAdjustments, setWeeklyAdjustments] = useState('')
   const [source, setSource] = useState('')
   const [preview, setPreview] = useState<WeeklyEventPreview>()
   const [createdIndexes, setCreatedIndexes] = useState<number[]>([])
@@ -35,7 +36,7 @@ export function WeeklyEventImportPanel({
   async function copyInstructions() {
     try {
       await navigator.clipboard.writeText(
-        buildWeeklyEventAiPrompt(data, weekStart),
+        buildWeeklyEventAiPrompt(data, weekStart, weeklyAdjustments),
       )
       setFeedback('Instrucciones copiadas. Pégalas en tu asistente de IA.')
     } catch {
@@ -136,6 +137,17 @@ export function WeeklyEventImportPanel({
             }}
           />
         </label>
+        <label className="form-field">
+          <span>Ajustes para esta semana (opcional)</span>
+          <textarea
+            value={weeklyAdjustments}
+            onChange={(event) => setWeeklyAdjustments(event.target.value)}
+            placeholder="Ej. Añadir mesa de pintura el miércoles a las 17:00. El FNM del viernes empieza a las 19:00."
+            rows={3}
+            maxLength={1000}
+            disabled={isSaving}
+          />
+        </label>
         <button
           className="secondary-button"
           type="button"
@@ -146,8 +158,9 @@ export function WeeklyEventImportPanel({
         </button>
         <p>
           Incluyen las últimas cuatro semanas con eventos publicados y las
-          opciones activas de la comunidad. Ajusta la propuesta con tu IA antes
-          de pedirle el JSON final.
+          opciones activas de la comunidad. Tus ajustes tendrán prioridad sobre
+          el historial. Confirma la propuesta con tu IA antes de pedirle el JSON
+          final.
         </p>
       </div>
 

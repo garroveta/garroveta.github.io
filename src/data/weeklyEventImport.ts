@@ -64,7 +64,11 @@ export function nextWeekMonday(reference: Date = new Date()) {
   return addCalendarDays(today, 8 - weekday)
 }
 
-export function buildWeeklyEventAiPrompt(data: DemoDataSet, weekStart: string) {
+export function buildWeeklyEventAiPrompt(
+  data: DemoDataSet,
+  weekStart: string,
+  weeklyAdjustments = '',
+) {
   const activeGames = data.games.filter(isCommunityOptionActive)
   const activeFormats = data.competitionFormats.filter(
     (format) =>
@@ -101,6 +105,11 @@ export function buildWeeklyEventAiPrompt(data: DemoDataSet, weekStart: string) {
     `Propón los eventos de CRC DeLorean para la semana del ${weekStart} al ${addCalendarDays(weekStart, 6)} (hora de Inca, Europe/Madrid).`,
     'Usa el historial como referencia para proponer días y horarios; marca como dudas lo que no puedas deducir con seguridad para que el gerente lo ajuste antes de generar el JSON. La imagen del calendario se genera después, a partir de la semana aprobada.',
     `Historial de las últimas cuatro semanas con eventos (${recentWeeks.join(', ') || 'sin datos'}):\n${history.length ? history.join('\n') : 'No hay eventos previos en la aplicación.'}`,
+    ...(weeklyAdjustments.trim()
+      ? [
+          `Indicaciones del gerente para esta semana (priorízalas frente al historial; si alguna queda fuera de la semana o es ambigua, consúltala antes de generar el JSON):\n${weeklyAdjustments.trim()}`,
+        ]
+      : []),
     `Juegos permitidos (usa el ID): ${activeGames.map((game) => `${game.id}=${game.name}`).join('; ')}`,
     `Formatos (para MTG es obligatorio; usa el ID): ${activeFormats.map((format) => `${format.id}=${format.name} (${format.gameId})`).join('; ') || 'ninguno'}`,
     `Tipos: ${eventTypes.map((type) => `${type}=${EVENT_TYPE_LABELS[type]}`).join('; ')}`,

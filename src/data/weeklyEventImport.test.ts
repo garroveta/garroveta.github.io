@@ -37,6 +37,23 @@ describe('weekly event import', () => {
     )
   })
 
+  it('adds optional manager adjustments without replacing the import rules', () => {
+    const prompt = buildWeeklyEventAiPrompt(
+      demoData,
+      '2026-09-21',
+      '  Añadir mesa de pintura el miércoles a las 17:00.  ',
+    )
+    expect(prompt).toContain(
+      'Indicaciones del gerente para esta semana (priorízalas frente al historial',
+    )
+    expect(prompt).toContain('Añadir mesa de pintura el miércoles a las 17:00.')
+    expect(prompt).toContain('weekStart debe ser lunes.')
+    expect(prompt).toContain('SOLO con JSON válido')
+    expect(
+      buildWeeklyEventAiPrompt(demoData, '2026-09-21', '   '),
+    ).not.toContain('Indicaciones del gerente')
+  })
+
   it('selects the next Monday in the Madrid time zone', () => {
     expect(nextWeekMonday(new Date('2026-09-15T10:00:00Z'))).toBe('2026-09-21')
   })
