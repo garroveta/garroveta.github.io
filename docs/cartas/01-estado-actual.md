@@ -1,7 +1,7 @@
 # Cartas — documentación de la funcionalidad
 
 Estado: prototipo local, todavía sin backend
-Última actualización: 6 de septiembre de 2026
+Última actualización: 15 de septiembre de 2026
 
 Este documento reúne todo lo que hace hoy la sección **Cartas** de Garroveta:
 su alcance, su modelo de datos, sus reglas de funcionamiento y sus límites
@@ -309,11 +309,19 @@ coincidencia no puede registrarse dos veces.
 
 ### 5.9 Datos de contacto
 
-Los datos de contacto del vendedor (WhatsApp, correo, Discord) aparecen
-**únicamente en el detalle de una coincidencia**, y la propia pantalla lo
-explica: «estos datos solo se muestran porque existe una coincidencia entre
-vuestras listas». No aparecen en el catálogo general ni en la página
-compartible.
+Los datos de contacto (WhatsApp, correo, Discord) **ya no dependen de
+Cartas**. Cada miembro los indica desde su perfil, se guardan en D1
+(`community_member.contact_methods`) y **cualquier miembro validado los ve en
+su ficha** (`#miembro?id=…`). No hace falta ninguna coincidencia de cartas.
+
+El detalle de una coincidencia muestra esos mismos datos del vendedor con el
+componente compartido `ContactMethodList`. Con una salvedad, propia del
+prototipo: como los vendedores de Cartas son todavía miembros ficticios, los
+datos que aparecen ahí son de demostración, y la pantalla lo advierte. Ese
+aviso desaparecerá cuando las ofertas pertenezcan a miembros reales (ver la
+tarea T6 en [`tareas/`](./tareas/README.md)).
+
+No aparecen en el catálogo general ni en la página compartible.
 
 ---
 
@@ -360,22 +368,22 @@ trae imagen propia.
 
 ## 8. Límites conocidos
 
-| Límite                      | Detalle                                                                                                                                                           |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Sin backend                 | Nada se comparte entre miembros ni entre dispositivos (sección 2).                                                                                                |
-| Datos de contacto no reales | No existe columna en la base de datos ni forma de rellenarlos desde el perfil. La pantalla lo advierte explícitamente para que nadie intente contactar con ellos. |
-| Identidad local             | Las comprobaciones de propiedad («esta oferta es mía») se apoyan en el identificador ficticio del prototipo, no en la cuenta real conectada.                      |
-| Tarjeta de Inicio           | Cuenta las coincidencias reales del juego de datos local, leídas siempre del prototipo aunque haya una cuenta conectada.                                          |
-| Sin mensajería              | El contacto ocurre fuera de la aplicación, por los medios que indique el vendedor.                                                                                |
-| Sin precios de referencia   | No hay estimación automática de precio de mercado.                                                                                                                |
+| Límite                    | Detalle                                                                                                                                                                                                        |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sin backend               | Nada se comparte entre miembros ni entre dispositivos (sección 2).                                                                                                                                             |
+| Vendedores ficticios      | Los contactos ya son reales y editables desde el perfil, pero las ofertas de Cartas siguen perteneciendo a miembros de demostración: el detalle de una coincidencia muestra contactos ficticios y lo advierte. |
+| Identidad local           | Las comprobaciones de propiedad («esta oferta es mía») se apoyan en el identificador ficticio del prototipo, no en la cuenta real conectada.                                                                   |
+| Tarjeta de Inicio         | Cuenta las coincidencias reales del juego de datos local, leídas siempre del prototipo aunque haya una cuenta conectada.                                                                                       |
+| Sin mensajería            | El contacto ocurre fuera de la aplicación, por los medios que indique el vendedor.                                                                                                                             |
+| Sin precios de referencia | No hay estimación automática de precio de mercado.                                                                                                                                                             |
 
 ---
 
 ## 9. Qué haría falta para conectarla a D1
 
-El plan de migración completo —modelo de datos, consulta de emparejamiento,
-secuencia de trabajo y riesgos— está en
-[`cartas-backend.md`](./cartas-backend.md).
+El diseño de la migración —modelo de datos, consulta de emparejamiento y
+riesgos— está en [`02-plan-backend.md`](./02-plan-backend.md). El trabajo,
+desglosado en tareas revisables, está en [`tareas/`](./tareas/README.md).
 
 ## 10. Archivos y pruebas
 
@@ -389,8 +397,9 @@ secuencia de trabajo y riesgos— está en
 | `cardLists.ts`                                    | listas personales                                       |
 | `cardDeals.ts`                                    | cierre de operaciones                                   |
 | `cardSelectors.ts`                                | consultas para la interfaz                              |
-| `cardListImport.ts`                               | análisis de listas (texto y CSV de ManaBox)             |
+| `cardListImport.ts`                               | análisis de listas (texto y cualquier CSV de cartas)    |
 | `cardSync.ts`                                     | plan y aplicación de una sincronización de ofertas      |
+| `cardImportSharing.ts`                            | texto para compartir una importación por WhatsApp       |
 | `scryfallClient.ts`                               | resolución de cartas contra Scryfall                    |
 | `cardPresentation.ts`, `cardMatchPresentation.ts` | etiquetas en español                                    |
 | `scryfallImages.ts`                               | imágenes de respaldo                                    |
@@ -406,14 +415,20 @@ secuencia de trabajo y riesgos— está en
 `src/components/MarketplaceCatalog.tsx`,
 `MarketplaceListingTable.tsx`, `MarketplaceListingGallery.tsx`,
 `MarketplaceListingAction.tsx`, `MarketplaceReservationSheet.tsx`,
-`src/hooks/useMarketplaceReservation.ts`.
+`src/components/QuantityField.tsx` (campo de cantidad compartido con el resto
+de la aplicación), `src/hooks/useMarketplaceReservation.ts`.
 
 ### Pruebas
 
-- 34 pruebas unitarias sobre la lógica de datos (7 archivos `src/data/card*.test.ts`).
-- 11 pruebas de integración en `src/App.test.tsx`: navegación del catálogo,
-  reserva parcial, importación de listas, creación automática de coincidencias,
-  revelación del contacto, cierre de operación, edición posterior, página
+- 79 pruebas unitarias sobre la lógica de datos (9 archivos
+  `src/data/card*.test.ts`), incluidas las del planificador de sincronización
+  y del analizador de listas.
+- Pruebas de componente en `src/components/cards/MarketplaceSyncPreview.test.tsx`
+  y `src/components/QuantityField.test.tsx`.
+- Pruebas de integración en `src/App.test.tsx`: navegación del catálogo,
+  reserva parcial, importación de listas, sincronización con aviso de
+  duplicados, creación automática de coincidencias, revelación del contacto,
+  cierre de operación, edición posterior, retirada de una oferta, página
   compartible y liberación parcial por parte del vendedor.
 
 ### Datos de demostración
