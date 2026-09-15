@@ -653,7 +653,7 @@ describe('App', () => {
     expect(
       screen.getByRole('link', { name: 'Garroveta, inicio' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Beta')).toBeInTheDocument()
+    expect(screen.getByText('Alfa')).toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: 'Hola, Álex' }),
     ).toBeInTheDocument()
@@ -2546,7 +2546,7 @@ describe('App', () => {
       screen.getByRole('heading', { name: 'Entra en tu comunidad' }),
     ).toBeInTheDocument()
     expect(screen.getByText('Acceso privado')).toBeInTheDocument()
-    expect(screen.getByText('Beta')).toBeInTheDocument()
+    expect(screen.getByText('Alfa')).toBeInTheDocument()
     expect(
       screen.queryByRole('navigation', { name: 'Navegación principal' }),
     ).not.toBeInTheDocument()

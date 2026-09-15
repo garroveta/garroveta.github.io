@@ -22,7 +22,7 @@ export function AppHeader({ activeRole, community }: AppHeaderProps) {
         <span className="brand__text">
           <span className="brand__name">
             <strong>Garroveta</strong>
-            <span className="brand__beta">Beta</span>
+            <span className="brand__beta">Alfa</span>
           </span>
           <small>
             {community.name} · {community.city}
